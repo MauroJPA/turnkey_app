@@ -33,6 +33,14 @@ migrate_working_dir/
 .pub/
 /build/
 
+# Ambiente local / binários do PocketBase (o schema vive em pb/migrations)
+.env
+/pb/bin/
+/pb/pb_data/
+
+# Nota: os ficheiros gerados (*.g.dart, *.freezed.dart) SÃO versionados,
+# para um clone novo compilar sem correr o build_runner primeiro.
+
 # Symbolication related
 app.*.symbols
 

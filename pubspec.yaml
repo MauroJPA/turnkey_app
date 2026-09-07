@@ -35,16 +35,45 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
+  # Estado / DI (ecossistema Riverpod 2.x — estável no Dart 3.8)
+  flutter_riverpod: ^2.6.1
+
+  # Navegação
+  go_router: ^14.6.2
+
+  # Backend
+  pocketbase: ^0.25.1
+
+  # Modelos imutáveis / serialização
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # Sessão
+  flutter_secure_storage: ^9.2.4
+
+  # Import de CSV
+  file_picker: ^8.1.7
+  csv: ^6.0.0
+
+  # Formatação
+  intl: ^0.20.2
+  collection: ^1.19.1
+
+  # OAuth — preparado, ativado numa iteração posterior
+  google_sign_in: ^6.2.2
+  sign_in_with_apple: ^6.1.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^5.0.0
+
+  # Geração de código (modelos). Providers do Riverpod são escritos à mão —
+  # riverpod_generator arrasta um analyzer_plugin incompatível com o Dart 3.8.
+  build_runner: ^2.4.13
+  freezed: ^2.5.7
+  json_serializable: ^6.9.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
