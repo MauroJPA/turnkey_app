@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../pocketbase/pb_client.dart';
 
@@ -62,12 +63,27 @@ class AuthRepository {
 
   void signOut() => _pb.authStore.clear();
 
-  // --- OAuth (preparado; ativado numa iteração posterior) ------------------
-  static const oauthDisponivel = false;
+  // --- OAuth (Google / Apple) via o fluxo OAuth2 do PocketBase ------------
 
-  Future<void> signInWithGoogle() =>
-      throw UnimplementedError('Login com Google ativado numa fase posterior.');
+  /// Nomes dos provedores OAuth2 que o servidor tem ativos
+  /// (ex.: `['google', 'apple']`). Vazio se nenhum estiver configurado.
+  Future<List<String>> enabledOAuthProviders() async {
+    try {
+      final methods = await _pb.collection('users').listAuthMethods();
+      return methods.oauth2.providers.map((p) => p.name).toList();
+    } on Object {
+      return const [];
+    }
+  }
 
-  Future<void> signInWithApple() =>
-      throw UnimplementedError('Login com Apple ativado numa fase posterior.');
+  /// Autentica com um provedor OAuth2 ([provider] = `google` | `apple` | …).
+  /// Abre o browser; o PocketBase trata da troca de tokens.
+  Future<void> signInWithOAuth2(String provider) {
+    return _pb.collection('users').authWithOAuth2(provider, (url) async {
+      final ok = await launchUrl(url, mode: LaunchMode.externalApplication);
+      if (!ok) {
+        throw Exception('Não foi possível abrir o browser para o login.');
+      }
+    });
+  }
 }

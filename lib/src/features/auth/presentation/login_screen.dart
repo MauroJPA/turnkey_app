@@ -3,6 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 import '../../../core/auth/auth_controller.dart';
+import '../../../core/auth/auth_repository.dart';
+
+/// Provedores OAuth2 ativos no servidor (ex.: `['google']`).
+final _oauthProvidersProvider = FutureProvider.autoDispose<List<String>>(
+  (ref) => ref.read(authRepositoryProvider).enabledOAuthProviders(),
+);
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -174,12 +180,57 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 }
 
-/// Botões de login social — preparados, ativados numa fase posterior.
-class _SocialButtons extends StatelessWidget {
+/// Botões de login social. Ficam ativos automaticamente quando o provedor
+/// respetivo for configurado no PocketBase (ver `pb/OAUTH.md`).
+class _SocialButtons extends ConsumerStatefulWidget {
   const _SocialButtons();
 
   @override
+  ConsumerState<_SocialButtons> createState() => _SocialButtonsState();
+}
+
+class _SocialButtonsState extends ConsumerState<_SocialButtons> {
+  String? _busy;
+
+  Future<void> _oauth(String provider) async {
+    setState(() => _busy = provider);
+    try {
+      await ref.read(authControllerProvider.notifier).signInWithProvider(
+            provider,
+          );
+    } on Object catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$e')));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final ativos = ref.watch(_oauthProvidersProvider).valueOrNull ?? const [];
+
+    Widget botao(String provider, IconData icon, String label) {
+      final disponivel = ativos.contains(provider);
+      final btn = OutlinedButton.icon(
+        onPressed:
+            (disponivel && _busy == null) ? () => _oauth(provider) : null,
+        icon: _busy == provider
+            ? const SizedBox(
+                height: 16,
+                width: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Icon(icon),
+        label: Text(label),
+      );
+      return disponivel
+          ? btn
+          : Tooltip(message: 'Configurar no servidor primeiro', child: btn);
+    }
+
     return Column(
       children: [
         Row(
@@ -187,32 +238,15 @@ class _SocialButtons extends StatelessWidget {
             const Expanded(child: Divider()),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                'ou',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              child: Text('ou', style: Theme.of(context).textTheme.bodySmall),
             ),
             const Expanded(child: Divider()),
           ],
         ),
         const SizedBox(height: 8),
-        Tooltip(
-          message: 'Disponível em breve',
-          child: OutlinedButton.icon(
-            onPressed: null,
-            icon: const Icon(Icons.g_mobiledata),
-            label: const Text('Continuar com Google'),
-          ),
-        ),
+        botao('google', Icons.g_mobiledata, 'Continuar com Google'),
         const SizedBox(height: 8),
-        Tooltip(
-          message: 'Disponível em breve',
-          child: OutlinedButton.icon(
-            onPressed: null,
-            icon: const Icon(Icons.apple),
-            label: const Text('Continuar com Apple'),
-          ),
-        ),
+        botao('apple', Icons.apple, 'Continuar com Apple'),
       ],
     );
   }

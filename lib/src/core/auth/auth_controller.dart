@@ -70,6 +70,11 @@ class AuthController extends Notifier<AuthState> {
     await _reclassify();
   }
 
+  Future<void> signInWithProvider(String provider) async {
+    await _repo.signInWithOAuth2(provider);
+    await _reclassify();
+  }
+
   /// Chamado pelo ecrã de onboarding depois de criar a empresa.
   Future<void> reload() => _reclassify();
 

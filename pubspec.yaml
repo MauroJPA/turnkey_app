@@ -59,9 +59,8 @@ dependencies:
   intl: ^0.20.2
   collection: ^1.19.1
 
-  # OAuth — preparado, ativado numa iteração posterior
-  google_sign_in: ^6.2.2
-  sign_in_with_apple: ^6.1.4
+  # OAuth (Google/Apple) via o fluxo OAuth2 do PocketBase — abre o browser
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
