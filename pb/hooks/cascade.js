@@ -89,9 +89,9 @@ function runCascade(app, kind, rootId) {
         } catch (_) {
           continue;
         }
-        let cpg = fnum(ing, 'custo_por_grama');
-        if (cpg <= 0) cpg = ingCpg(ing);
-        custo += cpg * qtd;
+        // sempre a partir do preço/gramas — o custo_por_grama do ingrediente
+        // é só cache de UI e pode estar desatualizado.
+        custo += ingCpg(ing) * qtd;
       } else if (recRel) {
         let rec;
         try {
@@ -229,9 +229,9 @@ function runCascade(app, kind, rootId) {
         } catch (_) {
           continue;
         }
-        let cpg = fnum(ing, 'custo_por_grama');
-        if (cpg <= 0) cpg = ingCpg(ing);
-        custo += cpg * qtd;
+        // sempre a partir do preço/gramas — o custo_por_grama do ingrediente
+        // é só cache de UI e pode estar desatualizado.
+        custo += ingCpg(ing) * qtd;
       } else if (subRel) {
         recomputeReceita(subRel);
         let sub;
@@ -252,7 +252,8 @@ function runCascade(app, kind, rootId) {
     const pesoAntes = fnum(receita, 'rendimento_esperado');
     const mudou =
       Math.abs(custoAntes - custo) > EPS ||
-      Math.abs(fnum(receita, 'custo_por_grama') - cpgReceita) > EPS ||
+      Math.abs(fnum(receita, 'custo_por_grama') - cpgReceita) >
+        cpgReceita * 1e-6 + 1e-9 ||
       (!manual && Math.abs(pesoAntes - peso) > EPS);
 
     if (mudou) {
@@ -293,7 +294,8 @@ function runCascade(app, kind, rootId) {
       return;
     }
     const cpg = ingCpg(ing);
-    if (Math.abs(fnum(ing, 'custo_por_grama') - cpg) > EPS) {
+    // epsilon relativo — custo_por_grama pode ser muito pequeno (0,0005…)
+    if (Math.abs(fnum(ing, 'custo_por_grama') - cpg) > cpg * 1e-6 + 1e-9) {
       ing.set('custo_por_grama', cpg);
       app.save(ing);
     }

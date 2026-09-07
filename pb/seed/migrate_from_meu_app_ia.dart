@@ -265,12 +265,19 @@ Future<void> main(List<String> argv) async {
     await importHist('historico_produtos', 'ficha', 'produto_id');
   } catch (_) {}
 
-  // ---- recompute + relatório ----
+  // ---- religar espelhos + recompute + relatório ----
   if (doRecompute && !dryRun) {
     final antes = <String, double>{
       for (final r in await all(dst, 'receitas'))
         '${r.data['nome']}': _num(r.data['custo_receita']),
     };
+    // liga os ingredientes "Gookie" às respetivas receitas (por nome)
+    final relink = await dst.send(
+      '/api/turnkey/admin/relink-espelhos',
+      method: 'POST',
+      body: {'empresa': empresaId},
+    );
+    stdout.writeln('relink-espelhos: $relink');
     final res = await dst.send(
       '/api/turnkey/admin/recompute',
       method: 'POST',

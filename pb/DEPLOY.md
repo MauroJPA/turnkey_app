@@ -60,9 +60,13 @@ dart run pb/seed/migrate_from_meu_app_ia.dart \
   --empresa="Gookie" --attach-user=<o-teu-email> --recompute
 ```
 
-`--recompute` recalcula tudo em cascata e imprime as diferenças vs. os valores
-antigos (esperado: batem certo a ±0,01, exceto cópias antigas sem linhas).
-`--dry-run` conta sem escrever.
+`--recompute` liga os ingredientes-espelho (os "ingredientes Gookie" que na
+verdade são receitas), recalcula tudo em cascata e imprime as diferenças vs. os
+valores antigos. `--dry-run` conta sem escrever.
+
+> As diferenças mostradas são **esperadas** onde o `meu_app_ia` tinha o custo
+> em cache desatualizado (ex.: preços de ingredientes corrigidos depois, cópias
+> de receitas sem linhas). O valor recalculado é o correto.
 
 ## Notas
 
