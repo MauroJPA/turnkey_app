@@ -8,6 +8,7 @@ import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/onboarding_screen.dart';
 import '../features/dashboard/presentation/home_shell.dart';
 import '../features/ingredients/presentation/ingredients_screen.dart';
+import '../features/production/presentation/production_screen.dart';
 import '../features/recipes/presentation/recipe_detail_screen.dart';
 import '../features/recipes/presentation/recipes_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
@@ -24,6 +25,7 @@ abstract class Routes {
   static const ingredients = '/ingredientes';
   static const recipes = '/receitas';
   static const techSheets = '/fichas-tecnicas';
+  static const production = '/produzir';
   static const settings = '/opcoes';
   static const team = '/opcoes/equipa';
 }
@@ -72,6 +74,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.ingredients,
         builder: (_, __) => const IngredientsScreen(),
+      ),
+      GoRoute(
+        path: Routes.production,
+        builder: (_, __) => const ProductionScreen(),
       ),
       GoRoute(
         path: Routes.recipes,
