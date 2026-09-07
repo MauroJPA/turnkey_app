@@ -31,14 +31,33 @@ pb/
 - Copiar `pb/hooks/*` para o `pb_hooks/` do servidor e reiniciar.
 - **Nunca** commitar credenciais de admin nem `pb_data/`.
 
-## Estado
+## Estado (validado contra PocketBase 0.35 local)
 
-- **M0** — `migrations/1704067200_base_collections.js`: `empresas`, campos
-  `empresa`+`papel` em `users`, `configuracoes_custo`. Escrito para a API JS da
-  v0.35; **a validar contra o servidor real no M1**.
-- **M2+** — `ingredientes`, `fornecedores`, `receitas`, `itens_receita`,
-  `fichas_tecnicas`, `itens_ficha`, `historico` entram nos respetivos milestones.
-- **M4** — `hooks/cost_cascade.pb.js` (recálculo recursivo + cascata).
+| Migration | Conteúdo |
+|---|---|
+| `1704067200_base_collections.js` | `empresas`, `users.empresa/papel/nome`, `configuracoes_custo` |
+| `1704153600_ingredientes.js` | `ingredientes` |
+| `1704240000_receitas.js` | `receitas`, `itens_receita`, `ingredientes.receita_espelho` |
+| `1704326400_historico.js` | `historico` (só o servidor escreve) |
+| `1704412800_timestamps.js` | campos `autodate` `created`/`updated` nas coleções de negócio |
+
+Hooks: `onboarding.pb.js`, `guards.pb.js`, `cost_cascade.pb.js` (+ `cascade.js`).
+Falta (M5): `fichas_tecnicas`, `itens_ficha` e `__recomputeFichaImpl`.
+
+## ⚠️ Regras de escrita de hooks (PocketBase 0.35)
+
+O corpo de cada handler (`onRecord*`) corre **isolado**: NÃO enxerga funções nem
+constantes definidas ao nível de topo do próprio ficheiro `.pb.js`. Consequências:
+
+- Cada handler tem de ser **autocontido** (define os seus helpers lá dentro) ou
+  carregar lógica com `require(`${__hooks}/<ficheiro>.js`)` **dentro** do handler.
+- No módulo carregado por `require`, a visibilidade entre funções de topo também
+  se mostrou pouco fiável — por isso `cascade.js` expõe **uma** função
+  (`runCascade`) com todos os auxiliares como closures internas.
+- `findRecordsByFilter(coll, filter, sort, limit, offset, params)`: passar `''`
+  como `sort` (um nome de campo "cru" como `'created'` dá `GoError: invalid sort
+  field` a menos que exista mesmo um campo com esse nome).
+- Coleções `base` **não** trazem `created`/`updated` — adicionar `autodate`.
 
 ## Regras de acesso (multi-empresa)
 

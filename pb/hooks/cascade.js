@@ -1,0 +1,236 @@
+/// <reference path="../pb_data/types.d.ts" />
+
+// Motor de cascata de custos.
+//
+// Tudo dentro de UMA função exportada, com os auxiliares como closures — o
+// require() do PocketBase não mantém de forma fiável a visibilidade entre
+// funções de topo de um módulo.
+//
+//   runCascade(app, 'ingrediente'|'receita', id)
+
+function runCascade(app, kind, rootId) {
+  const EPS = 0.001;
+  const seen = new Set();
+
+  const fnum = (rec, field) => {
+    try {
+      return rec.getFloat(field);
+    } catch (_) {
+      return 0;
+    }
+  };
+
+  const ingCpg = (ing) => {
+    const g = fnum(ing, 'gramas_embalagem');
+    return g > 0 ? fnum(ing, 'preco') / g : 0;
+  };
+
+  const parentRecipeIds = (field, id) => {
+    const rows = app.findRecordsByFilter(
+      'itens_receita',
+      field + ' = {:id}',
+      '',
+      0,
+      0,
+      { id: id },
+    );
+    const out = new Set();
+    for (const r of rows) {
+      const rid = r.getString('receita');
+      if (rid) out.add(rid);
+    }
+    return out;
+  };
+
+  const escreverHistorico = (tipo, entidadeId, empresaId, descricao, antes, depois) => {
+    try {
+      const h = new Record(app.findCollectionByNameOrId('historico'));
+      h.set('empresa', empresaId);
+      h.set('entidade_tipo', tipo);
+      h.set('entidade_id', entidadeId);
+      h.set('descricao', descricao);
+      h.set('valor_antes', antes);
+      h.set('valor_depois', depois);
+      app.save(h);
+    } catch (err) {
+      console.log('[cascata] historico: ' + err);
+    }
+  };
+
+  const recomputeFicha = (fichaId) => {
+    if (typeof globalThis.__recomputeFichaImpl === 'function') {
+      globalThis.__recomputeFichaImpl(app, fichaId, seen, EPS, fnum);
+    }
+  };
+
+  const sincronizarEspelho = (receita, custo, rendimento, cpg) => {
+    const publicar = receita.getBool('publicar_como_ingrediente');
+    const empresaId = receita.getString('empresa');
+
+    let espelho = null;
+    const achados = app.findRecordsByFilter(
+      'ingredientes',
+      'receita_espelho = {:id}',
+      '',
+      1,
+      0,
+      { id: receita.id },
+    );
+    if (achados.length > 0) espelho = achados[0];
+
+    if (!publicar) {
+      if (espelho && !espelho.getBool('deletado')) {
+        espelho.set('deletado', true);
+        app.save(espelho);
+      }
+      return;
+    }
+
+    if (!espelho) {
+      espelho = new Record(app.findCollectionByNameOrId('ingredientes'));
+      espelho.set('empresa', empresaId);
+      espelho.set('receita_espelho', receita.id);
+      espelho.set('origem', 'fabrico_proprio');
+      espelho.set('marca', '(receita)');
+    }
+    espelho.set('nome', receita.getString('nome'));
+    espelho.set('preco', custo);
+    espelho.set('gramas_embalagem', rendimento);
+    espelho.set('custo_por_grama', cpg);
+    espelho.set('disponivel', true);
+    espelho.set('deletado', false);
+    app.save(espelho);
+
+    recomputeIngrediente(espelho.id);
+  };
+
+  const recomputeReceita = (id) => {
+    if (seen.has(id)) return;
+    seen.add(id);
+
+    let receita;
+    try {
+      receita = app.findRecordById('receitas', id);
+    } catch (_) {
+      return;
+    }
+    const empresaId = receita.getString('empresa');
+
+    const itens = app.findRecordsByFilter(
+      'itens_receita',
+      'receita = {:id}',
+      '',
+      0,
+      0,
+      { id: id },
+    );
+
+    let custo = 0;
+    let peso = 0;
+    for (const item of itens) {
+      const qtd = fnum(item, 'quantidade_g');
+      peso += qtd;
+      const ingRel = item.getString('ingrediente');
+      const subRel = item.getString('sub_receita');
+      if (ingRel) {
+        let ing;
+        try {
+          ing = app.findRecordById('ingredientes', ingRel);
+        } catch (_) {
+          continue;
+        }
+        let cpg = fnum(ing, 'custo_por_grama');
+        if (cpg <= 0) cpg = ingCpg(ing);
+        custo += cpg * qtd;
+      } else if (subRel) {
+        recomputeReceita(subRel);
+        let sub;
+        try {
+          sub = app.findRecordById('receitas', subRel);
+        } catch (_) {
+          continue;
+        }
+        custo += fnum(sub, 'custo_por_grama') * qtd;
+      }
+    }
+
+    const manual = receita.getBool('rendimento_manual');
+    const rendimento = manual ? fnum(receita, 'rendimento_esperado') : peso;
+    const cpgReceita = rendimento > 0 ? custo / rendimento : 0;
+
+    const custoAntes = fnum(receita, 'custo_receita');
+    const pesoAntes = fnum(receita, 'rendimento_esperado');
+    const mudou =
+      Math.abs(custoAntes - custo) > EPS ||
+      Math.abs(fnum(receita, 'custo_por_grama') - cpgReceita) > EPS ||
+      (!manual && Math.abs(pesoAntes - peso) > EPS);
+
+    if (mudou) {
+      receita.set('custo_receita', custo);
+      receita.set('custo_por_grama', cpgReceita);
+      if (!manual) receita.set('rendimento_esperado', peso);
+      app.save(receita);
+      escreverHistorico(
+        'receita',
+        id,
+        empresaId,
+        'Recalculo: EUR ' +
+          custoAntes.toFixed(2) +
+          ' -> ' +
+          custo.toFixed(2) +
+          ' | Peso: ' +
+          pesoAntes.toFixed(0) +
+          'g -> ' +
+          (manual ? pesoAntes : peso).toFixed(0) +
+          'g',
+        { custo: custoAntes, peso: pesoAntes },
+        { custo: custo, peso: manual ? pesoAntes : peso },
+      );
+    }
+
+    sincronizarEspelho(receita, custo, rendimento, cpgReceita);
+
+    for (const rid of parentRecipeIds('sub_receita', id)) recomputeReceita(rid);
+
+    try {
+      const fichaItens = app.findRecordsByFilter(
+        'itens_ficha',
+        'receita = {:id}',
+        '',
+        0,
+        0,
+        { id: id },
+      );
+      const fichas = new Set();
+      for (const it of fichaItens) {
+        const fid = it.getString('ficha');
+        if (fid) fichas.add(fid);
+      }
+      for (const fid of fichas) recomputeFicha(fid);
+    } catch (_) {
+      /* itens_ficha ainda nao existe (M5) */
+    }
+  };
+
+  const recomputeIngrediente = (ingId) => {
+    let ing;
+    try {
+      ing = app.findRecordById('ingredientes', ingId);
+    } catch (_) {
+      return;
+    }
+    const cpg = ingCpg(ing);
+    if (Math.abs(fnum(ing, 'custo_por_grama') - cpg) > EPS) {
+      ing.set('custo_por_grama', cpg);
+      app.save(ing);
+    }
+    for (const rid of parentRecipeIds('ingrediente', ingId)) {
+      recomputeReceita(rid);
+    }
+  };
+
+  if (kind === 'ingrediente') recomputeIngrediente(rootId);
+  else recomputeReceita(rootId);
+}
+
+module.exports = { runCascade };

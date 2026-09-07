@@ -1,0 +1,277 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../app/router.dart';
+import '../../../core/auth/current_user.dart';
+import '../../../core/formatting/money.dart';
+import '../../../core/widgets/async_value_view.dart';
+import '../../../core/widgets/confirm_dialog.dart';
+import '../application/recipes_providers.dart';
+import '../domain/recipe_item.dart';
+import 'item_picker_sheet.dart';
+import 'recipe_form_sheet.dart';
+
+class RecipeDetailScreen extends ConsumerStatefulWidget {
+  const RecipeDetailScreen({super.key, required this.recipeId});
+  final String recipeId;
+
+  @override
+  ConsumerState<RecipeDetailScreen> createState() =>
+      _RecipeDetailScreenState();
+}
+
+class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
+  bool _busy = false;
+
+  bool get _podeEditar => ref.read(currentPapelProvider).canEditBusiness;
+
+  Future<void> _run(Future<void> Function() action) async {
+    setState(() => _busy = true);
+    try {
+      await action();
+    } on Object catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$e')));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _addItem() async {
+    final picked = await showItemPickerSheet(
+      context,
+      excludeRecipeId: widget.recipeId,
+    );
+    if (picked == null) return;
+    await _run(() async {
+      final actions = ref.read(recipeActionsProvider);
+      if (picked.kind == PickedKind.ingrediente) {
+        await actions.addIngrediente(
+            widget.recipeId, picked.id, picked.quantidadeG);
+      } else {
+        await actions.addSubReceita(
+            widget.recipeId, picked.id, picked.quantidadeG);
+      }
+    });
+  }
+
+  Future<void> _editQty(ItemReceita item) async {
+    final ctrl = TextEditingController(
+      text: item.quantidadeG.toStringAsFixed(0),
+    );
+    final novo = await showDialog<double>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Quantidade — ${item.nome}'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(labelText: 'Gramas'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(
+              ctx,
+              double.tryParse(ctrl.text.replaceAll(',', '.')),
+            ),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+    if (novo == null || novo <= 0) return;
+    await _run(
+      () => ref
+          .read(recipeActionsProvider)
+          .setQuantidade(widget.recipeId, item.id, novo),
+    );
+  }
+
+  Future<void> _vincular(ItemReceita item) async {
+    final picked = await showItemPickerSheet(
+      context,
+      excludeRecipeId: widget.recipeId,
+      apenasVincular: true,
+    );
+    if (picked == null) return;
+    await _run(
+      () => ref.read(recipeActionsProvider).vincular(
+            widget.recipeId,
+            item.id,
+            ingredienteId: picked.kind == PickedKind.ingrediente
+                ? picked.id
+                : null,
+            subReceitaId: picked.kind == PickedKind.subReceita
+                ? picked.id
+                : null,
+          ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final detailAsync = ref.watch(recipeDetailProvider(widget.recipeId));
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go(Routes.recipes),
+        ),
+        title: Text(
+          detailAsync.maybeWhen(
+            data: (d) => d.receita.nome,
+            orElse: () => 'Receita',
+          ),
+        ),
+        actions: [
+          if (_podeEditar)
+            detailAsync.maybeWhen(
+              data: (d) => IconButton(
+                tooltip: 'Editar receita',
+                icon: const Icon(Icons.edit_outlined),
+                onPressed: _busy
+                    ? null
+                    : () async {
+                        final input = await showRecipeFormSheet(
+                          context,
+                          existente: d.receita,
+                        );
+                        if (input == null) return;
+                        await _run(
+                          () => ref
+                              .read(recipeActionsProvider)
+                              .update(widget.recipeId, input),
+                        );
+                      },
+              ),
+              orElse: () => const SizedBox.shrink(),
+            ),
+        ],
+      ),
+      floatingActionButton: _podeEditar
+          ? FloatingActionButton.extended(
+              onPressed: _busy ? null : _addItem,
+              icon: const Icon(Icons.add),
+              label: const Text('Item'),
+            )
+          : null,
+      body: AsyncValueView<RecipeDetail>(
+        value: detailAsync,
+        onRetry: () =>
+            ref.invalidate(recipeDetailProvider(widget.recipeId)),
+        data: (d) => Column(
+          children: [
+            if (_busy) const LinearProgressIndicator(),
+            _Header(detail: d),
+            if (d.temPendencias)
+              MaterialBanner(
+                content: const Text('Há linhas por ligar a um ingrediente.'),
+                leading: const Icon(Icons.link_off),
+                actions: const [SizedBox.shrink()],
+              ),
+            const Divider(height: 1),
+            Expanded(
+              child: d.itens.isEmpty
+                  ? const Center(child: Text('Sem linhas. Usa "Item".'))
+                  : ListView.separated(
+                      itemCount: d.itens.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (_, i) => _itemTile(d, d.itens[i]),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _itemTile(RecipeDetail d, ItemReceita item) {
+    final pct = d.percentagem(item).toStringAsFixed(1);
+    final subtitle = item.pendente
+        ? '${item.quantidadeG.toStringAsFixed(0)} g · vínculo pendente'
+        : '${item.quantidadeG.toStringAsFixed(0)} g · $pct% · ${formatMoney(item.custoLinha)}';
+
+    final tile = ListTile(
+      title: Text(
+        item.nome,
+        style: item.pendente
+            ? TextStyle(color: Theme.of(context).colorScheme.error)
+            : null,
+      ),
+      subtitle: Text(subtitle),
+      trailing: item.pendente
+          ? TextButton(
+              onPressed: _podeEditar ? () => _vincular(item) : null,
+              child: const Text('Ligar'),
+            )
+          : (item.subReceitaId != null
+              ? const Icon(Icons.link, size: 16)
+              : null),
+      onTap: _podeEditar ? () => _editQty(item) : null,
+    );
+
+    if (!_podeEditar) return tile;
+
+    return Dismissible(
+      key: ValueKey(item.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        color: Theme.of(context).colorScheme.errorContainer,
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        child: const Icon(Icons.delete_outline),
+      ),
+      confirmDismiss: (_) => confirmDialog(
+        context,
+        titulo: 'Remover linha',
+        mensagem: 'Remover "${item.nome}" da receita?',
+        confirmar: 'Remover',
+      ),
+      onDismissed: (_) => _run(
+        () => ref
+            .read(recipeActionsProvider)
+            .removeItem(widget.recipeId, item.id),
+      ),
+      child: tile,
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  const _Header({required this.detail});
+  final RecipeDetail detail;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget cell(String t, String v) => Column(
+          children: [
+            Text(t, style: Theme.of(context).textTheme.bodySmall),
+            const SizedBox(height: 2),
+            Text(v,
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 15)),
+          ],
+        );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          cell('Peso', '${detail.pesoTotal.toStringAsFixed(0)} g'),
+          cell('Custo (prev.)', formatMoney(detail.custoPreview)),
+          cell('Custo/kg', formatMoney(detail.custoPorKg)),
+        ],
+      ),
+    );
+  }
+}
