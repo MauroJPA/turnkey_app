@@ -43,23 +43,31 @@ Future<void> main(List<String> argv) async {
   final dryRun = a.containsKey('dry-run');
   final doRecompute = a.containsKey('recompute');
 
-  if (srcUrl == null || a['src-email'] == null || a['src-pass'] == null) {
-    stderr.writeln('Faltam --src-url / --src-email / --src-pass.');
+  if (srcUrl == null) {
+    stderr.writeln('Falta --src-url.');
     exit(2);
   }
 
   final src = PocketBase(srcUrl);
   final dst = PocketBase(dstUrl);
-  await src
-      .collection('_superusers')
-      .authWithPassword(a['src-email']!, a['src-pass']!);
+
+  // A origem só é autenticada se derem credenciais; se as coleções tiverem
+  // regras de leitura abertas, lê-se sem token.
+  if (a['src-email'] != null && a['src-pass'] != null) {
+    await src
+        .collection('_superusers')
+        .authWithPassword(a['src-email']!, a['src-pass']!);
+    stdout.writeln('Autenticado na origem.');
+  } else {
+    stdout.writeln('Origem: leitura sem autenticação.');
+  }
   await dst
       .collection('_superusers')
       .authWithPassword(
         a['dst-email'] ?? 'dev@turnkey.local',
         a['dst-pass'] ?? '',
       );
-  stdout.writeln('Autenticado na origem e no destino.');
+  stdout.writeln('Autenticado no destino.');
 
   Future<List<RecordModel>> all(PocketBase pb, String c) =>
       pb.collection(c).getFullList(batch: 500);
@@ -120,6 +128,8 @@ Future<void> main(List<String> argv) async {
   final srcIngs = await all(src, 'ingredientes');
   for (final i in srcIngs) {
     final marca = '${i.data['marca'] ?? ''}';
+    final dataAtual =
+        '${i.data['data_atualizacao'] ?? i.data['data_criacao'] ?? ''}';
     final body = {
       'empresa': empresaId,
       'nome': '${i.data['nome'] ?? ''}',
@@ -128,6 +138,7 @@ Future<void> main(List<String> argv) async {
       'fornecedor': '${i.data['fornecedor'] ?? ''}',
       'preco': _num(i.data['preco_sem_iva']),
       'gramas_embalagem': _num(i.data['gramas_embalagem']),
+      if (dataAtual.isNotEmpty) 'preco_atualizado_em': dataAtual,
       'disponivel': true,
       'origem': marca.toLowerCase() == 'gookie' ? 'fabrico_proprio' : 'comprado',
       'deletado': i.data['deletado'] == true,
@@ -149,6 +160,7 @@ Future<void> main(List<String> argv) async {
           CategoriaReceita.fromLegacy('${r.data['categoria'] ?? ''}').api,
       'rendimento_esperado': _num(r.data['rendimento_esperado']),
       'custo_receita': _num(r.data['custo_receita']),
+      'procedimento': '${r.data['procedimento'] ?? ''}',
       'deletado': r.data['deletado'] == true,
     };
     if (!dryRun) {
@@ -283,6 +295,23 @@ Future<void> main(List<String> argv) async {
           ? 'Totais batem certo (tolerância 0,01).'
           : '$divergencias receita(s) com diferença — verificar acima.',
     );
+  }
+
+  // ---- ligar um utilizador existente a esta empresa (para poder explorar) ----
+  final attach = a['attach-user'];
+  if (attach != null && !dryRun) {
+    final u = await dst
+        .collection('users')
+        .getList(filter: 'email = "$attach"', perPage: 1);
+    if (u.items.isNotEmpty) {
+      await dst.collection('users').update(
+        u.items.first.id,
+        body: {'empresa': empresaId, 'papel': 'owner'},
+      );
+      stdout.writeln('$attach ligado à empresa $empresaNome como owner.');
+    } else {
+      stdout.writeln('Aviso: utilizador $attach não encontrado no destino.');
+    }
   }
 
   stdout.writeln(dryRun ? 'Dry-run concluído.' : 'Migração concluída.');

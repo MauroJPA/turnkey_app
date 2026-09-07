@@ -6,6 +6,13 @@
 //   - gestão de equipa por admin/owner (endpoint próprio, M6),
 // ambos com privilégios de servidor (não passam por onRecordUpdateRequest).
 onRecordUpdateRequest((e) => {
+  // Superusers (Admin UI, scripts de manutenção) não são bloqueados.
+  const auth = e.auth;
+  if (auth && auth.collection() && auth.collection().name === '_superusers') {
+    e.next();
+    return;
+  }
+
   const original = e.record.original();
   const mudouEmpresa =
     e.record.getString('empresa') !== original.getString('empresa');

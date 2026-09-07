@@ -29,10 +29,26 @@ routerAdd(
     if (!empresaId) throw new BadRequestError('empresa em falta.');
 
     const cascade = require(`${__hooks}/cascade.js`);
+    let ingredientes = 0;
     let receitas = 0;
     let fichas = 0;
 
     e.app.runInTransaction((tx) => {
+      // 1) custo/grama de cada ingrediente (e cascata para quem o usa)
+      const ings = tx.findRecordsByFilter(
+        'ingredientes',
+        'empresa = {:e} && deletado != true',
+        '',
+        0,
+        0,
+        { e: empresaId },
+      );
+      for (const ing of ings) {
+        cascade.runCascade(tx, 'ingrediente', ing.id);
+        ingredientes++;
+      }
+
+      // 2) garante que todas as receitas ficam recalculadas
       const rs = tx.findRecordsByFilter(
         'receitas',
         'empresa = {:e}',
@@ -59,7 +75,11 @@ routerAdd(
       }
     });
 
-    return e.json(200, { receitas: receitas, fichas: fichas });
+    return e.json(200, {
+      ingredientes: ingredientes,
+      receitas: receitas,
+      fichas: fichas,
+    });
   },
   $apis.requireAuth('users', '_superusers'),
 );
