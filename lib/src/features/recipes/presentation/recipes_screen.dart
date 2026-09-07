@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
-import '../../../core/formatting/money.dart';
+import '../../../core/formatting/money_provider.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../application/recipes_providers.dart';
@@ -141,7 +141,7 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
                 return ListView.separated(
                   itemCount: items.length,
                   separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (_, i) => _tile(items[i]),
+                  itemBuilder: (_, i) => _tile(items[i], ref.watch(moneyFormatProvider)),
                 );
               },
             ),
@@ -151,7 +151,7 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
     );
   }
 
-  Widget _tile(Receita r) {
+  Widget _tile(Receita r, MoneyFmt fmt) {
     if (_trash) {
       return ListTile(
         title: Text(r.nome),
@@ -200,7 +200,7 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
       r.categoria.label,
       if (r.rendimentoEsperado > 0)
         '${r.rendimentoEsperado.toStringAsFixed(0)} g',
-      if (r.custoReceita > 0) formatMoney(r.custoReceita),
+      if (r.custoReceita > 0) fmt(r.custoReceita),
     ].join(' · ');
 
     final tile = ListTile(

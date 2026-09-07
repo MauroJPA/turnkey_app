@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
-import '../../../core/formatting/money.dart';
+import '../../../core/formatting/money_provider.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../import_csv/application/ingredient_import_service.dart';
@@ -225,8 +225,10 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                               itemCount: items.length,
                               separatorBuilder: (_, __) =>
                                   const Divider(height: 1),
-                              itemBuilder: (_, idx) =>
-                                  _tile(items[idx]),
+                              itemBuilder: (_, idx) => _tile(
+                                items[idx],
+                                ref.watch(moneyFormatProvider),
+                              ),
                             ),
                     ),
                   ],
@@ -239,7 +241,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
     );
   }
 
-  Widget _tile(Ingrediente i) {
+  Widget _tile(Ingrediente i, MoneyFmt fmt) {
     final subtitle = [
       if (i.marca.isNotEmpty) i.marca,
       if (i.fornecedor.isNotEmpty) i.fornecedor,
@@ -251,12 +253,12 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(
-          formatMoney(i.preco),
+          fmt(i.preco),
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         if (i.gramasEmbalagem > 0)
           Text(
-            '${formatMoney(i.custoPorGrama * 1000)}/kg',
+            '${fmt(i.custoPorGrama * 1000)}/kg',
             style: Theme.of(context).textTheme.bodySmall,
           ),
       ],

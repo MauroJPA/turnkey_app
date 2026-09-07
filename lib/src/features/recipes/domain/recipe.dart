@@ -12,6 +12,27 @@ enum CategoriaReceita {
   static CategoriaReceita fromApi(String? v) => CategoriaReceita.values
       .firstWhere((c) => c.name == v, orElse: () => CategoriaReceita.outra);
 
+  /// Normaliza uma categoria vinda do `meu_app_ia` (massas, brigadeiros,
+  /// ganaches, mousses, geleias, coberturas, …) para as 4 daqui.
+  static CategoriaReceita fromLegacy(String? v) {
+    final s = (v ?? '').toLowerCase();
+    if (s.contains('massa')) return CategoriaReceita.massa;
+    if (s.contains('cobertura')) return CategoriaReceita.cobertura;
+    const recheios = [
+      'recheio',
+      'brigadeiro',
+      'ganache',
+      'mousse',
+      'geleia',
+      'geléia',
+      'compota',
+      'pasta',
+      'creme',
+    ];
+    if (recheios.any(s.contains)) return CategoriaReceita.recheio;
+    return CategoriaReceita.outra;
+  }
+
   String get api => name;
 
   String get label => switch (this) {

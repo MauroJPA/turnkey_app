@@ -4,9 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
-import '../../../core/formatting/money.dart';
+import '../../../core/formatting/money_provider.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
+import '../../../core/widgets/history_sheet.dart';
 import '../application/recipes_providers.dart';
 import '../domain/recipe_item.dart';
 import 'item_picker_sheet.dart';
@@ -133,6 +134,19 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
           ),
         ),
         actions: [
+          detailAsync.maybeWhen(
+            data: (d) => IconButton(
+              tooltip: 'Histórico',
+              icon: const Icon(Icons.history),
+              onPressed: () => showHistorySheet(
+                context,
+                tipo: 'receita',
+                id: widget.recipeId,
+                titulo: d.receita.nome,
+              ),
+            ),
+            orElse: () => const SizedBox.shrink(),
+          ),
           if (_podeEditar)
             detailAsync.maybeWhen(
               data: (d) => IconButton(
@@ -171,7 +185,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
         data: (d) => Column(
           children: [
             if (_busy) const LinearProgressIndicator(),
-            _Header(detail: d),
+            _Header(detail: d, fmt: ref.watch(moneyFormatProvider)),
             if (d.temPendencias)
               MaterialBanner(
                 content: const Text('Há linhas por ligar a um ingrediente.'),
@@ -185,7 +199,8 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                   : ListView.separated(
                       itemCount: d.itens.length,
                       separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (_, i) => _itemTile(d, d.itens[i]),
+                      itemBuilder: (_, i) => _itemTile(
+                        d, d.itens[i], ref.watch(moneyFormatProvider)),
                     ),
             ),
           ],
@@ -194,11 +209,11 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
     );
   }
 
-  Widget _itemTile(RecipeDetail d, ItemReceita item) {
+  Widget _itemTile(RecipeDetail d, ItemReceita item, MoneyFmt fmt) {
     final pct = d.percentagem(item).toStringAsFixed(1);
     final subtitle = item.pendente
         ? '${item.quantidadeG.toStringAsFixed(0)} g · vínculo pendente'
-        : '${item.quantidadeG.toStringAsFixed(0)} g · $pct% · ${formatMoney(item.custoLinha)}';
+        : '${item.quantidadeG.toStringAsFixed(0)} g · $pct% · ${fmt(item.custoLinha)}';
 
     final tile = ListTile(
       title: Text(
@@ -247,7 +262,8 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.detail});
+  const _Header({required this.detail, required this.fmt});
+  final MoneyFmt fmt;
   final RecipeDetail detail;
 
   @override
@@ -268,8 +284,8 @@ class _Header extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           cell('Peso', '${detail.pesoTotal.toStringAsFixed(0)} g'),
-          cell('Custo (prev.)', formatMoney(detail.custoPreview)),
-          cell('Custo/kg', formatMoney(detail.custoPorKg)),
+          cell('Custo (prev.)', fmt(detail.custoPreview)),
+          cell('Custo/kg', fmt(detail.custoPorKg)),
         ],
       ),
     );

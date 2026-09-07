@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
-import '../../../core/formatting/money.dart';
+import '../../../core/formatting/money_provider.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../pricing/data/cost_config_repository.dart';
@@ -119,6 +119,7 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
                   itemBuilder: (_, i) => _tile(
                     items[i],
                     configAsync.valueOrNull,
+                    ref.watch(moneyFormatProvider),
                   ),
                 );
               },
@@ -129,7 +130,7 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
     );
   }
 
-  Widget _tile(FichaTecnica f, CostConfig? config) {
+  Widget _tile(FichaTecnica f, CostConfig? config, MoneyFmt fmt) {
     if (_trash) {
       return ListTile(
         title: Text(f.nome),
@@ -177,7 +178,7 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
     final subtitle = [
       if (f.categoria.isNotEmpty) f.categoria,
       if (f.pesoProduto > 0) '${f.pesoProduto.toStringAsFixed(0)} g',
-      'custo ${formatMoney(f.custoProduto)}',
+      'custo ${fmt(f.custoProduto)}',
     ].join(' · ');
 
     final tile = ListTile(
@@ -190,7 +191,7 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  formatMoney(preco),
+                  fmt(preco),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).colorScheme.primary,

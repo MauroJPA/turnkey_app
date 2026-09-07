@@ -4,8 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
-import '../../../core/formatting/money.dart';
+import '../../../core/formatting/money_provider.dart';
 import '../../../core/widgets/async_value_view.dart';
+import '../../../core/widgets/history_sheet.dart';
 import '../../pricing/data/cost_config_repository.dart';
 import '../../pricing/domain/cost_config.dart';
 import '../../recipes/presentation/item_picker_sheet.dart';
@@ -113,6 +114,19 @@ class _TechSheetDetailScreenState
           ),
         ),
         actions: [
+          detailAsync.maybeWhen(
+            data: (d) => IconButton(
+              tooltip: 'Histórico',
+              icon: const Icon(Icons.history),
+              onPressed: () => showHistorySheet(
+                context,
+                tipo: 'ficha',
+                id: widget.fichaId,
+                titulo: d.ficha.nome,
+              ),
+            ),
+            orElse: () => const SizedBox.shrink(),
+          ),
           if (_podeEditar)
             detailAsync.maybeWhen(
               data: (d) => IconButton(
@@ -140,10 +154,12 @@ class _TechSheetDetailScreenState
       body: AsyncValueView<FichaDetail>(
         value: detailAsync,
         onRetry: () => ref.invalidate(fichaDetailProvider(widget.fichaId)),
-        data: (d) => ListView(
+        data: (d) {
+          final fmt = ref.watch(moneyFormatProvider);
+          return ListView(
           children: [
             if (_busy) const LinearProgressIndicator(),
-            _Header(detail: d, config: config),
+            _Header(detail: d, config: config, fmt: fmt),
             const Divider(height: 1),
             for (final slot in SlotFicha.values)
               _SlotSection(
@@ -158,19 +174,23 @@ class _TechSheetDetailScreenState
                       .read(fichaActionsProvider)
                       .removeItem(widget.fichaId, item.id),
                 ),
+                fmt: fmt,
               ),
-            if (config != null) _PriceBreakdown(custo: d.custoPreview, config: config),
+            if (config != null)
+              _PriceBreakdown(custo: d.custoPreview, config: config, fmt: fmt),
             const SizedBox(height: 24),
           ],
-        ),
+          );
+        },
       ),
     );
   }
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.detail, this.config});
+  const _Header({required this.detail, required this.fmt, this.config});
   final FichaDetail detail;
+  final MoneyFmt fmt;
   final CostConfig? config;
 
   @override
@@ -197,11 +217,11 @@ class _Header extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           cell('Peso', '${detail.pesoTotal.toStringAsFixed(0)} g'),
-          cell('Custo', formatMoney(detail.custoPreview)),
+          cell('Custo', fmt(detail.custoPreview)),
           if (preco != null)
             cell(
               'Preço sugerido',
-              formatMoney(preco),
+              fmt(preco),
               color: Theme.of(context).colorScheme.primary,
             ),
         ],
@@ -219,7 +239,10 @@ class _SlotSection extends StatelessWidget {
     required this.onAdd,
     required this.onEditQty,
     required this.onRemove,
+    required this.fmt,
   });
+
+  final MoneyFmt fmt;
 
   final SlotFicha slot;
   final List<ItemFicha> itens;
@@ -269,7 +292,7 @@ class _SlotSection extends StatelessWidget {
               subtitle: Text(
                 '${item.quantidadeG.toStringAsFixed(0)} g · '
                 '${detail.percentagem(item).toStringAsFixed(1)}% · '
-                '${formatMoney(item.custoLinha)}',
+                '${fmt(item.custoLinha)}',
               ),
               onTap: podeEditar ? () => onEditQty(item) : null,
               trailing: podeEditar
@@ -286,9 +309,14 @@ class _SlotSection extends StatelessWidget {
 }
 
 class _PriceBreakdown extends StatelessWidget {
-  const _PriceBreakdown({required this.custo, required this.config});
+  const _PriceBreakdown({
+    required this.custo,
+    required this.config,
+    required this.fmt,
+  });
   final double custo;
   final CostConfig config;
+  final MoneyFmt fmt;
 
   @override
   Widget build(BuildContext context) {
@@ -310,7 +338,7 @@ class _PriceBreakdown extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(e.key),
-                Text(formatMoney(e.value)),
+                Text(fmt(e.value)),
               ],
             ),
           ),
@@ -325,7 +353,7 @@ class _PriceBreakdown extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               Text(
-                formatMoney(preco),
+                fmt(preco),
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],

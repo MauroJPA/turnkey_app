@@ -34,14 +34,40 @@ expostos por providers Riverpod. Cada repositório injeta/filtra por `empresa`.
 Pré-requisitos: Flutter 3.32.x (Dart 3.8), um servidor PocketBase v0.35
 (ver [`pb/README.md`](pb/README.md)).
 
+**Terminal 1 — PocketBase** (binário em `pb/bin/pocketbase.exe`):
+
+```powershell
+cd pb ; .\serve.ps1
+```
+
+Admin UI em `http://127.0.0.1:8090/_/` (superuser `dev@turnkey.local`).
+
+**Terminal 2 — a app:**
+
 ```bash
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs
-flutter run --dart-define=PB_URL=http://127.0.0.1:8090
+flutter run -d chrome --dart-define=PB_URL=http://127.0.0.1:8090
 ```
 
 `--dart-define` disponíveis: `PB_URL`, `DEFAULT_LOCALE`, `DEBUG_TOOLS`
 (ver [`.env.example`](.env.example)).
+
+CSV de exemplo para o import de ingredientes:
+[`pb/seed/ingredientes_exemplo.csv`](pb/seed/ingredientes_exemplo.csv).
+
+## Migrar dados do `meu_app_ia`
+
+```bash
+dart run pb/seed/migrate_from_meu_app_ia.dart \
+  --src-url=http://<mini-pc>:8090 --src-email=<admin> --src-pass=<...> \
+  --dst-url=http://127.0.0.1:8090 --dst-email=dev@turnkey.local --dst-pass=<...> \
+  --empresa="Gookie" --recompute
+```
+
+Lê só da origem; cria uma empresa no destino e importa ingredientes, receitas,
+fichas, configurações e histórico. `--recompute` recalcula os custos em cascata
+e imprime as diferenças vs. os valores antigos. `--dry-run` só conta.
 
 ## Código gerado
 
@@ -62,8 +88,10 @@ flutter test
 
 ## Roadmap
 
-- **Fase 1** (atual): Login, Opções/Configurações, Ingredientes, Receitas,
-  Fichas Técnicas + motor de cascata de custos.
+- **Fase 1** — Login (email/senha; Google/Apple preparados), Configurações da
+  empresa + equipa/permissões, Ingredientes, Receitas, Fichas Técnicas, motor de
+  cascata de custos, histórico, import de CSV, script de migração do `meu_app_ia`.
+  **Feito.**
 - **Fase 2**: inventário, produção, lista de compras.
 - **Fase 3**: IA para faturas de compra → contabilidade.
 
