@@ -14,7 +14,7 @@ class TurnkeyApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      routerConfig: router,
+      routerConfig: ref.watch(routerProvider),
     );
   }
 }

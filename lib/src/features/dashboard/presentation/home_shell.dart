@@ -1,39 +1,66 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
+import '../../../core/auth/auth_controller.dart';
+import '../../../core/auth/current_user.dart';
+import '../../settings/application/empresa_providers.dart';
 
 /// Página "Opções" — ponto de entrada para as secções da Fase 1.
-/// As secções em si entram nos milestones seguintes.
-class HomeShell extends StatelessWidget {
+class HomeShell extends ConsumerWidget {
   const HomeShell({super.key});
 
+  static const _sections = <_Section>[
+    _Section('Ingredientes', Icons.egg_alt_outlined, Routes.ingredients),
+    _Section('Receitas', Icons.menu_book_outlined, Routes.recipes),
+    _Section('Fichas Técnicas', Icons.receipt_long_outlined, Routes.techSheets),
+    _Section('Configurações', Icons.settings_outlined, Routes.settings),
+  ];
+
   @override
-  Widget build(BuildContext context) {
-    final sections = <_Section>[
-      const _Section('Ingredientes', Icons.egg_alt_outlined, Routes.ingredients),
-      const _Section('Receitas', Icons.menu_book_outlined, Routes.recipes),
-      const _Section(
-        'Fichas Técnicas',
-        Icons.receipt_long_outlined,
-        Routes.techSheets,
-      ),
-      const _Section('Configurações', Icons.settings_outlined, Routes.settings),
-    ];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final empresa = ref.watch(currentEmpresaProvider);
+    final userName = ref.watch(currentUserNameProvider);
+    final papel = ref.watch(currentPapelProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Turnkey')),
+      appBar: AppBar(
+        title: Text(
+          empresa.maybeWhen(
+            data: (e) => e?.nome ?? 'Turnkey',
+            orElse: () => 'Turnkey',
+          ),
+        ),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (v) {
+              if (v == 'sair') {
+                ref.read(authControllerProvider.notifier).signOut();
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                enabled: false,
+                child: Text('${userName ?? ''} · ${papel.label}'),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem(value: 'sair', child: Text('Terminar sessão')),
+            ],
+          ),
+        ],
+      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final columns = constraints.maxWidth ~/ 220;
+          final columns = (constraints.maxWidth ~/ 220).clamp(1, 4);
           return GridView.count(
             padding: const EdgeInsets.all(16),
-            crossAxisCount: columns.clamp(1, 4),
+            crossAxisCount: columns,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
             childAspectRatio: 1.6,
             children: [
-              for (final s in sections)
+              for (final s in _sections)
                 Card(
                   child: InkWell(
                     onTap: () => context.go(s.route),
