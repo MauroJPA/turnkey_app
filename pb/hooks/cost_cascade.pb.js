@@ -51,6 +51,22 @@ onRecordAfterCreateSuccess(aoMudarLinha, 'itens_receita');
 onRecordAfterUpdateSuccess(aoMudarLinha, 'itens_receita');
 onRecordAfterDeleteSuccess(aoMudarLinha, 'itens_receita');
 
+function aoMudarLinhaFicha(e) {
+  try {
+    const fid = e.record.getString('ficha');
+    if (fid) {
+      require(`${__hooks}/cascade.js`).runCascade(e.app, 'ficha', fid);
+    }
+  } catch (err) {
+    console.log('[cascata] linha ficha: ' + err);
+  }
+  e.next();
+}
+
+onRecordAfterCreateSuccess(aoMudarLinhaFicha, 'itens_ficha');
+onRecordAfterUpdateSuccess(aoMudarLinhaFicha, 'itens_ficha');
+onRecordAfterDeleteSuccess(aoMudarLinhaFicha, 'itens_ficha');
+
 onRecordAfterUpdateSuccess((e) => {
   try {
     const EPS = 0.001;
