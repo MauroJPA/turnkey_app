@@ -10,12 +10,23 @@ class AppTheme {
   /// Castanho "cookie" — cor de marca por omissão.
   static const Color seed = Color(0xFF8D5B34);
 
-  static ThemeData light() => _base(Brightness.light);
-  static ThemeData dark() => _base(Brightness.dark);
+  static ThemeData light([Color? brand]) =>
+      _base(Brightness.light, brand ?? seed);
+  static ThemeData dark([Color? brand]) =>
+      _base(Brightness.dark, brand ?? seed);
 
-  static ThemeData _base(Brightness brightness) {
+  /// Interpreta uma cor hex (`#RRGGBB` ou `RRGGBB`); `null` se inválida.
+  static Color? parseHex(String value) {
+    var v = value.trim().replaceFirst('#', '');
+    if (v.length == 6) v = 'FF$v';
+    if (v.length != 8) return null;
+    final n = int.tryParse(v, radix: 16);
+    return n == null ? null : Color(n);
+  }
+
+  static ThemeData _base(Brightness brightness, Color seedColor) {
     final scheme = ColorScheme.fromSeed(
-      seedColor: seed,
+      seedColor: seedColor,
       brightness: brightness,
     );
     return ThemeData(

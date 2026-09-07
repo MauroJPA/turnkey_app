@@ -18,6 +18,25 @@ class EmpresaRepository {
     return Empresa.fromRecord(r);
   }
 
+  Future<Empresa> updatePerfil(
+    String id, {
+    required String nome,
+    required Moeda moeda,
+    required RegraArredondamento regra,
+    required String corMarca,
+  }) async {
+    final r = await _pb.collection('empresas').update(
+      id,
+      body: {
+        'nome': nome.trim(),
+        'moeda': moeda.code,
+        'regra_arredondamento': regra.name,
+        'cor_marca': corMarca.trim(),
+      },
+    );
+    return Empresa.fromRecord(r);
+  }
+
   /// Onboarding: cria a empresa, promove o utilizador a `owner` e cria a linha
   /// de `configuracoes_custo` — tudo atomicamente no servidor.
   ///

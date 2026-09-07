@@ -10,6 +10,8 @@ import '../features/dashboard/presentation/home_shell.dart';
 import '../features/ingredients/presentation/ingredients_screen.dart';
 import '../features/recipes/presentation/recipe_detail_screen.dart';
 import '../features/recipes/presentation/recipes_screen.dart';
+import '../features/settings/presentation/settings_screen.dart';
+import '../features/settings/presentation/team_screen.dart';
 import '../features/tech_sheets/presentation/tech_sheet_detail_screen.dart';
 import '../features/tech_sheets/presentation/tech_sheets_screen.dart';
 
@@ -23,6 +25,7 @@ abstract class Routes {
   static const recipes = '/receitas';
   static const techSheets = '/fichas-tecnicas';
   static const settings = '/opcoes';
+  static const team = '/opcoes/equipa';
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -89,6 +92,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: ':id',
             builder: (_, state) =>
                 TechSheetDetailScreen(fichaId: state.pathParameters['id']!),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: Routes.settings,
+        builder: (_, __) => const SettingsScreen(),
+        routes: [
+          GoRoute(
+            path: 'equipa',
+            builder: (_, __) => const TeamScreen(),
           ),
         ],
       ),
