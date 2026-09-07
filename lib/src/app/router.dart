@@ -7,6 +7,7 @@ import '../core/auth/auth_state.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/onboarding_screen.dart';
 import '../features/dashboard/presentation/home_shell.dart';
+import '../features/ingredients/presentation/ingredients_screen.dart';
 
 /// Nomes de rota centralizados.
 abstract class Routes {
@@ -60,6 +61,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.home,
         builder: (_, __) => const HomeShell(),
+      ),
+      GoRoute(
+        path: Routes.ingredients,
+        builder: (_, __) => const IngredientsScreen(),
       ),
     ],
     errorBuilder: (_, state) => Scaffold(
