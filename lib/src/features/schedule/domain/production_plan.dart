@@ -88,29 +88,47 @@ class ProducaoPlan {
   }
 }
 
-/// Uma linha do plano: uma receita e a quantidade a produzir (em kg).
+/// Uma linha do plano: uma receita e a quantidade a produzir (em kg),
+/// com formato de cookie, recheio, prioridade e hora limite.
 class ProducaoItem {
   const ProducaoItem({
     required this.id,
     required this.receitaId,
     required this.nome,
     required this.quantidadeKg,
+    this.formatoNome = '',
+    this.recheioNome = '',
+    this.prioridade = Prioridade.media,
+    this.horaLimite = '',
+    this.unidadesPrevistas = 0,
   });
 
   final String id;
   final String receitaId;
   final String nome;
   final double quantidadeKg;
+  final String formatoNome;
+  final String recheioNome;
+  final Prioridade prioridade;
+  final String horaLimite;
+  final int unidadesPrevistas;
 
   factory ProducaoItem.fromRecord(RecordModel r) {
-    var nome = '';
-    final exp = r.get<List<RecordModel>>('expand.receita', []);
-    if (exp.isNotEmpty) nome = exp.first.getStringValue('nome');
+    String expNome(String rel) {
+      final e = r.get<List<RecordModel>>('expand.$rel', const []);
+      return e.isNotEmpty ? e.first.getStringValue('nome') : '';
+    }
+
     return ProducaoItem(
       id: r.id,
       receitaId: r.getStringValue('receita'),
-      nome: nome,
+      nome: expNome('receita'),
       quantidadeKg: r.getDoubleValue('quantidade_kg'),
+      formatoNome: expNome('formato'),
+      recheioNome: expNome('recheio'),
+      prioridade: Prioridade.fromApi(r.getStringValue('prioridade')),
+      horaLimite: r.getStringValue('hora_limite'),
+      unidadesPrevistas: r.getIntValue('unidades_previstas'),
     );
   }
 }
@@ -152,16 +170,31 @@ class PlanoProduzir {
     required this.receitaId,
     required this.nome,
     required this.kg,
+    this.unidades = 0,
+    this.formato = '',
+    this.recheio = '',
+    this.prioridade = Prioridade.media,
+    this.horaLimite = '',
   });
 
   final String receitaId;
   final String nome;
   final double kg;
+  final int unidades;
+  final String formato;
+  final String recheio;
+  final Prioridade prioridade;
+  final String horaLimite;
 
   factory PlanoProduzir.fromJson(Map<String, dynamic> j) => PlanoProduzir(
         receitaId: j['receitaId'] as String? ?? '',
         nome: j['nome'] as String? ?? '',
         kg: (j['kg'] as num?)?.toDouble() ?? 0,
+        unidades: (j['unidades'] as num?)?.toInt() ?? 0,
+        formato: j['formato'] as String? ?? '',
+        recheio: j['recheio'] as String? ?? '',
+        prioridade: Prioridade.fromApi(j['prioridade'] as String?),
+        horaLimite: j['horaLimite'] as String? ?? '',
       );
 }
 

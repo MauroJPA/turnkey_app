@@ -121,29 +121,64 @@ class ScheduleScreen extends ConsumerWidget {
   }
 }
 
-class _PlanoTile extends StatelessWidget {
+class _PlanoTile extends ConsumerWidget {
   const _PlanoTile({required this.plano, required this.fmt});
 
   final ProducaoPlan plano;
   final MoneyFmt fmt;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
+    final itens = ref.watch(planItensProvider(plano.id)).valueOrNull;
     final (Color chipBg, Color chipFg) = switch (plano.estado) {
       EstadoProducao.planeada => (cs.secondaryContainer, cs.onSecondaryContainer),
       EstadoProducao.concluida => (cs.primaryContainer, cs.onPrimaryContainer),
       EstadoProducao.cancelada => (cs.surfaceContainerHighest, cs.onSurfaceVariant),
     };
+
+    String? resumo;
+    Prioridade? prioridadeMax;
+    if (itens != null && itens.isNotEmpty) {
+      prioridadeMax = itens
+          .map((i) => i.prioridade)
+          .reduce((a, b) => a.peso <= b.peso ? a : b);
+      final horas = itens
+          .map((i) => i.horaLimite)
+          .where((h) => h.isNotEmpty)
+          .toList()
+        ..sort();
+      resumo = [
+        '${itens.length} ${itens.length == 1 ? 'receita' : 'receitas'}',
+        if (horas.isNotEmpty) 'até ${horas.first}',
+        if (plano.custoSnapshot > 0) 'custo ${fmt(plano.custoSnapshot)}',
+      ].join(' · ');
+    }
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: ListTile(
-        title: Text(
-          plano.titulo.isEmpty ? 'Produção' : plano.titulo,
+        title: Row(
+          children: [
+            Flexible(
+              child: Text(plano.titulo.isEmpty ? 'Produção' : plano.titulo),
+            ),
+            if (prioridadeMax == Prioridade.alta)
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Icon(
+                  Icons.priority_high,
+                  size: 18,
+                  color: cs.error,
+                ),
+              ),
+          ],
         ),
-        subtitle: plano.custoSnapshot > 0
-            ? Text('Custo: ${fmt(plano.custoSnapshot)}')
-            : null,
+        subtitle: resumo != null
+            ? Text(resumo)
+            : (plano.custoSnapshot > 0
+                ? Text('Custo: ${fmt(plano.custoSnapshot)}')
+                : null),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(

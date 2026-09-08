@@ -70,7 +70,7 @@ class ScheduleRepository {
     final recs = await _itens.getFullList(
       filter: 'producao = "$planId"',
       sort: 'created',
-      expand: 'receita',
+      expand: 'receita,formato,recheio',
     );
     return recs.map(ProducaoItem.fromRecord).toList();
   }

@@ -222,8 +222,38 @@ class _Body extends ConsumerWidget {
                   Card(
                     margin: const EdgeInsets.symmetric(vertical: 3),
                     child: ListTile(
-                      title: Text(it.nome.isEmpty ? '(receita)' : it.nome),
-                      subtitle: Text('${it.quantidadeKg.toStringAsFixed(2)} kg'),
+                      title: InkWell(
+                        onTap: it.receitaId.isEmpty
+                            ? null
+                            : () => context.push(
+                                  '${Routes.recipes}/${it.receitaId}',
+                                ),
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                it.nome.isEmpty ? '(receita)' : it.nome,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                            _PrioridadeChip(prioridade: it.prioridade),
+                          ],
+                        ),
+                      ),
+                      subtitle: Text(
+                        [
+                          if (it.formatoNome.isNotEmpty) it.formatoNome,
+                          if (it.recheioNome.isNotEmpty)
+                            'recheio ${it.recheioNome}',
+                          '${it.quantidadeKg.toStringAsFixed(2)} kg',
+                          if (it.unidadesPrevistas > 0)
+                            '~${it.unidadesPrevistas} un',
+                          if (it.horaLimite.isNotEmpty) 'até ${it.horaLimite}',
+                        ].join(' · '),
+                      ),
                       trailing: podeEditar
                           ? Row(
                               mainAxisSize: MainAxisSize.min,
@@ -370,7 +400,16 @@ class _Body extends ConsumerWidget {
     b.writeln();
     b.writeln('A produzir:');
     for (final p in resp.produzir) {
-      b.writeln('- ${p.nome}: ${p.kg.toStringAsFixed(2)} kg');
+      final extras = [
+        if (p.formato.isNotEmpty) p.formato,
+        if (p.recheio.isNotEmpty) 'recheio ${p.recheio}',
+        if (p.unidades > 0) '~${p.unidades} un',
+        if (p.horaLimite.isNotEmpty) 'até ${p.horaLimite}',
+      ];
+      b.writeln(
+        '- ${p.nome}: ${p.kg.toStringAsFixed(2)} kg'
+        '${extras.isEmpty ? '' : ' (${extras.join(', ')})'}',
+      );
     }
     b.writeln();
     b.writeln('Ingredientes necessários:');
@@ -420,7 +459,9 @@ class _Body extends ConsumerWidget {
     PlanoResposta resp,
   ) async {
     final produz = resp.produzir
-        .map((p) => '• ${p.nome}: ${p.kg.toStringAsFixed(2)} kg')
+        .map((p) => '• ${p.nome}: ${p.kg.toStringAsFixed(2)} kg'
+            '${p.unidades > 0 ? ' → ~${p.unidades} un'
+                '${p.formato.isNotEmpty ? ' (${p.formato})' : ''}' : ''}')
         .join('\n');
     final consome = resp.necessarios
         .take(12)
@@ -528,6 +569,33 @@ Future<double?> _pedirKg(
       ],
     ),
   );
+}
+
+class _PrioridadeChip extends StatelessWidget {
+  const _PrioridadeChip({required this.prioridade});
+  final Prioridade prioridade;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final (Color bg, Color fg) = switch (prioridade) {
+      Prioridade.alta => (cs.errorContainer, cs.onErrorContainer),
+      Prioridade.media => (cs.secondaryContainer, cs.onSecondaryContainer),
+      Prioridade.baixa => (cs.surfaceContainerHighest, cs.onSurfaceVariant),
+    };
+    return Container(
+      margin: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        prioridade.label,
+        style: TextStyle(color: fg, fontSize: 11),
+      ),
+    );
+  }
 }
 
 class _SectionTitle extends StatelessWidget {

@@ -126,7 +126,8 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(Routes.recipes),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(Routes.recipes),
         ),
         title: Text(
           detailAsync.maybeWhen(
