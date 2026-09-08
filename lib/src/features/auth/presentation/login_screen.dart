@@ -245,8 +245,7 @@ class _SocialButtonsState extends ConsumerState<_SocialButtons> {
         ),
         const SizedBox(height: 8),
         botao('google', Icons.g_mobiledata, 'Continuar com Google'),
-        const SizedBox(height: 8),
-        botao('apple', Icons.apple, 'Continuar com Apple'),
+        // "Continuar com Apple" desativado por agora.
       ],
     );
   }

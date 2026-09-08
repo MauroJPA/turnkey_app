@@ -71,12 +71,34 @@ class InventoryRepository {
         ),
       );
     }
+    // Itens livres: linhas de inventário sem ingrediente nem ficha.
+    for (final r in inv) {
+      if (r.getStringValue('ingrediente').isNotEmpty) continue;
+      if (r.getStringValue('ficha').isNotEmpty) continue;
+      final desc = r.getStringValue('descricao');
+      if (desc.isEmpty) continue;
+      out.add(
+        StockItem(
+          tipo: StockTipo.livre,
+          id: desc,
+          nome: desc,
+          quantidade: r.getDoubleValue('quantidade'),
+          custoUnitario: 0,
+          minimo: r.getDoubleValue('minimo'),
+          localizacao: r.getStringValue('localizacao'),
+          inventarioId: r.id,
+          unidadeLivre: r.getStringValue('unidade'),
+        ),
+      );
+    }
     return out;
   }
 
   Future<double> ajustar({
     String? ingredienteId,
     String? fichaId,
+    String? descricao,
+    String? unidade,
     double delta = 0,
     MotivoMovimento motivo = MotivoMovimento.ajuste,
     String? notas,
@@ -89,6 +111,8 @@ class InventoryRepository {
       body: {
         if (ingredienteId != null) 'ingrediente': ingredienteId,
         if (fichaId != null) 'ficha': fichaId,
+        if (descricao != null) 'descricao': descricao,
+        if (unidade != null) 'unidade': unidade,
         'delta': delta,
         'motivo': motivo.api,
         if (notas != null && notas.isNotEmpty) 'notas': notas,
@@ -103,9 +127,14 @@ class InventoryRepository {
   Future<List<MovimentoStock>> movimentos({
     String? ingredienteId,
     String? fichaId,
+    String? descricao,
   }) async {
-    final campo = ingredienteId != null ? 'ingrediente' : 'ficha';
-    final id = ingredienteId ?? fichaId;
+    final campo = ingredienteId != null
+        ? 'ingrediente'
+        : fichaId != null
+            ? 'ficha'
+            : 'descricao';
+    final id = ingredienteId ?? fichaId ?? descricao;
     final res = await _pb.collection('movimentos_inventario').getList(
           page: 1,
           perPage: 60,

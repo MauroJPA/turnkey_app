@@ -32,18 +32,25 @@ routerAdd(
     }
     if (!empresaId) throw new BadRequestError('empresa em falta.');
 
-    if (!body.ingrediente && !body.ficha) {
-      throw new BadRequestError('Indica ingrediente ou ficha.');
+    const descricaoLivre = (body.descricao || '').toString().trim();
+    if (!body.ingrediente && !body.ficha && !descricaoLivre) {
+      throw new BadRequestError('Indica ingrediente, ficha ou descrição.');
     }
     const delta = Number(body.delta || 0);
     const temMeta =
-      body.minimo !== undefined || body.localizacao !== undefined;
+      body.minimo !== undefined ||
+      body.localizacao !== undefined ||
+      body.unidade !== undefined;
     if ((!isFinite(delta) || delta === 0) && !temMeta) {
       throw new BadRequestError('Nada para alterar.');
     }
     const motivo = body.motivo || 'ajuste';
-    const alvoCampo = body.ingrediente ? 'ingrediente' : 'ficha';
-    const alvoId = body.ingrediente || body.ficha;
+    const alvoCampo = body.ingrediente
+      ? 'ingrediente'
+      : body.ficha
+        ? 'ficha'
+        : 'descricao';
+    const alvoId = body.ingrediente || body.ficha || descricaoLivre;
 
     let quantidade = 0;
     e.app.runInTransaction((tx) => {
@@ -54,6 +61,8 @@ routerAdd(
             empresaId: empresaId,
             ingredienteId: body.ingrediente || null,
             fichaId: body.ficha || null,
+            descricao: descricaoLivre || null,
+            unidade: body.unidade || null,
           },
           delta,
           motivo,
@@ -81,6 +90,9 @@ routerAdd(
         if (body.minimo !== undefined) row.set('minimo', Number(body.minimo));
         if (body.localizacao !== undefined) {
           row.set('localizacao', String(body.localizacao));
+        }
+        if (body.unidade !== undefined) {
+          row.set('unidade', String(body.unidade));
         }
         tx.save(row);
         quantidade = row.getFloat('quantidade');
@@ -138,10 +150,41 @@ routerAdd(
 
       const fmt = infoFormato(it, alvoG);
       const recheioId = it.getString('recheio');
-      if (fmt && recheioId && fmt.recheioG > 0 && fmt.unidades > 0) {
-        const gRecheio = fmt.unidades * fmt.recheioG;
-        const pr = cascade.explodeCompras(app, recheioId, gRecheio);
-        for (const k in pr) agg[k] = (agg[k] || 0) + pr[k];
+      if (fmt && fmt.unidades > 0) {
+        const fichaId = cascade.resolverFicha(
+          app,
+          ctx.empresaId,
+          it.getString('receita'),
+          recheioId || '',
+          it.getString('formato'),
+        );
+        if (fichaId) {
+          // recheios / coberturas / extra pela quantidade por unidade da ficha
+          const slots = app.findRecordsByFilter(
+            'itens_ficha',
+            "ficha = {:f} && slot != 'massa'",
+            '',
+            0,
+            0,
+            { f: fichaId },
+          );
+          for (const sl of slots) {
+            const g = num(sl, 'quantidade_g') * fmt.unidades;
+            if (g <= 0) continue;
+            const recSlot = sl.getString('receita');
+            const ingSlot = sl.getString('ingrediente');
+            if (recSlot) {
+              const pr = cascade.explodeCompras(app, recSlot, g);
+              for (const k in pr) agg[k] = (agg[k] || 0) + pr[k];
+            } else if (ingSlot) {
+              agg[ingSlot] = (agg[ingSlot] || 0) + g;
+            }
+          }
+        } else if (recheioId && fmt.recheioG > 0) {
+          const gRecheio = fmt.unidades * fmt.recheioG;
+          const pr = cascade.explodeCompras(app, recheioId, gRecheio);
+          for (const k in pr) agg[k] = (agg[k] || 0) + pr[k];
+        }
       }
     }
 
@@ -250,10 +293,10 @@ routerAdd(
       const parcial = cascade.explodeCompras(app, it.getString('receita'), alvoG);
       for (const k in parcial) agg[k] = (agg[k] || 0) + parcial[k];
 
-      // recheio do formato
+      // recheios / coberturas / extra — da ficha técnica se existir
       const fId = it.getString('formato');
       const recheioId = it.getString('recheio');
-      if (fId && recheioId) {
+      if (fId) {
         let f;
         try {
           f = app.findRecordById('formatos_cookie', fId);
@@ -263,9 +306,39 @@ routerAdd(
         const massaG = f ? num(f, 'massa_g') : 0;
         const recheioG = f ? num(f, 'recheio_g') : 0;
         const N = massaG > 0 ? Math.round(alvoG / massaG) : 0;
-        if (recheioG > 0 && N > 0) {
-          const pr = cascade.explodeCompras(app, recheioId, N * recheioG);
-          for (const k in pr) agg[k] = (agg[k] || 0) + pr[k];
+        if (N > 0) {
+          const fichaId = cascade.resolverFicha(
+            app,
+            ctx.empresaId,
+            it.getString('receita'),
+            recheioId || '',
+            fId,
+          );
+          if (fichaId) {
+            const slots = app.findRecordsByFilter(
+              'itens_ficha',
+              "ficha = {:f} && slot != 'massa'",
+              '',
+              0,
+              0,
+              { f: fichaId },
+            );
+            for (const sl of slots) {
+              const g = num(sl, 'quantidade_g') * N;
+              if (g <= 0) continue;
+              const recSlot = sl.getString('receita');
+              const ingSlot = sl.getString('ingrediente');
+              if (recSlot) {
+                const pr = cascade.explodeCompras(app, recSlot, g);
+                for (const k in pr) agg[k] = (agg[k] || 0) + pr[k];
+              } else if (ingSlot) {
+                agg[ingSlot] = (agg[ingSlot] || 0) + g;
+              }
+            }
+          } else if (recheioId && recheioG > 0) {
+            const pr = cascade.explodeCompras(app, recheioId, N * recheioG);
+            for (const k in pr) agg[k] = (agg[k] || 0) + pr[k];
+          }
         }
       }
     }
@@ -449,16 +522,6 @@ routerAdd(
           const N = massaG > 0 ? Math.round(alvoG / massaG) : 0;
           const recheioId = it.getString('recheio');
 
-          if (recheioId && recheioG > 0 && N > 0) {
-            let recheioRec;
-            try {
-              recheioRec = tx.findRecordById('receitas', recheioId);
-            } catch (_) {
-              recheioRec = null;
-            }
-            if (recheioRec) consumirLinhasDe(recheioRec, N * recheioG);
-          }
-
           it.set('unidades_previstas', N);
           tx.save(it);
 
@@ -472,7 +535,41 @@ routerAdd(
           const nomeProduto =
             receita.getString('nome') +
             (formato ? ' — ' + formato.getString('nome') : '');
+
           if (fichaId && N > 0) {
+            // Recheios / coberturas / extra: quantidades por unidade da ficha.
+            const slots = tx.findRecordsByFilter(
+              'itens_ficha',
+              "ficha = {:f} && slot != 'massa'",
+              '',
+              0,
+              0,
+              { f: fichaId },
+            );
+            for (const sl of slots) {
+              const g = num(sl, 'quantidade_g') * N;
+              if (g <= 0) continue;
+              const recSlot = sl.getString('receita');
+              const ingSlot = sl.getString('ingrediente');
+              if (recSlot) {
+                let rr;
+                try {
+                  rr = tx.findRecordById('receitas', recSlot);
+                } catch (_) {
+                  rr = null;
+                }
+                if (rr) consumirLinhasDe(rr, g);
+              } else if (ingSlot) {
+                let ing;
+                try {
+                  ing = tx.findRecordById('ingredientes', ingSlot);
+                } catch (_) {
+                  ing = null;
+                }
+                if (ing) consumir(ing, g, ing.getString('nome'));
+              }
+            }
+
             cascade.aplicarMovimento(
               tx,
               { empresaId: ctx.empresaId, fichaId: fichaId },
@@ -482,6 +579,16 @@ routerAdd(
             );
             saidas.push({ nome: nomeProduto, gramas: N, unidades: N });
           } else {
+            // Sem ficha: usa o recheio indicado à mão (se houver).
+            if (recheioId && recheioG > 0 && N > 0) {
+              let recheioRec;
+              try {
+                recheioRec = tx.findRecordById('receitas', recheioId);
+              } catch (_) {
+                recheioRec = null;
+              }
+              if (recheioRec) consumirLinhasDe(recheioRec, N * recheioG);
+            }
             faltas.push(
               'Sem ficha técnica para ' +
                 nomeProduto +
@@ -521,6 +628,88 @@ routerAdd(
       saidas: saidas,
       faltas: faltas,
       custoTotal: custoTotal,
+    });
+  },
+  $apis.requireAuth('users', '_superusers'),
+);
+
+// --- GET /api/turnkey/fichas/resolver ---------------------------------
+// Devolve a ficha técnica que corresponde a uma massa + formato (+ recheio),
+// com os componentes (recheios/coberturas/extra) e a quantidade por unidade.
+//   query: massa, formato, recheio?
+routerAdd(
+  'GET',
+  '/api/turnkey/fichas/resolver',
+  (e) => {
+    const cascade = require(`${__hooks}/cascade.js`);
+    const auth = e.auth;
+    const isSuper =
+      auth && auth.collection() && auth.collection().name === '_superusers';
+    let empresaId = e.requestInfo().query.empresa || '';
+    if (!isSuper) {
+      if (!auth || auth.collection().name !== 'users') {
+        throw new ForbiddenError('Autenticação necessária.');
+      }
+      empresaId = auth.getString('empresa');
+    }
+    const q = e.requestInfo().query;
+    const massaId = q.massa || '';
+    const formatoId = q.formato || '';
+    const recheioId = q.recheio || '';
+    if (!massaId) throw new BadRequestError('massa em falta.');
+
+    const app = e.app;
+    const fichaId = cascade.resolverFicha(
+      app,
+      empresaId,
+      massaId,
+      recheioId,
+      formatoId,
+    );
+    if (!fichaId) return e.json(200, { fichaId: '' });
+
+    const num = (rec, f) => {
+      try {
+        return rec.getFloat(f);
+      } catch (_) {
+        return 0;
+      }
+    };
+    let ficha;
+    try {
+      ficha = app.findRecordById('fichas_tecnicas', fichaId);
+    } catch (_) {
+      return e.json(200, { fichaId: '' });
+    }
+    const slots = app.findRecordsByFilter(
+      'itens_ficha',
+      "ficha = {:f} && slot != 'massa'",
+      '',
+      0,
+      0,
+      { f: fichaId },
+    );
+    const componentes = [];
+    for (const sl of slots) {
+      let nome = '';
+      const recSlot = sl.getString('receita');
+      const ingSlot = sl.getString('ingrediente');
+      try {
+        if (recSlot) nome = app.findRecordById('receitas', recSlot).getString('nome');
+        else if (ingSlot)
+          nome = app.findRecordById('ingredientes', ingSlot).getString('nome');
+      } catch (_) {}
+      if (!nome) continue;
+      componentes.push({
+        slot: sl.getString('slot'),
+        nome: nome,
+        gPorUnidade: num(sl, 'quantidade_g'),
+      });
+    }
+    return e.json(200, {
+      fichaId: fichaId,
+      nome: ficha.getString('nome'),
+      componentes: componentes,
     });
   },
   $apis.requireAuth('users', '_superusers'),

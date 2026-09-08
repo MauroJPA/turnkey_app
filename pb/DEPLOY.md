@@ -7,7 +7,7 @@ pb/migrations/*.js   -> schema (coleções, campos, regras)
 pb/hooks/*           -> lógica (cascata de custos, onboarding, equipa, admin)
 ```
 
-As 20 migrations aplicam-se limpas a uma base de dados vazia (verificado).
+As 22 migrations aplicam-se limpas a uma base de dados vazia (verificado).
 
 ---
 

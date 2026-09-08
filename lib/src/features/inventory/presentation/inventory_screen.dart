@@ -42,6 +42,31 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     );
   }
 
+  Future<void> _novoItemLivre() async {
+    final r = await showModalBottomSheet<_ItemLivre>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => const _ItemLivreSheet(),
+    );
+    if (r == null || r.descricao.isEmpty) return;
+    try {
+      await ref.read(inventoryActionsProvider).criarItemLivre(
+            descricao: r.descricao,
+            unidade: r.unidade,
+            quantidadeInicial: r.quantidade,
+            minimo: r.minimo,
+            localizacao: r.localizacao,
+          );
+      if (mounted) setState(() => _filtro = StockTipo.livre);
+    } on Object catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$e')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(stockListProvider);
@@ -52,6 +77,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         title: const Text('Inventário'),
         actions: const [HelpButton(topic: HelpTopic.inventario)],
       ),
+      floatingActionButton: _podeEditar
+          ? FloatingActionButton.extended(
+              onPressed: _novoItemLivre,
+              icon: const Icon(Icons.add),
+              label: const Text('Item livre'),
+            )
+          : null,
       body: Column(
         children: [
           Padding(
@@ -71,17 +103,21 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               children: [
-                for (final f in [null, StockTipo.ingrediente, StockTipo.ficha])
+                for (final f in [
+                  null,
+                  StockTipo.ingrediente,
+                  StockTipo.ficha,
+                  StockTipo.livre,
+                ])
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: ChoiceChip(
-                      label: Text(
-                        f == null
-                            ? 'Tudo'
-                            : f == StockTipo.ingrediente
-                                ? 'Ingredientes'
-                                : 'Produtos',
-                      ),
+                      label: Text(switch (f) {
+                        null => 'Tudo',
+                        StockTipo.ingrediente => 'Ingredientes',
+                        StockTipo.ficha => 'Produtos',
+                        StockTipo.livre => 'Outros',
+                      }),
                       selected: _filtro == f,
                       onSelected: (_) => setState(() => _filtro = f),
                     ),
@@ -116,9 +152,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                       title: Text(i.nome),
                       subtitle: Text(
                         [
-                          i.tipo == StockTipo.ficha
-                              ? 'Produto'
-                              : 'Ingrediente',
+                          switch (i.tipo) {
+                            StockTipo.ficha => 'Produto',
+                            StockTipo.ingrediente => 'Ingrediente',
+                            StockTipo.livre => 'Outro',
+                          },
                           if (i.valor > 0) 'valor ${fmt(i.valor)}',
                           if (i.localizacao.isNotEmpty) i.localizacao,
                         ].join(' · '),
@@ -321,6 +359,7 @@ class _HistoricoSheet extends ConsumerWidget {
     final key = (
       ingredienteId: item.tipo == StockTipo.ingrediente ? item.id : null,
       fichaId: item.tipo == StockTipo.ficha ? item.id : null,
+      descricao: item.tipo == StockTipo.livre ? item.id : null,
     );
     final async = ref.watch(movimentosProvider(key));
     return SizedBox(
@@ -370,6 +409,129 @@ class _HistoricoSheet extends ConsumerWidget {
                     ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+typedef _ItemLivre = ({
+  String descricao,
+  String unidade,
+  double quantidade,
+  double minimo,
+  String localizacao,
+});
+
+/// Folha para criar um item livre no inventário (sabão, sacos de lixo…).
+class _ItemLivreSheet extends StatefulWidget {
+  const _ItemLivreSheet();
+
+  @override
+  State<_ItemLivreSheet> createState() => _ItemLivreSheetState();
+}
+
+class _ItemLivreSheetState extends State<_ItemLivreSheet> {
+  final _desc = TextEditingController();
+  final _qtd = TextEditingController(text: '0');
+  final _min = TextEditingController();
+  final _local = TextEditingController();
+  String _unidade = 'un';
+
+  static const _unidades = ['un', 'caixa', 'pacote', 'litro', 'kg', 'rolo'];
+
+  @override
+  void dispose() {
+    _desc.dispose();
+    _qtd.dispose();
+    _min.dispose();
+    _local.dispose();
+    super.dispose();
+  }
+
+  double _n(TextEditingController c) =>
+      double.tryParse(c.text.replaceAll(',', '.').trim()) ?? 0;
+
+  void _guardar() {
+    final d = _desc.text.trim();
+    if (d.isEmpty) return;
+    Navigator.pop(context, (
+      descricao: d,
+      unidade: _unidade,
+      quantidade: _n(_qtd),
+      minimo: _n(_min),
+      localizacao: _local.text.trim(),
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 8,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Novo item livre',
+              style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 4),
+          Text(
+            'Qualquer coisa da empresa que não seja ingrediente nem produto.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _desc,
+            autofocus: true,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(labelText: 'Nome *'),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _qtd,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration:
+                      const InputDecoration(labelText: 'Quantidade atual'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: _unidade,
+                  decoration: const InputDecoration(labelText: 'Unidade'),
+                  items: [
+                    for (final u in _unidades)
+                      DropdownMenuItem(value: u, child: Text(u)),
+                  ],
+                  onChanged: (v) => setState(() => _unidade = v ?? 'un'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _min,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration:
+                const InputDecoration(labelText: 'Stock mínimo (aviso)'),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _local,
+            decoration:
+                const InputDecoration(labelText: 'Localização (opcional)'),
+          ),
+          const SizedBox(height: 16),
+          FilledButton(onPressed: _guardar, child: const Text('Criar')),
         ],
       ),
     );

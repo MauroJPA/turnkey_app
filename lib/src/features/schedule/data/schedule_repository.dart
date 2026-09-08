@@ -124,6 +124,25 @@ class ScheduleRepository {
         .key;
   }
 
+  /// Ficha técnica que corresponde a uma massa + formato (+ recheio), com os
+  /// componentes (recheios/coberturas/extra). `fichaId` vazio se não houver.
+  Future<FichaResolvida> resolverFicha({
+    required String massaId,
+    required String formatoId,
+    String? recheioId,
+  }) async {
+    final res = await _pb.send(
+      '/api/turnkey/fichas/resolver',
+      method: 'GET',
+      query: {
+        'massa': massaId,
+        'formato': formatoId,
+        if (recheioId != null && recheioId.isNotEmpty) 'recheio': recheioId,
+      },
+    );
+    return FichaResolvida.fromJson(Map<String, dynamic>.from(res as Map));
+  }
+
   /// Nº de linhas já na lista de compras para esta produção.
   Future<int> contarLinhasCompra(String planId) async {
     final res = await _pb.collection('lista_compras').getList(

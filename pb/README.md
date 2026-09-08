@@ -54,6 +54,8 @@ pb/
 | `1705449600_lista_compras_embalagem.js` | `lista_compras.embalagem_g` |
 | `1705536000_lista_compras_custo.js` | `lista_compras.custo_estimado` |
 | `1705622400_empresas_tema.js` | `empresas.tema` (sistema/claro/escuro) |
+| `1705708800_lista_compras_extra.js` | `lista_compras`: `notas`, `unidade` (itens manuais) |
+| `1705795200_inventario_itens_livres.js` | `inventario`/`movimentos_inventario`: `descricao`, `unidade` (itens livres) + índice `(empresa, descricao)` |
 
 Aparência (tema, cor de marca `cor_marca`, logótipo `logo`) é **por empresa** —
 editada em Configurações → Aparência, aplica-se a toda a equipa.
@@ -70,10 +72,11 @@ sobre a sua empresa.
 
 | Método | Rota | Efeito |
 |---|---|---|
-| `POST` | `/api/turnkey/inventario/ajustar` | `{ ingrediente?\|ficha?, delta, motivo, notas?, producao?, minimo?, localizacao? }` → upsert da linha `inventario` (`quantidade = max(0, q+delta)`) + `movimentos_inventario`. `delta` 0 é aceite se vier `minimo`/`localizacao`. |
+| `POST` | `/api/turnkey/inventario/ajustar` | `{ ingrediente?\|ficha?\|descricao?(item livre) + unidade?, delta, motivo, notas?, producao?, minimo?, localizacao? }` → upsert da linha `inventario` (`quantidade = max(0, q+delta)`) + `movimentos_inventario`. `delta` 0 é aceite se vier `minimo`/`localizacao`/`unidade`. |
+| `GET` | `/api/turnkey/fichas/resolver` | `?massa=&formato=&recheio=` → ficha técnica correspondente + `componentes:[{slot,nome,gPorUnidade}]` (recheios/coberturas/extra) ou `{fichaId:''}`. |
 | `GET` | `/api/turnkey/producoes/{id}/plano` | explosão agregada (sub-receitas + espelhos de fabrico próprio + **recheio do formato**: `N = round(kg·1000/massa_g)`, `N·recheio_g` do recheio) → `{ necessarios:[{ingredienteId,nome,fornecedor,gramas,custo,emStock,aComprar,embalagemG,aComprarSacos}], produzir:[{receitaId,nome,kg,unidades,formato,recheio,prioridade,horaLimite}], custoTotal }`. |
 | `POST` | `/api/turnkey/producoes/{id}/lista-compras` | mesma agregação → upsert em `lista_compras`; `quantidade_necessaria_g` = necessidade exata, `quantidade_comprar_g` = `ceil(falta/embalagem)·embalagem` (sacos inteiros), grava `embalagem_g` → `{ linhas }`. |
-| `POST` | `/api/turnkey/producoes/{id}/concluir` | por `producao_item`: consome massa (`kg`) e, se houver `formato`+`recheio`, o recheio (`N·recheio_g`); com `formato` resolve a **ficha técnica** (`resolverFicha`: slot massa + slot recheio + `formato`) e credita `+N` unidades no `inventario` da ficha, senão entra em `faltas`; itens sem `formato` mantêm o crédito do ingrediente-espelho. Grava `unidades_previstas`, `estado=concluida`, `concluida_em`, `custo_snapshot` → `{ consumos, saidas, faltas, custoTotal }`. |
+| `POST` | `/api/turnkey/producoes/{id}/concluir` | por `producao_item`: consome a massa (`kg`, escalada por %) e — se `resolverFicha` encontrar a ficha do (massa+formato) — todos os slots não-massa da ficha (recheio_base/top, cobertura_base/top, extra) a `N·quantidade_g`, creditando `+N` unidades no `inventario` da ficha. Sem ficha: usa o `recheio` indicado à mão (se houver) e entra em `faltas`. Itens sem `formato` mantêm o crédito do ingrediente-espelho. Grava `unidades_previstas`, `estado=concluida`, `concluida_em`, `custo_snapshot` → `{ consumos, saidas, faltas, custoTotal }`. |
 
 ## ⚠️ Regras de escrita de hooks (PocketBase 0.35)
 

@@ -70,10 +70,12 @@ class _AgendaLinhaSheetState extends ConsumerState<_AgendaLinhaSheet> {
     if (r != null) setState(() => _recheio = r);
   }
 
+  bool _temFicha = false;
+
   void _confirmar() {
     final formato = _formato;
     if (formato == null || _kgValor <= 0) return;
-    if (formato.temRecheio && _recheio == null) {
+    if (formato.temRecheio && !_temFicha && _recheio == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Escolhe o recheio deste formato.')),
       );
@@ -88,8 +90,8 @@ class _AgendaLinhaSheetState extends ConsumerState<_AgendaLinhaSheet> {
             formatoId: formato.id,
             formatoNome: formato.nome,
             unidadesPrevistas: formato.unidades(_kgValor),
-            recheioId: formato.temRecheio ? _recheio!.id : null,
-            recheioNome: formato.temRecheio ? _recheio!.nome : null,
+            recheioId: _recheio?.id,
+            recheioNome: _recheio?.nome,
             prioridade: _prioridade,
             horaLimite: _horaTexto,
           ),
@@ -105,6 +107,19 @@ class _AgendaLinhaSheetState extends ConsumerState<_AgendaLinhaSheet> {
     final formatosAsync = ref.watch(formatosAtivosProvider);
     final sugerido =
         ref.watch(formatoSugeridoProvider(widget.receita.id)).valueOrNull;
+
+    // Ficha técnica correspondente (recheio/coberturas automáticos).
+    final ficha = _formato == null
+        ? null
+        : ref
+            .watch(fichaResolvidaProvider((
+              massaId: widget.receita.id,
+              formatoId: _formato!.id,
+              recheioId: _recheio?.id,
+            )))
+            .valueOrNull;
+    final temFicha = ficha?.existe ?? false;
+    _temFicha = temFicha;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -157,12 +172,61 @@ class _AgendaLinhaSheetState extends ConsumerState<_AgendaLinhaSheet> {
               );
             },
           ),
-          if (_formato?.temRecheio ?? false) ...[
+          if (temFicha) ...[
+            const SizedBox(height: 8),
+            Card(
+              color: Theme.of(context).colorScheme.secondaryContainer,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.check_circle_outline, size: 18),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Ficha técnica: ${ficha!.nome}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (ficha.componentes.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 4),
+                        child: Text('Só massa.'),
+                      )
+                    else
+                      for (final c in ficha.componentes)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            '• ${c.slotLabel}: ${c.nome} '
+                            '(${c.gPorUnidade.toStringAsFixed(0)} g/un)',
+                          ),
+                        ),
+                    const Padding(
+                      padding: EdgeInsets.only(top: 6),
+                      child: Text(
+                        'Recheios e coberturas são usados automaticamente.',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ] else if (_formato?.temRecheio ?? false) ...[
             const SizedBox(height: 8),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.cake_outlined),
               title: Text(_recheio?.nome ?? 'Escolher recheio'),
+              subtitle: const Text('Sem ficha técnica para esta massa'),
               trailing: const Icon(Icons.chevron_right),
               onTap: _escolherRecheio,
             ),

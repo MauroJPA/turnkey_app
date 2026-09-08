@@ -82,7 +82,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
     titulo: 'Produzir',
     paragrafos: [
       'Escolha uma receita e a quantidade em kg para ver quanto precisa de cada ingrediente.',
-      'Botão "Adicionar à agenda": escolhe o formato do cookie, o recheio (se levar), a prioridade e a hora limite, e junta ao carrinho.',
+      'Botão "Adicionar à agenda": escolhe o formato do cookie, a prioridade e a hora limite, e junta ao carrinho. Se já existir uma ficha técnica para essa massa, o recheio e as coberturas são preenchidos automaticamente.',
       'Quando tiver as receitas todas no carrinho, toque na barra em baixo para "Rever e agendar".',
     ],
   ),
@@ -127,7 +127,8 @@ const Map<HelpTopic, HelpEntry> helpContent = {
   HelpTopic.inventario: (
     titulo: 'Inventário',
     paragrafos: [
-      'O stock de tudo: ingredientes (em gramas) e produtos acabados (em unidades).',
+      'O stock de tudo: ingredientes (gramas), produtos acabados (unidades) e itens livres (na unidade que escolher).',
+      'Botão "Item livre": adicionar qualquer coisa da empresa que não seja ingrediente nem produto — sabão, sacos de lixo, uma tesoura…',
       'O triângulo de aviso aparece quando algo está abaixo do stock mínimo.',
       'Toque num item para dar entrada ou saída de stock e definir o mínimo.',
       'Toque e segure (ou toque, se não puder editar) para ver o histórico de movimentos.',

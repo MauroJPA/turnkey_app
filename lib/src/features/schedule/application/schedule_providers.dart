@@ -31,6 +31,22 @@ final formatoSugeridoProvider =
   return ref.watch(scheduleRepositoryProvider).formatoMaisUsado(receitaId);
 });
 
+typedef FichaResolveArgs = ({
+  String massaId,
+  String formatoId,
+  String? recheioId,
+});
+
+/// Ficha técnica que corresponde a uma massa + formato (+ recheio).
+final fichaResolvidaProvider = FutureProvider.autoDispose
+    .family<FichaResolvida, FichaResolveArgs>((ref, args) {
+  return ref.watch(scheduleRepositoryProvider).resolverFicha(
+        massaId: args.massaId,
+        formatoId: args.formatoId,
+        recheioId: args.recheioId,
+      );
+});
+
 final scheduleActionsProvider =
     Provider<ScheduleActions>(ScheduleActions.new);
 

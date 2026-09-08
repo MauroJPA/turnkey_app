@@ -8,13 +8,14 @@ final stockListProvider =
   return ref.watch(inventoryRepositoryProvider).list();
 });
 
-typedef ItemRef = ({String? ingredienteId, String? fichaId});
+typedef ItemRef = ({String? ingredienteId, String? fichaId, String? descricao});
 
 final movimentosProvider =
     FutureProvider.autoDispose.family<List<MovimentoStock>, ItemRef>(
   (ref, key) => ref.watch(inventoryRepositoryProvider).movimentos(
         ingredienteId: key.ingredienteId,
         fichaId: key.fichaId,
+        descricao: key.descricao,
       ),
 );
 
@@ -36,6 +37,7 @@ class InventoryActions {
           ingredienteId:
               item.tipo == StockTipo.ingrediente ? item.id : null,
           fichaId: item.tipo == StockTipo.ficha ? item.id : null,
+          descricao: item.tipo == StockTipo.livre ? item.id : null,
           delta: delta,
           motivo: motivo,
           notas: notas,
@@ -44,5 +46,24 @@ class InventoryActions {
         );
     _ref.invalidate(stockListProvider);
     _ref.invalidate(movimentosProvider);
+  }
+
+  /// Cria (ou atualiza) um item livre no inventário.
+  Future<void> criarItemLivre({
+    required String descricao,
+    required String unidade,
+    double quantidadeInicial = 0,
+    double? minimo,
+    String? localizacao,
+  }) async {
+    await _ref.read(inventoryRepositoryProvider).ajustar(
+          descricao: descricao,
+          unidade: unidade,
+          delta: quantidadeInicial,
+          motivo: MotivoMovimento.ajuste,
+          minimo: minimo,
+          localizacao: localizacao,
+        );
+    _ref.invalidate(stockListProvider);
   }
 }

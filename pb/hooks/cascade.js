@@ -384,13 +384,18 @@ function explodeCompras(app, receitaId, alvoG) {
 // ---------------------------------------------------------------------------
 // Aplica um movimento de stock: upsert da linha `inventario` do item e cria
 // um registo em `movimentos_inventario`. Devolve a quantidade final.
-// item = { empresaId, ingredienteId?, fichaId? }
+// item = { empresaId, ingredienteId? | fichaId? | descricao?(item livre) }
 // ---------------------------------------------------------------------------
 function aplicarMovimento(app, item, delta, motivo, opts) {
   opts = opts || {};
-  const alvoCampo = item.ingredienteId ? 'ingrediente' : 'ficha';
-  const alvoId = item.ingredienteId || item.fichaId;
-  if (!alvoId) throw new BadRequestError('Falta ingrediente ou ficha.');
+  const livre = !item.ingredienteId && !item.fichaId && item.descricao;
+  const alvoCampo = item.ingredienteId
+    ? 'ingrediente'
+    : item.fichaId
+      ? 'ficha'
+      : 'descricao';
+  const alvoId = item.ingredienteId || item.fichaId || item.descricao;
+  if (!alvoId) throw new BadRequestError('Falta ingrediente, ficha ou descrição.');
 
   const achados = app.findRecordsByFilter(
     'inventario',
@@ -409,6 +414,7 @@ function aplicarMovimento(app, item, delta, motivo, opts) {
     linha.set('empresa', item.empresaId);
     linha.set(alvoCampo, alvoId);
     linha.set('quantidade', 0);
+    if (livre && item.unidade) linha.set('unidade', item.unidade);
   }
 
   let q = linha.getFloat('quantidade') + delta;
@@ -419,6 +425,7 @@ function aplicarMovimento(app, item, delta, motivo, opts) {
   const mov = new Record(app.findCollectionByNameOrId('movimentos_inventario'));
   mov.set('empresa', item.empresaId);
   mov.set(alvoCampo, alvoId);
+  if (livre && item.unidade) mov.set('unidade', item.unidade);
   mov.set('delta', delta);
   mov.set('motivo', motivo);
   if (opts.producaoId) mov.set('producao', opts.producaoId);
@@ -497,17 +504,18 @@ function resolverFicha(app, empresaId, massaId, recheioId, formatoId) {
     }
     if (bool(ficha, 'deletado')) continue;
 
-    // recheio: se pediram um, a ficha tem de o ter num slot de recheio;
-    // se não pediram, a ficha não pode ter slots de recheio.
-    const recheios = app.findRecordsByFilter(
-      'itens_ficha',
-      "ficha = {:f} && (slot = 'recheio_base' || slot = 'recheio_top')",
-      '',
-      0,
-      0,
-      { f: fichaId },
-    );
+    // recheio: só se o pedido indicar um recheio à mão (caminho sem ficha
+    // pré-definida) é que exigimos correspondência num slot de recheio.
+    // Sem recheio no pedido, os recheios da ficha são os que valem.
     if (recheioId) {
+      const recheios = app.findRecordsByFilter(
+        'itens_ficha',
+        "ficha = {:f} && (slot = 'recheio_base' || slot = 'recheio_top')",
+        '',
+        0,
+        0,
+        { f: fichaId },
+      );
       let ok = false;
       for (const r of recheios) {
         if (casa(r, recheioRefs)) {
@@ -516,8 +524,6 @@ function resolverFicha(app, empresaId, massaId, recheioId, formatoId) {
         }
       }
       if (!ok) continue;
-    } else if (recheios.length > 0) {
-      continue;
     }
 
     const fFmt = ficha.getString('formato');

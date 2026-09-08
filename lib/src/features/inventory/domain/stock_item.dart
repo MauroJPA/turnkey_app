@@ -1,8 +1,9 @@
 import 'package:pocketbase/pocketbase.dart';
 
-enum StockTipo { ingrediente, ficha }
+enum StockTipo { ingrediente, ficha, livre }
 
-/// Uma linha de inventário: junta um ingrediente ou ficha ao seu stock atual.
+/// Uma linha de inventário: um ingrediente, uma ficha, ou um item livre
+/// (qualquer coisa da empresa: sabão, sacos de lixo, uma tesoura…).
 class StockItem {
   StockItem({
     required this.tipo,
@@ -13,37 +14,46 @@ class StockItem {
     this.minimo = 0,
     this.localizacao = '',
     this.inventarioId,
+    this.unidadeLivre = '',
   });
 
   final StockTipo tipo;
 
-  /// Id do ingrediente ou da ficha (não da linha de inventário).
+  /// Id do ingrediente/ficha; para itens livres é a própria `descricao`.
   final String id;
   final String nome;
 
-  /// Gramas (ingrediente) ou unidades (ficha).
+  /// Gramas (ingrediente), unidades (ficha) ou [unidadeLivre] (item livre).
   final double quantidade;
 
-  /// € por grama (ingrediente) ou € por unidade (ficha).
+  /// € por grama (ingrediente) ou € por unidade (ficha). 0 para itens livres.
   final double custoUnitario;
 
   final double minimo;
   final String localizacao;
   final String? inventarioId;
 
-  String get unidade => tipo == StockTipo.ingrediente ? 'g' : 'un';
+  /// Unidade dos itens livres (`un`, `caixa`, …).
+  final String unidadeLivre;
+
+  String get unidade => switch (tipo) {
+        StockTipo.ingrediente => 'g',
+        StockTipo.ficha => 'un',
+        StockTipo.livre => unidadeLivre.isEmpty ? 'un' : unidadeLivre,
+      };
 
   double get valor => quantidade * custoUnitario;
 
   bool get stockBaixo => minimo > 0 && quantidade < minimo;
 
   String quantidadeLabel() {
-    if (tipo == StockTipo.ficha) {
-      return '${quantidade.toStringAsFixed(quantidade % 1 == 0 ? 0 : 1)} un';
+    if (tipo == StockTipo.ingrediente) {
+      return quantidade >= 1000
+          ? '${(quantidade / 1000).toStringAsFixed(3)} kg'
+          : '${quantidade.toStringAsFixed(quantidade < 10 ? 1 : 0)} g';
     }
-    return quantidade >= 1000
-        ? '${(quantidade / 1000).toStringAsFixed(3)} kg'
-        : '${quantidade.toStringAsFixed(quantidade < 10 ? 1 : 0)} g';
+    final n = quantidade.toStringAsFixed(quantidade % 1 == 0 ? 0 : 1);
+    return '$n $unidade';
   }
 
   StockItem copyWith({double? quantidade, double? minimo, String? localizacao}) {
@@ -56,6 +66,7 @@ class StockItem {
       minimo: minimo ?? this.minimo,
       localizacao: localizacao ?? this.localizacao,
       inventarioId: inventarioId,
+      unidadeLivre: unidadeLivre,
     );
   }
 }

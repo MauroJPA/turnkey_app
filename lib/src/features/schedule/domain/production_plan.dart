@@ -247,6 +247,59 @@ class MovimentoResumo {
       );
 }
 
+/// Um componente da ficha (recheio, cobertura, extra) com a quantidade por
+/// unidade produzida.
+class FichaComponente {
+  const FichaComponente({
+    required this.slot,
+    required this.nome,
+    required this.gPorUnidade,
+  });
+
+  final String slot;
+  final String nome;
+  final double gPorUnidade;
+
+  String get slotLabel => switch (slot) {
+        'recheio_base' => 'Recheio',
+        'recheio_top' => 'Recheio (topo)',
+        'cobertura_base' => 'Cobertura',
+        'cobertura_top' => 'Cobertura (topo)',
+        _ => 'Extra',
+      };
+
+  factory FichaComponente.fromJson(Map<String, dynamic> j) => FichaComponente(
+        slot: j['slot'] as String? ?? 'extra',
+        nome: j['nome'] as String? ?? '',
+        gPorUnidade: (j['gPorUnidade'] as num?)?.toDouble() ?? 0,
+      );
+}
+
+/// Resposta de `GET /api/turnkey/fichas/resolver`.
+class FichaResolvida {
+  const FichaResolvida({
+    required this.fichaId,
+    this.nome = '',
+    this.componentes = const [],
+  });
+
+  final String fichaId;
+  final String nome;
+  final List<FichaComponente> componentes;
+
+  bool get existe => fichaId.isNotEmpty;
+
+  factory FichaResolvida.fromJson(Map<String, dynamic> j) => FichaResolvida(
+        fichaId: j['fichaId'] as String? ?? '',
+        nome: j['nome'] as String? ?? '',
+        componentes: ((j['componentes'] as List?) ?? const [])
+            .map((e) => FichaComponente.fromJson(
+                  Map<String, dynamic>.from(e as Map),
+                ))
+            .toList(),
+      );
+}
+
 /// Resposta de `POST /api/turnkey/producoes/{id}/concluir`.
 class ConclusaoResumo {
   const ConclusaoResumo({
