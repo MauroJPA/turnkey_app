@@ -74,6 +74,24 @@ routerAdd(
         cfg.set(campo, 0);
       }
       tx.save(cfg);
+
+      // Formatos de cookie por omissão (ver 1705104000_formatos_cookie.js).
+      const formatos = tx.findCollectionByNameOrId('formatos_cookie');
+      const seedFormatos = [
+        { nome: 'Mini', massa_g: 20, recheio_g: 0, ordem: 1 },
+        { nome: 'Recheado', massa_g: 120, recheio_g: 30, ordem: 2 },
+        { nome: 'Simples', massa_g: 150, recheio_g: 0, ordem: 3 },
+      ];
+      for (const f of seedFormatos) {
+        const fr = new Record(formatos);
+        fr.set('empresa', empresaId);
+        fr.set('nome', f.nome);
+        fr.set('massa_g', f.massa_g);
+        fr.set('recheio_g', f.recheio_g);
+        fr.set('ordem', f.ordem);
+        fr.set('ativo', true);
+        tx.save(fr);
+      }
     });
 
     return e.json(200, { empresaId: empresaId });
