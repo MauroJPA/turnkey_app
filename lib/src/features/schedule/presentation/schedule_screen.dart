@@ -7,6 +7,7 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
+import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_button.dart';
 import '../application/schedule_providers.dart';
 import '../domain/production_plan.dart';
@@ -70,10 +71,6 @@ class ScheduleScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(Routes.home),
-        ),
         title: const Text('Agenda de produção'),
         actions: const [HelpButton(topic: HelpTopic.agenda)],
       ),
@@ -89,8 +86,10 @@ class ScheduleScreen extends ConsumerWidget {
         onRetry: () => ref.invalidate(plansListProvider),
         data: (planos) {
           if (planos.isEmpty) {
-            return const Center(
-              child: Text('Sem produções planeadas.'),
+            return const EmptyState(
+              icon: Icons.event_note_outlined,
+              titulo: 'Sem produções planeadas',
+              mensagem: 'Use "Nova produção" ou envie receitas da página Produzir.',
             );
           }
           // agrupar por dia (a lista já vem ordenada por -data)

@@ -52,6 +52,11 @@ pb/
 | `1705276800_fichas_formato.js` | `fichas_tecnicas.formato` |
 | `1705363200_receitas_imagens.js` | `receitas.imagens` (file, ≤8, image/*) |
 | `1705449600_lista_compras_embalagem.js` | `lista_compras.embalagem_g` |
+| `1705536000_lista_compras_custo.js` | `lista_compras.custo_estimado` |
+| `1705622400_empresas_tema.js` | `empresas.tema` (sistema/claro/escuro) |
+
+Aparência (tema, cor de marca `cor_marca`, logótipo `logo`) é **por empresa** —
+editada em Configurações → Aparência, aplica-se a toda a equipa.
 
 Hooks: `onboarding.pb.js` (semeia `configuracoes_custo` + `formatos_cookie`),
 `guards.pb.js`, `cost_cascade.pb.js`, `team.pb.js`, `inventario.pb.js`,

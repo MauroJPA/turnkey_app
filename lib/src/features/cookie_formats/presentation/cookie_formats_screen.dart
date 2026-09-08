@@ -7,6 +7,7 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
+import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_button.dart';
 import '../application/cookie_format_providers.dart';
 import '../domain/cookie_format.dart';
@@ -94,7 +95,11 @@ class CookieFormatsScreen extends ConsumerWidget {
         onRetry: () => ref.invalidate(formatosProvider),
         data: (fs) {
           if (fs.isEmpty) {
-            return const Center(child: Text('Sem formatos.'));
+            return const EmptyState(
+              icon: Icons.cookie_outlined,
+              titulo: 'Sem formatos',
+              mensagem: 'Use "+" para criar o primeiro formato de cookie.',
+            );
           }
           return ListView.separated(
             padding: const EdgeInsets.only(bottom: 88),

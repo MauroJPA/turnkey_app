@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
+import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_button.dart';
 import '../application/shopping_providers.dart';
 import '../domain/shopping_item.dart';
@@ -118,10 +117,6 @@ class ShoppingScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(Routes.home),
-        ),
         title: const Text('Lista de compras'),
         actions: [
           const HelpButton(topic: HelpTopic.compras),
@@ -175,8 +170,10 @@ class ShoppingScreen extends ConsumerWidget {
         onRetry: () => ref.invalidate(shoppingListProvider),
         data: (itens) {
           if (itens.isEmpty) {
-            return const Center(
-              child: Text('Lista vazia. Gera a partir de uma produção.'),
+            return const EmptyState(
+              icon: Icons.shopping_cart_outlined,
+              titulo: 'Lista de compras vazia',
+              mensagem: 'Abra uma produção na Agenda e toque em "Adicionar à lista de compras".',
             );
           }
           final grupos = <String, List<ShoppingItem>>{};

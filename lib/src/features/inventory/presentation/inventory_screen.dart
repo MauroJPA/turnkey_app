@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/formatting/dates.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
+import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_button.dart';
 import '../application/inventory_providers.dart';
 import '../domain/stock_item.dart';
@@ -50,10 +49,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(Routes.home),
-        ),
         title: const Text('Inventário'),
         actions: const [HelpButton(topic: HelpTopic.inventario)],
       ),
@@ -106,7 +101,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   return mq && mf;
                 }).toList();
                 if (items.isEmpty) {
-                  return const Center(child: Text('Nada a mostrar.'));
+                  return const EmptyState(
+                    icon: Icons.warehouse_outlined,
+                    titulo: 'Nada a mostrar',
+                    mensagem: 'Sem itens para este filtro ou pesquisa.',
+                  );
                 }
                 return ListView.separated(
                   itemCount: items.length,

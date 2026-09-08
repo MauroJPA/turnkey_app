@@ -8,6 +8,7 @@ import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/onboarding_screen.dart';
 import '../features/cookie_formats/presentation/cookie_formats_screen.dart';
 import '../features/dashboard/presentation/home_shell.dart';
+import '../features/dashboard/presentation/main_shell.dart';
 import '../features/ingredients/presentation/ingredients_screen.dart';
 import '../features/inventory/presentation/inventory_screen.dart';
 import '../features/production/presentation/cart_review_screen.dart';
@@ -77,42 +78,45 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.onboarding,
         builder: (_, __) => const OnboardingScreen(),
       ),
+      // Secções principais — com a barra de navegação inferior.
+      ShellRoute(
+        builder: (_, __, child) => MainShell(child: child),
+        routes: [
+          GoRoute(
+            path: Routes.home,
+            builder: (_, __) => const HomeShell(),
+          ),
+          GoRoute(
+            path: Routes.production,
+            builder: (_, __) => const ProductionScreen(),
+          ),
+          GoRoute(
+            path: Routes.schedule,
+            builder: (_, __) => const ScheduleScreen(),
+          ),
+          GoRoute(
+            path: Routes.shopping,
+            builder: (_, __) => const ShoppingScreen(),
+          ),
+          GoRoute(
+            path: Routes.inventory,
+            builder: (_, __) => const InventoryScreen(),
+          ),
+        ],
+      ),
+      // Ecrãs de detalhe / secundários — ecrã inteiro, com "voltar".
       GoRoute(
-        path: Routes.home,
-        builder: (_, __) => const HomeShell(),
+        path: '${Routes.production}/agendar',
+        builder: (_, __) => const CartReviewScreen(),
+      ),
+      GoRoute(
+        path: '${Routes.schedule}/:id',
+        builder: (_, state) =>
+            PlanDetailScreen(planId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: Routes.ingredients,
         builder: (_, __) => const IngredientsScreen(),
-      ),
-      GoRoute(
-        path: Routes.production,
-        builder: (_, __) => const ProductionScreen(),
-        routes: [
-          GoRoute(
-            path: 'agendar',
-            builder: (_, __) => const CartReviewScreen(),
-          ),
-        ],
-      ),
-      GoRoute(
-        path: Routes.inventory,
-        builder: (_, __) => const InventoryScreen(),
-      ),
-      GoRoute(
-        path: Routes.schedule,
-        builder: (_, __) => const ScheduleScreen(),
-        routes: [
-          GoRoute(
-            path: ':id',
-            builder: (_, state) =>
-                PlanDetailScreen(planId: state.pathParameters['id']!),
-          ),
-        ],
-      ),
-      GoRoute(
-        path: Routes.shopping,
-        builder: (_, __) => const ShoppingScreen(),
       ),
       GoRoute(
         path: Routes.recipes,
