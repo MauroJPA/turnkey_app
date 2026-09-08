@@ -78,7 +78,7 @@ selecionável por variável de ambiente**, sem tocar no código.
 | `TURNKEY_AI_PROVIDER` | `gemini` (por omissão) ou `anthropic`. |
 | `GEMINI_API_KEY` (ou `GOOGLE_API_KEY`) | chave do Google AI Studio — usada quando o provider é `gemini`. De <https://aistudio.google.com/app/apikey>. Tem plano **gratuito**. |
 | `ANTHROPIC_API_KEY` | chave da Anthropic — usada quando o provider é `anthropic`. De <https://console.anthropic.com/>. |
-| `TURNKEY_AI_MODEL` | opcional; modelo a usar. Por omissão `gemini-2.0-flash` (gemini) ou `claude-sonnet-5` (anthropic). |
+| `TURNKEY_AI_MODEL` | opcional; modelo a usar. Por omissão `gemini-3.6-flash` (gemini) ou `claude-sonnet-5` (anthropic). A Google descontinua modelos periodicamente — se `/analisar` devolver `502 "model ... is no longer available"`, põe aqui o modelo novo (ex.: `gemini-3.8-flash`). |
 
 Sem a chave do provider ativo, `/analisar` devolve `503` com mensagem clara e a
 app mostra "IA não configurada". As chaves vivem **só no servidor** — a app

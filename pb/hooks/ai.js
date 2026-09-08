@@ -63,7 +63,10 @@ function analisarFaturaIA(opts) {
   var pedirGemini = function () {
     var key = $os.getenv('GEMINI_API_KEY') || $os.getenv('GOOGLE_API_KEY');
     if (!key) return { code: 503, message: 'IA não configurada (falta GEMINI_API_KEY).' };
-    var model = $os.getenv('TURNKEY_AI_MODEL') || 'gemini-2.0-flash';
+    // A Google descontinua os modelos ~a cada 6-12 meses (ex.: gemini-2.0-flash
+    // foi desligado). Se der 502 "model ... is no longer available", mete o
+    // novo em TURNKEY_AI_MODEL (ex.: gemini-3.8-flash) sem tocar no código.
+    var model = $os.getenv('TURNKEY_AI_MODEL') || 'gemini-3.6-flash';
     var out = http({
       url:
         'https://generativelanguage.googleapis.com/v1beta/models/' +

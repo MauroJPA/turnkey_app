@@ -52,8 +52,9 @@ O Mini PC corre **PocketBase v0.35.0**. Confirma:
      Settings → API keys (`sk-ant-...`). Variáveis: `TURNKEY_AI_PROVIDER=anthropic`,
      `ANTHROPIC_API_KEY=sk-ant-...`. Saída para `api.anthropic.com`. Custo
      ~€0,01–0,03 por fatura.
-   - Opcional `TURNKEY_AI_MODEL` (por omissão `gemini-2.0-flash` /
-     `claude-sonnet-5`).
+   - Opcional `TURNKEY_AI_MODEL` (por omissão `gemini-3.6-flash` /
+     `claude-sonnet-5`; se a Google descontinuar o modelo, o `/analisar` dá
+     `502 "no longer available"` e basta pôr aqui o novo, ex.: `gemini-3.8-flash`).
    - **Dev (Windows, `serve.ps1`)**: copia `pb/.env.example` para `pb/.env`
      (fora do git) e preenche. O `serve.ps1` carrega o `.env` para o ambiente
      antes de arrancar e escreve `provider=… chave definida`.
