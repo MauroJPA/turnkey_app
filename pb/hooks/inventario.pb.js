@@ -32,28 +32,59 @@ routerAdd(
     }
     if (!empresaId) throw new BadRequestError('empresa em falta.');
 
-    const delta = Number(body.delta);
-    if (!isFinite(delta) || delta === 0) {
-      throw new BadRequestError('delta inválido.');
-    }
-    const motivo = body.motivo || 'ajuste';
     if (!body.ingrediente && !body.ficha) {
       throw new BadRequestError('Indica ingrediente ou ficha.');
     }
+    const delta = Number(body.delta || 0);
+    const temMeta =
+      body.minimo !== undefined || body.localizacao !== undefined;
+    if ((!isFinite(delta) || delta === 0) && !temMeta) {
+      throw new BadRequestError('Nada para alterar.');
+    }
+    const motivo = body.motivo || 'ajuste';
+    const alvoCampo = body.ingrediente ? 'ingrediente' : 'ficha';
+    const alvoId = body.ingrediente || body.ficha;
 
     let quantidade = 0;
     e.app.runInTransaction((tx) => {
-      quantidade = require(`${__hooks}/cascade.js`).aplicarMovimento(
-        tx,
-        {
-          empresaId: empresaId,
-          ingredienteId: body.ingrediente || null,
-          fichaId: body.ficha || null,
-        },
-        delta,
-        motivo,
-        { autorId: autorId, notas: body.notas, producaoId: body.producao },
-      );
+      if (delta !== 0 && isFinite(delta)) {
+        quantidade = require(`${__hooks}/cascade.js`).aplicarMovimento(
+          tx,
+          {
+            empresaId: empresaId,
+            ingredienteId: body.ingrediente || null,
+            fichaId: body.ficha || null,
+          },
+          delta,
+          motivo,
+          { autorId: autorId, notas: body.notas, producaoId: body.producao },
+        );
+      }
+      if (temMeta) {
+        const achados = tx.findRecordsByFilter(
+          'inventario',
+          'empresa = {:e} && ' + alvoCampo + ' = {:i}',
+          '',
+          1,
+          0,
+          { e: empresaId, i: alvoId },
+        );
+        let row;
+        if (achados.length > 0) {
+          row = achados[0];
+        } else {
+          row = new Record(tx.findCollectionByNameOrId('inventario'));
+          row.set('empresa', empresaId);
+          row.set(alvoCampo, alvoId);
+          row.set('quantidade', 0);
+        }
+        if (body.minimo !== undefined) row.set('minimo', Number(body.minimo));
+        if (body.localizacao !== undefined) {
+          row.set('localizacao', String(body.localizacao));
+        }
+        tx.save(row);
+        quantidade = row.getFloat('quantidade');
+      }
     });
 
     return e.json(200, { quantidade: quantidade });
