@@ -148,7 +148,7 @@ class InvoiceRepository {
     return getById(id);
   }
 
-  Future<({int precos, int movimentos})> aplicar(
+  Future<({int precos, int precosIgnorados, int movimentos})> aplicar(
     String id,
     List<LinhaAAplicar> linhas,
   ) async {
@@ -173,6 +173,7 @@ class InvoiceRepository {
     final m = res as Map;
     return (
       precos: (m['precos'] as num?)?.toInt() ?? 0,
+      precosIgnorados: (m['precosIgnorados'] as num?)?.toInt() ?? 0,
       movimentos: (m['movimentos'] as num?)?.toInt() ?? 0,
     );
   }

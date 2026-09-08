@@ -281,12 +281,36 @@ class _RevisaoState extends ConsumerState<_Revisao> {
     }
     final novos = aAplicar.where((l) => l.criarNovo).length;
     final renomes = aAplicar.where((l) => l.renomear).length;
+
+    // Aviso: preços que não vão mudar porque a fatura é mais antiga do que a
+    // última atualização de preço do ingrediente (o servidor também garante).
+    final dFatura = DateTime.tryParse(
+      widget.fatura.dataFatura.isNotEmpty
+          ? widget.fatura.dataFatura
+          : widget.fatura.created,
+    );
+    var maisAntigos = 0;
+    if (dFatura != null) {
+      final diaFatura = DateTime(dFatura.year, dFatura.month, dFatura.day);
+      for (final l in aAplicar) {
+        if (l.acao != AcaoFatura.preco && l.acao != AcaoFatura.ambos) continue;
+        final at = l.ingrediente?.precoAtualizadoEm;
+        if (at != null &&
+            diaFatura.isBefore(DateTime(at.year, at.month, at.day))) {
+          maisAntigos++;
+        }
+      }
+    }
+
     final ok = await confirmDialog(
       context,
       titulo: 'Aplicar ${aAplicar.length} linha(s)?',
       mensagem: [
         'Atualiza os preços dos ingredientes escolhidos e dá entrada no '
             'inventário das quantidades marcadas.',
+        if (maisAntigos > 0)
+          'Atenção: $maisAntigos preço(s) NÃO vão mudar — esta fatura é mais '
+              'antiga do que a última atualização desse ingrediente.',
         if (novos > 0) 'Cria $novos ingrediente(s) novo(s).',
         if (renomes > 0)
           'Renomeia $renomes ingrediente(s) — muda em todas as receitas e '
@@ -345,6 +369,8 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text([
           '${res.precos} preço(s), ${res.movimentos} entrada(s) de stock',
+          if (res.precosIgnorados > 0)
+            '${res.precosIgnorados} preço(s) mantidos (fatura mais antiga)',
           if (novos > 0) '$novos novo(s)',
           if (renomes > 0) '$renomes renomeado(s)',
         ].join(' · ')),

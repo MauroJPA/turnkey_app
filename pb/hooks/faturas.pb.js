@@ -169,7 +169,17 @@ routerAdd(
     const numero = fatura.getString('numero');
     const nota = 'Fatura' + (numero ? ' ' + numero : '');
 
+    // Data desta fatura (YYYY-MM-DD). Só atualiza o preço de um ingrediente se
+    // esta fatura for igual ou mais recente do que a última atualização de
+    // preço desse ingrediente — assim, subir uma fatura antiga não estraga um
+    // preço mais recente.
+    const soData = (s) => String(s || '').substring(0, 10);
+    const dataFatura =
+      soData(fatura.getString('data_fatura')) ||
+      soData(fatura.getString('created'));
+
     let precos = 0;
+    let precosIgnorados = 0;
     let movimentos = 0;
 
     e.app.runInTransaction((tx) => {
@@ -200,11 +210,24 @@ routerAdd(
               ing = null;
             }
             if (ing && pu > 0) {
-              ing.set('preco', pu);
-              if (emb > 0) ing.set('gramas_embalagem', emb);
-              ing.set('preco_atualizado_em', new Date().toISOString());
-              tx.save(ing);
-              precos++;
+              const ultima = soData(ing.getString('preco_atualizado_em'));
+              const maisRecente =
+                !ultima || (dataFatura && dataFatura >= ultima);
+              if (maisRecente) {
+                ing.set('preco', pu);
+                if (emb > 0) ing.set('gramas_embalagem', emb);
+                // carimba com a data da fatura (não "agora"), para futuras
+                // comparações usarem sempre a data do documento.
+                ing.set(
+                  'preco_atualizado_em',
+                  (dataFatura || soData(new Date().toISOString())) +
+                    'T00:00:00.000Z',
+                );
+                tx.save(ing);
+                precos++;
+              } else {
+                precosIgnorados++;
+              }
             }
           }
           if ((acao === 'stock' || acao === 'ambos') && q > 0) {
@@ -237,7 +260,11 @@ routerAdd(
       tx.save(fatura);
     });
 
-    return e.json(200, { precos: precos, movimentos: movimentos });
+    return e.json(200, {
+      precos: precos,
+      precosIgnorados: precosIgnorados,
+      movimentos: movimentos,
+    });
   },
   $apis.requireAuth('users', '_superusers'),
 );

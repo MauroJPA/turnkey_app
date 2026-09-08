@@ -81,7 +81,7 @@ class InvoiceActions {
     return f;
   }
 
-  Future<({int precos, int movimentos})> aplicar(
+  Future<({int precos, int precosIgnorados, int movimentos})> aplicar(
     String id,
     List<LinhaAAplicar> linhas,
   ) async {

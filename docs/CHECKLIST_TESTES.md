@@ -212,6 +212,10 @@ antes de começar, para carregar as últimas migrations.
         receitas/fichas recalculou em cascata);
   - [ ] Inventário: as linhas com Stock/Ambos deram **entrada** (motivo
         "Compra", nota "Fatura nº…").
+- [ ] **Fatura antiga**: carrega uma fatura com **data anterior** à última
+      atualização de preço de um ingrediente → ao aplicar, o diálogo avisa
+      "X preço(s) NÃO vão mudar"; depois de aplicar, o **preço mantém-se** mas a
+      **entrada de stock é feita** (a mensagem final diz "X preço(s) mantidos").
 - [ ] Re-analisar uma fatura já analisada volta a chamar a IA (repete o custo).
 
 ---
