@@ -43,6 +43,7 @@ dependencies:
 
   # Backend
   pocketbase: ^0.25.1
+  http: ^1.2.0
 
   # Modelos imutáveis / serialização
   freezed_annotation: ^2.4.4

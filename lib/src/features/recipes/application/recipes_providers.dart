@@ -76,6 +76,19 @@ class RecipeActions {
     _refreshDetail(id);
   }
 
+  Future<void> adicionarImagens(
+    String id,
+    List<({String nome, List<int> bytes})> novas,
+  ) async {
+    await _repo.adicionarImagens(id, novas);
+    _refreshDetail(id);
+  }
+
+  Future<void> removerImagem(String id, String nomeFicheiro) async {
+    await _repo.removerImagem(id, nomeFicheiro);
+    _refreshDetail(id);
+  }
+
   Future<void> duplicate(String id) async {
     await _repo.duplicate(id);
     _refreshLists();

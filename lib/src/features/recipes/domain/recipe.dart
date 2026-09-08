@@ -55,9 +55,18 @@ class Receita with _$Receita {
     @Default(0) double custoPorGrama,
     @Default(false) bool publicarComoIngrediente,
     @Default(false) bool deletado,
+    @Default('') String procedimento,
+    @Default(<String>[]) List<String> imagens,
   }) = _Receita;
 
   const Receita._();
+
+  /// Passos do procedimento (linhas não vazias de [procedimento]).
+  List<String> get passos => procedimento
+      .split('\n')
+      .map((l) => l.trim())
+      .where((l) => l.isNotEmpty)
+      .toList();
 
   factory Receita.fromRecord(RecordModel r) => Receita(
         id: r.id,
@@ -70,6 +79,8 @@ class Receita with _$Receita {
         publicarComoIngrediente:
             r.getBoolValue('publicar_como_ingrediente'),
         deletado: r.getBoolValue('deletado'),
+        procedimento: r.getStringValue('procedimento'),
+        imagens: r.getListValue<String>('imagens'),
       );
 }
 
@@ -81,6 +92,7 @@ class RecipeInput {
     this.rendimentoEsperado = 0,
     this.rendimentoManual = false,
     this.publicarComoIngrediente = false,
+    this.procedimento = '',
   });
 
   final String nome;
@@ -88,6 +100,7 @@ class RecipeInput {
   final double rendimentoEsperado;
   final bool rendimentoManual;
   final bool publicarComoIngrediente;
+  final String procedimento;
 
   factory RecipeInput.fromModel(Receita r, {String? nome}) => RecipeInput(
         nome: nome ?? r.nome,
@@ -95,6 +108,7 @@ class RecipeInput {
         rendimentoEsperado: r.rendimentoEsperado,
         rendimentoManual: r.rendimentoManual,
         publicarComoIngrediente: r.publicarComoIngrediente,
+        procedimento: r.procedimento,
       );
 
   Map<String, dynamic> toBody() => {
@@ -103,5 +117,6 @@ class RecipeInput {
         'rendimento_manual': rendimentoManual,
         if (rendimentoManual) 'rendimento_esperado': rendimentoEsperado,
         'publicar_como_ingrediente': publicarComoIngrediente,
+        'procedimento': procedimento.trim(),
       };
 }

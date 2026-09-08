@@ -34,11 +34,15 @@ class _RecipeFormSheetState extends State<_RecipeFormSheet> {
       widget.existente?.categoria ?? CategoriaReceita.massa;
   late bool _manual = widget.existente?.rendimentoManual ?? false;
   late bool _publicar = widget.existente?.publicarComoIngrediente ?? false;
+  late final _procedimento = TextEditingController(
+    text: widget.existente?.procedimento ?? '',
+  );
 
   @override
   void dispose() {
     _nome.dispose();
     _rendimento.dispose();
+    _procedimento.dispose();
     super.dispose();
   }
 
@@ -53,6 +57,7 @@ class _RecipeFormSheetState extends State<_RecipeFormSheet> {
         rendimentoEsperado:
             double.tryParse(_rendimento.text.replaceAll(',', '.')) ?? 0,
         publicarComoIngrediente: _publicar,
+        procedimento: _procedimento.text,
       ),
     );
   }
@@ -125,6 +130,18 @@ class _RecipeFormSheetState extends State<_RecipeFormSheet> {
                 ),
                 value: _publicar,
                 onChanged: (v) => setState(() => _publicar = v),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _procedimento,
+                minLines: 3,
+                maxLines: 10,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  labelText: 'Procedimento',
+                  hintText: 'Um passo por linha',
+                  alignLabelWithHint: true,
+                ),
               ),
               const SizedBox(height: 12),
               FilledButton(

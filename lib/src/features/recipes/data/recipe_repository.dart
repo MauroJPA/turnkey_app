@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import 'package:pocketbase/pocketbase.dart';
 
 import '../../../core/auth/current_user.dart';
@@ -38,6 +39,35 @@ class RecipeRepository {
 
   Future<Receita> update(String id, RecipeInput input) async =>
       Receita.fromRecord(await _c.update(id, body: input.toBody()));
+
+  /// Anexa ficheiros ao campo `imagens` (multi-ficheiro, mantém os já lá).
+  Future<Receita> adicionarImagens(
+    String id,
+    List<({String nome, List<int> bytes})> novas,
+  ) async {
+    final files = [
+      for (final img in novas)
+        http.MultipartFile.fromBytes('imagens', img.bytes, filename: img.nome),
+    ];
+    return Receita.fromRecord(await _c.update(id, body: {}, files: files));
+  }
+
+  /// Remove um ficheiro do campo `imagens` (pelo nome guardado).
+  Future<Receita> removerImagem(String id, String nomeFicheiro) async =>
+      Receita.fromRecord(
+        await _c.update(id, body: {
+          'imagens-': [nomeFicheiro],
+        }),
+      );
+
+  /// URL público de uma imagem da receita (opcionalmente a miniatura 0x160).
+  String imagemUrl(String recipeId, String nomeFicheiro, {bool thumb = false}) {
+    final base = _pb.baseURL.endsWith('/')
+        ? _pb.baseURL.substring(0, _pb.baseURL.length - 1)
+        : _pb.baseURL;
+    final u = '$base/api/files/receitas/$recipeId/$nomeFicheiro';
+    return thumb ? '$u?thumb=0x160' : u;
+  }
 
   Future<void> setPublicar(String id, {required bool valor}) =>
       _c.update(id, body: {'publicar_como_ingrediente': valor});

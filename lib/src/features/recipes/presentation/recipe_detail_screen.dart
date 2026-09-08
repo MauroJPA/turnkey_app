@@ -11,6 +11,7 @@ import '../../../core/widgets/history_sheet.dart';
 import '../application/recipes_providers.dart';
 import '../domain/recipe_item.dart';
 import 'item_picker_sheet.dart';
+import 'procedimento_sheet.dart';
 import 'recipe_form_sheet.dart';
 
 class RecipeDetailScreen extends ConsumerStatefulWidget {
@@ -134,6 +135,14 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
           ),
         ),
         actions: [
+          detailAsync.maybeWhen(
+            data: (d) => IconButton(
+              tooltip: 'Procedimento e imagens',
+              icon: const Icon(Icons.menu_book_outlined),
+              onPressed: () => showProcedimentoSheet(context, d.receita),
+            ),
+            orElse: () => const SizedBox.shrink(),
+          ),
           detailAsync.maybeWhen(
             data: (d) => IconButton(
               tooltip: 'Histórico',

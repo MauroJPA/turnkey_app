@@ -26,6 +26,8 @@ mixin _$Receita {
   double get custoPorGrama => throw _privateConstructorUsedError;
   bool get publicarComoIngrediente => throw _privateConstructorUsedError;
   bool get deletado => throw _privateConstructorUsedError;
+  String get procedimento => throw _privateConstructorUsedError;
+  List<String> get imagens => throw _privateConstructorUsedError;
 
   /// Create a copy of Receita
   /// with the given fields replaced by the non-null parameter values.
@@ -48,6 +50,8 @@ abstract class $ReceitaCopyWith<$Res> {
     double custoPorGrama,
     bool publicarComoIngrediente,
     bool deletado,
+    String procedimento,
+    List<String> imagens,
   });
 }
 
@@ -75,6 +79,8 @@ class _$ReceitaCopyWithImpl<$Res, $Val extends Receita>
     Object? custoPorGrama = null,
     Object? publicarComoIngrediente = null,
     Object? deletado = null,
+    Object? procedimento = null,
+    Object? imagens = null,
   }) {
     return _then(
       _value.copyWith(
@@ -114,6 +120,14 @@ class _$ReceitaCopyWithImpl<$Res, $Val extends Receita>
                 ? _value.deletado
                 : deletado // ignore: cast_nullable_to_non_nullable
                       as bool,
+            procedimento: null == procedimento
+                ? _value.procedimento
+                : procedimento // ignore: cast_nullable_to_non_nullable
+                      as String,
+            imagens: null == imagens
+                ? _value.imagens
+                : imagens // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
           )
           as $Val,
     );
@@ -138,6 +152,8 @@ abstract class _$$ReceitaImplCopyWith<$Res> implements $ReceitaCopyWith<$Res> {
     double custoPorGrama,
     bool publicarComoIngrediente,
     bool deletado,
+    String procedimento,
+    List<String> imagens,
   });
 }
 
@@ -164,6 +180,8 @@ class __$$ReceitaImplCopyWithImpl<$Res>
     Object? custoPorGrama = null,
     Object? publicarComoIngrediente = null,
     Object? deletado = null,
+    Object? procedimento = null,
+    Object? imagens = null,
   }) {
     return _then(
       _$ReceitaImpl(
@@ -203,6 +221,14 @@ class __$$ReceitaImplCopyWithImpl<$Res>
             ? _value.deletado
             : deletado // ignore: cast_nullable_to_non_nullable
                   as bool,
+        procedimento: null == procedimento
+            ? _value.procedimento
+            : procedimento // ignore: cast_nullable_to_non_nullable
+                  as String,
+        imagens: null == imagens
+            ? _value._imagens
+            : imagens // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
       ),
     );
   }
@@ -221,7 +247,10 @@ class _$ReceitaImpl extends _Receita {
     this.custoPorGrama = 0,
     this.publicarComoIngrediente = false,
     this.deletado = false,
-  }) : super._();
+    this.procedimento = '',
+    final List<String> imagens = const <String>[],
+  }) : _imagens = imagens,
+       super._();
 
   @override
   final String id;
@@ -247,10 +276,21 @@ class _$ReceitaImpl extends _Receita {
   @override
   @JsonKey()
   final bool deletado;
+  @override
+  @JsonKey()
+  final String procedimento;
+  final List<String> _imagens;
+  @override
+  @JsonKey()
+  List<String> get imagens {
+    if (_imagens is EqualUnmodifiableListView) return _imagens;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_imagens);
+  }
 
   @override
   String toString() {
-    return 'Receita(id: $id, nome: $nome, categoria: $categoria, rendimentoEsperado: $rendimentoEsperado, rendimentoManual: $rendimentoManual, custoReceita: $custoReceita, custoPorGrama: $custoPorGrama, publicarComoIngrediente: $publicarComoIngrediente, deletado: $deletado)';
+    return 'Receita(id: $id, nome: $nome, categoria: $categoria, rendimentoEsperado: $rendimentoEsperado, rendimentoManual: $rendimentoManual, custoReceita: $custoReceita, custoPorGrama: $custoPorGrama, publicarComoIngrediente: $publicarComoIngrediente, deletado: $deletado, procedimento: $procedimento, imagens: $imagens)';
   }
 
   @override
@@ -276,7 +316,10 @@ class _$ReceitaImpl extends _Receita {
                 ) ||
                 other.publicarComoIngrediente == publicarComoIngrediente) &&
             (identical(other.deletado, deletado) ||
-                other.deletado == deletado));
+                other.deletado == deletado) &&
+            (identical(other.procedimento, procedimento) ||
+                other.procedimento == procedimento) &&
+            const DeepCollectionEquality().equals(other._imagens, _imagens));
   }
 
   @override
@@ -291,6 +334,8 @@ class _$ReceitaImpl extends _Receita {
     custoPorGrama,
     publicarComoIngrediente,
     deletado,
+    procedimento,
+    const DeepCollectionEquality().hash(_imagens),
   );
 
   /// Create a copy of Receita
@@ -313,6 +358,8 @@ abstract class _Receita extends Receita {
     final double custoPorGrama,
     final bool publicarComoIngrediente,
     final bool deletado,
+    final String procedimento,
+    final List<String> imagens,
   }) = _$ReceitaImpl;
   const _Receita._() : super._();
 
@@ -334,6 +381,10 @@ abstract class _Receita extends Receita {
   bool get publicarComoIngrediente;
   @override
   bool get deletado;
+  @override
+  String get procedimento;
+  @override
+  List<String> get imagens;
 
   /// Create a copy of Receita
   /// with the given fields replaced by the non-null parameter values.
