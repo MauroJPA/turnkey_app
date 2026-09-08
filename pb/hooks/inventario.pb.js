@@ -383,10 +383,9 @@ routerAdd(
         consumos.push({ nome: nome || ingRec.getString('nome'), gramas: g });
       };
 
-      // Consome as linhas diretas de uma receita escaladas para `alvoG` g.
+      // Consome as linhas diretas de uma receita escaladas para que a soma
+      // das quantidades seja `alvoG` g (percentagem de cada ingrediente).
       const consumirLinhasDe = (receitaRec, alvoG) => {
-        const rend = num(receitaRec, 'rendimento_esperado');
-        const fator = rend > 0 ? alvoG / rend : 0;
         const linhas = tx.findRecordsByFilter(
           'itens_receita',
           'receita = {:id}',
@@ -395,6 +394,9 @@ routerAdd(
           0,
           { id: receitaRec.id },
         );
+        let pesoBase = 0;
+        for (const l of linhas) pesoBase += num(l, 'quantidade_g');
+        const fator = pesoBase > 0 ? alvoG / pesoBase : 0;
         for (const l of linhas) {
           const g = num(l, 'quantidade_g') * fator;
           if (g <= 0) continue;

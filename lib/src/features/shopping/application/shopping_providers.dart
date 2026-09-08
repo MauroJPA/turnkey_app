@@ -29,12 +29,16 @@ class ShoppingActions {
   Future<void> adicionarManual({
     required String descricao,
     String fornecedor = '',
-    double comprarG = 0,
+    double quantidade = 0,
+    String unidade = 'un',
+    String notas = '',
   }) async {
     await _repo.addManual(
       descricao: descricao,
       fornecedor: fornecedor,
-      comprarG: comprarG,
+      quantidade: quantidade,
+      unidade: unidade,
+      notas: notas,
     );
     _refresh();
   }
@@ -56,6 +60,12 @@ class ShoppingActions {
 
   Future<int> limparComprados() async {
     final n = await _repo.limparComprados();
+    _refresh();
+    return n;
+  }
+
+  Future<int> limparTudo() async {
+    final n = await _repo.limparTudo();
     _refresh();
     return n;
   }

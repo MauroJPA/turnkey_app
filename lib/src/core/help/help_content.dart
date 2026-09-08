@@ -119,8 +119,9 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'O que precisa de comprar, agrupado por fornecedor.',
       'Cada linha mostra quantos sacos comprar, o peso da embalagem, quanto precisa e o preço estimado.',
       'Em cima vê o total esperado, o que já foi comprado e o que ainda falta.',
-      'Marque a caixa quando comprar — a quantidade entra logo no inventário.',
-      'Botão ↻ "Reorganizar": apaga o que já comprou e recalcula o que falta com o stock atual.',
+      'Marque a caixa quando comprar — se for um ingrediente, a quantidade entra logo no inventário.',
+      'Botão "+": adicionar qualquer coisa (sacos de lixo, sabão, uma tesoura…) — escolhe a quantidade e a unidade (un, kg, caixa…) e pode deixar uma nota a explicar.',
+      'Menu (⋮): "Reorganizar lista" apaga os comprados e recalcula; "Limpar lista" apaga tudo. Ambos pedem confirmação.',
     ],
   ),
   HelpTopic.inventario: (

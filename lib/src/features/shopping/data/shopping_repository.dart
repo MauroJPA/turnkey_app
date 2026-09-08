@@ -35,14 +35,18 @@ class ShoppingRepository {
   Future<void> addManual({
     required String descricao,
     String fornecedor = '',
-    double comprarG = 0,
+    double quantidade = 0,
+    String unidade = 'un',
+    String notas = '',
   }) async {
     await _c.create(body: {
       'empresa': _empresaId,
       'descricao': descricao,
       'fornecedor': fornecedor,
-      'quantidade_necessaria_g': comprarG,
-      'quantidade_comprar_g': comprarG,
+      'quantidade_necessaria_g': quantidade,
+      'quantidade_comprar_g': quantidade,
+      'unidade': unidade,
+      'notas': notas,
       'comprado': false,
     });
   }
@@ -75,6 +79,15 @@ class ShoppingRepository {
     final recs = await _c.getFullList(
       filter: 'empresa = "$_empresaId" && comprado = true',
     );
+    for (final r in recs) {
+      await _c.delete(r.id);
+    }
+    return recs.length;
+  }
+
+  /// Apaga toda a lista de compras da empresa (compradas e por comprar).
+  Future<int> limparTudo() async {
+    final recs = await _c.getFullList(filter: 'empresa = "$_empresaId"');
     for (final r in recs) {
       await _c.delete(r.id);
     }

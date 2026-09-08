@@ -332,15 +332,12 @@ function explodeCompras(app, receitaId, alvoG) {
     if (seen.has(recId)) return;
     seen.add(recId);
 
-    let receita;
     try {
-      receita = app.findRecordById('receitas', recId);
+      app.findRecordById('receitas', recId);
     } catch (_) {
       seen.delete(recId);
       return;
     }
-    const rend = num(receita, 'rendimento_esperado');
-    const fator = rend > 0 ? alvo / rend : 0;
 
     const itens = app.findRecordsByFilter(
       'itens_receita',
@@ -350,6 +347,11 @@ function explodeCompras(app, receitaId, alvoG) {
       0,
       { id: recId },
     );
+    // Escalar pela percentagem de cada linha: soma das linhas = alvo.
+    let pesoBase = 0;
+    for (const it of itens) pesoBase += num(it, 'quantidade_g');
+    const fator = pesoBase > 0 ? alvo / pesoBase : 0;
+
     for (const it of itens) {
       const g = num(it, 'quantidade_g') * fator;
       if (g <= 0) continue;

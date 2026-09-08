@@ -7,7 +7,9 @@ import '../domain/production.dart';
 typedef ProductionArgs = ({String recipeId, double alvoG});
 
 /// Constrói a árvore de produção de uma receita para [alvoG] gramas,
-/// escalando as quantidades e expandindo sub-receitas recursivamente.
+/// escalando cada ingrediente pela sua percentagem na mistura para que a
+/// soma das quantidades seja exatamente [alvoG]. Expande sub-receitas
+/// recursivamente.
 final productionProvider =
     FutureProvider.autoDispose.family<ProductionNode, ProductionArgs>(
   (ref, args) async {
@@ -26,7 +28,7 @@ final productionProvider =
           receitaId: id,
           nome: receita.nome,
           alvoG: alvoG,
-          rendimentoBase: receita.rendimentoEsperado,
+          rendimentoBase: 0,
           linhas: const [],
           subReceitas: const [],
           ciclo: true,
@@ -35,8 +37,11 @@ final productionProvider =
       final proximoCaminho = {...caminho, id};
 
       final linhasReceita = await items.listForRecipe(id);
-      final rendimento = receita.rendimentoEsperado;
-      final fator = rendimento > 0 ? alvoG / rendimento : 0.0;
+      // Base = soma das quantidades das linhas; escalar para que o total
+      // produzido seja [alvoG] (proporção de cada ingrediente mantida).
+      final pesoBase =
+          linhasReceita.fold<double>(0, (s, it) => s + it.quantidadeG);
+      final fator = pesoBase > 0 ? alvoG / pesoBase : 0.0;
 
       final linhas = <ProductionLine>[];
       final subs = <ProductionNode>[];
@@ -64,7 +69,7 @@ final productionProvider =
         receitaId: id,
         nome: receita.nome,
         alvoG: alvoG,
-        rendimentoBase: rendimento,
+        rendimentoBase: pesoBase,
         linhas: linhas,
         subReceitas: subs,
       );

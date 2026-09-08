@@ -36,6 +36,20 @@ void main() {
     expect(item(1594, 0).sacos, isNull);
   });
 
+  test('quantidadeTexto: gramas para ingredientes, unidade para manuais', () {
+    const ing = ShoppingItem(
+        id: 'x', descricao: 'Farinha', comprarG: 2000, embalagemG: 1000);
+    expect(ing.emGramas, isTrue);
+    expect(ing.quantidadeTexto(), '2 kg');
+
+    const manual = ShoppingItem(
+        id: 'y', descricao: 'Sacos de lixo', comprarG: 3, unidade: 'caixa');
+    expect(manual.emGramas, isFalse);
+    expect(manual.manual, isTrue);
+    expect(manual.quantidadeTexto(), '3 caixa');
+    expect(manual.sacos, isNull);
+  });
+
   test('copyWith mantém identidade e só troca comprarG/comprado', () {
     const item = ShoppingItem(
       id: 'a1',

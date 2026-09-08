@@ -17,55 +17,76 @@ class ShoppingScreen extends ConsumerWidget {
   bool _podeEditar(WidgetRef ref) =>
       ref.read(currentPapelProvider).canEditBusiness;
 
-  Future<void> _addManual(BuildContext context, WidgetRef ref) async {
-    final desc = TextEditingController();
-    final forn = TextEditingController();
-    final qtd = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Novo item'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: desc,
-              autofocus: true,
-              decoration: const InputDecoration(labelText: 'Descrição'),
-            ),
-            TextField(
-              controller: forn,
-              decoration: const InputDecoration(labelText: 'Fornecedor'),
-            ),
-            TextField(
-              controller: qtd,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                labelText: 'Quantidade a comprar',
-                suffixText: 'g',
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Adicionar'),
-          ),
-        ],
-      ),
+  Future<void> _reorganizar(BuildContext context, WidgetRef ref) async {
+    final ok = await confirmDialog(
+      context,
+      titulo: 'Reorganizar lista?',
+      mensagem:
+          'Remove as linhas já compradas (o stock delas já entrou ao dar o '
+          'visto) e recalcula o que falta comprar face ao stock atual.',
+      confirmar: 'Reorganizar',
     );
-    if (ok != true || desc.text.trim().isEmpty) return;
+    if (!ok) return;
+    try {
+      final r = await ref.read(shoppingActionsProvider).reorganizar();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${r.removidas} removida(s) · '
+              '${r.recalculadas} linha(s) recalculada(s).',
+            ),
+          ),
+        );
+      }
+    } on Object catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$e')));
+      }
+    }
+  }
+
+  Future<void> _limparTudo(BuildContext context, WidgetRef ref) async {
+    final ok = await confirmDialog(
+      context,
+      titulo: 'Limpar toda a lista?',
+      mensagem:
+          'Apaga todos os itens da lista de compras (comprados e por comprar). '
+          'Não altera o inventário. Não é possível desfazer.',
+      confirmar: 'Limpar tudo',
+      destrutivo: true,
+    );
+    if (!ok) return;
+    try {
+      final n = await ref.read(shoppingActionsProvider).limparTudo();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$n item(s) apagado(s).')),
+        );
+      }
+    } on Object catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$e')));
+      }
+    }
+  }
+
+  Future<void> _addManual(BuildContext context, WidgetRef ref) async {
+    final r = await showModalBottomSheet<_ManualItem>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => const _ManualItemSheet(),
+    );
+    if (r == null || r.descricao.isEmpty) return;
     await ref.read(shoppingActionsProvider).adicionarManual(
-          descricao: desc.text.trim(),
-          fornecedor: forn.text.trim(),
-          comprarG:
-              double.tryParse(qtd.text.replaceAll(',', '.').trim()) ?? 0,
+          descricao: r.descricao,
+          fornecedor: r.fornecedor,
+          quantidade: r.quantidade,
+          unidade: r.unidade,
+          notas: r.notas,
         );
   }
 
@@ -121,40 +142,31 @@ class ShoppingScreen extends ConsumerWidget {
         actions: [
           const HelpButton(topic: HelpTopic.compras),
           if (podeEditar)
-            IconButton(
-              tooltip: 'Reorganizar lista',
-              icon: const Icon(Icons.autorenew),
-              onPressed: () async {
-                final ok = await confirmDialog(
-                  context,
-                  titulo: 'Reorganizar lista?',
-                  mensagem:
-                      'Remove as linhas já compradas (o stock delas já entrou '
-                      'ao dar o visto) e recalcula o que falta comprar face ao '
-                      'stock atual.',
-                  confirmar: 'Reorganizar',
-                );
-                if (!ok) return;
-                try {
-                  final r =
-                      await ref.read(shoppingActionsProvider).reorganizar();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          '${r.removidas} removida(s) · '
-                          '${r.recalculadas} linha(s) recalculada(s).',
-                        ),
-                      ),
-                    );
-                  }
-                } on Object catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(SnackBar(content: Text('$e')));
-                  }
-                }
+            PopupMenuButton<String>(
+              onSelected: (v) {
+                if (v == 'reorganizar') _reorganizar(context, ref);
+                if (v == 'limpar') _limparTudo(context, ref);
               },
+              itemBuilder: (_) => const [
+                PopupMenuItem(
+                  value: 'reorganizar',
+                  child: ListTile(
+                    leading: Icon(Icons.autorenew),
+                    title: Text('Reorganizar lista'),
+                    subtitle: Text('Remove comprados e recalcula'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'limpar',
+                  child: ListTile(
+                    leading: Icon(Icons.delete_sweep_outlined),
+                    title: Text('Limpar lista'),
+                    subtitle: Text('Apaga tudo'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
             ),
         ],
       ),
@@ -286,13 +298,17 @@ class _Linha extends StatelessWidget {
         ? const TextStyle(decoration: TextDecoration.lineThrough)
         : null;
 
-    final descricao = sacos != null && sacos > 0
+    final descricao = (sacos != null && sacos > 0)
         ? '$sacos  ${item.descricao}'
-        : item.descricao;
+        : (!item.emGramas
+            ? '${item.quantidadeTexto()}  ${item.descricao}'
+            : item.descricao);
 
     final String detalhe;
-    if (item.necessariaG <= 0) {
-      detalhe = 'Item manual';
+    if (!item.emGramas) {
+      detalhe = 'Comprar ${item.quantidadeTexto()}';
+    } else if (item.necessariaG <= 0) {
+      detalhe = 'Comprar ${ShoppingItem.gramasLabel(item.comprarG)}';
     } else if (item.embalagemG > 0) {
       detalhe = 'Embalagem de ${ShoppingItem.gramasLabel(item.embalagemG)} — '
           'Precisamos de ${ShoppingItem.gramasLabel(item.necessariaG)}';
@@ -305,9 +321,21 @@ class _Linha extends StatelessWidget {
       controlAffinity: ListTileControlAffinity.leading,
       value: item.comprado,
       onChanged: podeEditar ? (v) => onToggle(v ?? false) : null,
-      isThreeLine: false,
+      isThreeLine: item.notas.isNotEmpty,
       title: Text(descricao, style: risca),
-      subtitle: Text(detalhe),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(detalhe),
+          if (item.notas.isNotEmpty)
+            Text(
+              item.notas,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontStyle: FontStyle.italic,
+                  ),
+            ),
+        ],
+      ),
       secondary: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -336,6 +364,128 @@ class _Linha extends StatelessWidget {
               tooltip: 'Remover',
               onPressed: onRemover,
             ),
+        ],
+      ),
+    );
+  }
+}
+
+typedef _ManualItem = ({
+  String descricao,
+  String fornecedor,
+  double quantidade,
+  String unidade,
+  String notas,
+});
+
+/// Folha "Novo item" da lista de compras — para qualquer coisa da empresa
+/// (não só ingredientes): sacos de lixo, sabão, uma tesoura…
+class _ManualItemSheet extends StatefulWidget {
+  const _ManualItemSheet();
+
+  @override
+  State<_ManualItemSheet> createState() => _ManualItemSheetState();
+}
+
+class _ManualItemSheetState extends State<_ManualItemSheet> {
+  final _desc = TextEditingController();
+  final _forn = TextEditingController();
+  final _qtd = TextEditingController(text: '1');
+  final _notas = TextEditingController();
+  String _unidade = 'un';
+
+  static const _unidades = ['un', 'g', 'kg', 'caixa', 'pacote', 'litro'];
+
+  @override
+  void dispose() {
+    _desc.dispose();
+    _forn.dispose();
+    _qtd.dispose();
+    _notas.dispose();
+    super.dispose();
+  }
+
+  void _guardar() {
+    final d = _desc.text.trim();
+    if (d.isEmpty) return;
+    Navigator.pop(context, (
+      descricao: d,
+      fornecedor: _forn.text.trim(),
+      quantidade:
+          double.tryParse(_qtd.text.replaceAll(',', '.').trim()) ?? 0,
+      unidade: _unidade,
+      notas: _notas.text.trim(),
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 8,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Novo item', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _desc,
+            autofocus: true,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(labelText: 'O que comprar *'),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _forn,
+            decoration: const InputDecoration(labelText: 'Fornecedor / loja'),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _qtd,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(labelText: 'Quantidade'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: _unidade,
+                  decoration: const InputDecoration(labelText: 'Unidade'),
+                  items: [
+                    for (final u in _unidades)
+                      DropdownMenuItem(value: u, child: Text(u)),
+                  ],
+                  onChanged: (v) => setState(() => _unidade = v ?? 'un'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _notas,
+            minLines: 2,
+            maxLines: 4,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+              labelText: 'Nota (opcional)',
+              hintText: 'Ex.: tesoura de bico fino — a faca demora muito',
+              alignLabelWithHint: true,
+            ),
+          ),
+          const SizedBox(height: 16),
+          FilledButton(
+            onPressed: _guardar,
+            child: const Text('Adicionar'),
+          ),
         ],
       ),
     );

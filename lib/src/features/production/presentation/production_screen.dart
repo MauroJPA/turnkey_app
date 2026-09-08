@@ -197,14 +197,14 @@ class _NodeView extends StatelessWidget {
                   )
                 else if (node.semRendimento)
                   Text(
-                    'Sem rendimento definido — não é possível escalar.',
+                    'Receita sem ingredientes — não é possível escalar.',
                     style: TextStyle(color: scheme.error),
                   )
                 else
                   Text(
                     'Produzir ${_g(node.alvoG)}  ·  '
                     '×${node.fator.toStringAsFixed(3)}  ·  '
-                    'base ${_g(node.rendimentoBase)}',
+                    'mistura base ${_g(node.rendimentoBase)}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
               ],
