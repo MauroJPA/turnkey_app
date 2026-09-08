@@ -164,7 +164,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
   HelpTopic.faturaRevisao: (
     titulo: 'Rever fatura',
     paragrafos: [
-      'Confere cada linha que a IA leu.',
+      'Confere cada linha que a IA leu. A imagem da fatura fica visível (ao lado, em ecrã grande; por cima, no telemóvel — toca para ampliar; "Ocultar fatura" dá mais espaço às linhas). PDF abre à parte.',
       'Toca em "Ingrediente" para ligar a linha ao ingrediente certo (já vem pré-escolhido pelo nome mais parecido) ou escolhe "Criar ingrediente novo".',
       'Se o ingrediente da fatura é o mesmo que já tens com outro nome (ex.: a fatura diz "Limão cal 3/4" e tu tens "Limão siciliano"), marca "Passar a chamar-se…": o ingrediente é renomeado e a mudança aplica-se a todas as receitas e fichas que o usam.',
       '"Comprado" é a quantidade que entra no stock; "Preço embalagem" e "Embalagem" atualizam o preço por grama do ingrediente.',

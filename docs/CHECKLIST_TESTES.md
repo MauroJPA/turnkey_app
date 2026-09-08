@@ -182,7 +182,9 @@ antes de começar, para carregar as últimas migrations.
 - [ ] Depois da análise a fatura abre no **ecrã de revisão** com o estado
       **"Analisada"** (ou **"Erro"** com a mensagem, se a IA falhar).
 - [ ] No ecrã de revisão:
-  - [ ] a **miniatura** da imagem abre em grande ao tocar;
+  - [ ] a **imagem da fatura fica visível** enquanto conferes: ao **lado** das
+        linhas em ecrã largo (janela ≥ 820 px), **por cima** no telemóvel
+        (toca para ampliar; "Ocultar fatura" recolhe). PDF → botão "Abrir PDF";
   - [ ] cada **linha** mostra a descrição lida pela IA;
   - [ ] o **ingrediente** vem pré-escolhido pelo nome mais parecido; tocar
         abre a pesquisa para corrigir;

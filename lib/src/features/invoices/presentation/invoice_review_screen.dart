@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -215,6 +217,7 @@ class _Revisao extends ConsumerStatefulWidget {
 class _RevisaoState extends ConsumerState<_Revisao> {
   late final List<_LinhaState> _linhas;
   bool _busy = false;
+  bool _verFatura = true;
 
   bool get _isLista => widget.fatura.tipo == FaturaTipo.listaPrecos;
 
@@ -386,56 +389,162 @@ class _RevisaoState extends ConsumerState<_Revisao> {
     }
   }
 
-  Widget _ficheiro(Fatura f) {
-    final repo = ref.read(invoiceRepositoryProvider);
-    if (!f.temFicheiro) {
-      return const Icon(Icons.receipt_long_outlined, size: 40);
-    }
-    final urlCompleto = repo.ficheiroUrl(f);
-    if (f.ficheiroEhPdf) {
-      return IconButton(
-        icon: const Icon(Icons.picture_as_pdf_outlined, size: 40),
-        tooltip: 'Abrir PDF',
-        onPressed: () => launchUrl(
-          Uri.parse(urlCompleto),
-          mode: LaunchMode.externalApplication,
+  void _abrirZoom(String url) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => Dialog(
+        insetPadding: const EdgeInsets.all(8),
+        child: Stack(
+          children: [
+            InteractiveViewer(
+              maxScale: 6,
+              child: Center(child: Image.network(url)),
+            ),
+            Positioned(
+              right: 0,
+              top: 0,
+              child: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+          ],
         ),
-      );
-    }
-    return GestureDetector(
-      onTap: () => showDialog<void>(
-        context: context,
-        builder: (_) => Dialog(
-          child: InteractiveViewer(child: Image.network(urlCompleto)),
-        ),
-      ),
-      child: Image.network(
-        repo.ficheiroUrl(f, thumb: true),
-        width: 48,
-        height: 48,
-        fit: BoxFit.cover,
       ),
     );
   }
 
+  /// Pré-visualização grande da fatura, para conferir os dados ao lado (ecrã
+  /// largo) ou por cima (telemóvel) das linhas.
+  Widget _previewFatura(Fatura f, {required bool wide}) {
+    final url = ref.read(invoiceRepositoryProvider).ficheiroUrl(f);
+    final cs = Theme.of(context).colorScheme;
+
+    if (f.ficheiroEhPdf) {
+      return Container(
+        width: double.infinity,
+        height: wide ? null : 150,
+        color: cs.surfaceContainerHighest,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.picture_as_pdf_outlined, size: 40, color: cs.primary),
+            const SizedBox(height: 8),
+            const Text('Fatura em PDF'),
+            const SizedBox(height: 8),
+            FilledButton.icon(
+              onPressed: () => launchUrl(
+                Uri.parse(url),
+                mode: LaunchMode.externalApplication,
+              ),
+              icon: const Icon(Icons.open_in_new),
+              label: const Text('Abrir PDF'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final img = Image.network(
+      url,
+      fit: BoxFit.contain,
+      loadingBuilder: (ctx, child, prog) => prog == null
+          ? child
+          : const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: CircularProgressIndicator(),
+              ),
+            ),
+      errorBuilder: (ctx, e, s) => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text('Não foi possível carregar a imagem da fatura.'),
+        ),
+      ),
+    );
+
+    return Container(
+      width: double.infinity,
+      height: wide
+          ? null
+          : math.min(MediaQuery.of(context).size.height * 0.36, 380),
+      color: cs.surfaceContainerHighest,
+      child: wide
+          ? InteractiveViewer(maxScale: 6, child: img)
+          : Stack(
+              children: [
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTap: () => _abrirZoom(url),
+                    child: img,
+                  ),
+                ),
+                Positioned(
+                  right: 6,
+                  bottom: 6,
+                  child: Material(
+                    color: Colors.black.withValues(alpha: 0.45),
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      icon: const Icon(Icons.zoom_out_map,
+                          color: Colors.white, size: 20),
+                      tooltip: 'Ampliar',
+                      onPressed: () => _abrirZoom(url),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _toggleBar(Fatura f) => Material(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        child: InkWell(
+          onTap: () => setState(() => _verFatura = !_verFatura),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Row(
+              children: [
+                Icon(_verFatura ? Icons.expand_less : Icons.expand_more,
+                    size: 20),
+                const SizedBox(width: 6),
+                Text(_verFatura ? 'Ocultar fatura' : 'Ver fatura'),
+                const Spacer(),
+                if (!f.ficheiroEhPdf && _verFatura)
+                  Text('toca para ampliar',
+                      style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
+          ),
+        ),
+      );
+
+  Widget _cabecalho(Fatura f) => Card(
+        child: ListTile(
+          leading: Icon(f.ficheiroEhPdf
+              ? Icons.picture_as_pdf_outlined
+              : Icons.receipt_long_outlined),
+          title: Text(f.fornecedor.isEmpty ? 'Fornecedor?' : f.fornecedor),
+          subtitle: Text([
+            f.tipo.label,
+            if (f.numero.isNotEmpty) 'nº ${f.numero}',
+            if (f.dataFatura.isNotEmpty) formatDateShort(f.dataFatura),
+            if (f.total > 0) 'total ${f.total.toStringAsFixed(2)}',
+          ].join(' · ')),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     final f = widget.fatura;
-    return ListView(
+    final lista = ListView(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
       children: [
-        Card(
-          child: ListTile(
-            leading: _ficheiro(f),
-            title: Text(f.fornecedor.isEmpty ? 'Fornecedor?' : f.fornecedor),
-            subtitle: Text([
-              f.tipo.label,
-              if (f.numero.isNotEmpty) 'nº ${f.numero}',
-              if (f.dataFatura.isNotEmpty) formatDateShort(f.dataFatura),
-              if (f.total > 0) 'total ${f.total.toStringAsFixed(2)}',
-            ].join(' · ')),
-          ),
-        ),
+        _cabecalho(f),
         const SizedBox(height: 8),
         Text('Linhas lidas pela IA — confirma cada uma',
             style: Theme.of(context).textTheme.titleSmall),
@@ -584,6 +693,27 @@ class _RevisaoState extends ConsumerState<_Revisao> {
               : const Icon(Icons.check),
           label: const Text('Aplicar aos ingredientes'),
         ),
+      ],
+    );
+
+    if (!f.temFicheiro) return lista;
+
+    final wide = MediaQuery.of(context).size.width >= 820;
+    if (wide) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(width: 380, child: _previewFatura(f, wide: true)),
+          const VerticalDivider(width: 1),
+          Expanded(child: lista),
+        ],
+      );
+    }
+    return Column(
+      children: [
+        if (_verFatura) _previewFatura(f, wide: false),
+        _toggleBar(f),
+        Expanded(child: lista),
       ],
     );
   }
