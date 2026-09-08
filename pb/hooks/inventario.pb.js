@@ -108,12 +108,41 @@ routerAdd(
       }
     };
 
-    // explosão agregada -> necessarios
+    // formato de um item: { massaG, recheioG, unidades } ou null
+    const infoFormato = (it, alvoG) => {
+      const fId = it.getString('formato');
+      if (!fId) return null;
+      let f;
+      try {
+        f = app.findRecordById('formatos_cookie', fId);
+      } catch (_) {
+        return null;
+      }
+      const massaG = num(f, 'massa_g');
+      const recheioG = num(f, 'recheio_g');
+      const unidades = massaG > 0 ? Math.round(alvoG / massaG) : 0;
+      return {
+        nome: f.getString('nome'),
+        massaG: massaG,
+        recheioG: recheioG,
+        unidades: unidades,
+      };
+    };
+
+    // explosão agregada -> necessarios (massa + recheio do formato)
     const agg = {};
     for (const it of ctx.itens) {
       const alvoG = num(it, 'quantidade_kg') * 1000;
       const parcial = cascade.explodeCompras(app, it.getString('receita'), alvoG);
       for (const k in parcial) agg[k] = (agg[k] || 0) + parcial[k];
+
+      const fmt = infoFormato(it, alvoG);
+      const recheioId = it.getString('recheio');
+      if (fmt && recheioId && fmt.recheioG > 0 && fmt.unidades > 0) {
+        const gRecheio = fmt.unidades * fmt.recheioG;
+        const pr = cascade.explodeCompras(app, recheioId, gRecheio);
+        for (const k in pr) agg[k] = (agg[k] || 0) + pr[k];
+      }
     }
 
     const necessarios = [];
@@ -163,10 +192,26 @@ routerAdd(
       } catch (_) {
         continue;
       }
+      const alvoG = num(it, 'quantidade_kg') * 1000;
+      const fmt = infoFormato(it, alvoG);
+      let recheioNome = '';
+      const recheioId = it.getString('recheio');
+      if (recheioId) {
+        try {
+          recheioNome = app
+            .findRecordById('receitas', recheioId)
+            .getString('nome');
+        } catch (_) {}
+      }
       produzir.push({
         receitaId: r.id,
         nome: r.getString('nome'),
         kg: num(it, 'quantidade_kg'),
+        unidades: fmt ? fmt.unidades : num(it, 'unidades_previstas'),
+        formato: fmt ? fmt.nome : '',
+        recheio: recheioNome,
+        prioridade: it.getString('prioridade') || 'media',
+        horaLimite: it.getString('hora_limite'),
       });
     }
 
@@ -308,25 +353,17 @@ routerAdd(
         consumos.push({ nome: nome || ingRec.getString('nome'), gramas: g });
       };
 
-      for (const it of ctx.itens) {
-        const receitaId = it.getString('receita');
-        let receita;
-        try {
-          receita = tx.findRecordById('receitas', receitaId);
-        } catch (_) {
-          continue;
-        }
-        const alvoG = num(it, 'quantidade_kg') * 1000;
-        const rend = num(receita, 'rendimento_esperado');
+      // Consome as linhas diretas de uma receita escaladas para `alvoG` g.
+      const consumirLinhasDe = (receitaRec, alvoG) => {
+        const rend = num(receitaRec, 'rendimento_esperado');
         const fator = rend > 0 ? alvoG / rend : 0;
-
         const linhas = tx.findRecordsByFilter(
           'itens_receita',
           'receita = {:id}',
           '',
           0,
           0,
-          { id: receitaId },
+          { id: receitaRec.id },
         );
         for (const l of linhas) {
           const g = num(l, 'quantidade_g') * fator;
@@ -338,7 +375,9 @@ routerAdd(
             if (esp) {
               consumir(esp, g, esp.getString('nome'));
             } else {
-              faltas.push('Sub-receita sem stock: ' + l.getString('nome_provisorio'));
+              faltas.push(
+                'Sub-receita sem stock: ' + l.getString('nome_provisorio'),
+              );
             }
           } else if (ingRel) {
             let ing;
@@ -350,23 +389,92 @@ routerAdd(
             consumir(ing, g, ing.getString('nome'));
           }
         }
+      };
 
-        // saída: +alvoG g no ingrediente-espelho da receita
-        const esp = espelhoDe(receitaId);
-        if (esp) {
-          cascade.aplicarMovimento(
+      for (const it of ctx.itens) {
+        const receitaId = it.getString('receita');
+        let receita;
+        try {
+          receita = tx.findRecordById('receitas', receitaId);
+        } catch (_) {
+          continue;
+        }
+        const alvoG = num(it, 'quantidade_kg') * 1000;
+        const formatoId = it.getString('formato');
+
+        // consumo da massa
+        consumirLinhasDe(receita, alvoG);
+
+        if (formatoId) {
+          let formato;
+          try {
+            formato = tx.findRecordById('formatos_cookie', formatoId);
+          } catch (_) {
+            formato = null;
+          }
+          const massaG = formato ? num(formato, 'massa_g') : 0;
+          const recheioG = formato ? num(formato, 'recheio_g') : 0;
+          const N = massaG > 0 ? Math.round(alvoG / massaG) : 0;
+          const recheioId = it.getString('recheio');
+
+          if (recheioId && recheioG > 0 && N > 0) {
+            let recheioRec;
+            try {
+              recheioRec = tx.findRecordById('receitas', recheioId);
+            } catch (_) {
+              recheioRec = null;
+            }
+            if (recheioRec) consumirLinhasDe(recheioRec, N * recheioG);
+          }
+
+          it.set('unidades_previstas', N);
+          tx.save(it);
+
+          const fichaId = cascade.resolverFicha(
             tx,
-            { empresaId: ctx.empresaId, ingredienteId: esp.id },
-            alvoG,
-            'saida_producao',
-            { autorId: ctx.autorId, producaoId: ctx.producao.id },
+            ctx.empresaId,
+            receitaId,
+            recheioId || '',
+            formatoId,
           );
-          saidas.push({ nome: receita.getString('nome'), gramas: alvoG });
-        } else {
-          faltas.push(
+          const nomeProduto =
             receita.getString('nome') +
-              ' não está publicada como ingrediente — produto não entrou em stock.',
-          );
+            (formato ? ' — ' + formato.getString('nome') : '');
+          if (fichaId && N > 0) {
+            cascade.aplicarMovimento(
+              tx,
+              { empresaId: ctx.empresaId, fichaId: fichaId },
+              N,
+              'saida_producao',
+              { autorId: ctx.autorId, producaoId: ctx.producao.id },
+            );
+            saidas.push({ nome: nomeProduto, gramas: N, unidades: N });
+          } else {
+            faltas.push(
+              'Sem ficha técnica para ' +
+                nomeProduto +
+                (recheioId ? ' (com recheio)' : '') +
+                ' — produto não entrou em stock.',
+            );
+          }
+        } else {
+          // sem formato: comportamento antigo (ingrediente-espelho)
+          const esp = espelhoDe(receitaId);
+          if (esp) {
+            cascade.aplicarMovimento(
+              tx,
+              { empresaId: ctx.empresaId, ingredienteId: esp.id },
+              alvoG,
+              'saida_producao',
+              { autorId: ctx.autorId, producaoId: ctx.producao.id },
+            );
+            saidas.push({ nome: receita.getString('nome'), gramas: alvoG });
+          } else {
+            faltas.push(
+              receita.getString('nome') +
+                ' não está publicada como ingrediente — produto não entrou em stock.',
+            );
+          }
         }
       }
 

@@ -427,6 +427,60 @@ function aplicarMovimento(app, item, delta, motivo, opts) {
   return q;
 }
 
+// Resolve a ficha técnica (produto acabado) correspondente a uma combinação
+// massa + recheio + formato. Devolve o id da ficha ou '' se não houver uma
+// que corresponda inequivocamente.
+function resolverFicha(app, empresaId, massaId, recheioId, formatoId) {
+  if (!massaId) return '';
+  const linhasMassa = app.findRecordsByFilter(
+    'itens_ficha',
+    "empresa = {:e} && slot = 'massa' && receita = {:r}",
+    '',
+    0,
+    0,
+    { e: empresaId, r: massaId },
+  );
+  for (const lm of linhasMassa) {
+    const fichaId = lm.getString('ficha');
+    if (!fichaId) continue;
+
+    let ficha;
+    try {
+      ficha = app.findRecordById('fichas_tecnicas', fichaId);
+    } catch (_) {
+      continue;
+    }
+    if (ficha.getString('deletado') === 'true' || ficha.get('deletado') === true) {
+      continue;
+    }
+    if (formatoId && ficha.getString('formato') !== formatoId) continue;
+
+    const recheios = app.findRecordsByFilter(
+      'itens_ficha',
+      "ficha = {:f} && (slot = 'recheio_base' || slot = 'recheio_top')",
+      '',
+      0,
+      0,
+      { f: fichaId },
+    );
+    if (recheioId) {
+      let ok = false;
+      for (const r of recheios) {
+        if (r.getString('receita') === recheioId) {
+          ok = true;
+          break;
+        }
+      }
+      if (!ok) continue;
+    } else if (recheios.length > 0) {
+      // pediram sem recheio mas a ficha tem recheio -> não corresponde
+      continue;
+    }
+    return fichaId;
+  }
+  return '';
+}
+
 // Valida o acesso a uma produção pelo `{id}` da rota e devolve o contexto.
 function carregarProducao(e, exigeEscrita) {
   const auth = e.auth;
@@ -469,4 +523,5 @@ module.exports = {
   explodeCompras,
   aplicarMovimento,
   carregarProducao,
+  resolverFicha,
 };
