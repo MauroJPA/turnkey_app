@@ -17,6 +17,8 @@ antes de começar, para carregar as últimas migrations.
 - [ ] Tocar em cada aba do rodapé abre a secção certa.
 - [ ] O botão **?** (canto superior direito) existe em todas as páginas e abre
       uma explicação clara.
+- [ ] Ao lado do **?** há o ícone de **sugestão/erro**: abre um campo de nota,
+      "Enviar" grava (mensagem "Obrigado! Sugestão enviada.").
 
 ## 1. Início (painel)
 
@@ -82,6 +84,8 @@ antes de começar, para carregar as últimas migrations.
         seletor de recheio manual; mostra "≈ N unidades".
   - [ ] **Intermédio**: só kg; texto "entra em stock a granel (g)".
   - [ ] Prioridade (Alta/Média/Baixa) e hora limite.
+- [ ] Ao adicionar, o aviso no fundo tem o botão **"Ver produção"** que abre
+      "Rever e agendar".
 - [ ] Adicionar **2+ receitas** → barra inferior "N receitas para agendar".
 - [ ] "Rever e agendar":
   - [ ] Campo de título mostra a **pré-visão** do título por omissão.
