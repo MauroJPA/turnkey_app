@@ -109,7 +109,11 @@ class Fatura {
   }
 
   factory Fatura.fromRecord(RecordModel r) {
-    final di = r.get<Map<String, dynamic>>('dados_ia', const {});
+    // Um campo json vazio volta como "" (não {}) neste SDK — ler defensivamente.
+    final rawDi = r.data['dados_ia'];
+    final di = rawDi is Map
+        ? Map<String, dynamic>.from(rawDi)
+        : <String, dynamic>{};
     return Fatura(
       id: r.id,
       tipo: FaturaTipo.fromApi(r.getStringValue('tipo')),

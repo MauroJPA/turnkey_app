@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pocketbase/pocketbase.dart';
 import 'package:turnkey_app/src/features/invoices/domain/fatura.dart';
 
 void main() {
@@ -99,6 +100,39 @@ void main() {
     test('erroIa lê a mensagem de erro guardada', () {
       final f = comDados(const {'erro': 'Falha na IA'});
       expect(f.erroIa, 'Falha na IA');
+    });
+  });
+
+  group('Fatura.fromRecord', () {
+    test('dados_ia vazio ("") de um json field por preencher não rebenta', () {
+      final r = RecordModel({
+        'id': 'f1',
+        'tipo': 'fatura',
+        'estado': 'nova',
+        'dados_ia': '', // PocketBase devolve "" para json por preencher
+      });
+      final f = Fatura.fromRecord(r);
+      expect(f.dadosIa, isEmpty);
+      expect(f.linhasIa, isEmpty);
+      expect(f.estado, FaturaEstado.nova);
+    });
+
+    test('dados_ia com objeto é lido', () {
+      final r = RecordModel({
+        'id': 'f2',
+        'tipo': 'lista_precos',
+        'estado': 'analisada',
+        'dados_ia': {
+          'fornecedor': 'Makro',
+          'linhas': [
+            {'descricao': 'Farinha', 'preco_unitario': 0.9},
+          ],
+        },
+      });
+      final f = Fatura.fromRecord(r);
+      expect(f.tipo, FaturaTipo.listaPrecos);
+      expect(f.linhasIa, hasLength(1));
+      expect(f.linhasIa.single.descricao, 'Farinha');
     });
   });
 }
