@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/formatting/money_provider.dart';
+import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
+import '../../../core/widgets/help_button.dart';
 import '../application/shopping_providers.dart';
 import '../domain/shopping_item.dart';
 
@@ -122,6 +124,7 @@ class ShoppingScreen extends ConsumerWidget {
         ),
         title: const Text('Lista de compras'),
         actions: [
+          const HelpButton(topic: HelpTopic.compras),
           if (podeEditar)
             IconButton(
               tooltip: 'Reorganizar lista',

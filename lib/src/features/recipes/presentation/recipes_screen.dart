@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/formatting/money_provider.dart';
+import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
+import '../../../core/widgets/help_button.dart';
 import '../application/recipes_providers.dart';
 import '../domain/recipe.dart';
 import 'recipe_form_sheet.dart';
@@ -61,6 +63,7 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
         ),
         title: Text(_trash ? 'Receitas · Lixeira' : 'Receitas'),
         actions: [
+          const HelpButton(topic: HelpTopic.receitas),
           IconButton(
             tooltip: _trash ? 'Ver ativas' : 'Lixeira',
             icon: Icon(

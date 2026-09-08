@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
+import '../../../core/widgets/help_button.dart';
 import '../application/cookie_format_providers.dart';
 import '../domain/cookie_format.dart';
 
@@ -78,6 +80,7 @@ class CookieFormatsScreen extends ConsumerWidget {
               context.canPop() ? context.pop() : context.go(Routes.settings),
         ),
         title: const Text('Formatos de cookie'),
+        actions: const [HelpButton(topic: HelpTopic.formatos)],
       ),
       floatingActionButton: podeEditar
           ? FloatingActionButton.extended(

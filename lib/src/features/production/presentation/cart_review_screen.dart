@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
+import '../../../core/help/help_content.dart';
+import '../../../core/widgets/help_button.dart';
 import '../../schedule/application/schedule_providers.dart';
 import '../../schedule/data/schedule_repository.dart';
 import '../application/agenda_cart.dart';
@@ -74,6 +76,7 @@ class _CartReviewScreenState extends ConsumerState<CartReviewScreen> {
               context.canPop() ? context.pop() : context.go(Routes.production),
         ),
         title: const Text('Rever e agendar'),
+        actions: const [HelpButton(topic: HelpTopic.agendar)],
       ),
       body: linhas.isEmpty
           ? const Center(child: Text('Carrinho vazio.'))

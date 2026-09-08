@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
 import '../../../core/formatting/money_provider.dart';
+import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
+import '../../../core/widgets/help_button.dart';
 import '../../recipes/domain/recipe.dart';
 import '../../recipes/presentation/recipe_picker_sheet.dart';
 import '../application/agenda_cart.dart';
@@ -59,6 +61,7 @@ class _ProductionScreenState extends ConsumerState<ProductionScreen> {
           onPressed: () => context.go(Routes.home),
         ),
         title: const Text('Produzir'),
+        actions: const [HelpButton(topic: HelpTopic.produzir)],
       ),
       floatingActionButton: pronto
           ? FloatingActionButton.extended(

@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/formatting/money_provider.dart';
+import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
+import '../../../core/widgets/help_button.dart';
 import '../../../core/widgets/history_sheet.dart';
 import '../../pricing/data/cost_config_repository.dart';
 import '../../pricing/domain/cost_config.dart';
@@ -114,6 +116,7 @@ class _TechSheetDetailScreenState
           ),
         ),
         actions: [
+          const HelpButton(topic: HelpTopic.fichaDetalhe),
           detailAsync.maybeWhen(
             data: (d) => IconButton(
               tooltip: 'Histórico',

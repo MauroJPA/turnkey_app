@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
 import '../../../core/auth/permissions.dart';
+import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
+import '../../../core/widgets/help_button.dart';
 import '../application/settings_providers.dart';
 import '../domain/team_member.dart';
 
@@ -83,6 +85,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
           onPressed: () => context.go(Routes.settings),
         ),
         title: const Text('Equipa'),
+        actions: const [HelpButton(topic: HelpTopic.equipa)],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _busy ? null : _addMember,

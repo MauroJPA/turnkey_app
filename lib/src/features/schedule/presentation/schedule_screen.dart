@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/formatting/money_provider.dart';
+import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
+import '../../../core/widgets/help_button.dart';
 import '../application/schedule_providers.dart';
 import '../domain/production_plan.dart';
 
@@ -73,6 +75,7 @@ class ScheduleScreen extends ConsumerWidget {
           onPressed: () => context.go(Routes.home),
         ),
         title: const Text('Agenda de produção'),
+        actions: const [HelpButton(topic: HelpTopic.agenda)],
       ),
       floatingActionButton: podeEditar
           ? FloatingActionButton.extended(
