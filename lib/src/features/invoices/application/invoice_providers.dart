@@ -35,16 +35,39 @@ class InvoiceActions {
       nome: nome,
     );
     _ref.invalidate(faturasListProvider);
+
+    // A análise pode falhar (503/502) ou marcar a fatura como duplicada (409) —
+    // nesse caso o estado 'erro' já ficou gravado; devolvemos a fatura para o
+    // ecrã de revisão mostrar o motivo, em vez de rebentar.
+    var result = f;
     try {
-      final analisada =
-          await _repo.analisar(f.id, bytes: bytes, nome: nome);
-      _ref.invalidate(faturasListProvider);
-      _ref.invalidate(faturaProvider(f.id));
-      return analisada;
+      result = await _repo.analisar(f.id, bytes: bytes, nome: nome);
     } on Object {
-      _ref.invalidate(faturaProvider(f.id));
-      rethrow;
+      result = await _repo.getById(f.id);
     }
+
+    // Renomear o ficheiro para FT-FORNECEDOR-DDMMAAAA com a data lida.
+    if (result.estado != FaturaEstado.erro && result.dataFatura.isNotEmpty) {
+      final data = DateTime.tryParse(result.dataFatura);
+      if (data != null) {
+        try {
+          result = await _repo.renomearFicheiro(
+            f.id,
+            bytes: bytes,
+            nomeOriginal: nome,
+            fornecedor:
+                result.fornecedor.isNotEmpty ? result.fornecedor : fornecedor,
+            dataFatura: data,
+          );
+        } on Object {
+          // fica com o nome provisório
+        }
+      }
+    }
+
+    _ref.invalidate(faturasListProvider);
+    _ref.invalidate(faturaProvider(f.id));
+    return result;
   }
 
   Future<Fatura> reanalisar(

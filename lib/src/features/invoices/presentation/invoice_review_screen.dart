@@ -71,21 +71,61 @@ class _Erro extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final duplicada = fatura.duplicadaDe.isNotEmpty;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline,
+          Icon(duplicada ? Icons.copy_all_outlined : Icons.error_outline,
               size: 40, color: Theme.of(context).colorScheme.error),
           const SizedBox(height: 12),
-          Text('A análise falhou: ${fatura.erroIa}',
-              textAlign: TextAlign.center),
-          const SizedBox(height: 16),
-          const Text(
-            'Verifica a configuração da IA no servidor (fornecedor e chave) e '
-            'tenta de novo com uma foto nítida.',
+          Text(
+            duplicada
+                ? fatura.erroIa
+                : 'A análise falhou: ${fatura.erroIa}',
             textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            duplicada
+                ? 'Esta fatura já tinha sido carregada. Podes apagá-la.'
+                : 'Verifica a configuração da IA no servidor (fornecedor e '
+                    'chave) e tenta de novo com uma foto nítida.',
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          Wrap(
+            spacing: 8,
+            alignment: WrapAlignment.center,
+            children: [
+              if (duplicada)
+                OutlinedButton.icon(
+                  onPressed: () => context.pushReplacement(
+                    '${Routes.invoices}/${fatura.duplicadaDe}',
+                  ),
+                  icon: const Icon(Icons.open_in_new),
+                  label: const Text('Abrir a original'),
+                ),
+              FilledButton.icon(
+                onPressed: () async {
+                  final ok = await confirmDialog(
+                    context,
+                    titulo: 'Apagar esta fatura?',
+                    mensagem: 'Remove o registo e o ficheiro carregado.',
+                    confirmar: 'Apagar',
+                    destrutivo: true,
+                  );
+                  if (!ok) return;
+                  await ref
+                      .read(invoiceActionsProvider)
+                      .apagar(fatura.id);
+                  if (context.mounted && context.canPop()) context.pop();
+                },
+                icon: const Icon(Icons.delete_outline),
+                label: const Text('Apagar fatura'),
+              ),
+            ],
           ),
         ],
       ),

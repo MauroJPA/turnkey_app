@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:turnkey_app/src/features/invoices/data/invoice_repository.dart';
 import 'package:turnkey_app/src/features/invoices/domain/fatura.dart';
 
 void main() {
@@ -133,6 +134,25 @@ void main() {
       expect(f.tipo, FaturaTipo.listaPrecos);
       expect(f.linhasIa, hasLength(1));
       expect(f.linhasIa.single.descricao, 'Farinha');
+    });
+  });
+
+  group('InvoiceRepository.nomeFicheiro', () {
+    test('segue FT-FORNECEDOR-DDMMAAAA.ext (data da fatura)', () {
+      expect(
+        InvoiceRepository.nomeFicheiro(
+            'Makro', DateTime(2026, 9, 8), 'IMG_0421.JPG'),
+        'FT-MAKRO-08092026.jpg',
+      );
+      expect(
+        InvoiceRepository.nomeFicheiro(
+            'Nova Distribuição, Lda', DateTime(2025, 12, 1), 'fatura.pdf'),
+        'FT-NOVADISTRIBUICAOLDA-01122025.pdf',
+      );
+      expect(
+        InvoiceRepository.nomeFicheiro('', DateTime(2026, 1, 3), 'x.webp'),
+        'FT-FORNECEDOR-03012026.webp',
+      );
     });
   });
 }

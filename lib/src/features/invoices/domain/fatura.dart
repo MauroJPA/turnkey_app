@@ -98,6 +98,9 @@ class Fatura {
 
   String get erroIa => (dadosIa['erro'] ?? '').toString();
 
+  /// Se esta fatura foi marcada como duplicada, o id da original.
+  String get duplicadaDe => (dadosIa['duplicada_de'] ?? '').toString();
+
   List<FaturaLinhaIa> get linhasIa {
     final l = dadosIa['linhas'];
     if (l is! List) return const [];

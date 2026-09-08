@@ -56,7 +56,37 @@ class InvoiceRepository {
         'estado': 'nova',
         if (_pb.authStore.record != null) 'autor': _pb.authStore.record!.id,
       },
-      files: [http.MultipartFile.fromBytes('ficheiro', bytes, filename: nome)],
+      files: [
+        http.MultipartFile.fromBytes(
+          'ficheiro',
+          bytes,
+          // Nome provisório com a data de hoje; renomeado para a data da
+          // fatura depois da análise (renomearFicheiro).
+          filename: nomeFicheiro(fornecedor, DateTime.now(), nome),
+        ),
+      ],
+    );
+    return Fatura.fromRecord(rec);
+  }
+
+  /// Re-carrega o mesmo ficheiro com o nome final `FT-FORNECEDOR-DDMMAAAA`,
+  /// já com a data lida da fatura.
+  Future<Fatura> renomearFicheiro(
+    String id, {
+    required List<int> bytes,
+    required String nomeOriginal,
+    required String fornecedor,
+    required DateTime dataFatura,
+  }) async {
+    final rec = await _c.update(
+      id,
+      files: [
+        http.MultipartFile.fromBytes(
+          'ficheiro',
+          bytes,
+          filename: nomeFicheiro(fornecedor, dataFatura, nomeOriginal),
+        ),
+      ],
     );
     return Fatura.fromRecord(rec);
   }
@@ -67,6 +97,39 @@ class InvoiceRepository {
     if (n.endsWith('.webp')) return 'image/webp';
     if (n.endsWith('.pdf')) return 'application/pdf';
     return 'image/jpeg';
+  }
+
+  static String _ext(String nome) {
+    final n = nome.toLowerCase();
+    for (final e in const ['.jpeg', '.jpg', '.png', '.webp', '.pdf']) {
+      if (n.endsWith(e)) return e;
+    }
+    return '.jpg';
+  }
+
+  static String _slugFornecedor(String s) {
+    const acc = {
+      'Á': 'A', 'À': 'A', 'Ã': 'A', 'Â': 'A', 'Ä': 'A',
+      'É': 'E', 'È': 'E', 'Ê': 'E', 'Ë': 'E',
+      'Í': 'I', 'Ì': 'I', 'Î': 'I', 'Ï': 'I',
+      'Ó': 'O', 'Ò': 'O', 'Õ': 'O', 'Ô': 'O', 'Ö': 'O',
+      'Ú': 'U', 'Ù': 'U', 'Û': 'U', 'Ü': 'U',
+      'Ç': 'C',
+    };
+    var out = s.toUpperCase();
+    acc.forEach((k, v) => out = out.replaceAll(k, v));
+    out = out.replaceAll(RegExp('[^A-Z0-9]'), '');
+    if (out.isEmpty) return 'FORNECEDOR';
+    return out.length > 40 ? out.substring(0, 40) : out;
+  }
+
+  /// `FT-NOMEFORNECEDOR-DDMMAAAA.ext` (o PocketBase normaliza e junta um
+  /// sufixo aleatório ao guardar).
+  static String nomeFicheiro(String fornecedor, DateTime data, String origem) {
+    final dd = data.day.toString().padLeft(2, '0');
+    final mm = data.month.toString().padLeft(2, '0');
+    final aaaa = data.year.toString().padLeft(4, '0');
+    return 'FT-${_slugFornecedor(fornecedor)}-$dd$mm$aaaa${_ext(origem)}';
   }
 
   Future<Fatura> analisar(

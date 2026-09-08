@@ -11,6 +11,7 @@ import '../../../core/formatting/dates.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
+import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../application/invoice_providers.dart';
@@ -100,6 +101,26 @@ class InvoicesScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _apagar(BuildContext context, WidgetRef ref, Fatura f) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = await confirmDialog(
+      context,
+      titulo: 'Apagar fatura?',
+      mensagem: '${f.fornecedor.isEmpty ? 'Fatura' : f.fornecedor}'
+          '${f.numero.isEmpty ? '' : ' nº ${f.numero}'} — '
+          'remove o registo e o ficheiro.',
+      confirmar: 'Apagar',
+      destrutivo: true,
+    );
+    if (!ok) return;
+    try {
+      await ref.read(invoiceActionsProvider).apagar(f.id);
+      messenger.showSnackBar(const SnackBar(content: Text('Fatura apagada.')));
+    } on Object catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(faturasListProvider);
@@ -168,6 +189,9 @@ class InvoicesScreen extends ConsumerWidget {
                       trailing: _EstadoChip(estado: f.estado),
                       onTap: () =>
                           context.push('${Routes.invoices}/${f.id}'),
+                      onLongPress: podeEditar
+                          ? () => _apagar(context, ref, f)
+                          : null,
                     ),
                   ),
               ],

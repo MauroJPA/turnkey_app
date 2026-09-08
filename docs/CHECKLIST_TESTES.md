@@ -201,6 +201,12 @@ antes de começar, para carregar as últimas migrations.
       "Limão siciliano", marca a caixa, aplica → abre uma receita que usava
       "Limão siciliano" e confirma que agora diz "Limão cal 3/4".
 - [ ] A fatura fica com o estado **"Confirmada"** e agrupada pelo **mês**.
+- [ ] **Duplicada**: carrega a **mesma** fatura outra vez → depois da análise fica
+      em **"Erro"** a dizer "Fatura duplicada", com botões **"Abrir a original"**
+      e **"Apagar fatura"**.
+- [ ] **Nome do ficheiro**: no `/export` (ou no armazenamento) o ficheiro segue
+      `FT-FORNECEDOR-DDMMAAAA` com a **data da fatura** (não a data de hoje).
+- [ ] **Apagar**: toca e mantém numa fatura na lista → confirma → desaparece.
 - [ ] **Verificar o efeito**:
   - [ ] Ingredientes: o preço das linhas com Preço/Ambos mudou (e o custo das
         receitas/fichas recalculou em cascata);
