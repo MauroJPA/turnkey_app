@@ -8,23 +8,29 @@ import '../domain/recipe.dart';
 /// Abre uma folha para escolher uma receita.
 ///
 /// Por defeito mostra só produtos de fabrico próprio (`publicarComoIngrediente`),
-/// com um interruptor para ver todas. Devolve a [Receita] escolhida ou `null`.
+/// com um interruptor para ver todas. Passa [categoria] para limitar a uma
+/// categoria (ex.: recheios). Devolve a [Receita] escolhida ou `null`.
 Future<Receita?> showRecipePickerSheet(
   BuildContext context, {
   bool soFabricoProprio = true,
+  CategoriaReceita? categoria,
 }) {
   return showModalBottomSheet<Receita>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (_) => _RecipePicker(soFabricoProprio: soFabricoProprio),
+    builder: (_) => _RecipePicker(
+      soFabricoProprio: soFabricoProprio,
+      categoria: categoria,
+    ),
   );
 }
 
 class _RecipePicker extends ConsumerStatefulWidget {
-  const _RecipePicker({required this.soFabricoProprio});
+  const _RecipePicker({required this.soFabricoProprio, this.categoria});
 
   final bool soFabricoProprio;
+  final CategoriaReceita? categoria;
 
   @override
   ConsumerState<_RecipePicker> createState() => _RecipePickerState();
@@ -67,7 +73,9 @@ class _RecipePickerState extends ConsumerState<_RecipePicker> {
                         r.nome.toLowerCase().contains(_q.toLowerCase());
                     final mf =
                         !_soFabricoProprio || r.publicarComoIngrediente;
-                    return mq && mf;
+                    final mc = widget.categoria == null ||
+                        r.categoria == widget.categoria;
+                    return mq && mf && mc;
                   }).toList();
                   return ListView.builder(
                     itemCount: items.length,

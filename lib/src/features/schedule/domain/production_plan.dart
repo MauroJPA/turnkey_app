@@ -1,5 +1,32 @@
 import 'package:pocketbase/pocketbase.dart';
 
+/// Prioridade de uma linha da agenda.
+enum Prioridade {
+  alta,
+  media,
+  baixa;
+
+  static Prioridade fromApi(String? v) => Prioridade.values.firstWhere(
+        (p) => p.name == v,
+        orElse: () => Prioridade.media,
+      );
+
+  String get api => name;
+
+  String get label => switch (this) {
+        Prioridade.alta => 'Alta',
+        Prioridade.media => 'Média',
+        Prioridade.baixa => 'Baixa',
+      };
+
+  /// Peso para ordenar (0 = mais urgente).
+  int get peso => switch (this) {
+        Prioridade.alta => 0,
+        Prioridade.media => 1,
+        Prioridade.baixa => 2,
+      };
+}
+
 /// Estado de um plano de produção.
 enum EstadoProducao {
   planeada,

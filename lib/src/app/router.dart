@@ -10,6 +10,7 @@ import '../features/cookie_formats/presentation/cookie_formats_screen.dart';
 import '../features/dashboard/presentation/home_shell.dart';
 import '../features/ingredients/presentation/ingredients_screen.dart';
 import '../features/inventory/presentation/inventory_screen.dart';
+import '../features/production/presentation/cart_review_screen.dart';
 import '../features/production/presentation/production_screen.dart';
 import '../features/recipes/presentation/recipe_detail_screen.dart';
 import '../features/recipes/presentation/recipes_screen.dart';
@@ -87,6 +88,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.production,
         builder: (_, __) => const ProductionScreen(),
+        routes: [
+          GoRoute(
+            path: 'agendar',
+            builder: (_, __) => const CartReviewScreen(),
+          ),
+        ],
       ),
       GoRoute(
         path: Routes.inventory,

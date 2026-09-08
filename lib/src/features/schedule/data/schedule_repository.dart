@@ -79,12 +79,22 @@ class ScheduleRepository {
     String planId, {
     required String receitaId,
     required double quantidadeKg,
+    String? formatoId,
+    String? recheioId,
+    String prioridade = 'media',
+    String horaLimite = '',
+    int unidadesPrevistas = 0,
   }) async {
     await _itens.create(body: {
       'empresa': _empresaId,
       'producao': planId,
       'receita': receitaId,
       'quantidade_kg': quantidadeKg,
+      if (formatoId != null) 'formato': formatoId,
+      if (recheioId != null) 'recheio': recheioId,
+      'prioridade': prioridade,
+      if (horaLimite.isNotEmpty) 'hora_limite': horaLimite,
+      'unidades_previstas': unidadesPrevistas,
     });
   }
 
