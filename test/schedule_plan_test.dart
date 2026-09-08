@@ -65,6 +65,49 @@ void main() {
     expect(r.custoTotal, closeTo(28.6, 1e-9));
   });
 
+  test('PlanoProduzir.fromJson lê formato/recheio/unidades/prioridade', () {
+    final resp = PlanoResposta.fromJson({
+      'necessarios': [
+        {
+          'ingredienteId': 'i1',
+          'nome': 'Bicarbonato',
+          'gramas': 1594.0,
+          'aComprar': 1594.0,
+          'embalagemG': 1000.0,
+          'aComprarSacos': 2,
+        },
+      ],
+      'produzir': [
+        {
+          'receitaId': 'r1',
+          'nome': 'Boston',
+          'kg': 10.0,
+          'unidades': 83,
+          'formato': 'Recheado',
+          'recheio': 'Brigadeiro_Rio',
+          'prioridade': 'alta',
+          'horaLimite': '14:00',
+        },
+      ],
+      'custoTotal': 67.7,
+    });
+    final p = resp.produzir.single;
+    expect(p.unidades, 83);
+    expect(p.formato, 'Recheado');
+    expect(p.recheio, 'Brigadeiro_Rio');
+    expect(p.prioridade, Prioridade.alta);
+    expect(p.horaLimite, '14:00');
+    expect(resp.necessarios.single.aComprarSacos, 2);
+    expect(resp.necessarios.single.embalagemG, 1000.0);
+  });
+
+  test('Prioridade.fromApi tolerante; peso ordena alta<media<baixa', () {
+    expect(Prioridade.fromApi('alta'), Prioridade.alta);
+    expect(Prioridade.fromApi(null), Prioridade.media);
+    expect(Prioridade.fromApi('xpto'), Prioridade.media);
+    expect(Prioridade.alta.peso < Prioridade.baixa.peso, isTrue);
+  });
+
   test('EstadoProducao.fromApi cai em planeada para valores desconhecidos', () {
     expect(EstadoProducao.fromApi('concluida'), EstadoProducao.concluida);
     expect(EstadoProducao.fromApi('cancelada'), EstadoProducao.cancelada);

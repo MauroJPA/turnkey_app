@@ -326,9 +326,12 @@ class _Body extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          n.aComprar > 0
-                              ? 'comprar ${_gLabel(n.aComprar)}'
-                              : 'ok',
+                          n.aComprar <= 0
+                              ? 'ok'
+                              : n.aComprarSacos > 0
+                                  ? '${n.aComprarSacos} '
+                                      '${n.aComprarSacos == 1 ? 'saco' : 'sacos'}'
+                                  : 'comprar ${_gLabel(n.aComprar)}',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: n.aComprar > 0

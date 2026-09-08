@@ -13,6 +13,7 @@ class ShoppingItem {
     this.comprarG = 0,
     this.comprado = false,
     this.producaoId,
+    this.embalagemG = 0,
   });
 
   final String id;
@@ -23,9 +24,14 @@ class ShoppingItem {
   final double comprarG;
   final bool comprado;
   final String? producaoId;
+  final double embalagemG;
 
   /// Rótulo do fornecedor para agrupar (nunca vazio).
   String get grupo => fornecedor.trim().isEmpty ? 'Sem fornecedor' : fornecedor;
+
+  /// Nº de embalagens que cobrem `comprarG` (null se não se conhece a embalagem).
+  int? get sacos =>
+      embalagemG > 0 ? (comprarG / embalagemG).ceil() : null;
 
   static String gramasLabel(double g) => g >= 1000
       ? '${(g / 1000).toStringAsFixed(3)} kg'
@@ -44,6 +50,7 @@ class ShoppingItem {
       producaoId: r.getStringValue('producao').isEmpty
           ? null
           : r.getStringValue('producao'),
+      embalagemG: r.getDoubleValue('embalagem_g'),
     );
   }
 
@@ -56,5 +63,6 @@ class ShoppingItem {
         comprarG: comprarG ?? this.comprarG,
         comprado: comprado ?? this.comprado,
         producaoId: producaoId,
+        embalagemG: embalagemG,
       );
 }

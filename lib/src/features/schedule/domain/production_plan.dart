@@ -143,6 +143,8 @@ class PlanoNecessario {
     required this.custo,
     required this.emStock,
     required this.aComprar,
+    this.embalagemG = 0,
+    this.aComprarSacos = 0,
   });
 
   final String ingredienteId;
@@ -152,6 +154,8 @@ class PlanoNecessario {
   final double custo;
   final double emStock;
   final double aComprar;
+  final double embalagemG;
+  final int aComprarSacos;
 
   factory PlanoNecessario.fromJson(Map<String, dynamic> j) => PlanoNecessario(
         ingredienteId: j['ingredienteId'] as String? ?? '',
@@ -161,6 +165,8 @@ class PlanoNecessario {
         custo: (j['custo'] as num?)?.toDouble() ?? 0,
         emStock: (j['emStock'] as num?)?.toDouble() ?? 0,
         aComprar: (j['aComprar'] as num?)?.toDouble() ?? 0,
+        embalagemG: (j['embalagemG'] as num?)?.toDouble() ?? 0,
+        aComprarSacos: (j['aComprarSacos'] as num?)?.toInt() ?? 0,
       );
 }
 

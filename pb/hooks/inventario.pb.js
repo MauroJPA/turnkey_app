@@ -171,6 +171,7 @@ routerAdd(
       );
       if (inv.length > 0) emStock = inv[0].getFloat('quantidade');
 
+      const faltaG = Math.max(0, g - emStock);
       necessarios.push({
         ingredienteId: ingId,
         nome: ing.getString('nome'),
@@ -178,7 +179,10 @@ routerAdd(
         gramas: g,
         custo: custo,
         emStock: emStock,
-        aComprar: Math.max(0, g - emStock),
+        aComprar: faltaG,
+        embalagemG: gramasEmb,
+        aComprarSacos:
+          gramasEmb > 0 ? Math.ceil(faltaG / gramasEmb) : 0,
       });
     }
     necessarios.sort((a, b) => a.nome.localeCompare(b.nome));
@@ -245,6 +249,25 @@ routerAdd(
       const alvoG = num(it, 'quantidade_kg') * 1000;
       const parcial = cascade.explodeCompras(app, it.getString('receita'), alvoG);
       for (const k in parcial) agg[k] = (agg[k] || 0) + parcial[k];
+
+      // recheio do formato
+      const fId = it.getString('formato');
+      const recheioId = it.getString('recheio');
+      if (fId && recheioId) {
+        let f;
+        try {
+          f = app.findRecordById('formatos_cookie', fId);
+        } catch (_) {
+          f = null;
+        }
+        const massaG = f ? num(f, 'massa_g') : 0;
+        const recheioG = f ? num(f, 'recheio_g') : 0;
+        const N = massaG > 0 ? Math.round(alvoG / massaG) : 0;
+        if (recheioG > 0 && N > 0) {
+          const pr = cascade.explodeCompras(app, recheioId, N * recheioG);
+          for (const k in pr) agg[k] = (agg[k] || 0) + pr[k];
+        }
+      }
     }
 
     let linhas = 0;
@@ -268,7 +291,10 @@ routerAdd(
           { e: ctx.empresaId, i: ingId },
         );
         if (inv.length > 0) emStock = inv[0].getFloat('quantidade');
-        const comprar = Math.max(0, necessario - emStock);
+        const faltaG = Math.max(0, necessario - emStock);
+        const embG = num(ing, 'gramas_embalagem');
+        const comprar =
+          embG > 0 ? Math.ceil(faltaG / embG) * embG : faltaG;
 
         const existentes = tx.findRecordsByFilter(
           'lista_compras',
@@ -292,6 +318,7 @@ routerAdd(
         row.set('fornecedor', ing.getString('fornecedor'));
         row.set('quantidade_necessaria_g', necessario);
         row.set('quantidade_comprar_g', comprar);
+        row.set('embalagem_g', embG);
         tx.save(row);
         linhas++;
       }

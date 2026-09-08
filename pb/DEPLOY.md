@@ -7,7 +7,7 @@ pb/migrations/*.js   -> schema (coleções, campos, regras)
 pb/hooks/*           -> lógica (cascata de custos, onboarding, equipa, admin)
 ```
 
-As 12 migrations aplicam-se limpas a uma base de dados vazia (verificado).
+As 17 migrations aplicam-se limpas a uma base de dados vazia (verificado).
 
 ---
 
@@ -44,9 +44,11 @@ O Mini PC corre **PocketBase v0.35.0**. Confirma:
 4. **Verificar** no Admin UI (`/_/`) que existem as coleções:
    `empresas, configuracoes_custo, ingredientes, receitas, itens_receita,
    fichas_tecnicas, itens_ficha, historico, inventario, movimentos_inventario,
-   producoes, producao_itens, lista_compras`
-   e que `users` tem os campos `nome`, `empresa`, `papel`.
-   Endpoints da Fase 2 (`pb_hooks/inventario.pb.js`): `POST
+   producoes, producao_itens, lista_compras, formatos_cookie`
+   e que `users` tem os campos `nome`, `empresa`, `papel`. A migração
+   `1705104000_formatos_cookie.js` **semeia** Mini/Recheado/Simples em cada
+   empresa existente (e o onboarding fá-lo para novas).
+   Endpoints (`pb_hooks/inventario.pb.js`): `POST
    /api/turnkey/inventario/ajustar`, `GET /api/turnkey/producoes/{id}/plano`,
    `POST /api/turnkey/producoes/{id}/lista-compras`, `POST
    /api/turnkey/producoes/{id}/concluir` — ver [`README.md`](README.md).

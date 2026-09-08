@@ -47,10 +47,16 @@ pb/
 | `1704844800_inventario.js` | `inventario`, `movimentos_inventario` (só o servidor escreve) |
 | `1704931200_producoes.js` | `producoes`, `producao_itens`, `movimentos_inventario.producao` |
 | `1705017600_lista_compras.js` | `lista_compras` |
+| `1705104000_formatos_cookie.js` | `formatos_cookie` + seed Mini/Recheado/Simples por empresa |
+| `1705190400_producao_itens_agenda.js` | `producao_itens`: `formato`, `recheio`, `prioridade`, `hora_limite`, `unidades_previstas` |
+| `1705276800_fichas_formato.js` | `fichas_tecnicas.formato` |
+| `1705363200_receitas_imagens.js` | `receitas.imagens` (file, ≤8, image/*) |
+| `1705449600_lista_compras_embalagem.js` | `lista_compras.embalagem_g` |
 
-Hooks: `onboarding.pb.js`, `guards.pb.js`, `cost_cascade.pb.js`, `team.pb.js`,
-`inventario.pb.js`, `admin.pb.js` (+ `cascade.js`, que exporta `runCascade`,
-`explodeCompras`, `aplicarMovimento`, `carregarProducao`).
+Hooks: `onboarding.pb.js` (semeia `configuracoes_custo` + `formatos_cookie`),
+`guards.pb.js`, `cost_cascade.pb.js`, `team.pb.js`, `inventario.pb.js`,
+`admin.pb.js` (+ `cascade.js`, que exporta `runCascade`, `explodeCompras`,
+`aplicarMovimento`, `carregarProducao`, `resolverFicha`).
 
 ### Endpoints (Fase 2 — `inventario.pb.js`)
 
@@ -60,9 +66,9 @@ sobre a sua empresa.
 | Método | Rota | Efeito |
 |---|---|---|
 | `POST` | `/api/turnkey/inventario/ajustar` | `{ ingrediente?\|ficha?, delta, motivo, notas?, producao?, minimo?, localizacao? }` → upsert da linha `inventario` (`quantidade = max(0, q+delta)`) + `movimentos_inventario`. `delta` 0 é aceite se vier `minimo`/`localizacao`. |
-| `GET` | `/api/turnkey/producoes/{id}/plano` | explosão agregada (desce sub-receitas e espelhos de fabrico próprio até ingredientes comprados) → `{ necessarios:[{ingredienteId,nome,fornecedor,gramas,custo,emStock,aComprar}], produzir:[{receitaId,nome,kg}], custoTotal }`. |
-| `POST` | `/api/turnkey/producoes/{id}/lista-compras` | mesma agregação → upsert em `lista_compras` (funde na linha não-comprada do mesmo ingrediente+produção), `comprar = max(0, necessário − stock)` → `{ linhas }`. |
-| `POST` | `/api/turnkey/producoes/{id}/concluir` | por cada `producao_item` consome as linhas diretas escaladas (`consumo_producao`) e credita o espelho da receita (`saida_producao`); marca `estado=concluida`, `concluida_em`, `custo_snapshot` → `{ consumos, saidas, faltas, custoTotal }`. |
+| `GET` | `/api/turnkey/producoes/{id}/plano` | explosão agregada (sub-receitas + espelhos de fabrico próprio + **recheio do formato**: `N = round(kg·1000/massa_g)`, `N·recheio_g` do recheio) → `{ necessarios:[{ingredienteId,nome,fornecedor,gramas,custo,emStock,aComprar,embalagemG,aComprarSacos}], produzir:[{receitaId,nome,kg,unidades,formato,recheio,prioridade,horaLimite}], custoTotal }`. |
+| `POST` | `/api/turnkey/producoes/{id}/lista-compras` | mesma agregação → upsert em `lista_compras`; `quantidade_necessaria_g` = necessidade exata, `quantidade_comprar_g` = `ceil(falta/embalagem)·embalagem` (sacos inteiros), grava `embalagem_g` → `{ linhas }`. |
+| `POST` | `/api/turnkey/producoes/{id}/concluir` | por `producao_item`: consome massa (`kg`) e, se houver `formato`+`recheio`, o recheio (`N·recheio_g`); com `formato` resolve a **ficha técnica** (`resolverFicha`: slot massa + slot recheio + `formato`) e credita `+N` unidades no `inventario` da ficha, senão entra em `faltas`; itens sem `formato` mantêm o crédito do ingrediente-espelho. Grava `unidades_previstas`, `estado=concluida`, `concluida_em`, `custo_snapshot` → `{ consumos, saidas, faltas, custoTotal }`. |
 
 ## ⚠️ Regras de escrita de hooks (PocketBase 0.35)
 

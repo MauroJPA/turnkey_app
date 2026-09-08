@@ -20,6 +20,19 @@ void main() {
     expect(base('Makro').grupo, 'Makro');
   });
 
+  test('sacos = ceil(comprarG / embalagemG); sem embalagem -> null', () {
+    ShoppingItem item(double comprar, double emb) => ShoppingItem(
+          id: 'x',
+          descricao: 'Bicarbonato',
+          comprarG: comprar,
+          embalagemG: emb,
+        );
+    expect(item(1594, 1000).sacos, 2);
+    expect(item(2000, 1000).sacos, 2);
+    expect(item(0, 1000).sacos, 0);
+    expect(item(1594, 0).sacos, isNull);
+  });
+
   test('copyWith mantém identidade e só troca comprarG/comprado', () {
     const item = ShoppingItem(
       id: 'a1',

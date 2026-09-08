@@ -227,7 +227,7 @@ class _Linha extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final emStock = (item.necessariaG - item.comprarG).clamp(0, double.infinity);
+    final sacos = item.sacos;
     return CheckboxListTile(
       controlAffinity: ListTileControlAffinity.leading,
       value: item.comprado,
@@ -243,8 +243,12 @@ class _Linha extends StatelessWidget {
       ),
       subtitle: Text(
         item.necessariaG > 0
-            ? 'Necessário ${ShoppingItem.gramasLabel(item.necessariaG)} · '
-                'em stock ${ShoppingItem.gramasLabel(emStock.toDouble())}'
+            ? [
+                if (sacos != null && sacos > 0)
+                  '$sacos ${sacos == 1 ? 'saco' : 'sacos'} de '
+                      '${ShoppingItem.gramasLabel(item.embalagemG)}',
+                'precisa ${ShoppingItem.gramasLabel(item.necessariaG)}',
+              ].join(' · ')
             : 'Item manual',
       ),
       secondary: Row(
