@@ -12,7 +12,7 @@
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 
-# --- carregar pb\.env (KEY=VALUE por linha; # = comentário) -----------
+# --- carregar pb\.env (KEY=VALUE por linha; # = comentario) -----------
 $envFile = Join-Path $PSScriptRoot ".env"
 if (Test-Path $envFile) {
   foreach ($line in Get-Content $envFile) {
@@ -25,13 +25,19 @@ if (Test-Path $envFile) {
     Set-Item -Path "Env:$k" -Value $v
   }
 }
+
 $aiProvider = $env:TURNKEY_AI_PROVIDER
 if (-not $aiProvider) { $aiProvider = "gemini" }
-$aiKey = if ($aiProvider -match "anthropic|claude") { $env:ANTHROPIC_API_KEY } else { $env:GEMINI_API_KEY; if (-not $env:GEMINI_API_KEY) { $env:GOOGLE_API_KEY } }
+if ($aiProvider -match "anthropic|claude") {
+  $aiKey = $env:ANTHROPIC_API_KEY
+} else {
+  $aiKey = $env:GEMINI_API_KEY
+  if (-not $aiKey) { $aiKey = $env:GOOGLE_API_KEY }
+}
 if ($aiKey) {
   Write-Host "IA de faturas: provider=$aiProvider, chave definida." -ForegroundColor Green
 } else {
-  Write-Host "IA de faturas: provider=$aiProvider, sem chave — /faturas/{id}/analisar devolve 503." -ForegroundColor Yellow
+  Write-Host "IA de faturas: provider=$aiProvider, sem chave. /faturas/{id}/analisar devolve 503." -ForegroundColor Yellow
 }
 
 $bin = ".\bin\pocketbase.exe"
