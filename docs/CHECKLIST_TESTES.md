@@ -186,11 +186,20 @@ antes de começar, para carregar as últimas migrations.
   - [ ] cada **linha** mostra a descrição lida pela IA;
   - [ ] o **ingrediente** vem pré-escolhido pelo nome mais parecido; tocar
         abre a pesquisa para corrigir;
+  - [ ] no cimo da pesquisa há **"Criar ingrediente novo «…»"** → a linha passa
+        a mostrar um campo de nome editável e cria o ingrediente ao aplicar
+        (com o fornecedor da fatura, o preço e a embalagem da linha);
+  - [ ] quando o ingrediente ligado tem nome diferente da fatura, aparece
+        **"Passar «X» a chamar-se «Y»"** → ao aplicar renomeia o ingrediente
+        (e as receitas/fichas que o usam passam a mostrar o nome novo);
   - [ ] campos **Comprado (g)**, **Preço embalagem**, **Embalagem (g)** editáveis;
   - [ ] **Ação** por linha: Preço / Stock / Preço + Stock / Ignorar
         (numa *lista de preços* só há Preço / Ignorar e não há quantidade).
-- [ ] **"Aplicar aos ingredientes"**: pede confirmação, depois mostra
-      "X preço(s) atualizado(s) · Y entrada(s) de stock" e volta à lista.
+- [ ] **"Aplicar aos ingredientes"**: pede confirmação (diz quantos novos /
+      renomeados), depois mostra o resumo e volta à lista.
+- [ ] **Renomear**: exemplo — fatura "Limão cal 3/4", ingrediente guardado
+      "Limão siciliano", marca a caixa, aplica → abre uma receita que usava
+      "Limão siciliano" e confirma que agora diz "Limão cal 3/4".
 - [ ] A fatura fica com o estado **"Confirmada"** e agrupada pelo **mês**.
 - [ ] **Verificar o efeito**:
   - [ ] Ingredientes: o preço das linhas com Preço/Ambos mudou (e o custo das
