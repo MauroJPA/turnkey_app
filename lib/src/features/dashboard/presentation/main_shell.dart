@@ -12,6 +12,11 @@ class MainShell extends StatelessWidget {
 
   static const _abas = <({String rota, IconData icon, String label})>[
     (rota: Routes.home, icon: Icons.home_outlined, label: 'Início'),
+    (
+      rota: Routes.miseEnPlace,
+      icon: Icons.checklist_rtl,
+      label: 'Mise'
+    ),
     (rota: Routes.production, icon: Icons.blender_outlined, label: 'Produzir'),
     (rota: Routes.schedule, icon: Icons.event_note_outlined, label: 'Agenda'),
     (

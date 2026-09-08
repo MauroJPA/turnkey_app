@@ -114,6 +114,18 @@ class HomeShell extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
         children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(56),
+              ),
+              onPressed: () => context.go(Routes.miseEnPlace),
+              icon: const Icon(Icons.checklist_rtl),
+              label: const Text('Mise en place — produzir agora'),
+            ),
+          ),
+          const SizedBox(height: 4),
           _StatCard(
             icon: Icons.warning_amber_rounded,
             titulo: 'Stock baixo',

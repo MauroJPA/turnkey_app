@@ -10,6 +10,7 @@ enum HelpTopic {
   fichas,
   fichaDetalhe,
   produzir,
+  miseEnPlace,
   agendar,
   agenda,
   planoDetalhe,
@@ -85,6 +86,17 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Botão "Adicionar à agenda": escolhe se é um "Produto final" (cookie pronto, com formato/ficha técnica → conta unidades) ou um "Intermédio" (recheio, massa, base → entra em stock a granel em gramas). Depois a prioridade e a hora limite, e junta ao carrinho.',
       'Se já existir uma ficha técnica para essa massa, o recheio e as coberturas são preenchidos automaticamente.',
       'Quando tiver as receitas todas no carrinho, toque na barra em baixo para "Rever e agendar".',
+    ],
+  ),
+  HelpTopic.miseEnPlace: (
+    titulo: 'Mise en place',
+    paragrafos: [
+      'Página para produzir agora, sem agendar antes.',
+      'Escolhe a receita e a quantidade em kg. Se for um produto final, escolhe o formato.',
+      'Aparece a lista em caixas: "Produzir primeiro" (recheios/bases — carrega em "Abrir" para ver a receita, procedimento e imagens de cada um) e "Ingredientes" (com o que tens em stock; a vermelho quando falta).',
+      'Botão "Procedimento e imagens" mostra o passo-a-passo da receita escolhida.',
+      'Vai marcando as caixas à medida que preparas.',
+      '"Produção feita" → pergunta se registas na Agenda (como concluída, dá baixa no stock) e se adicionas o que faltou à lista de compras.',
     ],
   ),
   HelpTopic.agendar: (

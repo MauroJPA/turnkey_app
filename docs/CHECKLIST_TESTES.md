@@ -148,6 +148,20 @@ antes de começar, para carregar as últimas migrations.
 - [ ] Concluir a produção → Inventário: ingredientes descem, o produto final
       sobe em unidades (ou aviso se faltar a ficha).
 
+## 12. Mise en place (produzir agora)
+
+- [ ] Aba **Mise** no rodapé e botão "Mise en place — produzir agora" no Início.
+- [ ] Escolher receita + kg (+ formato p/ produto final) mostra as caixas.
+- [ ] Seção **"Produzir primeiro"** lista os intermédios (recheios/bases);
+      botão **"Abrir"** abre o mise en place desse intermédio (com o seu
+      procedimento e imagens).
+- [ ] Seção **"Ingredientes"**: caixas grandes, a vermelho quando falta stock.
+- [ ] **"Procedimento e imagens desta receita"** abre o passo-a-passo.
+- [ ] **"Produção feita"** → pop-ups: (1) itens por marcar? (2) registar na
+      agenda + baixa no stock? (3) faltou stock → adicionar à lista de compras?
+- [ ] No fim: resumo (consumos/entradas/avisos) + "Ver na agenda" abre o plano
+      conclído.
+
 ---
 
 ## Notas / ajustes pedidos

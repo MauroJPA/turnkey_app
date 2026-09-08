@@ -766,3 +766,190 @@ routerAdd(
   },
   $apis.requireAuth('users', '_superusers'),
 );
+
+// --- GET /api/turnkey/receitas/{id}/plano -----------------------------
+// Mise en place de UMA receita, sem precisar de uma produção agendada.
+//   ?kg=  (obrigatório)  &formato=  &recheio=  &empresa=(só superuser)
+routerAdd(
+  'GET',
+  '/api/turnkey/receitas/{id}/plano',
+  (e) => {
+    const cascade = require(`${__hooks}/cascade.js`);
+    const auth = e.auth;
+    const isSuper =
+      auth && auth.collection() && auth.collection().name === '_superusers';
+    let empresaId = e.requestInfo().query.empresa || '';
+    if (!isSuper) {
+      if (!auth || auth.collection().name !== 'users') {
+        throw new ForbiddenError('Autenticação necessária.');
+      }
+      empresaId = auth.getString('empresa');
+    }
+    const app = e.app;
+    const num = (rec, f) => {
+      try {
+        return rec.getFloat(f);
+      } catch (_) {
+        return 0;
+      }
+    };
+    const nomeReceita = (id) => {
+      try {
+        return app.findRecordById('receitas', id).getString('nome');
+      } catch (_) {
+        return '';
+      }
+    };
+    const merge = (dst, src) => {
+      for (const k in src) dst[k] = (dst[k] || 0) + src[k];
+    };
+
+    const receitaId = e.request.pathValue('id');
+    let receita;
+    try {
+      receita = app.findRecordById('receitas', receitaId);
+    } catch (_) {
+      throw new NotFoundError('Receita não encontrada.');
+    }
+    const q = e.requestInfo().query;
+    const kg = Number(q.kg || 0);
+    if (!isFinite(kg) || kg <= 0) throw new BadRequestError('kg inválido.');
+    const alvoG = kg * 1000;
+    const formatoId = q.formato || '';
+    const recheioId = q.recheio || '';
+
+    let massaG = 0;
+    let unidades = 0;
+    let formatoNome = '';
+    if (formatoId) {
+      try {
+        const f = app.findRecordById('formatos_cookie', formatoId);
+        massaG = num(f, 'massa_g');
+        formatoNome = f.getString('nome');
+        unidades = massaG > 0 ? Math.round(alvoG / massaG) : 0;
+      } catch (_) {}
+    }
+
+    const ep = cascade.explodeProducao(app, receitaId, alvoG);
+    const comprarMap = {};
+    const intermediosMap = {};
+    merge(comprarMap, ep.comprar);
+    merge(intermediosMap, ep.produzir);
+
+    if (formatoId && unidades > 0) {
+      const fichaId = cascade.resolverFicha(
+        app,
+        empresaId,
+        receitaId,
+        recheioId || '',
+        formatoId,
+      );
+      if (fichaId) {
+        const slots = app.findRecordsByFilter(
+          'itens_ficha',
+          "ficha = {:f} && slot != 'massa'",
+          '',
+          0,
+          0,
+          { f: fichaId },
+        );
+        for (const sl of slots) {
+          const g = num(sl, 'quantidade_g') * unidades;
+          if (g <= 0) continue;
+          merge(
+            comprarMap,
+            cascade.explodeComprasDe(
+              app,
+              g,
+              sl.getString('receita'),
+              sl.getString('ingrediente'),
+            ),
+          );
+          const recSlot = sl.getString('receita');
+          if (recSlot) {
+            intermediosMap[recSlot] = (intermediosMap[recSlot] || 0) + g;
+          } else {
+            const ingSlot = sl.getString('ingrediente');
+            try {
+              const ig = app.findRecordById('ingredientes', ingSlot);
+              const esp = ig.getString('receita_espelho');
+              if (ig.getString('origem') === 'fabrico_proprio' && esp) {
+                intermediosMap[esp] = (intermediosMap[esp] || 0) + g;
+              }
+            } catch (_) {}
+          }
+        }
+      } else if (recheioId) {
+        const recheioG = massaG > 0
+          ? (() => {
+              try {
+                return num(
+                  app.findRecordById('formatos_cookie', formatoId),
+                  'recheio_g',
+                );
+              } catch (_) {
+                return 0;
+              }
+            })()
+          : 0;
+        if (recheioG > 0) {
+          const gRecheio = unidades * recheioG;
+          merge(comprarMap, cascade.explodeCompras(app, recheioId, gRecheio));
+          intermediosMap[recheioId] =
+            (intermediosMap[recheioId] || 0) + gRecheio;
+        }
+      }
+    }
+
+    const emStockDe = (ingId) => {
+      const inv = app.findRecordsByFilter(
+        'inventario',
+        'empresa = {:e} && ingrediente = {:i}',
+        '',
+        1,
+        0,
+        { e: empresaId, i: ingId },
+      );
+      return inv.length > 0 ? inv[0].getFloat('quantidade') : 0;
+    };
+
+    const comprar = [];
+    for (const k in comprarMap) {
+      let ing;
+      try {
+        ing = app.findRecordById('ingredientes', k);
+      } catch (_) {
+        continue;
+      }
+      comprar.push({
+        ingredienteId: k,
+        nome: ing.getString('nome'),
+        gramas: comprarMap[k],
+        emStock: emStockDe(k),
+      });
+    }
+    comprar.sort((a, b) => a.nome.localeCompare(b.nome));
+
+    const intermedios = [];
+    for (const k in intermediosMap) {
+      intermedios.push({
+        receitaId: k,
+        nome: nomeReceita(k),
+        gramas: intermediosMap[k],
+      });
+    }
+    intermedios.sort((a, b) => a.nome.localeCompare(b.nome));
+
+    return e.json(200, {
+      receitaId: receitaId,
+      nome: receita.getString('nome'),
+      kg: kg,
+      unidades: unidades,
+      formato: formatoNome,
+      recheio: recheioId ? nomeReceita(recheioId) : '',
+      comprar: comprar,
+      intermedios: intermedios,
+    });
+  },
+  $apis.requireAuth('users', '_superusers'),
+);

@@ -11,6 +11,7 @@ import '../features/dashboard/presentation/home_shell.dart';
 import '../features/dashboard/presentation/main_shell.dart';
 import '../features/ingredients/presentation/ingredients_screen.dart';
 import '../features/inventory/presentation/inventory_screen.dart';
+import '../features/mise_en_place/presentation/mep_screen.dart';
 import '../features/production/presentation/cart_review_screen.dart';
 import '../features/production/presentation/production_screen.dart';
 import '../features/recipes/presentation/recipe_detail_screen.dart';
@@ -33,6 +34,7 @@ abstract class Routes {
   static const recipes = '/receitas';
   static const techSheets = '/fichas-tecnicas';
   static const production = '/produzir';
+  static const miseEnPlace = '/mise-en-place';
   static const schedule = '/agenda';
   static const shopping = '/compras';
   static const inventory = '/inventario';
@@ -96,6 +98,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, __) => const CartReviewScreen(),
               ),
             ],
+          ),
+          GoRoute(
+            path: Routes.miseEnPlace,
+            builder: (_, state) => MiseEnPlaceScreen(
+              receitaId: state.uri.queryParameters['receita'],
+            ),
           ),
           GoRoute(
             path: Routes.schedule,
