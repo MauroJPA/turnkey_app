@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/router.dart';
 import '../../cookie_formats/application/cookie_format_providers.dart';
 import '../../cookie_formats/domain/cookie_format.dart';
 import '../../recipes/domain/recipe.dart';
@@ -93,6 +95,8 @@ class _AgendaLinhaSheetState extends ConsumerState<_AgendaLinhaSheet> {
         return;
       }
     }
+    final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
     ref.read(agendaCartProvider.notifier).adicionar(
           CartLinha(
             id: DateTime.now().microsecondsSinceEpoch.toString(),
@@ -110,8 +114,19 @@ class _AgendaLinhaSheetState extends ConsumerState<_AgendaLinhaSheet> {
           ),
         );
     Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Adicionado ao carrinho de produção.')),
+    final total = ref.read(agendaCartProvider).length;
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          'Adicionado ao carrinho ($total '
+          '${total == 1 ? 'receita' : 'receitas'}).',
+        ),
+        action: SnackBarAction(
+          label: 'Ver produção',
+          onPressed: () => router.go('${Routes.production}/agendar'),
+        ),
+        duration: const Duration(seconds: 5),
+      ),
     );
   }
 

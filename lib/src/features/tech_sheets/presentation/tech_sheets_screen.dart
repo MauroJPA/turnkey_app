@@ -8,7 +8,7 @@ import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
-import '../../../core/widgets/help_button.dart';
+import '../../../core/widgets/help_actions.dart';
 import '../../pricing/data/cost_config_repository.dart';
 import '../../pricing/domain/cost_config.dart';
 import '../application/tech_sheets_providers.dart';
@@ -65,7 +65,7 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
         ),
         title: Text(_trash ? 'Fichas · Lixeira' : 'Fichas Técnicas'),
         actions: [
-          const HelpButton(topic: HelpTopic.fichas),
+          const HelpActions(topic: HelpTopic.fichas),
           IconButton(
             tooltip: _trash ? 'Ver ativas' : 'Lixeira',
             icon: Icon(

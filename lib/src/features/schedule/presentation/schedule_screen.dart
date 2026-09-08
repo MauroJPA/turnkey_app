@@ -8,7 +8,7 @@ import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/empty_state.dart';
-import '../../../core/widgets/help_button.dart';
+import '../../../core/widgets/help_actions.dart';
 import '../application/schedule_providers.dart';
 import '../domain/production_plan.dart';
 
@@ -72,7 +72,7 @@ class ScheduleScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Agenda de produção'),
-        actions: const [HelpButton(topic: HelpTopic.agenda)],
+        actions: const [HelpActions(topic: HelpTopic.agenda)],
       ),
       floatingActionButton: podeEditar
           ? FloatingActionButton.extended(

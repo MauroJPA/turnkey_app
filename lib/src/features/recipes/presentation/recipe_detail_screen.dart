@@ -8,7 +8,7 @@ import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
-import '../../../core/widgets/help_button.dart';
+import '../../../core/widgets/help_actions.dart';
 import '../../../core/widgets/history_sheet.dart';
 import '../../production/presentation/agenda_line_sheet.dart';
 import '../application/recipes_providers.dart';
@@ -139,7 +139,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
           ),
         ),
         actions: [
-          const HelpButton(topic: HelpTopic.receitaDetalhe),
+          const HelpActions(topic: HelpTopic.receitaDetalhe),
           detailAsync.maybeWhen(
             data: (d) => IconButton(
               tooltip: 'Agendar produção',

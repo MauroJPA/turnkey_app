@@ -7,7 +7,7 @@ import '../../../core/auth/auth_controller.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
-import '../../../core/widgets/help_button.dart';
+import '../../../core/widgets/help_actions.dart';
 import '../../inventory/application/inventory_providers.dart';
 import '../../schedule/application/schedule_providers.dart';
 import '../../schedule/domain/production_plan.dart';
@@ -88,7 +88,7 @@ class HomeShell extends ConsumerWidget {
           ],
         ),
         actions: [
-          const HelpButton(topic: HelpTopic.dashboard),
+          const HelpActions(topic: HelpTopic.dashboard),
           IconButton(
             tooltip: 'Configurações',
             icon: const Icon(Icons.settings_outlined),

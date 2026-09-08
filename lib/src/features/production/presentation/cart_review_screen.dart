@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
 import '../../../core/help/help_content.dart';
-import '../../../core/widgets/help_button.dart';
+import '../../../core/widgets/help_actions.dart';
 import '../../schedule/application/schedule_providers.dart';
 import '../../schedule/data/schedule_repository.dart';
 import '../../schedule/domain/production_plan.dart';
@@ -79,7 +79,7 @@ class _CartReviewScreenState extends ConsumerState<CartReviewScreen> {
               context.canPop() ? context.pop() : context.go(Routes.production),
         ),
         title: const Text('Rever e agendar'),
-        actions: const [HelpButton(topic: HelpTopic.agendar)],
+        actions: const [HelpActions(topic: HelpTopic.agendar)],
       ),
       body: linhas.isEmpty
           ? const Center(child: Text('Carrinho vazio.'))

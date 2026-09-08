@@ -8,7 +8,7 @@ import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
-import '../../../core/widgets/help_button.dart';
+import '../../../core/widgets/help_actions.dart';
 import '../../import_csv/application/ingredient_import_service.dart';
 import '../../import_csv/domain/import_result.dart';
 import '../application/ingredients_providers.dart';
@@ -135,7 +135,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
         ),
         title: Text(_trash ? 'Ingredientes · Lixeira' : 'Ingredientes'),
         actions: [
-          const HelpButton(topic: HelpTopic.ingredientes),
+          const HelpActions(topic: HelpTopic.ingredientes),
           if (_podeEditar && !_trash)
             IconButton(
               tooltip: 'Importar CSV',

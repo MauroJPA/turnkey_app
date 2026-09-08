@@ -9,7 +9,7 @@ import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
-import '../../../core/widgets/help_button.dart';
+import '../../../core/widgets/help_actions.dart';
 import '../../recipes/domain/recipe.dart';
 import '../../recipes/presentation/recipe_picker_sheet.dart';
 import '../application/schedule_providers.dart';
@@ -44,7 +44,7 @@ class PlanDetailScreen extends ConsumerWidget {
         ),
         title: const Text('Produção'),
         actions: [
-          const HelpButton(topic: HelpTopic.planoDetalhe),
+          const HelpActions(topic: HelpTopic.planoDetalhe),
           if (podeEditar)
             AsyncValueView<ProducaoPlan>(
               value: planoAsync,

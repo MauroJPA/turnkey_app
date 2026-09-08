@@ -7,7 +7,7 @@ import '../../../app/router.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/help/help_content.dart';
-import '../../../core/widgets/help_button.dart';
+import '../../../core/widgets/help_actions.dart';
 import '../../pricing/data/cost_config_repository.dart';
 import '../../pricing/domain/cost_config.dart';
 import '../application/empresa_providers.dart';
@@ -119,7 +119,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           onPressed: () => context.go(Routes.home),
         ),
         title: const Text('Configurações'),
-        actions: const [HelpButton(topic: HelpTopic.configuracoes)],
+        actions: const [HelpActions(topic: HelpTopic.configuracoes)],
       ),
       body: (empresaAsync.isLoading || configAsync.isLoading)
           ? const Center(child: CircularProgressIndicator())
