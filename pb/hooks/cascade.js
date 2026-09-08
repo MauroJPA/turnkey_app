@@ -312,4 +312,161 @@ function runCascade(app, kind, rootId) {
   else recomputeReceita(rootId);
 }
 
-module.exports = { runCascade };
+// ---------------------------------------------------------------------------
+// Explosão para compras: dado uma receita e a quantidade-alvo em gramas,
+// devolve { [ingredienteId]: gramas } SÓ dos ingredientes `comprado`, descendo
+// por sub-receitas e por ingredientes de fabrico próprio com receita_espelho.
+// ---------------------------------------------------------------------------
+function explodeCompras(app, receitaId, alvoG) {
+  const num = (rec, f) => {
+    try {
+      return rec.getFloat(f);
+    } catch (_) {
+      return 0;
+    }
+  };
+  const acc = {};
+  const seen = new Set();
+
+  const walk = (recId, alvo) => {
+    if (seen.has(recId)) return;
+    seen.add(recId);
+
+    let receita;
+    try {
+      receita = app.findRecordById('receitas', recId);
+    } catch (_) {
+      seen.delete(recId);
+      return;
+    }
+    const rend = num(receita, 'rendimento_esperado');
+    const fator = rend > 0 ? alvo / rend : 0;
+
+    const itens = app.findRecordsByFilter(
+      'itens_receita',
+      'receita = {:id}',
+      '',
+      0,
+      0,
+      { id: recId },
+    );
+    for (const it of itens) {
+      const g = num(it, 'quantidade_g') * fator;
+      if (g <= 0) continue;
+      const subRel = it.getString('sub_receita');
+      const ingRel = it.getString('ingrediente');
+      if (subRel) {
+        walk(subRel, g);
+      } else if (ingRel) {
+        let ing;
+        try {
+          ing = app.findRecordById('ingredientes', ingRel);
+        } catch (_) {
+          continue;
+        }
+        const espelho = ing.getString('receita_espelho');
+        if (ing.getString('origem') === 'fabrico_proprio' && espelho) {
+          walk(espelho, g);
+        } else {
+          acc[ingRel] = (acc[ingRel] || 0) + g;
+        }
+      }
+    }
+    seen.delete(recId);
+  };
+
+  walk(receitaId, alvoG);
+  return acc;
+}
+
+// ---------------------------------------------------------------------------
+// Aplica um movimento de stock: upsert da linha `inventario` do item e cria
+// um registo em `movimentos_inventario`. Devolve a quantidade final.
+// item = { empresaId, ingredienteId?, fichaId? }
+// ---------------------------------------------------------------------------
+function aplicarMovimento(app, item, delta, motivo, opts) {
+  opts = opts || {};
+  const alvoCampo = item.ingredienteId ? 'ingrediente' : 'ficha';
+  const alvoId = item.ingredienteId || item.fichaId;
+  if (!alvoId) throw new BadRequestError('Falta ingrediente ou ficha.');
+
+  const achados = app.findRecordsByFilter(
+    'inventario',
+    'empresa = {:e} && ' + alvoCampo + ' = {:i}',
+    '',
+    1,
+    0,
+    { e: item.empresaId, i: alvoId },
+  );
+
+  let linha;
+  if (achados.length > 0) {
+    linha = achados[0];
+  } else {
+    linha = new Record(app.findCollectionByNameOrId('inventario'));
+    linha.set('empresa', item.empresaId);
+    linha.set(alvoCampo, alvoId);
+    linha.set('quantidade', 0);
+  }
+
+  let q = linha.getFloat('quantidade') + delta;
+  if (q < 0) q = 0;
+  linha.set('quantidade', q);
+  app.save(linha);
+
+  const mov = new Record(app.findCollectionByNameOrId('movimentos_inventario'));
+  mov.set('empresa', item.empresaId);
+  mov.set(alvoCampo, alvoId);
+  mov.set('delta', delta);
+  mov.set('motivo', motivo);
+  if (opts.producaoId) mov.set('producao', opts.producaoId);
+  if (opts.autorId) mov.set('autor', opts.autorId);
+  if (opts.notas) mov.set('notas', opts.notas);
+  app.save(mov);
+
+  return q;
+}
+
+// Valida o acesso a uma produção pelo `{id}` da rota e devolve o contexto.
+function carregarProducao(e, exigeEscrita) {
+  const auth = e.auth;
+  const isSuper =
+    auth && auth.collection() && auth.collection().name === '_superusers';
+  const id = e.request.pathValue('id');
+  const producao = e.app.findRecordById('producoes', id);
+  const empresaId = producao.getString('empresa');
+
+  if (!isSuper) {
+    if (!auth || auth.collection().name !== 'users') {
+      throw new ForbiddenError('Autenticação necessária.');
+    }
+    if (auth.getString('empresa') !== empresaId) {
+      throw new ForbiddenError('Produção de outra empresa.');
+    }
+    if (exigeEscrita && auth.getString('papel') === 'viewer') {
+      throw new ForbiddenError('Sem permissão.');
+    }
+  }
+
+  const itens = e.app.findRecordsByFilter(
+    'producao_itens',
+    'producao = {:id}',
+    '',
+    0,
+    0,
+    { id: id },
+  );
+  return {
+    producao: producao,
+    empresaId: empresaId,
+    itens: itens,
+    autorId: auth && !isSuper ? auth.id : null,
+  };
+}
+
+module.exports = {
+  runCascade,
+  explodeCompras,
+  aplicarMovimento,
+  carregarProducao,
+};
