@@ -6,6 +6,7 @@ import '../core/auth/auth_controller.dart';
 import '../core/auth/auth_state.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/onboarding_screen.dart';
+import '../features/cookie_formats/presentation/cookie_formats_screen.dart';
 import '../features/dashboard/presentation/home_shell.dart';
 import '../features/ingredients/presentation/ingredients_screen.dart';
 import '../features/inventory/presentation/inventory_screen.dart';
@@ -35,6 +36,7 @@ abstract class Routes {
   static const inventory = '/inventario';
   static const settings = '/opcoes';
   static const team = '/opcoes/equipa';
+  static const cookieFormats = '/opcoes/formatos';
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -134,6 +136,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'equipa',
             builder: (_, __) => const TeamScreen(),
+          ),
+          GoRoute(
+            path: 'formatos',
+            builder: (_, __) => const CookieFormatsScreen(),
           ),
         ],
       ),

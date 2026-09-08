@@ -268,6 +268,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
             const Divider(height: 40),
 
+            // ---- Formatos de cookie ----
+            if (ref.read(currentPapelProvider).canEditConfig)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.cookie_outlined),
+                title: const Text('Formatos de cookie'),
+                subtitle: const Text('Tamanhos, massa e recheio por unidade'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.go(Routes.cookieFormats),
+              ),
+
             // ---- Equipa ----
             if (ref.read(currentPapelProvider).canManageTeam)
               ListTile(
