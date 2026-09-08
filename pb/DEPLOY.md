@@ -7,7 +7,7 @@ pb/migrations/*.js   -> schema (coleções, campos, regras)
 pb/hooks/*           -> lógica (cascata de custos, onboarding, equipa, admin)
 ```
 
-As 9 migrations aplicam-se limpas a uma base de dados vazia (verificado).
+As 12 migrations aplicam-se limpas a uma base de dados vazia (verificado).
 
 ---
 
@@ -42,9 +42,14 @@ O Mini PC corre **PocketBase v0.35.0**. Confirma:
    ```
 
 4. **Verificar** no Admin UI (`/_/`) que existem as coleções:
-   `empresas, configuracoes_custo, ingredientes, fornecedores?, receitas,
-   itens_receita, fichas_tecnicas, itens_ficha, historico`
+   `empresas, configuracoes_custo, ingredientes, receitas, itens_receita,
+   fichas_tecnicas, itens_ficha, historico, inventario, movimentos_inventario,
+   producoes, producao_itens, lista_compras`
    e que `users` tem os campos `nome`, `empresa`, `papel`.
+   Endpoints da Fase 2 (`pb_hooks/inventario.pb.js`): `POST
+   /api/turnkey/inventario/ajustar`, `GET /api/turnkey/producoes/{id}/plano`,
+   `POST /api/turnkey/producoes/{id}/lista-compras`, `POST
+   /api/turnkey/producoes/{id}/concluir` — ver [`README.md`](README.md).
 
 5. **Primeiro utilizador**: cria uma conta na app (ecrã de registo) e faz o
    onboarding — fica `owner` da nova empresa.
