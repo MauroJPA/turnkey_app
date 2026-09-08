@@ -11,6 +11,8 @@ import '../features/dashboard/presentation/home_shell.dart';
 import '../features/dashboard/presentation/main_shell.dart';
 import '../features/ingredients/presentation/ingredients_screen.dart';
 import '../features/inventory/presentation/inventory_screen.dart';
+import '../features/invoices/presentation/invoice_review_screen.dart';
+import '../features/invoices/presentation/invoices_screen.dart';
 import '../features/mise_en_place/presentation/mep_screen.dart';
 import '../features/production/presentation/cart_review_screen.dart';
 import '../features/production/presentation/production_screen.dart';
@@ -38,6 +40,7 @@ abstract class Routes {
   static const schedule = '/agenda';
   static const shopping = '/compras';
   static const inventory = '/inventario';
+  static const invoices = '/faturas';
   static const settings = '/opcoes';
   static const team = '/opcoes/equipa';
   static const cookieFormats = '/opcoes/formatos';
@@ -123,6 +126,18 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: Routes.inventory,
             builder: (_, __) => const InventoryScreen(),
+          ),
+          GoRoute(
+            path: Routes.invoices,
+            builder: (_, __) => const InvoicesScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                builder: (_, state) => InvoiceReviewScreen(
+                  faturaId: state.pathParameters['id']!,
+                ),
+              ),
+            ],
           ),
           GoRoute(
             path: Routes.ingredients,

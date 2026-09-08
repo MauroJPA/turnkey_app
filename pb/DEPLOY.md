@@ -7,7 +7,7 @@ pb/migrations/*.js   -> schema (coleções, campos, regras)
 pb/hooks/*           -> lógica (cascata de custos, onboarding, equipa, admin)
 ```
 
-As 25 migrations aplicam-se limpas a uma base de dados vazia (verificado).
+As 27 migrations aplicam-se limpas a uma base de dados vazia (verificado).
 
 ---
 
@@ -41,10 +41,22 @@ O Mini PC corre **PocketBase v0.35.0**. Confirma:
    ./pocketbase serve   # reinicia o serviço (systemd: systemctl restart pocketbase)
    ```
 
+   **Análise de faturas por IA** (`faturas.pb.js`): definir a variável de ambiente
+   `ANTHROPIC_API_KEY` no processo do PocketBase antes de arrancar.
+   - `serve.ps1` (dev): `$env:ANTHROPIC_API_KEY = "sk-ant-..."` antes de `serve`.
+   - systemd: `Environment=ANTHROPIC_API_KEY=sk-ant-...` na unit (ou um
+     `EnvironmentFile=`), depois `systemctl daemon-reload && systemctl restart pocketbase`.
+   - Opcional `TURNKEY_AI_MODEL` (por omissão `claude-sonnet-5`).
+   - Sem a chave, tudo o resto funciona; só `/api/turnkey/faturas/{id}/analisar`
+     devolve `503` e a app mostra "IA não configurada".
+   - Custo estimado: ~€0,01–0,03 por fatura analisada. O servidor precisa de
+     **acesso de saída à internet** para `api.anthropic.com`.
+
 4. **Verificar** no Admin UI (`/_/`) que existem as coleções:
    `empresas, configuracoes_custo, ingredientes, receitas, itens_receita,
    fichas_tecnicas, itens_ficha, historico, inventario, movimentos_inventario,
-   producoes, producao_itens, lista_compras, formatos_cookie`
+   producoes, producao_itens, lista_compras, formatos_cookie, sugestoes,
+   faturas, faturas_itens`
    e que `users` tem os campos `nome`, `empresa`, `papel`. A migração
    `1705104000_formatos_cookie.js` **semeia** Mini/Recheado/Simples em cada
    empresa existente (e o onboarding fá-lo para novas).

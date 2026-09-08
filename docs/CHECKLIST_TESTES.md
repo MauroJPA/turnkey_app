@@ -162,6 +162,39 @@ antes de começar, para carregar as últimas migrations.
 - [ ] No fim: resumo (consumos/entradas/avisos) + "Ver na agenda" abre o plano
       conclído.
 
+## 13. Faturas (foto → preços e stock)
+
+> Pré-requisito no servidor: a variável `ANTHROPIC_API_KEY` tem de estar
+> definida (ver `pb/DEPLOY.md`). Sem ela, o passo "analisar" mostra
+> **"IA não configurada"** — o resto da página continua a funcionar.
+
+- [ ] Cartão **Faturas** na grelha "Tudo" do Início abre a página.
+- [ ] A aba tem o **?** e o ícone de sugestão; o rodapé aparece.
+- [ ] Sem faturas: aparece o estado vazio a explicar "Nova fatura".
+- [ ] Botão **"Nova fatura"**:
+  - [ ] pergunta o **tipo** (Fatura / Lista de preços);
+  - [ ] pede o **fornecedor** (ex. "Makro");
+  - [ ] abre o seletor de imagem; ao escolher, mostra "A analisar a fatura…".
+- [ ] Depois da análise a fatura abre no **ecrã de revisão** com o estado
+      **"Analisada"** (ou **"Erro"** com a mensagem, se a IA falhar).
+- [ ] No ecrã de revisão:
+  - [ ] a **miniatura** da imagem abre em grande ao tocar;
+  - [ ] cada **linha** mostra a descrição lida pela IA;
+  - [ ] o **ingrediente** vem pré-escolhido pelo nome mais parecido; tocar
+        abre a pesquisa para corrigir;
+  - [ ] campos **Comprado (g)**, **Preço embalagem**, **Embalagem (g)** editáveis;
+  - [ ] **Ação** por linha: Preço / Stock / Preço + Stock / Ignorar
+        (numa *lista de preços* só há Preço / Ignorar e não há quantidade).
+- [ ] **"Aplicar aos ingredientes"**: pede confirmação, depois mostra
+      "X preço(s) atualizado(s) · Y entrada(s) de stock" e volta à lista.
+- [ ] A fatura fica com o estado **"Confirmada"** e agrupada pelo **mês**.
+- [ ] **Verificar o efeito**:
+  - [ ] Ingredientes: o preço das linhas com Preço/Ambos mudou (e o custo das
+        receitas/fichas recalculou em cascata);
+  - [ ] Inventário: as linhas com Stock/Ambos deram **entrada** (motivo
+        "Compra", nota "Fatura nº…").
+- [ ] Re-analisar uma fatura já analisada volta a chamar a IA (repete o custo).
+
 ---
 
 ## Notas / ajustes pedidos

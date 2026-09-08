@@ -16,6 +16,8 @@ enum HelpTopic {
   planoDetalhe,
   compras,
   inventario,
+  faturas,
+  faturaRevisao,
   formatos,
   configuracoes,
   equipa,
@@ -145,6 +147,26 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'O triângulo de aviso aparece quando algo está abaixo do stock mínimo.',
       'Toque num item para dar entrada ou saída de stock e definir o mínimo.',
       'Toque e segure (ou toque, se não puder editar) para ver o histórico de movimentos.',
+    ],
+  ),
+  HelpTopic.faturas: (
+    titulo: 'Faturas',
+    paragrafos: [
+      'Guarda aqui as fotos das faturas de compra e as listas de preços dos fornecedores.',
+      'Botão "Nova fatura": escolhes se é uma fatura ou uma lista de preços, o fornecedor, e a foto/ficheiro.',
+      'A seguir uma IA lê as linhas (produtos, quantidades, preços). Podes sempre corrigir antes de aplicar.',
+      'As faturas ficam agrupadas por mês — a base para, no futuro, exportar para a contabilidade.',
+      'O estado mostra: Nova, Analisada (IA leu), Confirmada (já aplicada) ou Erro.',
+    ],
+  ),
+  HelpTopic.faturaRevisao: (
+    titulo: 'Rever fatura',
+    paragrafos: [
+      'Confere cada linha que a IA leu.',
+      'Toca em "Ingrediente" para ligar a linha ao ingrediente certo (já vem pré-escolhido pelo nome mais parecido).',
+      '"Comprado" é a quantidade que entra no stock; "Preço embalagem" e "Embalagem" atualizam o preço por grama do ingrediente.',
+      'Ação por linha: Preço (só atualiza o preço), Stock (só dá entrada), Preço + Stock, ou Ignorar.',
+      '"Aplicar aos ingredientes" grava tudo: os preços recalculam os custos das receitas e fichas em cascata.',
     ],
   ),
   HelpTopic.formatos: (

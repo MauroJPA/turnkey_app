@@ -26,6 +26,8 @@ class HomeShell extends ConsumerWidget {
         Routes.recipes),
     _Section('Fichas Técnicas', Icons.receipt_long_outlined,
         'Produtos e preço de venda', Routes.techSheets),
+    _Section('Faturas', Icons.document_scanner_outlined,
+        'Foto da fatura → preços e stock', Routes.invoices),
     _Section('Formatos de cookie', Icons.cookie_outlined,
         'Tamanhos e recheio por unidade', Routes.cookieFormats),
     _Section('Configurações', Icons.settings_outlined,

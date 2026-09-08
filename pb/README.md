@@ -57,14 +57,23 @@ pb/
 | `1705708800_lista_compras_extra.js` | `lista_compras`: `notas`, `unidade` (itens manuais) |
 | `1705795200_inventario_itens_livres.js` | `inventario`/`movimentos_inventario`: `descricao`, `unidade` (itens livres) + índice `(empresa, descricao)` |
 | `1705881600_sugestoes.js` | `sugestoes` (qualquer utilizador cria; só a Admin UI lê) |
+| `1705968000_faturas.js` | `faturas` (foto + `dados_ia` + `estado`), `faturas_itens` (linhas emparelhadas com ingredientes) — ambas só escritas por endpoint |
 
 Aparência (tema, cor de marca `cor_marca`, logótipo `logo`) é **por empresa** —
 editada em Configurações → Aparência, aplica-se a toda a equipa.
 
 Hooks: `onboarding.pb.js` (semeia `configuracoes_custo` + `formatos_cookie`),
 `guards.pb.js`, `cost_cascade.pb.js`, `team.pb.js`, `inventario.pb.js`,
-`admin.pb.js` (+ `cascade.js`, que exporta `runCascade`, `explodeCompras`,
-`aplicarMovimento`, `carregarProducao`, `resolverFicha`).
+`faturas.pb.js`, `admin.pb.js` (+ `cascade.js`, que exporta `runCascade`,
+`explodeCompras`, `explodeProducao`, `explodeComprasDe`, `aplicarMovimento`,
+`carregarProducao`, `resolverFicha`).
+
+### Variáveis de ambiente do servidor
+
+| Variável | Para quê |
+|---|---|
+| `ANTHROPIC_API_KEY` | **obrigatória para a análise de faturas por IA** (`faturas.pb.js`). Sem ela, `/analisar` devolve `503` com mensagem clara e a app mostra "IA não configurada". A chave vive **só no servidor** — a app Flutter nunca a vê. |
+| `TURNKEY_AI_MODEL` | opcional; modelo da Anthropic a usar (por omissão `claude-sonnet-5`). |
 
 ### Endpoints (Fase 2 — `inventario.pb.js`)
 
@@ -78,6 +87,16 @@ sobre a sua empresa.
 | `GET` | `/api/turnkey/producoes/{id}/plano` | explosão agregada (sub-receitas + espelhos de fabrico próprio + **recheio do formato**: `N = round(kg·1000/massa_g)`, `N·recheio_g` do recheio) → `{ necessarios:[{ingredienteId,nome,fornecedor,gramas,custo,emStock,aComprar,embalagemG,aComprarSacos}], produzir:[{receitaId,nome,kg,unidades,formato,recheio,prioridade,horaLimite}], custoTotal }`. |
 | `POST` | `/api/turnkey/producoes/{id}/lista-compras` | mesma agregação → upsert em `lista_compras`; `quantidade_necessaria_g` = necessidade exata, `quantidade_comprar_g` = `ceil(falta/embalagem)·embalagem` (sacos inteiros), grava `embalagem_g` → `{ linhas }`. |
 | `POST` | `/api/turnkey/producoes/{id}/concluir` | por `producao_item`: consome a massa (`kg`, escalada por %) e — se `resolverFicha` encontrar a ficha do (massa+formato) — todos os slots não-massa da ficha (recheio_base/top, cobertura_base/top, extra) a `N·quantidade_g`, creditando `+N` unidades no `inventario` da ficha. Sem ficha: usa o `recheio` indicado à mão (se houver) e entra em `faltas`. Itens sem `formato` mantêm o crédito do ingrediente-espelho. Grava `unidades_previstas`, `estado=concluida`, `concluida_em`, `custo_snapshot` → `{ consumos, saidas, faltas, custoTotal }`. |
+
+### Endpoints (Fase 5 — `faturas.pb.js`)
+
+Auth `users` não-viewer (ou superuser); só agem sobre a empresa do autor.
+
+| Método | Rota | Efeito |
+|---|---|---|
+| `POST` | `/api/turnkey/faturas/{id}/analisar` | body `{ imagem: <base64>, mime }`. Envia a imagem à API da Anthropic (Messages API, visão) com um prompt que extrai `{ fornecedor, data, numero, total, iva, moeda, linhas:[{descricao, quantidade, unidade, preco_unitario, total, embalagem_g}] }`. Grava em `faturas.dados_ia`, `estado='analisada'`, pré-preenche `fornecedor/numero/total/iva/data_fatura` se vazios. Sem `ANTHROPIC_API_KEY` → `503`. Erro da IA → `estado='erro'`, `dados_ia.erro`, `502`. |
+| `POST` | `/api/turnkey/faturas/{id}/aplicar` | body `{ linhas:[{ ingredienteId?, descricaoFatura, quantidadeG, precoUnitario, totalLinha, embalagemG, acao }] }` (`acao` ∈ `preco\|stock\|ambos\|ignorar`). Numa transação: apaga `faturas_itens` anteriores; por linha com ingrediente e `acao≠ignorar` — `preco/ambos` → update `ingredientes.preco` (+`gramas_embalagem` se >0, +`preco_atualizado_em`) que dispara a cascata de custos; `stock/ambos` → `cascade.aplicarMovimento(+quantidadeG, 'compra', notas:'Fatura <nº>')`. Recria `faturas_itens`, `faturas.estado='confirmada'` → `{ precos, movimentos }`. |
+| `GET` | `/api/turnkey/faturas/export?de=&ate=` | faturas `confirmada` no intervalo → `{ faturas:[{ id, fornecedor, dataFatura, numero, total, iva, ficheiroUrl, linhas:[...] }] }`. Base para a exportação para contabilidade (SAF-T / zip de PDFs fica para fase seguinte — o modelo já guarda tudo). |
 
 ## ⚠️ Regras de escrita de hooks (PocketBase 0.35)
 
