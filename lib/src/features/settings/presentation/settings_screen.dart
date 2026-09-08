@@ -1,13 +1,16 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
+import '../../../app/theme/app_theme.dart';
 import '../../../core/auth/current_user.dart';
 import '../../pricing/data/cost_config_repository.dart';
 import '../../pricing/domain/cost_config.dart';
 import '../application/empresa_providers.dart';
 import '../application/settings_providers.dart';
+import '../data/empresa_repository.dart';
 import '../domain/empresa.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -25,6 +28,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   };
   Moeda _moeda = Moeda.eur;
   RegraArredondamento _regra = RegraArredondamento.cima;
+  TemaApp _tema = TemaApp.sistema;
   bool _prefilled = false;
   bool _busy = false;
 
@@ -57,6 +61,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _cor.text = e.corMarca;
     _moeda = e.moeda;
     _regra = e.regraArredondamento;
+    _tema = e.tema;
     _custos['salario']!.text = _n(c.salario);
     _custos['aluguel']!.text = _n(c.aluguel);
     _custos['impostos']!.text = _n(c.impostos);
@@ -192,14 +197,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: _cor,
-              decoration: const InputDecoration(
-                labelText: 'Cor de marca (hex, ex. #8D5B34)',
-              ),
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerLeft,
               child: FilledButton(
@@ -213,10 +210,62 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 moeda: _moeda,
                                 regra: _regra,
                                 corMarca: _cor.text,
+                                tema: _tema,
                               );
                         }),
                 child: const Text('Guardar empresa'),
               ),
+            ),
+
+            const Divider(height: 40),
+
+            // ---- Aparência ----
+            Text('Aparência', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text(
+              'Aplica-se a toda a equipa desta empresa.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            _AparenciaControls(
+              tema: _tema,
+              corHex: _cor.text,
+              logoUrl: ref.read(empresaRepositoryProvider).logoUrl(empresa),
+              onTema: (t) => setState(() => _tema = t),
+              onCor: (hex) => setState(() => _cor.text = hex),
+              corController: _cor,
+              onGuardar: _busy
+                  ? null
+                  : () => _run('Aparência guardada.', () async {
+                        await ref.read(settingsActionsProvider).saveEmpresa(
+                              nome: _nome.text,
+                              moeda: _moeda,
+                              regra: _regra,
+                              corMarca: _cor.text,
+                              tema: _tema,
+                            );
+                      }),
+              onEscolherLogo: _busy
+                  ? null
+                  : () => _run('Logótipo atualizado.', () async {
+                        final picked = await FilePicker.platform.pickFiles(
+                          type: FileType.image,
+                          withData: true,
+                        );
+                        final f = picked?.files.single;
+                        if (f?.bytes == null) return;
+                        await ref.read(settingsActionsProvider).definirLogo(
+                              nome: f!.name,
+                              bytes: f.bytes!.toList(),
+                            );
+                      }),
+              onRemoverLogo: _busy || !empresa.temLogo
+                  ? null
+                  : () => _run('Logótipo removido.', () async {
+                        await ref
+                            .read(settingsActionsProvider)
+                            .removerLogo();
+                      }),
             ),
 
             const Divider(height: 40),
@@ -291,6 +340,195 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Controlos de Aparência: modo de tema, cor (amostras + hex avançado) e
+/// logótipo da empresa.
+class _AparenciaControls extends StatelessWidget {
+  const _AparenciaControls({
+    required this.tema,
+    required this.corHex,
+    required this.logoUrl,
+    required this.corController,
+    required this.onTema,
+    required this.onCor,
+    required this.onGuardar,
+    required this.onEscolherLogo,
+    required this.onRemoverLogo,
+  });
+
+  final TemaApp tema;
+  final String corHex;
+  final String logoUrl;
+  final TextEditingController corController;
+  final ValueChanged<TemaApp> onTema;
+  final ValueChanged<String> onCor;
+  final VoidCallback? onGuardar;
+  final VoidCallback? onEscolherLogo;
+  final VoidCallback? onRemoverLogo;
+
+  @override
+  Widget build(BuildContext context) {
+    final corAtual = AppTheme.parseHex(corHex);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('Modo', style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: 6),
+        SegmentedButton<TemaApp>(
+          segments: const [
+            ButtonSegment(value: TemaApp.claro, label: Text('Claro')),
+            ButtonSegment(value: TemaApp.sistema, label: Text('Automático')),
+            ButtonSegment(value: TemaApp.escuro, label: Text('Escuro')),
+          ],
+          selected: {tema},
+          onSelectionChanged: (s) => onTema(s.first),
+        ),
+        const SizedBox(height: 16),
+        Text('Cor', style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            for (final p in AppTheme.presets)
+              _Amostra(
+                cor: p.cor,
+                nome: p.nome,
+                ativa: corAtual != null &&
+                    (corAtual.toARGB32() & 0xFFFFFF) ==
+                        (p.cor.toARGB32() & 0xFFFFFF),
+                onTap: () => onCor(AppTheme.toHex(p.cor)),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Theme(
+          data: Theme.of(context)
+              .copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            title: const Text('Avançado'),
+            childrenPadding: const EdgeInsets.only(bottom: 8),
+            children: [
+              TextField(
+                controller: corController,
+                decoration: const InputDecoration(
+                  labelText: 'Cor personalizada (hex, ex. #8D5B34)',
+                ),
+                onChanged: onCor,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text('Logótipo', style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: logoUrl.isEmpty
+                  ? const Icon(Icons.storefront_outlined)
+                  : Image.network(
+                      logoUrl,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) =>
+                          const Icon(Icons.broken_image_outlined),
+                    ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: onEscolherLogo,
+                    icon: const Icon(Icons.image_outlined),
+                    label: const Text('Escolher imagem'),
+                  ),
+                  if (onRemoverLogo != null)
+                    TextButton(
+                      onPressed: onRemoverLogo,
+                      child: const Text('Remover'),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: FilledButton(
+            onPressed: onGuardar,
+            child: const Text('Guardar aparência'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Amostra extends StatelessWidget {
+  const _Amostra({
+    required this.cor,
+    required this.nome,
+    required this.ativa,
+    required this.onTap,
+  });
+
+  final Color cor;
+  final String nome;
+  final bool ativa;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(40),
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: cor,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: ativa
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Colors.transparent,
+                width: 3,
+              ),
+            ),
+            child: ativa
+                ? const Icon(Icons.check, color: Colors.white, size: 20)
+                : null,
+          ),
+          const SizedBox(height: 4),
+          SizedBox(
+            width: 64,
+            child: Text(
+              nome,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+              maxLines: 2,
+            ),
+          ),
+        ],
       ),
     );
   }

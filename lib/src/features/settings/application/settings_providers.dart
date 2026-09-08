@@ -25,6 +25,7 @@ class SettingsActions {
     required Moeda moeda,
     required RegraArredondamento regra,
     required String corMarca,
+    required TemaApp tema,
   }) async {
     final id = requireEmpresaId(_ref);
     await _ref.read(empresaRepositoryProvider).updatePerfil(
@@ -33,7 +34,25 @@ class SettingsActions {
           moeda: moeda,
           regra: regra,
           corMarca: corMarca,
+          tema: tema,
         );
+    _ref.invalidate(currentEmpresaProvider);
+  }
+
+  Future<void> definirLogo({
+    required String nome,
+    required List<int> bytes,
+  }) async {
+    final id = requireEmpresaId(_ref);
+    await _ref
+        .read(empresaRepositoryProvider)
+        .definirLogo(id, nome: nome, bytes: bytes);
+    _ref.invalidate(currentEmpresaProvider);
+  }
+
+  Future<void> removerLogo() async {
+    final id = requireEmpresaId(_ref);
+    await _ref.read(empresaRepositoryProvider).removerLogo(id);
     _ref.invalidate(currentEmpresaProvider);
   }
 

@@ -25,6 +25,8 @@ mixin _$Empresa {
       throw _privateConstructorUsedError;
   String get corMarca => throw _privateConstructorUsedError;
   String get plano => throw _privateConstructorUsedError;
+  TemaApp get tema => throw _privateConstructorUsedError;
+  String get logo => throw _privateConstructorUsedError;
 
   /// Create a copy of Empresa
   /// with the given fields replaced by the non-null parameter values.
@@ -45,6 +47,8 @@ abstract class $EmpresaCopyWith<$Res> {
     RegraArredondamento regraArredondamento,
     String corMarca,
     String plano,
+    TemaApp tema,
+    String logo,
   });
 }
 
@@ -70,6 +74,8 @@ class _$EmpresaCopyWithImpl<$Res, $Val extends Empresa>
     Object? regraArredondamento = null,
     Object? corMarca = null,
     Object? plano = null,
+    Object? tema = null,
+    Object? logo = null,
   }) {
     return _then(
       _value.copyWith(
@@ -101,6 +107,14 @@ class _$EmpresaCopyWithImpl<$Res, $Val extends Empresa>
                 ? _value.plano
                 : plano // ignore: cast_nullable_to_non_nullable
                       as String,
+            tema: null == tema
+                ? _value.tema
+                : tema // ignore: cast_nullable_to_non_nullable
+                      as TemaApp,
+            logo: null == logo
+                ? _value.logo
+                : logo // ignore: cast_nullable_to_non_nullable
+                      as String,
           )
           as $Val,
     );
@@ -123,6 +137,8 @@ abstract class _$$EmpresaImplCopyWith<$Res> implements $EmpresaCopyWith<$Res> {
     RegraArredondamento regraArredondamento,
     String corMarca,
     String plano,
+    TemaApp tema,
+    String logo,
   });
 }
 
@@ -147,6 +163,8 @@ class __$$EmpresaImplCopyWithImpl<$Res>
     Object? regraArredondamento = null,
     Object? corMarca = null,
     Object? plano = null,
+    Object? tema = null,
+    Object? logo = null,
   }) {
     return _then(
       _$EmpresaImpl(
@@ -178,6 +196,14 @@ class __$$EmpresaImplCopyWithImpl<$Res>
             ? _value.plano
             : plano // ignore: cast_nullable_to_non_nullable
                   as String,
+        tema: null == tema
+            ? _value.tema
+            : tema // ignore: cast_nullable_to_non_nullable
+                  as TemaApp,
+        logo: null == logo
+            ? _value.logo
+            : logo // ignore: cast_nullable_to_non_nullable
+                  as String,
       ),
     );
   }
@@ -194,6 +220,8 @@ class _$EmpresaImpl extends _Empresa {
     required this.regraArredondamento,
     this.corMarca = '',
     this.plano = '',
+    this.tema = TemaApp.sistema,
+    this.logo = '',
   }) : super._();
 
   @override
@@ -212,10 +240,16 @@ class _$EmpresaImpl extends _Empresa {
   @override
   @JsonKey()
   final String plano;
+  @override
+  @JsonKey()
+  final TemaApp tema;
+  @override
+  @JsonKey()
+  final String logo;
 
   @override
   String toString() {
-    return 'Empresa(id: $id, nome: $nome, slug: $slug, moeda: $moeda, regraArredondamento: $regraArredondamento, corMarca: $corMarca, plano: $plano)';
+    return 'Empresa(id: $id, nome: $nome, slug: $slug, moeda: $moeda, regraArredondamento: $regraArredondamento, corMarca: $corMarca, plano: $plano, tema: $tema, logo: $logo)';
   }
 
   @override
@@ -231,7 +265,9 @@ class _$EmpresaImpl extends _Empresa {
                 other.regraArredondamento == regraArredondamento) &&
             (identical(other.corMarca, corMarca) ||
                 other.corMarca == corMarca) &&
-            (identical(other.plano, plano) || other.plano == plano));
+            (identical(other.plano, plano) || other.plano == plano) &&
+            (identical(other.tema, tema) || other.tema == tema) &&
+            (identical(other.logo, logo) || other.logo == logo));
   }
 
   @override
@@ -244,6 +280,8 @@ class _$EmpresaImpl extends _Empresa {
     regraArredondamento,
     corMarca,
     plano,
+    tema,
+    logo,
   );
 
   /// Create a copy of Empresa
@@ -264,6 +302,8 @@ abstract class _Empresa extends Empresa {
     required final RegraArredondamento regraArredondamento,
     final String corMarca,
     final String plano,
+    final TemaApp tema,
+    final String logo,
   }) = _$EmpresaImpl;
   const _Empresa._() : super._();
 
@@ -281,6 +321,10 @@ abstract class _Empresa extends Empresa {
   String get corMarca;
   @override
   String get plano;
+  @override
+  TemaApp get tema;
+  @override
+  String get logo;
 
   /// Create a copy of Empresa
   /// with the given fields replaced by the non-null parameter values.

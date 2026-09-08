@@ -10,6 +10,15 @@ class AppTheme {
   /// Castanho "cookie" — cor de marca por omissão.
   static const Color seed = Color(0xFF8D5B34);
 
+  /// Cores predefinidas para escolher em Configurações → Aparência.
+  static const List<({String nome, Color cor})> presets = [
+    (nome: 'Castanho cookie', cor: Color(0xFF8D5B34)),
+    (nome: 'Azul', cor: Color(0xFF2E6FB7)),
+    (nome: 'Verde', cor: Color(0xFF2E7D4F)),
+    (nome: 'Ameixa', cor: Color(0xFF7A4988)),
+    (nome: 'Framboesa', cor: Color(0xFFB23A5C)),
+  ];
+
   static ThemeData light([Color? brand]) =>
       _base(Brightness.light, brand ?? seed);
   static ThemeData dark([Color? brand]) =>
@@ -22,6 +31,12 @@ class AppTheme {
     if (v.length != 8) return null;
     final n = int.tryParse(v, radix: 16);
     return n == null ? null : Color(n);
+  }
+
+  /// `#RRGGBB` de uma cor (para gravar em `empresas.cor_marca`).
+  static String toHex(Color c) {
+    final rgb = c.toARGB32() & 0xFFFFFF;
+    return '#${rgb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
   }
 
   static ThemeData _base(Brightness brightness, Color seedColor) {

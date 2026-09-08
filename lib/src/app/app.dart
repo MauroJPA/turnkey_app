@@ -10,18 +10,19 @@ class TurnkeyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Cor de marca da empresa ativa (se definida e válida).
-    final brand = ref.watch(currentEmpresaProvider).maybeWhen(
-          data: (e) =>
-              e == null ? null : AppTheme.parseHex(e.corMarca),
-          orElse: () => null,
-        );
+    final empresa = ref.watch(currentEmpresaProvider).valueOrNull;
+
+    // Cor de marca e modo de tema da empresa ativa (com fallback).
+    final brand =
+        empresa == null ? null : AppTheme.parseHex(empresa.corMarca);
+    final modo = empresa?.tema.modo ?? ThemeMode.system;
 
     return MaterialApp.router(
       title: 'Turnkey',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(brand),
       darkTheme: AppTheme.dark(brand),
+      themeMode: modo,
       routerConfig: ref.watch(routerProvider),
     );
   }
