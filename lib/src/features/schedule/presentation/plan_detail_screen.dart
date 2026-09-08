@@ -249,7 +249,10 @@ class _Body extends ConsumerWidget {
                       ),
                       subtitle: Text(
                         [
-                          if (it.formatoNome.isNotEmpty) it.formatoNome,
+                          if (it.formatoNome.isNotEmpty)
+                            it.formatoNome
+                          else
+                            'Intermédio',
                           if (it.recheioNome.isNotEmpty)
                             'recheio ${it.recheioNome}',
                           '${it.quantidadeKg.toStringAsFixed(2)} kg',

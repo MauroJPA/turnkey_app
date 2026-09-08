@@ -1,5 +1,21 @@
 import 'package:pocketbase/pocketbase.dart';
 
+/// Título por omissão de uma produção: "Produção de hoje" ou
+/// "Produção DD/MM/AAAA", com os nomes das receitas se houver.
+String tituloPadraoProducao(DateTime data, List<String> nomesReceitas) {
+  final hoje = DateTime.now();
+  final ehHoje = data.year == hoje.year &&
+      data.month == hoje.month &&
+      data.day == hoje.day;
+  final dd = data.day.toString().padLeft(2, '0');
+  final mm = data.month.toString().padLeft(2, '0');
+  final base = ehHoje ? 'Produção de hoje' : 'Produção $dd/$mm/${data.year}';
+  final nomes = nomesReceitas.where((n) => n.trim().isNotEmpty).toList();
+  if (nomes.isEmpty) return base;
+  final lista = nomes.take(3).join(', ') + (nomes.length > 3 ? '…' : '');
+  return '$base - $lista';
+}
+
 /// Prioridade de uma linha da agenda.
 enum Prioridade {
   alta,

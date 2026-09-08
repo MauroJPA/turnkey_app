@@ -37,7 +37,9 @@ class _ProductionScreenState extends ConsumerState<ProductionScreen> {
   }
 
   Future<void> _escolher() async {
-    final r = await showRecipePickerSheet(context);
+    // Mostra todas as receitas de fabrico próprio — pode produzir-se um
+    // produto final (com ficha) ou um intermédio (recheio, massa, base).
+    final r = await showRecipePickerSheet(context, soFabricoProprio: false);
     if (r != null) setState(() => _receita = r);
   }
 

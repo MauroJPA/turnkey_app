@@ -44,6 +44,10 @@ class _AgendaLinhaSheetState extends ConsumerState<_AgendaLinhaSheet> {
   Prioridade _prioridade = Prioridade.media;
   TimeOfDay? _hora;
 
+  /// true = produto final (com formato/ficha); false = intermédio a granel
+  /// (recheios, massas, bases — vão para stock em gramas).
+  bool _produtoFinal = true;
+
   static String _fmtKg(double v) =>
       v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
 
@@ -73,13 +77,21 @@ class _AgendaLinhaSheetState extends ConsumerState<_AgendaLinhaSheet> {
   bool _temFicha = false;
 
   void _confirmar() {
+    if (_kgValor <= 0) return;
     final formato = _formato;
-    if (formato == null || _kgValor <= 0) return;
-    if (formato.temRecheio && !_temFicha && _recheio == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Escolhe o recheio deste formato.')),
-      );
-      return;
+    if (_produtoFinal) {
+      if (formato == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Escolhe o formato do cookie.')),
+        );
+        return;
+      }
+      if (formato.temRecheio && !_temFicha && _recheio == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Escolhe o recheio deste formato.')),
+        );
+        return;
+      }
     }
     ref.read(agendaCartProvider.notifier).adicionar(
           CartLinha(
@@ -87,11 +99,12 @@ class _AgendaLinhaSheetState extends ConsumerState<_AgendaLinhaSheet> {
             receitaId: widget.receita.id,
             receitaNome: widget.receita.nome,
             kg: _kgValor,
-            formatoId: formato.id,
-            formatoNome: formato.nome,
-            unidadesPrevistas: formato.unidades(_kgValor),
-            recheioId: _recheio?.id,
-            recheioNome: _recheio?.nome,
+            formatoId: _produtoFinal ? (formato?.id ?? '') : '',
+            formatoNome: _produtoFinal ? (formato?.nome ?? '') : '',
+            unidadesPrevistas:
+                _produtoFinal ? (formato?.unidades(_kgValor) ?? 0) : 0,
+            recheioId: _produtoFinal ? _recheio?.id : null,
+            recheioNome: _produtoFinal ? _recheio?.nome : null,
             prioridade: _prioridade,
             horaLimite: _horaTexto,
           ),
@@ -141,8 +154,25 @@ class _AgendaLinhaSheetState extends ConsumerState<_AgendaLinhaSheet> {
             'Adicionar à agenda',
             style: Theme.of(context).textTheme.bodySmall,
           ),
+          const SizedBox(height: 12),
+          SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(value: true, label: Text('Produto final')),
+              ButtonSegment(value: false, label: Text('Intermédio')),
+            ],
+            selected: {_produtoFinal},
+            onSelectionChanged: (s) => setState(() => _produtoFinal = s.first),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _produtoFinal
+                ? 'Cookie pronto para vender (usa formato/ficha técnica).'
+                : 'Recheio, massa ou base — entra em stock a granel (g).',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
           const SizedBox(height: 16),
-          formatosAsync.when(
+          if (_produtoFinal)
+            formatosAsync.when(
             loading: () => const LinearProgressIndicator(),
             error: (e, _) => Text('$e'),
             data: (formatos) {
@@ -172,7 +202,7 @@ class _AgendaLinhaSheetState extends ConsumerState<_AgendaLinhaSheet> {
               );
             },
           ),
-          if (temFicha) ...[
+          if (_produtoFinal && temFicha) ...[
             const SizedBox(height: 8),
             Card(
               color: Theme.of(context).colorScheme.secondaryContainer,
@@ -220,7 +250,7 @@ class _AgendaLinhaSheetState extends ConsumerState<_AgendaLinhaSheet> {
                 ),
               ),
             ),
-          ] else if (_formato?.temRecheio ?? false) ...[
+          ] else if (_produtoFinal && (_formato?.temRecheio ?? false)) ...[
             const SizedBox(height: 8),
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -235,13 +265,15 @@ class _AgendaLinhaSheetState extends ConsumerState<_AgendaLinhaSheet> {
           TextField(
             controller: _kg,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: 'Massa a produzir',
+            decoration: InputDecoration(
+              labelText: _produtoFinal
+                  ? 'Massa a produzir'
+                  : 'Quantidade a produzir',
               suffixText: 'kg',
             ),
             onChanged: (_) => setState(() {}),
           ),
-          if (_formato != null && _kgValor > 0)
+          if (_produtoFinal && _formato != null && _kgValor > 0)
             Padding(
               padding: const EdgeInsets.only(top: 6),
               child: Text(

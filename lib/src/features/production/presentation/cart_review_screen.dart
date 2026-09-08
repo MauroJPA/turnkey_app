@@ -7,6 +7,7 @@ import '../../../core/help/help_content.dart';
 import '../../../core/widgets/help_button.dart';
 import '../../schedule/application/schedule_providers.dart';
 import '../../schedule/data/schedule_repository.dart';
+import '../../schedule/domain/production_plan.dart';
 import '../application/agenda_cart.dart';
 
 class CartReviewScreen extends ConsumerStatefulWidget {
@@ -38,6 +39,8 @@ class _CartReviewScreenState extends ConsumerState<CartReviewScreen> {
       final plano = await repo.createPlan(
         data: _data,
         titulo: _titulo.text.trim(),
+        nomesReceitas:
+            linhas.map((l) => l.receitaNome).toList(),
       );
       for (final l in linhas) {
         await repo.addItem(
@@ -106,8 +109,13 @@ class _CartReviewScreenState extends ConsumerState<CartReviewScreen> {
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                         child: TextField(
                           controller: _titulo,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: 'Título (opcional)',
+                            helperText: 'Vazio → "${tituloPadraoProducao(
+                              _data,
+                              linhas.map((l) => l.receitaNome).toList(),
+                            )}"',
+                            helperMaxLines: 2,
                           ),
                         ),
                       ),
@@ -132,9 +140,14 @@ class _CartReviewScreenState extends ConsumerState<CartReviewScreen> {
                       ),
                       subtitle: Text(
                         [
-                          l.formatoNome,
+                          if (l.formatoNome.isNotEmpty)
+                            l.formatoNome
+                          else
+                            'Intermédio (a granel)',
                           if (l.recheioNome != null) 'recheio ${l.recheioNome}',
-                          '${l.kg.toStringAsFixed(2)} kg → ~${l.unidadesPrevistas} un',
+                          l.unidadesPrevistas > 0
+                              ? '${l.kg.toStringAsFixed(2)} kg → ~${l.unidadesPrevistas} un'
+                              : '${l.kg.toStringAsFixed(2)} kg',
                           l.prioridade.label,
                           if (l.horaLimite.isNotEmpty) 'até ${l.horaLimite}',
                         ].join(' · '),

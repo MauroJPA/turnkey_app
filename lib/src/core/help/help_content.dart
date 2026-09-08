@@ -81,8 +81,9 @@ const Map<HelpTopic, HelpEntry> helpContent = {
   HelpTopic.produzir: (
     titulo: 'Produzir',
     paragrafos: [
-      'Escolha uma receita e a quantidade em kg para ver quanto precisa de cada ingrediente.',
-      'Botão "Adicionar à agenda": escolhe o formato do cookie, a prioridade e a hora limite, e junta ao carrinho. Se já existir uma ficha técnica para essa massa, o recheio e as coberturas são preenchidos automaticamente.',
+      'Escolha uma receita e a quantidade em kg para ver quanto precisa de cada ingrediente. As quantidades são escaladas pela percentagem de cada ingrediente para dar exatamente os kg pedidos.',
+      'Botão "Adicionar à agenda": escolhe se é um "Produto final" (cookie pronto, com formato/ficha técnica → conta unidades) ou um "Intermédio" (recheio, massa, base → entra em stock a granel em gramas). Depois a prioridade e a hora limite, e junta ao carrinho.',
+      'Se já existir uma ficha técnica para essa massa, o recheio e as coberturas são preenchidos automaticamente.',
       'Quando tiver as receitas todas no carrinho, toque na barra em baixo para "Rever e agendar".',
     ],
   ),
@@ -90,7 +91,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
     titulo: 'Rever e agendar',
     paragrafos: [
       'Confirme as receitas que vai produzir.',
-      'Escolha o dia e (opcional) um título para esta produção.',
+      'Escolha o dia e, se quiser, um título. Se deixar vazio, fica "Produção de hoje" (ou "Produção DD/MM/AAAA") com os nomes das receitas — e pode sempre editar depois.',
       'Toque em "Criar produção" para a guardar na Agenda.',
     ],
   ),

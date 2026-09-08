@@ -38,12 +38,16 @@ class ScheduleRepository {
   Future<ProducaoPlan> createPlan({
     required DateTime data,
     String titulo = '',
+    List<String> nomesReceitas = const [],
   }) async {
+    final t = titulo.trim().isEmpty
+        ? tituloPadraoProducao(data, nomesReceitas)
+        : titulo.trim();
     final rec = await _planos.create(
       body: {
         'empresa': _empresaId,
         'data': _ymd(data),
-        'titulo': titulo,
+        'titulo': t,
         'estado': EstadoProducao.planeada.api,
       },
     );

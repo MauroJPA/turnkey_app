@@ -101,6 +101,21 @@ void main() {
     expect(resp.necessarios.single.embalagemG, 1000.0);
   });
 
+  test('tituloPadraoProducao: hoje vs data, com nomes de receitas', () {
+    final hoje = DateTime.now();
+    expect(tituloPadraoProducao(hoje, const []), 'Produção de hoje');
+    expect(
+      tituloPadraoProducao(hoje, const ['Massa - Rio', 'Brigadeiro - Rio']),
+      'Produção de hoje - Massa - Rio, Brigadeiro - Rio',
+    );
+    final d = DateTime(2026, 9, 15);
+    expect(tituloPadraoProducao(d, const []), 'Produção 15/09/2026');
+    expect(
+      tituloPadraoProducao(d, const ['A', 'B', 'C', 'D']),
+      'Produção 15/09/2026 - A, B, C…',
+    );
+  });
+
   test('Prioridade.fromApi tolerante; peso ordena alta<media<baixa', () {
     expect(Prioridade.fromApi('alta'), Prioridade.alta);
     expect(Prioridade.fromApi(null), Prioridade.media);
