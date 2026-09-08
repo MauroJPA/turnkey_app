@@ -16,6 +16,7 @@ import '../features/schedule/presentation/plan_detail_screen.dart';
 import '../features/schedule/presentation/schedule_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/settings/presentation/team_screen.dart';
+import '../features/shopping/presentation/shopping_screen.dart';
 import '../features/tech_sheets/presentation/tech_sheet_detail_screen.dart';
 import '../features/tech_sheets/presentation/tech_sheets_screen.dart';
 
@@ -99,6 +100,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                 PlanDetailScreen(planId: state.pathParameters['id']!),
           ),
         ],
+      ),
+      GoRoute(
+        path: Routes.shopping,
+        builder: (_, __) => const ShoppingScreen(),
       ),
       GoRoute(
         path: Routes.recipes,

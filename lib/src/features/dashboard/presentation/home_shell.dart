@@ -17,6 +17,7 @@ class HomeShell extends ConsumerWidget {
     _Section('Fichas Técnicas', Icons.receipt_long_outlined, Routes.techSheets),
     _Section('Produzir', Icons.scale_outlined, Routes.production),
     _Section('Agenda', Icons.event_note_outlined, Routes.schedule),
+    _Section('Compras', Icons.shopping_cart_outlined, Routes.shopping),
     _Section('Inventário', Icons.warehouse_outlined, Routes.inventory),
     _Section('Configurações', Icons.settings_outlined, Routes.settings),
   ];
