@@ -75,6 +75,11 @@ Hooks: `onboarding.pb.js` (semeia `configuracoes_custo` + `formatos_cookie`),
 | `ANTHROPIC_API_KEY` | **obrigatória para a análise de faturas por IA** (`faturas.pb.js`). Sem ela, `/analisar` devolve `503` com mensagem clara e a app mostra "IA não configurada". A chave vive **só no servidor** — a app Flutter nunca a vê. |
 | `TURNKEY_AI_MODEL` | opcional; modelo da Anthropic a usar (por omissão `claude-sonnet-5`). |
 
+Em dev, o `pb/serve.ps1` carrega estas variáveis de um ficheiro `pb/.env`
+(fora do git — ver `pb/.env.example`). Em produção, definir no serviço
+(NSSM `AppEnvironmentExtra` no Windows, `Environment=`/`EnvironmentFile=` no
+systemd). Detalhe em [`DEPLOY.md`](DEPLOY.md).
+
 ### Endpoints (Fase 2 — `inventario.pb.js`)
 
 Todos exigem `requireAuth('users', '_superusers')`; um `users` não-viewer só age

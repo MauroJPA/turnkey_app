@@ -41,16 +41,26 @@ O Mini PC corre **PocketBase v0.35.0**. Confirma:
    ./pocketbase serve   # reinicia o serviço (systemd: systemctl restart pocketbase)
    ```
 
-   **Análise de faturas por IA** (`faturas.pb.js`): definir a variável de ambiente
-   `ANTHROPIC_API_KEY` no processo do PocketBase antes de arrancar.
-   - `serve.ps1` (dev): `$env:ANTHROPIC_API_KEY = "sk-ant-..."` antes de `serve`.
-   - systemd: `Environment=ANTHROPIC_API_KEY=sk-ant-...` na unit (ou um
-     `EnvironmentFile=`), depois `systemctl daemon-reload && systemctl restart pocketbase`.
+   **Análise de faturas por IA** (`faturas.pb.js`): é preciso a variável de
+   ambiente `ANTHROPIC_API_KEY` no processo do PocketBase. Obtém a chave em
+   <https://console.anthropic.com/> → Settings → API keys (começa por `sk-ant-`).
+   - **Dev (Windows, `serve.ps1`)**: copia `pb/.env.example` para `pb/.env`
+     (fora do git) e põe lá `ANTHROPIC_API_KEY=sk-ant-...`. O `serve.ps1`
+     carrega o `.env` para o ambiente antes de arrancar e escreve se a chave
+     está definida. Alternativa pontual: `$env:ANTHROPIC_API_KEY = "sk-ant-..."`
+     no terminal antes de correr `serve`.
+   - **Mini PC — Windows service (NSSM)**: `nssm set pocketbase AppEnvironmentExtra ANTHROPIC_API_KEY=sk-ant-...` e reiniciar o serviço. Ou correr o PocketBase pelo mesmo `serve.ps1` com um `pb\.env` ao lado.
+   - **Mini PC — Linux systemd**: `Environment=ANTHROPIC_API_KEY=sk-ant-...` na
+     unit (ou `EnvironmentFile=/etc/pocketbase.env`), depois
+     `systemctl daemon-reload && systemctl restart pocketbase`.
    - Opcional `TURNKEY_AI_MODEL` (por omissão `claude-sonnet-5`).
    - Sem a chave, tudo o resto funciona; só `/api/turnkey/faturas/{id}/analisar`
      devolve `503` e a app mostra "IA não configurada".
    - Custo estimado: ~€0,01–0,03 por fatura analisada. O servidor precisa de
      **acesso de saída à internet** para `api.anthropic.com`.
+   - Confirmar depois de arrancar:
+     `curl -X POST http://127.0.0.1:8090/api/turnkey/faturas/x/analisar` →
+     deve dar `401` (falta auth), **não** `503`. Um `503` = chave não carregada.
 
 4. **Verificar** no Admin UI (`/_/`) que existem as coleções:
    `empresas, configuracoes_custo, ingredientes, receitas, itens_receita,
