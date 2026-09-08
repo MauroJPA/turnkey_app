@@ -37,8 +37,8 @@ class InvoicesScreen extends ConsumerWidget {
                     : Icons.sell_outlined),
                 title: Text(t.label),
                 subtitle: Text(t == FaturaTipo.fatura
-                    ? 'Foto da fatura de uma compra'
-                    : 'Lista de preços do fornecedor'),
+                    ? 'Foto ou PDF da fatura de uma compra'
+                    : 'Lista de preços do fornecedor (foto ou PDF)'),
               ),
             ),
         ],
@@ -63,7 +63,7 @@ class InvoicesScreen extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Escolher imagem'),
+            child: const Text('Escolher ficheiro'),
           ),
         ],
       ),
@@ -71,7 +71,8 @@ class InvoicesScreen extends ConsumerWidget {
     if (ok != true || !context.mounted) return;
 
     final picked = await FilePicker.platform.pickFiles(
-      type: FileType.image,
+      type: FileType.custom,
+      allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
       withData: true,
     );
     final f = picked?.files.single;

@@ -152,8 +152,8 @@ const Map<HelpTopic, HelpEntry> helpContent = {
   HelpTopic.faturas: (
     titulo: 'Faturas',
     paragrafos: [
-      'Guarda aqui as fotos das faturas de compra e as listas de preços dos fornecedores.',
-      'Botão "Nova fatura": escolhes se é uma fatura ou uma lista de preços, o fornecedor, e a foto/ficheiro.',
+      'Guarda aqui as faturas de compra e as listas de preços dos fornecedores.',
+      'Botão "Nova fatura": escolhes se é uma fatura ou uma lista de preços, o fornecedor, e o ficheiro — uma foto tirada com o telemóvel (JPG/PNG) ou um PDF.',
       'A seguir uma IA lê as linhas (produtos, quantidades, preços). Podes sempre corrigir antes de aplicar.',
       'As faturas ficam agrupadas por mês — a base para, no futuro, exportar para a contabilidade.',
       'O estado mostra: Nova, Analisada (IA leu), Confirmada (já aplicada) ou Erro.',

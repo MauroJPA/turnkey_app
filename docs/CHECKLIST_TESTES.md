@@ -174,7 +174,10 @@ antes de começar, para carregar as últimas migrations.
 - [ ] Botão **"Nova fatura"**:
   - [ ] pergunta o **tipo** (Fatura / Lista de preços);
   - [ ] pede o **fornecedor** (ex. "Makro");
-  - [ ] abre o seletor de imagem; ao escolher, mostra "A analisar a fatura…".
+  - [ ] abre o seletor de ficheiro (**foto do telemóvel JPG/PNG ou PDF**); ao
+        escolher, mostra "A analisar a fatura…".
+- [ ] Testar com um **PDF** e com uma **foto** — ambos analisam; no ecrã de
+      revisão o PDF mostra o ícone "Abrir PDF" e a foto mostra a miniatura.
 - [ ] Depois da análise a fatura abre no **ecrã de revisão** com o estado
       **"Analisada"** (ou **"Erro"** com a mensagem, se a IA falhar).
 - [ ] No ecrã de revisão:

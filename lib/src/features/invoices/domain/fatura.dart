@@ -94,6 +94,8 @@ class Fatura {
 
   bool get temFicheiro => ficheiro.isNotEmpty;
 
+  bool get ficheiroEhPdf => ficheiro.toLowerCase().endsWith('.pdf');
+
   String get erroIa => (dadosIa['erro'] ?? '').toString();
 
   List<FaturaLinhaIa> get linhasIa {

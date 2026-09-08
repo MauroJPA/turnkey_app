@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/router.dart';
 import '../../../core/formatting/dates.dart';
@@ -222,33 +223,47 @@ class _RevisaoState extends ConsumerState<_Revisao> {
     }
   }
 
+  Widget _ficheiro(Fatura f) {
+    final repo = ref.read(invoiceRepositoryProvider);
+    if (!f.temFicheiro) {
+      return const Icon(Icons.receipt_long_outlined, size: 40);
+    }
+    final urlCompleto = repo.ficheiroUrl(f);
+    if (f.ficheiroEhPdf) {
+      return IconButton(
+        icon: const Icon(Icons.picture_as_pdf_outlined, size: 40),
+        tooltip: 'Abrir PDF',
+        onPressed: () => launchUrl(
+          Uri.parse(urlCompleto),
+          mode: LaunchMode.externalApplication,
+        ),
+      );
+    }
+    return GestureDetector(
+      onTap: () => showDialog<void>(
+        context: context,
+        builder: (_) => Dialog(
+          child: InteractiveViewer(child: Image.network(urlCompleto)),
+        ),
+      ),
+      child: Image.network(
+        repo.ficheiroUrl(f, thumb: true),
+        width: 48,
+        height: 48,
+        fit: BoxFit.cover,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final f = widget.fatura;
-    final url = ref.read(invoiceRepositoryProvider).ficheiroUrl(f, thumb: true);
     return ListView(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
       children: [
         Card(
           child: ListTile(
-            leading: url.isEmpty
-                ? const Icon(Icons.receipt_long_outlined, size: 40)
-                : GestureDetector(
-                    onTap: () => showDialog<void>(
-                      context: context,
-                      builder: (_) => Dialog(
-                        child: InteractiveViewer(
-                          child: Image.network(
-                            ref
-                                .read(invoiceRepositoryProvider)
-                                .ficheiroUrl(f),
-                          ),
-                        ),
-                      ),
-                    ),
-                    child: Image.network(url,
-                        width: 48, height: 48, fit: BoxFit.cover),
-                  ),
+            leading: _ficheiro(f),
             title: Text(f.fornecedor.isEmpty ? 'Fornecedor?' : f.fornecedor),
             subtitle: Text([
               f.tipo.label,
