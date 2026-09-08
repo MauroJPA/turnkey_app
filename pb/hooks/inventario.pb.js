@@ -141,25 +141,41 @@ routerAdd(
       };
     };
 
-    // explosão agregada -> necessarios (massa + recheio do formato)
-    const agg = {};
-    for (const it of ctx.itens) {
-      const alvoG = num(it, 'quantidade_kg') * 1000;
-      const parcial = cascade.explodeCompras(app, it.getString('receita'), alvoG);
-      for (const k in parcial) agg[k] = (agg[k] || 0) + parcial[k];
+    const nomeReceita = (id) => {
+      try {
+        return app.findRecordById('receitas', id).getString('nome');
+      } catch (_) {
+        return '';
+      }
+    };
+    const merge = (dst, src) => {
+      for (const k in src) dst[k] = (dst[k] || 0) + src[k];
+    };
 
+    // Para cada item: o que comprar (ingredientes) e os intermédios a produzir.
+    const agg = {};
+    const porReceita = [];
+    for (const it of ctx.itens) {
+      const receitaId = it.getString('receita');
+      const alvoG = num(it, 'quantidade_kg') * 1000;
       const fmt = infoFormato(it, alvoG);
       const recheioId = it.getString('recheio');
+
+      const ep = cascade.explodeProducao(app, receitaId, alvoG);
+      const comprarItem = {};
+      const intermediosItem = {};
+      merge(comprarItem, ep.comprar);
+      merge(intermediosItem, ep.produzir);
+
       if (fmt && fmt.unidades > 0) {
         const fichaId = cascade.resolverFicha(
           app,
           ctx.empresaId,
-          it.getString('receita'),
+          receitaId,
           recheioId || '',
           it.getString('formato'),
         );
         if (fichaId) {
-          // recheios / coberturas / extra pela quantidade por unidade da ficha
           const slots = app.findRecordsByFilter(
             'itens_ficha',
             "ficha = {:f} && slot != 'massa'",
@@ -173,19 +189,75 @@ routerAdd(
             if (g <= 0) continue;
             const recSlot = sl.getString('receita');
             const ingSlot = sl.getString('ingrediente');
-            if (recSlot) {
-              const pr = cascade.explodeCompras(app, recSlot, g);
-              for (const k in pr) agg[k] = (agg[k] || 0) + pr[k];
-            } else if (ingSlot) {
-              agg[ingSlot] = (agg[ingSlot] || 0) + g;
+            merge(
+              comprarItem,
+              cascade.explodeComprasDe(app, g, recSlot, ingSlot),
+            );
+            if (recSlot) intermediosItem[recSlot] = (intermediosItem[recSlot] || 0) + g;
+            else if (ingSlot) {
+              let ig;
+              try {
+                ig = app.findRecordById('ingredientes', ingSlot);
+              } catch (_) {
+                ig = null;
+              }
+              const esp = ig ? ig.getString('receita_espelho') : '';
+              if (ig && ig.getString('origem') === 'fabrico_proprio' && esp) {
+                intermediosItem[esp] = (intermediosItem[esp] || 0) + g;
+              }
             }
           }
         } else if (recheioId && fmt.recheioG > 0) {
           const gRecheio = fmt.unidades * fmt.recheioG;
-          const pr = cascade.explodeCompras(app, recheioId, gRecheio);
-          for (const k in pr) agg[k] = (agg[k] || 0) + pr[k];
+          merge(comprarItem, cascade.explodeCompras(app, recheioId, gRecheio));
+          intermediosItem[recheioId] =
+            (intermediosItem[recheioId] || 0) + gRecheio;
         }
       }
+
+      merge(agg, comprarItem);
+
+      const comprarLista = [];
+      for (const k in comprarItem) {
+        let ing;
+        try {
+          ing = app.findRecordById('ingredientes', k);
+        } catch (_) {
+          continue;
+        }
+        comprarLista.push({
+          ingredienteId: k,
+          nome: ing.getString('nome'),
+          gramas: comprarItem[k],
+        });
+      }
+      comprarLista.sort((a, b) => a.nome.localeCompare(b.nome));
+
+      const intermediosLista = [];
+      for (const k in intermediosItem) {
+        intermediosLista.push({
+          receitaId: k,
+          nome: nomeReceita(k),
+          gramas: intermediosItem[k],
+        });
+      }
+      intermediosLista.sort((a, b) => a.nome.localeCompare(b.nome));
+
+      let recheioNome = '';
+      if (recheioId) recheioNome = nomeReceita(recheioId);
+
+      porReceita.push({
+        receitaId: receitaId,
+        nome: nomeReceita(receitaId),
+        kg: num(it, 'quantidade_kg'),
+        unidades: fmt ? fmt.unidades : num(it, 'unidades_previstas'),
+        formato: fmt ? fmt.nome : '',
+        recheio: recheioNome,
+        prioridade: it.getString('prioridade') || 'media',
+        horaLimite: it.getString('hora_limite'),
+        comprar: comprarLista,
+        intermedios: intermediosLista,
+      });
     }
 
     const necessarios = [];
@@ -230,41 +302,22 @@ routerAdd(
     }
     necessarios.sort((a, b) => a.nome.localeCompare(b.nome));
 
-    // o que se produz
-    const produzir = [];
-    for (const it of ctx.itens) {
-      let r;
-      try {
-        r = app.findRecordById('receitas', it.getString('receita'));
-      } catch (_) {
-        continue;
-      }
-      const alvoG = num(it, 'quantidade_kg') * 1000;
-      const fmt = infoFormato(it, alvoG);
-      let recheioNome = '';
-      const recheioId = it.getString('recheio');
-      if (recheioId) {
-        try {
-          recheioNome = app
-            .findRecordById('receitas', recheioId)
-            .getString('nome');
-        } catch (_) {}
-      }
-      produzir.push({
-        receitaId: r.id,
-        nome: r.getString('nome'),
-        kg: num(it, 'quantidade_kg'),
-        unidades: fmt ? fmt.unidades : num(it, 'unidades_previstas'),
-        formato: fmt ? fmt.nome : '',
-        recheio: recheioNome,
-        prioridade: it.getString('prioridade') || 'media',
-        horaLimite: it.getString('hora_limite'),
-      });
-    }
+    // `produzir` — projeção compacta de `porReceita` (compatibilidade).
+    const produzir = porReceita.map((p) => ({
+      receitaId: p.receitaId,
+      nome: p.nome,
+      kg: p.kg,
+      unidades: p.unidades,
+      formato: p.formato,
+      recheio: p.recheio,
+      prioridade: p.prioridade,
+      horaLimite: p.horaLimite,
+    }));
 
     return e.json(200, {
       necessarios: necessarios,
       produzir: produzir,
+      porReceita: porReceita,
       custoTotal: custoTotal,
     });
   },
@@ -326,14 +379,13 @@ routerAdd(
             for (const sl of slots) {
               const g = num(sl, 'quantidade_g') * N;
               if (g <= 0) continue;
-              const recSlot = sl.getString('receita');
-              const ingSlot = sl.getString('ingrediente');
-              if (recSlot) {
-                const pr = cascade.explodeCompras(app, recSlot, g);
-                for (const k in pr) agg[k] = (agg[k] || 0) + pr[k];
-              } else if (ingSlot) {
-                agg[ingSlot] = (agg[ingSlot] || 0) + g;
-              }
+              const pr = cascade.explodeComprasDe(
+                app,
+                g,
+                sl.getString('receita'),
+                sl.getString('ingrediente'),
+              );
+              for (const k in pr) agg[k] = (agg[k] || 0) + pr[k];
             }
           } else if (recheioId && recheioG > 0) {
             const pr = cascade.explodeCompras(app, recheioId, N * recheioG);

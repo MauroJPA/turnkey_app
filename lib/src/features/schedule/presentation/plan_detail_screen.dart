@@ -299,8 +299,65 @@ class _Body extends ConsumerWidget {
           },
         ),
         const SizedBox(height: 8),
+        _SectionTitle('Mise en place — por receita'),
+        AsyncValueView<PlanoResposta>(
+          value: planoAsync,
+          data: (resp) {
+            if (resp.porReceita.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text('Sem receitas no plano.'),
+              );
+            }
+            return Column(
+              children: [
+                for (final pr in resp.porReceita)
+                  Card(
+                    margin: const EdgeInsets.symmetric(vertical: 3),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            pr.nome.isEmpty ? '(receita)' : pr.nome,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            [
+                              if (pr.formato.isNotEmpty) pr.formato,
+                              if (pr.recheio.isNotEmpty) 'recheio ${pr.recheio}',
+                              '${pr.kg.toStringAsFixed(2)} kg',
+                              if (pr.unidades > 0) '~${pr.unidades} un',
+                            ].join(' · '),
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          const SizedBox(height: 6),
+                          if (pr.intermedios.isNotEmpty) ...[
+                            const Text('Produzir primeiro:',
+                                style: TextStyle(fontSize: 12)),
+                            for (final i in pr.intermedios)
+                              Text('  • ${i.nome}: ${_gLabel(i.gramas)}'),
+                            const SizedBox(height: 4),
+                          ],
+                          const Text('Ingredientes:',
+                              style: TextStyle(fontSize: 12)),
+                          if (pr.comprar.isEmpty)
+                            const Text('  • —')
+                          else
+                            for (final c in pr.comprar)
+                              Text('  • ${c.nome}: ${_gLabel(c.gramas)}'),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 8),
         _SectionTitle(
-          'Ingredientes necessários',
+          'Ingredientes necessários (total)',
           trailing: IconButton(
             tooltip: 'Recalcular',
             icon: const Icon(Icons.refresh),
@@ -422,7 +479,29 @@ class _Body extends ConsumerWidget {
       );
     }
     b.writeln();
-    b.writeln('Ingredientes necessários:');
+    b.writeln('=== MISE EN PLACE (por receita) ===');
+    for (final pr in resp.porReceita) {
+      b.writeln();
+      final cab = [
+        if (pr.formato.isNotEmpty) pr.formato,
+        if (pr.recheio.isNotEmpty) 'recheio ${pr.recheio}',
+        '${pr.kg.toStringAsFixed(2)} kg',
+        if (pr.unidades > 0) '~${pr.unidades} un',
+      ].join(' · ');
+      b.writeln('# ${pr.nome}  ($cab)');
+      if (pr.intermedios.isNotEmpty) {
+        b.writeln('  Produzir primeiro:');
+        for (final i in pr.intermedios) {
+          b.writeln('    - ${i.nome}: ${_gLabel(i.gramas)}');
+        }
+      }
+      b.writeln('  Ingredientes:');
+      for (final c in pr.comprar) {
+        b.writeln('    - ${c.nome}: ${_gLabel(c.gramas)}');
+      }
+    }
+    b.writeln();
+    b.writeln('=== INGREDIENTES NO TOTAL (para comprar) ===');
     for (final n in resp.necessarios) {
       final compra =
           n.aComprar > 0 ? ' (comprar ${_gLabel(n.aComprar)})' : ' (em stock)';

@@ -382,6 +382,95 @@ function explodeCompras(app, receitaId, alvoG) {
 }
 
 // ---------------------------------------------------------------------------
+// Como explodeCompras mas separa o que há para COMPRAR (ingredientes
+// comprados) do que há para PRODUZIR (sub-receitas e ingredientes de fabrico
+// próprio, pela receita-espelho). Devolve { comprar:{[ingId]:g},
+// produzir:{[receitaId]:g} }.
+// ---------------------------------------------------------------------------
+function explodeProducao(app, receitaId, alvoG) {
+  const num = (rec, f) => {
+    try {
+      return rec.getFloat(f);
+    } catch (_) {
+      return 0;
+    }
+  };
+  const comprar = {};
+  const produzir = {};
+  const seen = new Set();
+
+  const walk = (recId, alvo) => {
+    if (seen.has(recId)) return;
+    seen.add(recId);
+    try {
+      app.findRecordById('receitas', recId);
+    } catch (_) {
+      seen.delete(recId);
+      return;
+    }
+    const itens = app.findRecordsByFilter(
+      'itens_receita',
+      'receita = {:id}',
+      '',
+      0,
+      0,
+      { id: recId },
+    );
+    let pesoBase = 0;
+    for (const it of itens) pesoBase += num(it, 'quantidade_g');
+    const fator = pesoBase > 0 ? alvo / pesoBase : 0;
+    for (const it of itens) {
+      const g = num(it, 'quantidade_g') * fator;
+      if (g <= 0) continue;
+      const subRel = it.getString('sub_receita');
+      const ingRel = it.getString('ingrediente');
+      if (subRel) {
+        produzir[subRel] = (produzir[subRel] || 0) + g;
+        walk(subRel, g);
+      } else if (ingRel) {
+        let ing;
+        try {
+          ing = app.findRecordById('ingredientes', ingRel);
+        } catch (_) {
+          continue;
+        }
+        const espelho = ing.getString('receita_espelho');
+        if (ing.getString('origem') === 'fabrico_proprio' && espelho) {
+          produzir[espelho] = (produzir[espelho] || 0) + g;
+          walk(espelho, g);
+        } else {
+          comprar[ingRel] = (comprar[ingRel] || 0) + g;
+        }
+      }
+    }
+    seen.delete(recId);
+  };
+
+  walk(receitaId, alvoG);
+  return { comprar: comprar, produzir: produzir };
+}
+
+// Explode "o que comprar" de uma linha de ficha (que aponta para uma receita
+// OU para um ingrediente que pode ser um espelho de fabrico próprio).
+function explodeComprasDe(app, alvo, receitaId, ingredienteId) {
+  if (receitaId) return explodeCompras(app, receitaId, alvo);
+  if (!ingredienteId) return {};
+  let ing;
+  try {
+    ing = app.findRecordById('ingredientes', ingredienteId);
+  } catch (_) {
+    return {};
+  }
+  const espelho = ing.getString('receita_espelho');
+  if (ing.getString('origem') === 'fabrico_proprio' && espelho) {
+    return explodeCompras(app, espelho, alvo);
+  }
+  const out = {};
+  out[ingredienteId] = alvo;
+  return out;
+}
+
+// ---------------------------------------------------------------------------
 // Aplica um movimento de stock: upsert da linha `inventario` do item e cria
 // um registo em `movimentos_inventario`. Devolve a quantidade final.
 // item = { empresaId, ingredienteId? | fichaId? | descricao?(item livre) }
@@ -580,6 +669,8 @@ function carregarProducao(e, exigeEscrita) {
 module.exports = {
   runCascade,
   explodeCompras,
+  explodeProducao,
+  explodeComprasDe,
   aplicarMovimento,
   carregarProducao,
   resolverFicha,

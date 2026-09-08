@@ -78,7 +78,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.onboarding,
         builder: (_, __) => const OnboardingScreen(),
       ),
-      // Secções principais — com a barra de navegação inferior.
+      // Todas as secções autenticadas — sempre com a barra de navegação
+      // inferior (rodapé) para acesso rápido a qualquer página.
       ShellRoute(
         builder: (_, __, child) => MainShell(child: child),
         routes: [
@@ -89,10 +90,23 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: Routes.production,
             builder: (_, __) => const ProductionScreen(),
+            routes: [
+              GoRoute(
+                path: 'agendar',
+                builder: (_, __) => const CartReviewScreen(),
+              ),
+            ],
           ),
           GoRoute(
             path: Routes.schedule,
             builder: (_, __) => const ScheduleScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                builder: (_, state) =>
+                    PlanDetailScreen(planId: state.pathParameters['id']!),
+              ),
+            ],
           ),
           GoRoute(
             path: Routes.shopping,
@@ -102,55 +116,47 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: Routes.inventory,
             builder: (_, __) => const InventoryScreen(),
           ),
-        ],
-      ),
-      // Ecrãs de detalhe / secundários — ecrã inteiro, com "voltar".
-      GoRoute(
-        path: '${Routes.production}/agendar',
-        builder: (_, __) => const CartReviewScreen(),
-      ),
-      GoRoute(
-        path: '${Routes.schedule}/:id',
-        builder: (_, state) =>
-            PlanDetailScreen(planId: state.pathParameters['id']!),
-      ),
-      GoRoute(
-        path: Routes.ingredients,
-        builder: (_, __) => const IngredientsScreen(),
-      ),
-      GoRoute(
-        path: Routes.recipes,
-        builder: (_, __) => const RecipesScreen(),
-        routes: [
           GoRoute(
-            path: ':id',
-            builder: (_, state) =>
-                RecipeDetailScreen(recipeId: state.pathParameters['id']!),
-          ),
-        ],
-      ),
-      GoRoute(
-        path: Routes.techSheets,
-        builder: (_, __) => const TechSheetsScreen(),
-        routes: [
-          GoRoute(
-            path: ':id',
-            builder: (_, state) =>
-                TechSheetDetailScreen(fichaId: state.pathParameters['id']!),
-          ),
-        ],
-      ),
-      GoRoute(
-        path: Routes.settings,
-        builder: (_, __) => const SettingsScreen(),
-        routes: [
-          GoRoute(
-            path: 'equipa',
-            builder: (_, __) => const TeamScreen(),
+            path: Routes.ingredients,
+            builder: (_, __) => const IngredientsScreen(),
           ),
           GoRoute(
-            path: 'formatos',
-            builder: (_, __) => const CookieFormatsScreen(),
+            path: Routes.recipes,
+            builder: (_, __) => const RecipesScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                builder: (_, state) => RecipeDetailScreen(
+                  recipeId: state.pathParameters['id']!,
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: Routes.techSheets,
+            builder: (_, __) => const TechSheetsScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                builder: (_, state) => TechSheetDetailScreen(
+                  fichaId: state.pathParameters['id']!,
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: Routes.settings,
+            builder: (_, __) => const SettingsScreen(),
+            routes: [
+              GoRoute(
+                path: 'equipa',
+                builder: (_, __) => const TeamScreen(),
+              ),
+              GoRoute(
+                path: 'formatos',
+                builder: (_, __) => const CookieFormatsScreen(),
+              ),
+            ],
           ),
         ],
       ),

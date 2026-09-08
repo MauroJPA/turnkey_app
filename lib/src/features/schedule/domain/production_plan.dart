@@ -220,16 +220,68 @@ class PlanoProduzir {
       );
 }
 
+/// Uma quantidade de um item (ingrediente ou intermédio) numa receita.
+class PlanoQtd {
+  const PlanoQtd({required this.nome, required this.gramas});
+  final String nome;
+  final double gramas;
+
+  factory PlanoQtd.fromJson(Map<String, dynamic> j) => PlanoQtd(
+        nome: j['nome'] as String? ?? '',
+        gramas: (j['gramas'] as num?)?.toDouble() ?? 0,
+      );
+}
+
+/// Detalhe de UMA receita do plano — para o "mise en place".
+class PlanoPorReceita {
+  const PlanoPorReceita({
+    required this.receitaId,
+    required this.nome,
+    required this.kg,
+    this.unidades = 0,
+    this.formato = '',
+    this.recheio = '',
+    this.comprar = const [],
+    this.intermedios = const [],
+  });
+
+  final String receitaId;
+  final String nome;
+  final double kg;
+  final int unidades;
+  final String formato;
+  final String recheio;
+  final List<PlanoQtd> comprar;
+  final List<PlanoQtd> intermedios;
+
+  factory PlanoPorReceita.fromJson(Map<String, dynamic> j) => PlanoPorReceita(
+        receitaId: j['receitaId'] as String? ?? '',
+        nome: j['nome'] as String? ?? '',
+        kg: (j['kg'] as num?)?.toDouble() ?? 0,
+        unidades: (j['unidades'] as num?)?.toInt() ?? 0,
+        formato: j['formato'] as String? ?? '',
+        recheio: j['recheio'] as String? ?? '',
+        comprar: ((j['comprar'] as List?) ?? const [])
+            .map((e) => PlanoQtd.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList(),
+        intermedios: ((j['intermedios'] as List?) ?? const [])
+            .map((e) => PlanoQtd.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList(),
+      );
+}
+
 /// Resposta agregada de `GET /api/turnkey/producoes/{id}/plano`.
 class PlanoResposta {
   const PlanoResposta({
     required this.necessarios,
     required this.produzir,
     required this.custoTotal,
+    this.porReceita = const [],
   });
 
   final List<PlanoNecessario> necessarios;
   final List<PlanoProduzir> produzir;
+  final List<PlanoPorReceita> porReceita;
   final double custoTotal;
 
   double get totalAComprar =>
@@ -243,6 +295,11 @@ class PlanoResposta {
             .toList(),
         produzir: ((j['produzir'] as List?) ?? const [])
             .map((e) => PlanoProduzir.fromJson(
+                  Map<String, dynamic>.from(e as Map),
+                ))
+            .toList(),
+        porReceita: ((j['porReceita'] as List?) ?? const [])
+            .map((e) => PlanoPorReceita.fromJson(
                   Map<String, dynamic>.from(e as Map),
                 ))
             .toList(),
