@@ -164,9 +164,10 @@ antes de começar, para carregar as últimas migrations.
 
 ## 13. Faturas (foto → preços e stock)
 
-> Pré-requisito no servidor: a variável `ANTHROPIC_API_KEY` tem de estar
-> definida (ver `pb/DEPLOY.md`). Sem ela, o passo "analisar" mostra
-> **"IA não configurada"** — o resto da página continua a funcionar.
+> Pré-requisito no servidor: `TURNKEY_AI_PROVIDER` (por omissão `gemini`) e a
+> chave desse provider — `GEMINI_API_KEY` (grátis, <https://aistudio.google.com/app/apikey>)
+> ou `ANTHROPIC_API_KEY` — em `pb/.env` (ver `pb/DEPLOY.md`). Sem a chave, o
+> passo "analisar" mostra **"IA não configurada"** — o resto da página funciona.
 
 - [ ] Cartão **Faturas** na grelha "Tudo" do Início abre a página.
 - [ ] A aba tem o **?** e o ícone de sugestão; o rodapé aparece.

@@ -82,7 +82,7 @@ class _Erro extends ConsumerWidget {
               textAlign: TextAlign.center),
           const SizedBox(height: 16),
           const Text(
-            'Verifica a chave da IA no servidor (ANTHROPIC_API_KEY) e '
+            'Verifica a configuração da IA no servidor (fornecedor e chave) e '
             'tenta de novo com uma foto nítida.',
             textAlign: TextAlign.center,
           ),

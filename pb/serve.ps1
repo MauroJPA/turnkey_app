@@ -4,9 +4,10 @@
 #
 # Chaves/segredos: cria um ficheiro pb\.env (fora do git) com linhas KEY=VALUE,
 # por exemplo:
-#   ANTHROPIC_API_KEY=sk-ant-...
-#   TURNKEY_AI_MODEL=claude-sonnet-5
+#   TURNKEY_AI_PROVIDER=gemini
+#   GEMINI_API_KEY=AIza...
 # Este script carrega-as para o ambiente antes de arrancar o PocketBase.
+# Ver pb\.env.example.
 
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
@@ -24,10 +25,13 @@ if (Test-Path $envFile) {
     Set-Item -Path "Env:$k" -Value $v
   }
 }
-if ($env:ANTHROPIC_API_KEY) {
-  Write-Host "ANTHROPIC_API_KEY: definida (analise de faturas por IA ativa)." -ForegroundColor Green
+$aiProvider = $env:TURNKEY_AI_PROVIDER
+if (-not $aiProvider) { $aiProvider = "gemini" }
+$aiKey = if ($aiProvider -match "anthropic|claude") { $env:ANTHROPIC_API_KEY } else { $env:GEMINI_API_KEY; if (-not $env:GEMINI_API_KEY) { $env:GOOGLE_API_KEY } }
+if ($aiKey) {
+  Write-Host "IA de faturas: provider=$aiProvider, chave definida." -ForegroundColor Green
 } else {
-  Write-Host "ANTHROPIC_API_KEY: nao definida — /faturas/{id}/analisar devolve 503." -ForegroundColor Yellow
+  Write-Host "IA de faturas: provider=$aiProvider, sem chave — /faturas/{id}/analisar devolve 503." -ForegroundColor Yellow
 }
 
 $bin = ".\bin\pocketbase.exe"

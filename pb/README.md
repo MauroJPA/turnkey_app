@@ -66,14 +66,24 @@ Hooks: `onboarding.pb.js` (semeia `configuracoes_custo` + `formatos_cookie`),
 `guards.pb.js`, `cost_cascade.pb.js`, `team.pb.js`, `inventario.pb.js`,
 `faturas.pb.js`, `admin.pb.js` (+ `cascade.js`, que exporta `runCascade`,
 `explodeCompras`, `explodeProducao`, `explodeComprasDe`, `aplicarMovimento`,
-`carregarProducao`, `resolverFicha`).
+`carregarProducao`, `resolverFicha`; + `ai.js`, que exporta `analisarFaturaIA`).
 
-### Variáveis de ambiente do servidor
+### Variáveis de ambiente do servidor — IA de faturas
+
+A análise de faturas (`faturas.pb.js` → `ai.js`) tem o **fornecedor de IA
+selecionável por variável de ambiente**, sem tocar no código.
 
 | Variável | Para quê |
 |---|---|
-| `ANTHROPIC_API_KEY` | **obrigatória para a análise de faturas por IA** (`faturas.pb.js`). Sem ela, `/analisar` devolve `503` com mensagem clara e a app mostra "IA não configurada". A chave vive **só no servidor** — a app Flutter nunca a vê. |
-| `TURNKEY_AI_MODEL` | opcional; modelo da Anthropic a usar (por omissão `claude-sonnet-5`). |
+| `TURNKEY_AI_PROVIDER` | `gemini` (por omissão) ou `anthropic`. |
+| `GEMINI_API_KEY` (ou `GOOGLE_API_KEY`) | chave do Google AI Studio — usada quando o provider é `gemini`. De <https://aistudio.google.com/app/apikey>. Tem plano **gratuito**. |
+| `ANTHROPIC_API_KEY` | chave da Anthropic — usada quando o provider é `anthropic`. De <https://console.anthropic.com/>. |
+| `TURNKEY_AI_MODEL` | opcional; modelo a usar. Por omissão `gemini-2.0-flash` (gemini) ou `claude-sonnet-5` (anthropic). |
+
+Sem a chave do provider ativo, `/analisar` devolve `503` com mensagem clara e a
+app mostra "IA não configurada". As chaves vivem **só no servidor** — a app
+Flutter nunca as vê. **Adicionar um fornecedor novo**: uma função `pedir<Nome>()`
+em `ai.js` + um ramo no `switch` (instruções no topo do ficheiro).
 
 Em dev, o `pb/serve.ps1` carrega estas variáveis de um ficheiro `pb/.env`
 (fora do git — ver `pb/.env.example`). Em produção, definir no serviço
@@ -99,7 +109,7 @@ Auth `users` não-viewer (ou superuser); só agem sobre a empresa do autor.
 
 | Método | Rota | Efeito |
 |---|---|---|
-| `POST` | `/api/turnkey/faturas/{id}/analisar` | body `{ imagem: <base64>, mime }`. Envia a imagem à API da Anthropic (Messages API, visão) com um prompt que extrai `{ fornecedor, data, numero, total, iva, moeda, linhas:[{descricao, quantidade, unidade, preco_unitario, total, embalagem_g}] }`. Grava em `faturas.dados_ia`, `estado='analisada'`, pré-preenche `fornecedor/numero/total/iva/data_fatura` se vazios. Sem `ANTHROPIC_API_KEY` → `503`. Erro da IA → `estado='erro'`, `dados_ia.erro`, `502`. |
+| `POST` | `/api/turnkey/faturas/{id}/analisar` | body `{ imagem: <base64>, mime }`. Via `ai.js` (`TURNKEY_AI_PROVIDER`: `gemini` por omissão, ou `anthropic`) envia a imagem/PDF ao modelo de visão com um prompt que extrai `{ fornecedor, data, numero, total, iva, moeda, linhas:[{descricao, quantidade, unidade, preco_unitario, total, embalagem_g}] }`. Grava em `faturas.dados_ia`, `estado='analisada'`, pré-preenche `fornecedor/numero/total/iva/data_fatura` se vazios. Devolve `{ estado, provider, dados }`. Sem a chave do provider ativo → `503` (não mexe na fatura). Erro de rede/IA/JSON → `estado='erro'`, `dados_ia.erro`, `502`. |
 | `POST` | `/api/turnkey/faturas/{id}/aplicar` | body `{ linhas:[{ ingredienteId?, descricaoFatura, quantidadeG, precoUnitario, totalLinha, embalagemG, acao }] }` (`acao` ∈ `preco\|stock\|ambos\|ignorar`). Numa transação: apaga `faturas_itens` anteriores; por linha com ingrediente e `acao≠ignorar` — `preco/ambos` → update `ingredientes.preco` (+`gramas_embalagem` se >0, +`preco_atualizado_em`) que dispara a cascata de custos; `stock/ambos` → `cascade.aplicarMovimento(+quantidadeG, 'compra', notas:'Fatura <nº>')`. Recria `faturas_itens`, `faturas.estado='confirmada'` → `{ precos, movimentos }`. |
 | `GET` | `/api/turnkey/faturas/export?de=&ate=` | faturas `confirmada` no intervalo → `{ faturas:[{ id, fornecedor, dataFatura, numero, total, iva, ficheiroUrl, linhas:[...] }] }`. Base para a exportação para contabilidade (SAF-T / zip de PDFs fica para fase seguinte — o modelo já guarda tudo). |
 

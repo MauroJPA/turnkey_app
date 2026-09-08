@@ -31,104 +31,36 @@ routerAdd(
       }
     }
 
-    const key = $os.getenv('ANTHROPIC_API_KEY');
-    if (!key) {
-      throw new ApiError(503, 'IA não configurada (falta ANTHROPIC_API_KEY).', null);
-    }
-    const model = $os.getenv('TURNKEY_AI_MODEL') || 'claude-sonnet-5';
-
     const body = e.requestInfo().body || {};
     const imagem = (body.imagem || '').toString();
-    let mime = (body.mime || 'image/jpeg').toString();
+    const mime = (body.mime || 'image/jpeg').toString();
     if (!imagem) throw new BadRequestError('Falta a imagem (base64).');
-    const bloco =
-      mime === 'application/pdf'
-        ? { type: 'document', source: { type: 'base64', media_type: mime, data: imagem } }
-        : { type: 'image', source: { type: 'base64', media_type: mime, data: imagem } };
 
     const tipo = fatura.getString('tipo') || 'fatura';
     const isLista = tipo === 'lista_precos';
-    const sistema =
-      'És um extrator de dados de ' +
-      (isLista ? 'listas de preços' : 'faturas de compra') +
-      ' de uma padaria em Portugal. Responde APENAS com JSON válido, sem texto ' +
-      'à volta e sem cercas de código. Formato: {"fornecedor": string, "data": ' +
-      '"YYYY-MM-DD"|null, "numero": string|null, "total": number|null, "iva": ' +
-      'number|null, "moeda": string|null, "linhas": [{"descricao": string, ' +
-      '"quantidade": number|null, "unidade": string|null, "preco_unitario": ' +
-      'number|null, "total": number|null, "embalagem_g": number|null}]}. ' +
-      'Regras: preco_unitario é o preço por unidade/embalagem, NÃO o total da ' +
-      'linha. Não incluas descontos, portes ou totais como linhas de produto. ' +
-      'embalagem_g só quando o peso/volume da embalagem aparecer (converte kg->g, ' +
-      'L->ml tratado como g). ' +
-      (isLista ? 'Numa lista de preços, quantidade e total são null.' : '');
 
-    const payload = {
-      model: model,
-      max_tokens: 2000,
-      system: sistema,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            bloco,
-            { type: 'text', text: 'Extrai os dados. Só JSON.' },
-          ],
-        },
-      ],
-    };
+    // Análise por IA — fornecedor selecionável por TURNKEY_AI_PROVIDER
+    // (gemini por omissão; anthropic disponível). Ver pb/hooks/ai.js.
+    const ai = require(`${__hooks}/ai.js`);
+    const r = ai.analisarFaturaIA({
+      imagemBase64: imagem,
+      mime: mime,
+      isLista: isLista,
+    });
 
-    let resp;
-    try {
-      resp = $http.send({
-        url: 'https://api.anthropic.com/v1/messages',
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          'x-api-key': key,
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify(payload),
-        timeout: 120,
-      });
-    } catch (err) {
+    if (!r.ok) {
+      // 503 = problema de configuração do servidor: não marca a fatura.
+      if (r.code === 503) throw new ApiError(503, r.message, null);
       fatura.set('estado', 'erro');
-      fatura.set('dados_ia', { erro: 'Falha de rede: ' + err });
+      fatura.set(
+        'dados_ia',
+        r.raw ? { erro: r.message, bruto: r.raw } : { erro: r.message },
+      );
       e.app.save(fatura);
-      throw new ApiError(502, 'Não foi possível contactar a IA.', null);
+      throw new ApiError(502, r.message, null);
     }
 
-    if (resp.statusCode < 200 || resp.statusCode >= 300) {
-      const detalhe =
-        resp.json && resp.json.error
-          ? resp.json.error.message
-          : 'HTTP ' + resp.statusCode;
-      fatura.set('estado', 'erro');
-      fatura.set('dados_ia', { erro: detalhe });
-      e.app.save(fatura);
-      throw new ApiError(502, 'A IA respondeu com erro: ' + detalhe, null);
-    }
-
-    let texto = '';
-    try {
-      const parts = resp.json.content || [];
-      for (const p of parts) if (p.type === 'text') texto += p.text;
-    } catch (_) {}
-    texto = texto.trim();
-    // tolerar cercas ```json ... ```
-    const m = texto.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (m) texto = m[1].trim();
-
-    let dados;
-    try {
-      dados = JSON.parse(texto);
-    } catch (_) {
-      fatura.set('estado', 'erro');
-      fatura.set('dados_ia', { erro: 'Resposta não é JSON', bruto: texto });
-      e.app.save(fatura);
-      throw new ApiError(502, 'A IA não devolveu JSON válido.', null);
-    }
-
+    const dados = r.dados;
     fatura.set('dados_ia', dados);
     fatura.set('estado', 'analisada');
     if (!fatura.getString('fornecedor') && dados.fornecedor)
@@ -143,7 +75,7 @@ routerAdd(
       fatura.set('data_fatura', String(dados.data));
     e.app.save(fatura);
 
-    return e.json(200, { estado: 'analisada', dados: dados });
+    return e.json(200, { estado: 'analisada', provider: r.provider, dados: dados });
   },
   $apis.requireAuth('users', '_superusers'),
 );

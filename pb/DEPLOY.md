@@ -41,23 +41,33 @@ O Mini PC corre **PocketBase v0.35.0**. Confirma:
    ./pocketbase serve   # reinicia o serviço (systemd: systemctl restart pocketbase)
    ```
 
-   **Análise de faturas por IA** (`faturas.pb.js`): é preciso a variável de
-   ambiente `ANTHROPIC_API_KEY` no processo do PocketBase. Obtém a chave em
-   <https://console.anthropic.com/> → Settings → API keys (começa por `sk-ant-`).
+   **Análise de faturas por IA** (`faturas.pb.js` → `ai.js`): o fornecedor de IA
+   escolhe-se por `TURNKEY_AI_PROVIDER` — **`gemini`** (por omissão, tem plano
+   gratuito) ou `anthropic`. Só é preciso a chave do provider ativo.
+   - **Gemini** (agora): chave em <https://aistudio.google.com/app/apikey>
+     (começa por `AIza`). Variáveis: `TURNKEY_AI_PROVIDER=gemini`,
+     `GEMINI_API_KEY=AIza...`. Saída de internet para
+     `generativelanguage.googleapis.com`.
+   - **Anthropic** (futuro): chave em <https://console.anthropic.com/> →
+     Settings → API keys (`sk-ant-...`). Variáveis: `TURNKEY_AI_PROVIDER=anthropic`,
+     `ANTHROPIC_API_KEY=sk-ant-...`. Saída para `api.anthropic.com`. Custo
+     ~€0,01–0,03 por fatura.
+   - Opcional `TURNKEY_AI_MODEL` (por omissão `gemini-2.0-flash` /
+     `claude-sonnet-5`).
    - **Dev (Windows, `serve.ps1`)**: copia `pb/.env.example` para `pb/.env`
-     (fora do git) e põe lá `ANTHROPIC_API_KEY=sk-ant-...`. O `serve.ps1`
-     carrega o `.env` para o ambiente antes de arrancar e escreve se a chave
-     está definida. Alternativa pontual: `$env:ANTHROPIC_API_KEY = "sk-ant-..."`
-     no terminal antes de correr `serve`.
-   - **Mini PC — Windows service (NSSM)**: `nssm set pocketbase AppEnvironmentExtra ANTHROPIC_API_KEY=sk-ant-...` e reiniciar o serviço. Ou correr o PocketBase pelo mesmo `serve.ps1` com um `pb\.env` ao lado.
-   - **Mini PC — Linux systemd**: `Environment=ANTHROPIC_API_KEY=sk-ant-...` na
-     unit (ou `EnvironmentFile=/etc/pocketbase.env`), depois
+     (fora do git) e preenche. O `serve.ps1` carrega o `.env` para o ambiente
+     antes de arrancar e escreve `provider=… chave definida`.
+   - **Mini PC — Windows service (NSSM)**:
+     `nssm set pocketbase AppEnvironmentExtra TURNKEY_AI_PROVIDER=gemini GEMINI_API_KEY=AIza...`
+     e reiniciar o serviço. Ou correr o PocketBase pelo mesmo `serve.ps1` com um
+     `pb\.env` ao lado.
+   - **Mini PC — Linux systemd**: `Environment=TURNKEY_AI_PROVIDER=gemini` e
+     `Environment=GEMINI_API_KEY=AIza...` na unit (ou
+     `EnvironmentFile=/etc/pocketbase.env`), depois
      `systemctl daemon-reload && systemctl restart pocketbase`.
-   - Opcional `TURNKEY_AI_MODEL` (por omissão `claude-sonnet-5`).
-   - Sem a chave, tudo o resto funciona; só `/api/turnkey/faturas/{id}/analisar`
-     devolve `503` e a app mostra "IA não configurada".
-   - Custo estimado: ~€0,01–0,03 por fatura analisada. O servidor precisa de
-     **acesso de saída à internet** para `api.anthropic.com`.
+   - Sem a chave do provider ativo, tudo o resto funciona; só
+     `/api/turnkey/faturas/{id}/analisar` devolve `503` e a app mostra
+     "IA não configurada".
    - Confirmar depois de arrancar:
      `curl -X POST http://127.0.0.1:8090/api/turnkey/faturas/x/analisar` →
      deve dar `401` (falta auth), **não** `503`. Um `503` = chave não carregada.
