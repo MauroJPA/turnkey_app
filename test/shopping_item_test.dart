@@ -2,11 +2,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:turnkey_app/src/features/shopping/domain/shopping_item.dart';
 
 void main() {
-  test('gramasLabel: g abaixo de 1 kg, kg com 3 casas a partir de 1000', () {
+  test('gramasLabel: g abaixo de 1 kg, kg (vírgula, sem zeros) a partir de 1000',
+      () {
     expect(ShoppingItem.gramasLabel(0), '0 g');
     expect(ShoppingItem.gramasLabel(999), '999 g');
-    expect(ShoppingItem.gramasLabel(1000), '1.000 kg');
-    expect(ShoppingItem.gramasLabel(1594.2), '1.594 kg');
+    expect(ShoppingItem.gramasLabel(1000), '1 kg');
+    expect(ShoppingItem.gramasLabel(1200), '1,2 kg');
+    expect(ShoppingItem.gramasLabel(1594.2), '1,594 kg');
+    expect(ShoppingItem.gramasLabel(10000), '10 kg');
   });
 
   test('grupo cai em "Sem fornecedor" quando vazio ou só espaços', () {

@@ -80,4 +80,34 @@ class ShoppingRepository {
     }
     return recs.length;
   }
+
+  /// Reorganiza a lista: apaga as linhas já compradas (o stock delas já entrou
+  /// ao dar o visto) e volta a gerar as linhas de cada produção envolvida
+  /// contra o stock atual. Devolve o nº de linhas recalculadas.
+  Future<({int removidas, int recalculadas})> reorganizar() async {
+    final todas = await _c.getFullList(filter: 'empresa = "$_empresaId"');
+
+    var removidas = 0;
+    for (final r in todas.where((r) => r.getBoolValue('comprado'))) {
+      await _c.delete(r.id);
+      removidas++;
+    }
+
+    final producoes = <String>{
+      for (final r in todas)
+        if (!r.getBoolValue('comprado'))
+          if (r.getStringValue('producao').isNotEmpty)
+            r.getStringValue('producao'),
+    };
+
+    var recalculadas = 0;
+    for (final pid in producoes) {
+      final res = await _pb.send(
+        '/api/turnkey/producoes/$pid/lista-compras',
+        method: 'POST',
+      );
+      recalculadas += ((res as Map)['linhas'] as num?)?.toInt() ?? 0;
+    }
+    return (removidas: removidas, recalculadas: recalculadas);
+  }
 }

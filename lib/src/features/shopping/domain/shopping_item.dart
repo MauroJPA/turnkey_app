@@ -1,5 +1,7 @@
 import 'package:pocketbase/pocketbase.dart';
 
+import '../../../core/formatting/quantities.dart';
+
 /// Uma linha da lista de compras.
 ///
 /// As quantidades estão sempre em gramas (origem: explosão de ingredientes).
@@ -14,6 +16,7 @@ class ShoppingItem {
     this.comprado = false,
     this.producaoId,
     this.embalagemG = 0,
+    this.custoEstimado = 0,
   });
 
   final String id;
@@ -25,6 +28,7 @@ class ShoppingItem {
   final bool comprado;
   final String? producaoId;
   final double embalagemG;
+  final double custoEstimado;
 
   /// Rótulo do fornecedor para agrupar (nunca vazio).
   String get grupo => fornecedor.trim().isEmpty ? 'Sem fornecedor' : fornecedor;
@@ -33,9 +37,7 @@ class ShoppingItem {
   int? get sacos =>
       embalagemG > 0 ? (comprarG / embalagemG).ceil() : null;
 
-  static String gramasLabel(double g) => g >= 1000
-      ? '${(g / 1000).toStringAsFixed(3)} kg'
-      : '${g.toStringAsFixed(0)} g';
+  static String gramasLabel(double g) => gramasParaTexto(g);
 
   factory ShoppingItem.fromRecord(RecordModel r) {
     final ing = r.getStringValue('ingrediente');
@@ -51,6 +53,7 @@ class ShoppingItem {
           ? null
           : r.getStringValue('producao'),
       embalagemG: r.getDoubleValue('embalagem_g'),
+      custoEstimado: r.getDoubleValue('custo_estimado'),
     );
   }
 
@@ -64,5 +67,6 @@ class ShoppingItem {
         comprado: comprado ?? this.comprado,
         producaoId: producaoId,
         embalagemG: embalagemG,
+        custoEstimado: custoEstimado,
       );
 }

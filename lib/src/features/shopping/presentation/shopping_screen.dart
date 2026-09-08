@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/formatting/money_provider.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../application/shopping_providers.dart';
@@ -111,6 +112,7 @@ class ShoppingScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(shoppingListProvider);
     final podeEditar = _podeEditar(ref);
+    final fmt = ref.watch(moneyFormatProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -122,24 +124,37 @@ class ShoppingScreen extends ConsumerWidget {
         actions: [
           if (podeEditar)
             IconButton(
-              tooltip: 'Remover comprados',
-              icon: const Icon(Icons.cleaning_services_outlined),
+              tooltip: 'Reorganizar lista',
+              icon: const Icon(Icons.autorenew),
               onPressed: () async {
                 final ok = await confirmDialog(
                   context,
-                  titulo: 'Remover itens comprados?',
-                  mensagem: 'Apaga da lista as linhas já marcadas. '
-                      'O stock não é alterado.',
-                  confirmar: 'Remover',
-                  destrutivo: true,
+                  titulo: 'Reorganizar lista?',
+                  mensagem:
+                      'Remove as linhas já compradas (o stock delas já entrou '
+                      'ao dar o visto) e recalcula o que falta comprar face ao '
+                      'stock atual.',
+                  confirmar: 'Reorganizar',
                 );
                 if (!ok) return;
-                final n =
-                    await ref.read(shoppingActionsProvider).limparComprados();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('$n item(s) removido(s).')),
-                  );
+                try {
+                  final r =
+                      await ref.read(shoppingActionsProvider).reorganizar();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          '${r.removidas} removida(s) · '
+                          '${r.recalculadas} linha(s) recalculada(s).',
+                        ),
+                      ),
+                    );
+                  }
+                } on Object catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text('$e')));
+                  }
                 }
               },
             ),
@@ -165,19 +180,37 @@ class ShoppingScreen extends ConsumerWidget {
           for (final i in itens) {
             grupos.putIfAbsent(i.grupo, () => []).add(i);
           }
-          final totalComprar = itens
-              .where((i) => !i.comprado)
-              .fold<double>(0, (s, i) => s + i.comprarG);
+          final totalEsperado =
+              itens.fold<double>(0, (s, i) => s + i.custoEstimado);
+          final totalComprado = itens
+              .where((i) => i.comprado)
+              .fold<double>(0, (s, i) => s + i.custoEstimado);
+          final falta = itens.where((i) => !i.comprado).length;
 
           return ListView(
             padding: const EdgeInsets.only(bottom: 88),
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Text(
-                  'Em falta: ${ShoppingItem.gramasLabel(totalComprar)} '
-                  '· ${itens.where((i) => !i.comprado).length} item(s)',
-                  style: Theme.of(context).textTheme.bodySmall,
+              Card(
+                margin: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _linhaTotal(context, 'Total esperado', fmt(totalEsperado),
+                          forte: true),
+                      const SizedBox(height: 4),
+                      _linhaTotal(context, 'Já comprado (visto)',
+                          fmt(totalComprado)),
+                      const SizedBox(height: 4),
+                      _linhaTotal(
+                        context,
+                        'Ainda em falta',
+                        '${fmt(totalEsperado - totalComprado)} · '
+                            '$falta ${falta == 1 ? 'item' : 'itens'}',
+                      ),
+                    ],
+                  ),
                 ),
               ),
               for (final entry in grupos.entries) ...[
@@ -194,6 +227,7 @@ class ShoppingScreen extends ConsumerWidget {
                   _Linha(
                     item: item,
                     podeEditar: podeEditar,
+                    fmt: fmt,
                     onToggle: (v) => ref
                         .read(shoppingActionsProvider)
                         .definirComprado(item, v),
@@ -210,10 +244,29 @@ class ShoppingScreen extends ConsumerWidget {
   }
 }
 
+Widget _linhaTotal(
+  BuildContext context,
+  String rotulo,
+  String valor, {
+  bool forte = false,
+}) {
+  final style = forte
+      ? const TextStyle(fontWeight: FontWeight.bold)
+      : Theme.of(context).textTheme.bodyMedium;
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(rotulo, style: style),
+      Text(valor, style: style),
+    ],
+  );
+}
+
 class _Linha extends StatelessWidget {
   const _Linha({
     required this.item,
     required this.podeEditar,
+    required this.fmt,
     required this.onToggle,
     required this.onEditar,
     required this.onRemover,
@@ -221,6 +274,7 @@ class _Linha extends StatelessWidget {
 
   final ShoppingItem item;
   final bool podeEditar;
+  final MoneyFmt fmt;
   final ValueChanged<bool> onToggle;
   final VoidCallback onEditar;
   final VoidCallback onRemover;
@@ -228,29 +282,32 @@ class _Linha extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sacos = item.sacos;
+    final risca = item.comprado
+        ? const TextStyle(decoration: TextDecoration.lineThrough)
+        : null;
+
+    final descricao = sacos != null && sacos > 0
+        ? '$sacos  ${item.descricao}'
+        : item.descricao;
+
+    final String detalhe;
+    if (item.necessariaG <= 0) {
+      detalhe = 'Item manual';
+    } else if (item.embalagemG > 0) {
+      detalhe = 'Embalagem de ${ShoppingItem.gramasLabel(item.embalagemG)} — '
+          'Precisamos de ${ShoppingItem.gramasLabel(item.necessariaG)}';
+    } else {
+      detalhe = 'Precisamos de ${ShoppingItem.gramasLabel(item.necessariaG)}'
+          ' · comprar ${ShoppingItem.gramasLabel(item.comprarG)}';
+    }
+
     return CheckboxListTile(
       controlAffinity: ListTileControlAffinity.leading,
       value: item.comprado,
-      onChanged:
-          podeEditar ? (v) => onToggle(v ?? false) : null,
-      title: Text(
-        item.descricao,
-        style: item.comprado
-            ? const TextStyle(
-                decoration: TextDecoration.lineThrough,
-              )
-            : null,
-      ),
-      subtitle: Text(
-        item.necessariaG > 0
-            ? [
-                if (sacos != null && sacos > 0)
-                  '$sacos ${sacos == 1 ? 'saco' : 'sacos'} de '
-                      '${ShoppingItem.gramasLabel(item.embalagemG)}',
-                'precisa ${ShoppingItem.gramasLabel(item.necessariaG)}',
-              ].join(' · ')
-            : 'Item manual',
-      ),
+      onChanged: podeEditar ? (v) => onToggle(v ?? false) : null,
+      isThreeLine: false,
+      title: Text(descricao, style: risca),
+      subtitle: Text(detalhe),
       secondary: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -260,10 +317,11 @@ class _Linha extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  ShoppingItem.gramasLabel(item.comprarG),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
+                if (item.custoEstimado > 0)
+                  Text(
+                    fmt(item.custoEstimado),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 if (podeEditar)
                   Text(
                     'editar',

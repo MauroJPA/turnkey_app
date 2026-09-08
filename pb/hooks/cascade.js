@@ -428,21 +428,64 @@ function aplicarMovimento(app, item, delta, motivo, opts) {
 }
 
 // Resolve a ficha técnica (produto acabado) correspondente a uma combinação
-// massa + recheio + formato. Devolve o id da ficha ou '' se não houver uma
-// que corresponda inequivocamente.
+// massa + recheio + formato. Devolve o id da ficha ou '' se não houver.
+//
+// As fichas ligam a massa/recheio quer por `receita` quer pelo `ingrediente`
+// espelho (o "ingrediente Gookie" cujo `receita_espelho` aponta para a
+// receita) — os dois casos são aceites.
+//
+// O `formato` é usado como desempate: se houver fichas com o formato exato
+// usa-se essa; senão aceita-se uma ficha SEM formato definido (fichas antigas).
+// Só se descarta uma ficha com um formato *diferente* explicitamente definido.
 function resolverFicha(app, empresaId, massaId, recheioId, formatoId) {
   if (!massaId) return '';
+  const bool = (rec, f) => {
+    try {
+      return rec.getBool(f);
+    } catch (_) {
+      return false;
+    }
+  };
+  // ids que representam uma receita numa ficha: a própria receita + os
+  // ingredientes-espelho que apontam para ela.
+  const refsDe = (recId) => {
+    const out = [recId];
+    if (!recId) return out;
+    const esp = app.findRecordsByFilter(
+      'ingredientes',
+      'empresa = {:e} && receita_espelho = {:r}',
+      '',
+      0,
+      0,
+      { e: empresaId, r: recId },
+    );
+    for (const i of esp) out.push(i.id);
+    return out;
+  };
+  const casa = (linha, refs) =>
+    refs.indexOf(linha.getString('receita')) >= 0 ||
+    refs.indexOf(linha.getString('ingrediente')) >= 0;
+
+  const massaRefs = refsDe(massaId);
+  const recheioRefs = recheioId ? refsDe(recheioId) : [];
+
   const linhasMassa = app.findRecordsByFilter(
     'itens_ficha',
-    "empresa = {:e} && slot = 'massa' && receita = {:r}",
+    "empresa = {:e} && slot = 'massa'",
     '',
     0,
     0,
-    { e: empresaId, r: massaId },
+    { e: empresaId },
   );
+
+  const exatas = [];
+  const semFormato = [];
+  const vistas = {};
   for (const lm of linhasMassa) {
+    if (!casa(lm, massaRefs)) continue;
     const fichaId = lm.getString('ficha');
-    if (!fichaId) continue;
+    if (!fichaId || vistas[fichaId]) continue;
+    vistas[fichaId] = true;
 
     let ficha;
     try {
@@ -450,11 +493,10 @@ function resolverFicha(app, empresaId, massaId, recheioId, formatoId) {
     } catch (_) {
       continue;
     }
-    if (ficha.getString('deletado') === 'true' || ficha.get('deletado') === true) {
-      continue;
-    }
-    if (formatoId && ficha.getString('formato') !== formatoId) continue;
+    if (bool(ficha, 'deletado')) continue;
 
+    // recheio: se pediram um, a ficha tem de o ter num slot de recheio;
+    // se não pediram, a ficha não pode ter slots de recheio.
     const recheios = app.findRecordsByFilter(
       'itens_ficha',
       "ficha = {:f} && (slot = 'recheio_base' || slot = 'recheio_top')",
@@ -466,18 +508,27 @@ function resolverFicha(app, empresaId, massaId, recheioId, formatoId) {
     if (recheioId) {
       let ok = false;
       for (const r of recheios) {
-        if (r.getString('receita') === recheioId) {
+        if (casa(r, recheioRefs)) {
           ok = true;
           break;
         }
       }
       if (!ok) continue;
     } else if (recheios.length > 0) {
-      // pediram sem recheio mas a ficha tem recheio -> não corresponde
       continue;
     }
-    return fichaId;
+
+    const fFmt = ficha.getString('formato');
+    if (formatoId && fFmt === formatoId) {
+      exatas.push(fichaId);
+    } else if (!fFmt) {
+      semFormato.push(fichaId);
+    }
+    // fFmt definido e diferente do pedido -> ignora
   }
+
+  if (exatas.length > 0) return exatas[0];
+  if (semFormato.length > 0) return semFormato[0];
   return '';
 }
 

@@ -295,6 +295,8 @@ routerAdd(
         const embG = num(ing, 'gramas_embalagem');
         const comprar =
           embG > 0 ? Math.ceil(faltaG / embG) * embG : faltaG;
+        const cpg = embG > 0 ? num(ing, 'preco') / embG : 0;
+        const custoEstimado = comprar * cpg;
 
         const existentes = tx.findRecordsByFilter(
           'lista_compras',
@@ -319,6 +321,7 @@ routerAdd(
         row.set('quantidade_necessaria_g', necessario);
         row.set('quantidade_comprar_g', comprar);
         row.set('embalagem_g', embG);
+        row.set('custo_estimado', custoEstimado);
         tx.save(row);
         linhas++;
       }

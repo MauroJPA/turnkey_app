@@ -59,4 +59,10 @@ class ShoppingActions {
     _refresh();
     return n;
   }
+
+  Future<({int removidas, int recalculadas})> reorganizar() async {
+    final r = await _repo.reorganizar();
+    _refresh(stock: true);
+    return r;
+  }
 }
