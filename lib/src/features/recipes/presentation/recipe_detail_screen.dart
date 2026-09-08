@@ -8,6 +8,7 @@ import '../../../core/formatting/money_provider.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/history_sheet.dart';
+import '../../production/presentation/agenda_line_sheet.dart';
 import '../application/recipes_providers.dart';
 import '../domain/recipe_item.dart';
 import 'item_picker_sheet.dart';
@@ -136,6 +137,15 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
           ),
         ),
         actions: [
+          detailAsync.maybeWhen(
+            data: (d) => IconButton(
+              tooltip: 'Agendar produção',
+              icon: const Icon(Icons.event_note_outlined),
+              onPressed: () =>
+                  showAgendaLineSheet(context, receita: d.receita),
+            ),
+            orElse: () => const SizedBox.shrink(),
+          ),
           detailAsync.maybeWhen(
             data: (d) => IconButton(
               tooltip: 'Procedimento e imagens',

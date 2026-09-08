@@ -25,6 +25,12 @@ final planoProvider =
   return ref.watch(scheduleRepositoryProvider).plano(id);
 });
 
+/// Formato mais usado historicamente para uma receita (`''` se não há).
+final formatoSugeridoProvider =
+    FutureProvider.autoDispose.family<String, String>((ref, receitaId) {
+  return ref.watch(scheduleRepositoryProvider).formatoMaisUsado(receitaId);
+});
+
 final scheduleActionsProvider =
     Provider<ScheduleActions>(ScheduleActions.new);
 

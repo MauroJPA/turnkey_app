@@ -104,6 +104,36 @@ class ScheduleRepository {
 
   Future<void> removeItem(String itemId) => _itens.delete(itemId);
 
+  /// Id do formato mais usado nas produções anteriores desta receita
+  /// (para pré-selecionar). `''` se ainda não há histórico.
+  Future<String> formatoMaisUsado(String receitaId) async {
+    final recs = await _itens.getFullList(
+      filter: 'receita = "$receitaId" && formato != ""',
+      fields: 'formato',
+      sort: '-created',
+    );
+    if (recs.isEmpty) return '';
+    final contagem = <String, int>{};
+    for (final r in recs) {
+      final f = r.getStringValue('formato');
+      if (f.isNotEmpty) contagem[f] = (contagem[f] ?? 0) + 1;
+    }
+    if (contagem.isEmpty) return '';
+    return contagem.entries
+        .reduce((a, b) => a.value >= b.value ? a : b)
+        .key;
+  }
+
+  /// Nº de linhas já na lista de compras para esta produção.
+  Future<int> contarLinhasCompra(String planId) async {
+    final res = await _pb.collection('lista_compras').getList(
+          page: 1,
+          perPage: 1,
+          filter: 'producao = "$planId"',
+        );
+    return res.totalItems;
+  }
+
   Future<PlanoResposta> plano(String planId) async {
     final res = await _pb.send(
       '/api/turnkey/producoes/$planId/plano',

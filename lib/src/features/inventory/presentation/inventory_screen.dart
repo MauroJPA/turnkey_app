@@ -175,8 +175,19 @@ class _AjusteSheetState extends ConsumerState<_AjusteSheet> {
         : '',
   );
   bool _entrada = true;
-  MotivoMovimento _motivo = MotivoMovimento.ajuste;
+  MotivoMovimento _motivo = MotivoMovimento.compra;
+  bool _motivoTocado = false;
   bool _busy = false;
+
+  void _atualizarDirecao(bool entrada) {
+    setState(() {
+      _entrada = entrada;
+      if (!_motivoTocado) {
+        _motivo =
+            entrada ? MotivoMovimento.compra : MotivoMovimento.venda;
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -244,7 +255,7 @@ class _AjusteSheetState extends ConsumerState<_AjusteSheet> {
               ButtonSegment(value: false, label: Text('Saída')),
             ],
             selected: {_entrada},
-            onSelectionChanged: (s) => setState(() => _entrada = s.first),
+            onSelectionChanged: (s) => _atualizarDirecao(s.first),
           ),
           const SizedBox(height: 12),
           TextField(
@@ -263,8 +274,10 @@ class _AjusteSheetState extends ConsumerState<_AjusteSheet> {
               for (final m in MotivoMovimento.values)
                 DropdownMenuItem(value: m, child: Text(m.label)),
             ],
-            onChanged: (v) =>
-                setState(() => _motivo = v ?? MotivoMovimento.ajuste),
+            onChanged: (v) => setState(() {
+              _motivo = v ?? MotivoMovimento.ajuste;
+              _motivoTocado = true;
+            }),
           ),
           const SizedBox(height: 12),
           TextField(

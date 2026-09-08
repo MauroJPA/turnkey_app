@@ -11,6 +11,7 @@ import '../../../core/widgets/confirm_dialog.dart';
 import '../../recipes/domain/recipe.dart';
 import '../../recipes/presentation/recipe_picker_sheet.dart';
 import '../application/schedule_providers.dart';
+import '../data/schedule_repository.dart';
 import '../domain/production_plan.dart';
 
 String _gLabel(double g) => g >= 1000
@@ -442,6 +443,22 @@ class _Body extends ConsumerWidget {
 
   Future<void> _gerarCompras(BuildContext context, WidgetRef ref) async {
     try {
+      final jaTem = await ref
+          .read(scheduleRepositoryProvider)
+          .contarLinhasCompra(plano.id);
+      if (!context.mounted) return;
+      if (jaTem > 0) {
+        final ok = await confirmDialog(
+          context,
+          titulo: 'Já foi adicionado',
+          mensagem:
+              'Esta produção já tem $jaTem linha(s) na lista de compras. '
+              'Queres mesmo adicionar de novo? (as quantidades são '
+              'recalculadas, não somadas)',
+          confirmar: 'Adicionar de novo',
+        );
+        if (!ok) return;
+      }
       final n =
           await ref.read(scheduleActionsProvider).gerarListaCompras(plano.id);
       if (!context.mounted) return;

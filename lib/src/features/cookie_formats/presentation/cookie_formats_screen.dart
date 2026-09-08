@@ -42,6 +42,29 @@ class CookieFormatsScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _apagar(
+    BuildContext context,
+    WidgetRef ref,
+    FormatoCookie f,
+  ) async {
+    final ok = await confirmDialog(
+      context,
+      titulo: 'Apagar formato?',
+      mensagem: 'Remove "${f.nome}". Produções antigas mantêm o valor guardado.',
+      confirmar: 'Apagar',
+      destrutivo: true,
+    );
+    if (!ok) return;
+    try {
+      await ref.read(cookieFormatActionsProvider).apagar(f.id);
+    } on Object catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$e')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(formatosProvider);
@@ -85,29 +108,27 @@ class CookieFormatsScreen extends ConsumerWidget {
                           '${f.totalG.toStringAsFixed(0)} g'
                       : 'massa ${f.massaG.toStringAsFixed(0)} g',
                 ),
-                trailing: !f.ativo
-                    ? const Chip(label: Text('inativo'))
-                    : null,
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!f.ativo)
+                      const Padding(
+                        padding: EdgeInsets.only(right: 4),
+                        child: Chip(label: Text('inativo')),
+                      ),
+                    if (podeEditar)
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        tooltip: 'Remover formato',
+                        onPressed: () => _apagar(context, ref, f),
+                      ),
+                  ],
+                ),
                 onTap: podeEditar
                     ? () => _editar(context, ref, existente: f)
                     : null,
-                onLongPress: podeEditar
-                    ? () async {
-                        final ok = await confirmDialog(
-                          context,
-                          titulo: 'Apagar formato?',
-                          mensagem:
-                              'Remove "${f.nome}". Produções antigas mantêm o '
-                              'valor guardado.',
-                          confirmar: 'Apagar',
-                          destrutivo: true,
-                        );
-                        if (!ok) return;
-                        await ref
-                            .read(cookieFormatActionsProvider)
-                            .apagar(f.id);
-                      }
-                    : null,
+                onLongPress:
+                    podeEditar ? () => _apagar(context, ref, f) : null,
               );
             },
           );
