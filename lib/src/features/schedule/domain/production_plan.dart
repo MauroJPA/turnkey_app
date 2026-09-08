@@ -1,0 +1,214 @@
+import 'package:pocketbase/pocketbase.dart';
+
+/// Estado de um plano de produção.
+enum EstadoProducao {
+  planeada,
+  concluida,
+  cancelada;
+
+  static EstadoProducao fromApi(String? v) => EstadoProducao.values.firstWhere(
+        (e) => e.name == v,
+        orElse: () => EstadoProducao.planeada,
+      );
+
+  String get api => name;
+
+  String get label => switch (this) {
+        EstadoProducao.planeada => 'Planeada',
+        EstadoProducao.concluida => 'Concluída',
+        EstadoProducao.cancelada => 'Cancelada',
+      };
+}
+
+/// Um plano de produção para um dia: cabeçalho (data, título, estado).
+class ProducaoPlan {
+  const ProducaoPlan({
+    required this.id,
+    required this.data,
+    required this.titulo,
+    required this.estado,
+    this.notas = '',
+    this.concluidaEm,
+    this.custoSnapshot = 0,
+  });
+
+  final String id;
+  final DateTime data;
+  final String titulo;
+  final EstadoProducao estado;
+  final String notas;
+  final DateTime? concluidaEm;
+  final double custoSnapshot;
+
+  bool get concluida => estado == EstadoProducao.concluida;
+
+  factory ProducaoPlan.fromRecord(RecordModel r) {
+    DateTime? parseDate(String f) {
+      final s = r.getStringValue(f);
+      if (s.isEmpty) return null;
+      return DateTime.tryParse(s);
+    }
+
+    return ProducaoPlan(
+      id: r.id,
+      data: parseDate('data') ?? DateTime.now(),
+      titulo: r.getStringValue('titulo'),
+      estado: EstadoProducao.fromApi(r.getStringValue('estado')),
+      notas: r.getStringValue('notas'),
+      concluidaEm: parseDate('concluida_em'),
+      custoSnapshot: r.getDoubleValue('custo_snapshot'),
+    );
+  }
+}
+
+/// Uma linha do plano: uma receita e a quantidade a produzir (em kg).
+class ProducaoItem {
+  const ProducaoItem({
+    required this.id,
+    required this.receitaId,
+    required this.nome,
+    required this.quantidadeKg,
+  });
+
+  final String id;
+  final String receitaId;
+  final String nome;
+  final double quantidadeKg;
+
+  factory ProducaoItem.fromRecord(RecordModel r) {
+    var nome = '';
+    final exp = r.get<List<RecordModel>>('expand.receita', []);
+    if (exp.isNotEmpty) nome = exp.first.getStringValue('nome');
+    return ProducaoItem(
+      id: r.id,
+      receitaId: r.getStringValue('receita'),
+      nome: nome,
+      quantidadeKg: r.getDoubleValue('quantidade_kg'),
+    );
+  }
+}
+
+/// Um ingrediente necessário para o plano (resultado da explosão server-side).
+class PlanoNecessario {
+  const PlanoNecessario({
+    required this.ingredienteId,
+    required this.nome,
+    required this.fornecedor,
+    required this.gramas,
+    required this.custo,
+    required this.emStock,
+    required this.aComprar,
+  });
+
+  final String ingredienteId;
+  final String nome;
+  final String fornecedor;
+  final double gramas;
+  final double custo;
+  final double emStock;
+  final double aComprar;
+
+  factory PlanoNecessario.fromJson(Map<String, dynamic> j) => PlanoNecessario(
+        ingredienteId: j['ingredienteId'] as String? ?? '',
+        nome: j['nome'] as String? ?? '',
+        fornecedor: j['fornecedor'] as String? ?? '',
+        gramas: (j['gramas'] as num?)?.toDouble() ?? 0,
+        custo: (j['custo'] as num?)?.toDouble() ?? 0,
+        emStock: (j['emStock'] as num?)?.toDouble() ?? 0,
+        aComprar: (j['aComprar'] as num?)?.toDouble() ?? 0,
+      );
+}
+
+/// Uma receita a produzir (linha de `produzir` no plano).
+class PlanoProduzir {
+  const PlanoProduzir({
+    required this.receitaId,
+    required this.nome,
+    required this.kg,
+  });
+
+  final String receitaId;
+  final String nome;
+  final double kg;
+
+  factory PlanoProduzir.fromJson(Map<String, dynamic> j) => PlanoProduzir(
+        receitaId: j['receitaId'] as String? ?? '',
+        nome: j['nome'] as String? ?? '',
+        kg: (j['kg'] as num?)?.toDouble() ?? 0,
+      );
+}
+
+/// Resposta agregada de `GET /api/turnkey/producoes/{id}/plano`.
+class PlanoResposta {
+  const PlanoResposta({
+    required this.necessarios,
+    required this.produzir,
+    required this.custoTotal,
+  });
+
+  final List<PlanoNecessario> necessarios;
+  final List<PlanoProduzir> produzir;
+  final double custoTotal;
+
+  double get totalAComprar =>
+      necessarios.fold(0, (s, n) => s + n.aComprar);
+
+  factory PlanoResposta.fromJson(Map<String, dynamic> j) => PlanoResposta(
+        necessarios: ((j['necessarios'] as List?) ?? const [])
+            .map((e) => PlanoNecessario.fromJson(
+                  Map<String, dynamic>.from(e as Map),
+                ))
+            .toList(),
+        produzir: ((j['produzir'] as List?) ?? const [])
+            .map((e) => PlanoProduzir.fromJson(
+                  Map<String, dynamic>.from(e as Map),
+                ))
+            .toList(),
+        custoTotal: (j['custoTotal'] as num?)?.toDouble() ?? 0,
+      );
+}
+
+/// Movimento (consumo ou saída) devolvido por `.../concluir`.
+class MovimentoResumo {
+  const MovimentoResumo({required this.nome, required this.gramas});
+
+  final String nome;
+  final double gramas;
+
+  factory MovimentoResumo.fromJson(Map<String, dynamic> j) => MovimentoResumo(
+        nome: j['nome'] as String? ?? '',
+        gramas: (j['gramas'] as num?)?.toDouble() ?? 0,
+      );
+}
+
+/// Resposta de `POST /api/turnkey/producoes/{id}/concluir`.
+class ConclusaoResumo {
+  const ConclusaoResumo({
+    required this.consumos,
+    required this.saidas,
+    required this.faltas,
+    required this.custoTotal,
+  });
+
+  final List<MovimentoResumo> consumos;
+  final List<MovimentoResumo> saidas;
+  final List<String> faltas;
+  final double custoTotal;
+
+  factory ConclusaoResumo.fromJson(Map<String, dynamic> j) => ConclusaoResumo(
+        consumos: ((j['consumos'] as List?) ?? const [])
+            .map((e) => MovimentoResumo.fromJson(
+                  Map<String, dynamic>.from(e as Map),
+                ))
+            .toList(),
+        saidas: ((j['saidas'] as List?) ?? const [])
+            .map((e) => MovimentoResumo.fromJson(
+                  Map<String, dynamic>.from(e as Map),
+                ))
+            .toList(),
+        faltas: ((j['faltas'] as List?) ?? const [])
+            .map((e) => e.toString())
+            .toList(),
+        custoTotal: (j['custoTotal'] as num?)?.toDouble() ?? 0,
+      );
+}

@@ -45,6 +45,9 @@ final productionProvider =
         final qtd = it.quantidadeG * fator;
         if (it.subReceitaId != null) {
           subs.add(await build(it.subReceitaId!, qtd, proximoCaminho));
+        } else if (it.eEspelho) {
+          // ingrediente que é uma receita própria -> explode também
+          subs.add(await build(it.ingredienteEspelhoId!, qtd, proximoCaminho));
         } else {
           linhas.add(
             ProductionLine(

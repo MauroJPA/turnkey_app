@@ -40,9 +40,29 @@ pb/
 | `1704240000_receitas.js` | `receitas`, `itens_receita`, `ingredientes.receita_espelho` |
 | `1704326400_historico.js` | `historico` (só o servidor escreve) |
 | `1704412800_timestamps.js` | campos `autodate` `created`/`updated` nas coleções de negócio |
+| `1704499200_fichas_tecnicas.js` | `fichas_tecnicas`, `itens_ficha` |
+| `1704585600_equipa_regras.js` | regras de equipa/papéis |
+| `1704672000_fix_config_rule.js` | correção de regra em `configuracoes_custo` |
+| `1704758400_receita_procedimento.js` | `receitas.procedimento` |
+| `1704844800_inventario.js` | `inventario`, `movimentos_inventario` (só o servidor escreve) |
+| `1704931200_producoes.js` | `producoes`, `producao_itens`, `movimentos_inventario.producao` |
+| `1705017600_lista_compras.js` | `lista_compras` |
 
-Hooks: `onboarding.pb.js`, `guards.pb.js`, `cost_cascade.pb.js` (+ `cascade.js`).
-Falta (M5): `fichas_tecnicas`, `itens_ficha` e `__recomputeFichaImpl`.
+Hooks: `onboarding.pb.js`, `guards.pb.js`, `cost_cascade.pb.js`, `team.pb.js`,
+`inventario.pb.js`, `admin.pb.js` (+ `cascade.js`, que exporta `runCascade`,
+`explodeCompras`, `aplicarMovimento`, `carregarProducao`).
+
+### Endpoints (Fase 2 — `inventario.pb.js`)
+
+Todos exigem `requireAuth('users', '_superusers')`; um `users` não-viewer só age
+sobre a sua empresa.
+
+| Método | Rota | Efeito |
+|---|---|---|
+| `POST` | `/api/turnkey/inventario/ajustar` | `{ ingrediente?\|ficha?, delta, motivo, notas?, producao?, minimo?, localizacao? }` → upsert da linha `inventario` (`quantidade = max(0, q+delta)`) + `movimentos_inventario`. `delta` 0 é aceite se vier `minimo`/`localizacao`. |
+| `GET` | `/api/turnkey/producoes/{id}/plano` | explosão agregada (desce sub-receitas e espelhos de fabrico próprio até ingredientes comprados) → `{ necessarios:[{ingredienteId,nome,fornecedor,gramas,custo,emStock,aComprar}], produzir:[{receitaId,nome,kg}], custoTotal }`. |
+| `POST` | `/api/turnkey/producoes/{id}/lista-compras` | mesma agregação → upsert em `lista_compras` (funde na linha não-comprada do mesmo ingrediente+produção), `comprar = max(0, necessário − stock)` → `{ linhas }`. |
+| `POST` | `/api/turnkey/producoes/{id}/concluir` | por cada `producao_item` consome as linhas diretas escaladas (`consumo_producao`) e credita o espelho da receita (`saida_producao`); marca `estado=concluida`, `concluida_em`, `custo_snapshot` → `{ consumos, saidas, faltas, custoTotal }`. |
 
 ## ⚠️ Regras de escrita de hooks (PocketBase 0.35)
 

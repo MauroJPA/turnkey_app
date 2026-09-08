@@ -19,11 +19,18 @@ class ItemReceita with _$ItemReceita {
     @Default(0) double quantidadeG,
     @Default('') String nomeResolvido,
     @Default(0) double custoPorGramaResolvido,
+    @Default('') String ingredienteOrigem,
+    String? ingredienteEspelhoId,
   }) = _ItemReceita;
 
   const ItemReceita._();
 
   bool get pendente => ingredienteId == null && subReceitaId == null;
+
+  /// Ingrediente que na verdade é uma receita própria (para explodir a produção).
+  bool get eEspelho =>
+      ingredienteOrigem == 'fabrico_proprio' &&
+      (ingredienteEspelhoId?.isNotEmpty ?? false);
 
   double get custoLinha => custoPorGramaResolvido * quantidadeG;
 
@@ -34,6 +41,8 @@ class ItemReceita with _$ItemReceita {
   factory ItemReceita.fromRecord(RecordModel r) {
     var nome = r.getStringValue('nome_provisorio');
     var cpg = 0.0;
+    var origem = '';
+    String? espelhoId;
 
     final ing = r.get<List<RecordModel>>('expand.ingrediente', []);
     final sub = r.get<List<RecordModel>>('expand.sub_receita', []);
@@ -43,6 +52,9 @@ class ItemReceita with _$ItemReceita {
       final preco = e.getDoubleValue('preco');
       final g = e.getDoubleValue('gramas_embalagem');
       cpg = g > 0 ? preco / g : 0;
+      origem = e.getStringValue('origem');
+      final esp = e.getStringValue('receita_espelho');
+      if (esp.isNotEmpty) espelhoId = esp;
     } else if (sub.isNotEmpty) {
       final e = sub.first;
       nome = e.getStringValue('nome');
@@ -65,6 +77,8 @@ class ItemReceita with _$ItemReceita {
       quantidadeG: r.getDoubleValue('quantidade_g'),
       nomeResolvido: nome,
       custoPorGramaResolvido: cpg,
+      ingredienteOrigem: origem,
+      ingredienteEspelhoId: espelhoId,
     );
   }
 }

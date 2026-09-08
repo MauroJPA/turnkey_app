@@ -5,8 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/widgets/async_value_view.dart';
-import '../../recipes/application/recipes_providers.dart';
 import '../../recipes/domain/recipe.dart';
+import '../../recipes/presentation/recipe_picker_sheet.dart';
 import '../application/production_providers.dart';
 import '../domain/production.dart';
 
@@ -33,12 +33,7 @@ class _ProductionScreenState extends ConsumerState<ProductionScreen> {
   }
 
   Future<void> _escolher() async {
-    final r = await showModalBottomSheet<Receita>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => const _RecipePicker(),
-    );
+    final r = await showRecipePickerSheet(context);
     if (r != null) setState(() => _receita = r);
   }
 
@@ -212,74 +207,6 @@ class _NodeView extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// Escolhe uma receita (produto de fabrico próprio).
-class _RecipePicker extends ConsumerStatefulWidget {
-  const _RecipePicker();
-
-  @override
-  ConsumerState<_RecipePicker> createState() => _RecipePickerState();
-}
-
-class _RecipePickerState extends ConsumerState<_RecipePicker> {
-  String _q = '';
-  bool _soFabricoProprio = true;
-
-  @override
-  Widget build(BuildContext context) {
-    final async = ref.watch(recipesListProvider(false));
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.8,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          children: [
-            TextField(
-              onChanged: (v) => setState(() => _q = v),
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Procurar receita',
-                isDense: true,
-              ),
-            ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              title: const Text('Só produtos de fabrico próprio'),
-              value: _soFabricoProprio,
-              onChanged: (v) => setState(() => _soFabricoProprio = v),
-            ),
-            Expanded(
-              child: AsyncValueView<List<Receita>>(
-                value: async,
-                data: (all) {
-                  final items = all.where((r) {
-                    final mq = _q.isEmpty ||
-                        r.nome.toLowerCase().contains(_q.toLowerCase());
-                    final mf =
-                        !_soFabricoProprio || r.publicarComoIngrediente;
-                    return mq && mf;
-                  }).toList();
-                  return ListView.builder(
-                    itemCount: items.length,
-                    itemBuilder: (_, i) => ListTile(
-                      title: Text(items[i].nome),
-                      subtitle: Text(
-                        '${items[i].categoria.label} · '
-                        '${items[i].rendimentoEsperado.toStringAsFixed(0)} g',
-                      ),
-                      onTap: () => Navigator.pop(context, items[i]),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

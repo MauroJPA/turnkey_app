@@ -12,6 +12,8 @@ import '../features/inventory/presentation/inventory_screen.dart';
 import '../features/production/presentation/production_screen.dart';
 import '../features/recipes/presentation/recipe_detail_screen.dart';
 import '../features/recipes/presentation/recipes_screen.dart';
+import '../features/schedule/presentation/plan_detail_screen.dart';
+import '../features/schedule/presentation/schedule_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/settings/presentation/team_screen.dart';
 import '../features/tech_sheets/presentation/tech_sheet_detail_screen.dart';
@@ -86,6 +88,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.inventory,
         builder: (_, __) => const InventoryScreen(),
+      ),
+      GoRoute(
+        path: Routes.schedule,
+        builder: (_, __) => const ScheduleScreen(),
+        routes: [
+          GoRoute(
+            path: ':id',
+            builder: (_, state) =>
+                PlanDetailScreen(planId: state.pathParameters['id']!),
+          ),
+        ],
       ),
       GoRoute(
         path: Routes.recipes,
