@@ -358,8 +358,12 @@ class _InsaPickerState extends State<_InsaPicker> {
     super.dispose();
   }
 
-  void _buscar() =>
-      setState(() => _fut = widget.repo.referencias(q: _q.text.trim()));
+  void _buscar() {
+    final f = widget.repo.referencias(q: _q.text.trim());
+    setState(() {
+      _fut = f;
+    });
+  }
 
   static String _norm(String s) {
     const m = {
