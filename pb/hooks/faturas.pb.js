@@ -42,9 +42,10 @@ routerAdd(
     // Análise por IA — fornecedor selecionável por TURNKEY_AI_PROVIDER
     // (gemini por omissão; anthropic disponível). Ver pb/hooks/ai.js.
     const ai = require(`${__hooks}/ai.js`);
-    const r = ai.analisarFaturaIA({
+    const r = ai.analisarImagemIA({
       imagemBase64: imagem,
       mime: mime,
+      tarefa: 'fatura',
       isLista: isLista,
     });
 

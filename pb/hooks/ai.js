@@ -1,8 +1,9 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-// Análise de faturas por IA — camada com FORNECEDOR selecionável.
+// Análise de imagens por IA — camada com FORNECEDOR selecionável.
 //
-//   analisarFaturaIA({ imagemBase64, mime, isLista })
+//   analisarImagemIA({ imagemBase64, mime, tarefa, isLista })
+//     tarefa: 'fatura' (por omissão) | 'rotulo'
 //     -> { ok: true,  dados, provider }              (JSON já parseado)
 //     -> { ok: false, code, message, raw? }          (503 sem chave; 502 rede/IA/JSON)
 //
@@ -12,37 +13,57 @@
 //   ANTHROPIC_API_KEY     chave da Anthropic          (provider = anthropic)
 //   TURNKEY_AI_MODEL      modelo a usar               (por omissão, por fornecedor)
 //
-// Para ADICIONAR um fornecedor novo: cria uma função `pedir<Nome>(...)` no
-// mesmo molde (recebe { imagem, mime, sistema, instrucao, model } e devolve
-// texto ou lança), e acrescenta um ramo no switch de `analisarFaturaIA`.
 // Tudo numa função exportada, com auxiliares como closures — o require() do
 // PocketBase não mantém de forma fiável a visibilidade entre funções de topo.
 
-function analisarFaturaIA(opts) {
+function analisarImagemIA(opts) {
   var imagem = (opts && opts.imagemBase64) || '';
   var mime = (opts && opts.mime) || 'image/jpeg';
+  var tarefa = (opts && opts.tarefa) || 'fatura';
   var isLista = !!(opts && opts.isLista);
 
   if (!imagem) return { ok: false, code: 400, message: 'Falta a imagem (base64).' };
 
   var provider = ($os.getenv('TURNKEY_AI_PROVIDER') || 'gemini').toLowerCase().trim();
 
-  // ---- prompt comum a todos os fornecedores -------------------------
-  var sistema =
-    'És um extrator de dados de ' +
-    (isLista ? 'listas de preços' : 'faturas de compra') +
-    ' de uma padaria em Portugal. Responde APENAS com JSON válido, sem texto ' +
-    'à volta e sem cercas de código. Formato: {"fornecedor": string, "data": ' +
-    '"YYYY-MM-DD"|null, "numero": string|null, "total": number|null, "iva": ' +
-    'number|null, "moeda": string|null, "linhas": [{"descricao": string, ' +
-    '"quantidade": number|null, "unidade": string|null, "preco_unitario": ' +
-    'number|null, "total": number|null, "embalagem_g": number|null}]}. ' +
-    'Regras: preco_unitario é o preço por unidade/embalagem, NÃO o total da ' +
-    'linha. Não incluas descontos, portes ou totais como linhas de produto. ' +
-    'embalagem_g só quando o peso/volume da embalagem aparecer (converte kg->g, ' +
-    'L->ml tratado como g). ' +
-    (isLista ? 'Numa lista de preços, quantidade e total são null.' : '');
-  var instrucao = 'Extrai os dados. Só JSON.';
+  // ---- prompt por tarefa -----------------------------------------------
+  var sistema, instrucao;
+  if (tarefa === 'rotulo') {
+    sistema =
+      'És um extrator da informação de um RÓTULO de produto alimentar em ' +
+      'Portugal. Responde APENAS com JSON válido, sem texto à volta e sem ' +
+      'cercas de código. Formato: {"nome": string|null, "base": "100g"|"100ml", ' +
+      '"densidade": number|null, "nutri": {"energia_kcal": number|null, ' +
+      '"lipidos_g": number|null, "saturados_g": number|null, "hidratos_g": ' +
+      'number|null, "acucares_g": number|null, "fibra_g": number|null, ' +
+      '"proteina_g": number|null, "sal_g": number|null}, "ingredientes_texto": ' +
+      'string|null, "alergenios": string[], "alergenios_tracos": string[]}. ' +
+      'Regras: os valores nutricionais são SEMPRE por 100 g (indica "100ml" em ' +
+      '"base" se o rótulo for por 100 ml); se só houver por porção, converte ' +
+      'para 100 g. Se o rótulo só indicar "sódio", sal = sódio × 2,5. Os ' +
+      'alergénios têm de ser EXATAMENTE destes: Glúten, Crustáceos, Ovos, ' +
+      'Peixe, Amendoins, Soja, Leite, Frutos de casca rija, Aipo, Mostarda, ' +
+      'Sésamo, Sulfitos, Tremoço, Moluscos. Em "alergenios" põe os que a lista ' +
+      'de ingredientes contém (costumam vir a NEGRITO); em "alergenios_tracos" ' +
+      'os de "pode conter". null quando um valor não aparece.';
+    instrucao = 'Lê o rótulo. Só JSON.';
+  } else {
+    sistema =
+      'És um extrator de dados de ' +
+      (isLista ? 'listas de preços' : 'faturas de compra') +
+      ' de uma padaria em Portugal. Responde APENAS com JSON válido, sem texto ' +
+      'à volta e sem cercas de código. Formato: {"fornecedor": string, "data": ' +
+      '"YYYY-MM-DD"|null, "numero": string|null, "total": number|null, "iva": ' +
+      'number|null, "moeda": string|null, "linhas": [{"descricao": string, ' +
+      '"quantidade": number|null, "unidade": string|null, "preco_unitario": ' +
+      'number|null, "total": number|null, "embalagem_g": number|null}]}. ' +
+      'Regras: preco_unitario é o preço por unidade/embalagem, NÃO o total da ' +
+      'linha. Não incluas descontos, portes ou totais como linhas de produto. ' +
+      'embalagem_g só quando o peso/volume da embalagem aparecer (converte kg->g, ' +
+      'L->ml tratado como g). ' +
+      (isLista ? 'Numa lista de preços, quantidade e total são null.' : '');
+    instrucao = 'Extrai os dados. Só JSON.';
+  }
 
   var http = function (req) {
     try {
@@ -178,4 +199,4 @@ function analisarFaturaIA(opts) {
   return { ok: true, dados: dados, provider: provider };
 }
 
-module.exports = { analisarFaturaIA };
+module.exports = { analisarImagemIA };

@@ -1,9 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 import '../../../core/auth/current_user.dart';
+import '../../../core/nutrition/nutrition.dart';
 import '../../../core/pocketbase/pb_client.dart';
 import '../domain/ingredient.dart';
+import '../domain/ingrediente_referencia.dart';
 
 final ingredientRepositoryProvider = Provider<IngredientRepository>((ref) {
   return IngredientRepository(
@@ -54,6 +58,70 @@ class IngredientRepository implements IngredientWriter {
 
   Future<Ingrediente> duplicate(Ingrediente src) =>
       create(IngredienteInput.fromModel(src, nome: '${src.nome} (cópia)'));
+
+  // --- nutrição -------------------------------------------------------
+
+  String _mimeRotulo(String nome) {
+    final n = nome.toLowerCase();
+    if (n.endsWith('.png')) return 'image/png';
+    if (n.endsWith('.webp')) return 'image/webp';
+    if (n.endsWith('.pdf')) return 'application/pdf';
+    return 'image/jpeg';
+  }
+
+  /// Lê um rótulo (foto/PDF) por IA e preenche os campos nutricionais +
+  /// alergénios do ingrediente. Devolve o ingrediente atualizado.
+  Future<Ingrediente> analisarRotulo(
+    String id, {
+    required List<int> bytes,
+    required String nome,
+  }) async {
+    await _pb.send(
+      '/api/turnkey/ingredientes/$id/rotulo',
+      method: 'POST',
+      body: {'imagem': base64Encode(bytes), 'mime': _mimeRotulo(nome)},
+    );
+    return getById(id);
+  }
+
+  /// Grava a nutrição/alergénios editados à mão (origem = manual).
+  Future<Ingrediente> definirNutricao(
+    String id, {
+    required Nutrientes nutri,
+    String base = '100g',
+    double densidade = 1,
+    required List<String> alergenios,
+    required List<String> alergeniosTracos,
+    String origem = 'manual',
+  }) async {
+    final rec = await _c.update(id, body: {
+      ...nutri.toCampos(),
+      'nutri_base': base,
+      'nutri_densidade': densidade,
+      'nutri_origem': origem,
+      'nutri_atualizado_em': DateTime.now().toUtc().toIso8601String(),
+      'alergenios': alergenios,
+      'alergenios_tracos': alergeniosTracos,
+    });
+    return Ingrediente.fromRecord(rec);
+  }
+
+  /// Pesquisa na tabela partilhada de referência (ex.: INSA TCA).
+  Future<List<IngredienteReferencia>> referencias({
+    String q = '',
+    int limite = 40,
+  }) async {
+    final termo = q.trim().replaceAll("'", ' ');
+    final res = await _pb.collection('ingredientes_referencia').getList(
+          page: 1,
+          perPage: limite,
+          filter: termo.isEmpty
+              ? ''
+              : "nome ~ '$termo' || sinonimos ~ '$termo'",
+          sort: 'nome',
+        );
+    return res.items.map(IngredienteReferencia.fromRecord).toList();
+  }
 
   Future<void> setDeleted(String id, {required bool deletado}) =>
       _c.update(id, body: {'deletado': deletado});
