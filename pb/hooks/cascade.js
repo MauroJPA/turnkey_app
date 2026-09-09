@@ -199,10 +199,11 @@ function runCascade(app, kind, rootId) {
     let peso = 0;
     for (const item of itens) {
       const qtd = fnum(item, 'quantidade_g');
-      peso += qtd;
       const ingRel = item.getString('ingrediente');
       const recRel = item.getString('receita');
+      const embRel = item.getString('embalagem');
       if (ingRel) {
+        peso += qtd;
         let ing;
         try {
           ing = app.findRecordById('ingredientes', ingRel);
@@ -213,6 +214,7 @@ function runCascade(app, kind, rootId) {
         // é só cache de UI e pode estar desatualizado.
         custo += ingCpg(ing) * qtd;
       } else if (recRel) {
+        peso += qtd;
         let rec;
         try {
           rec = app.findRecordById('receitas', recRel);
@@ -220,6 +222,19 @@ function runCascade(app, kind, rootId) {
           continue;
         }
         custo += fnum(rec, 'custo_por_grama') * qtd;
+      } else if (embRel) {
+        // embalagem: qtd = nº de peças; NÃO conta para o peso do produto.
+        let emb;
+        try {
+          emb = app.findRecordById('embalagens', embRel);
+        } catch (_) {
+          continue;
+        }
+        const pecas = fnum(emb, 'unidades_compra') || 1;
+        const rende = fnum(emb, 'rende_unidades') || 1;
+        custo += (fnum(emb, 'preco_compra') / pecas / rende) * qtd;
+      } else {
+        peso += qtd;
       }
     }
 
@@ -261,9 +276,11 @@ function runCascade(app, kind, rootId) {
     for (const item of itens) {
       const qtd = fnum(item, 'quantidade_g');
       if (qtd <= 0) continue;
-      pesoCru += qtd;
       const ingRel = item.getString('ingrediente');
       const recRel = item.getString('receita');
+      // embalagens não têm peso, nutrição nem alergénios.
+      if (!ingRel && !recRel) continue;
+      pesoCru += qtd;
       if (ingRel) {
         let ing;
         try {
@@ -566,8 +583,28 @@ function runCascade(app, kind, rootId) {
     }
   };
 
+  const recomputeEmbalagem = (embId) => {
+    let emb;
+    try {
+      emb = app.findRecordById('embalagens', embId);
+    } catch (_) {
+      return;
+    }
+    const pecas = fnum(emb, 'unidades_compra') || 1;
+    const rende = fnum(emb, 'rende_unidades') || 1;
+    const cu = fnum(emb, 'preco_compra') / pecas / rende;
+    if (Math.abs(fnum(emb, 'custo_unitario') - cu) > cu * 1e-6 + 1e-9) {
+      emb.set('custo_unitario', cu);
+      app.save(emb);
+    }
+    for (const fid of fichasQueUsam('embalagem', embId)) {
+      recomputeFicha(fid);
+    }
+  };
+
   if (kind === 'ingrediente') recomputeIngrediente(rootId);
   else if (kind === 'ficha') recomputeFicha(rootId);
+  else if (kind === 'embalagem') recomputeEmbalagem(rootId);
   else recomputeReceita(rootId);
 }
 

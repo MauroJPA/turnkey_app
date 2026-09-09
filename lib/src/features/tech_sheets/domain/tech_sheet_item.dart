@@ -13,12 +13,16 @@ class ItemFicha with _$ItemFicha {
     required SlotFicha slot,
     String? ingredienteId,
     String? receitaId,
+    String? embalagemId,
     @Default(0) double quantidadeG,
     @Default('') String nomeResolvido,
     @Default(0) double custoPorGramaResolvido,
   }) = _ItemFicha;
 
   const ItemFicha._();
+
+  /// Linha de embalagem: a quantidade é o nº de peças, não gramas.
+  bool get isEmbalagem => slot == SlotFicha.embalagem || embalagemId != null;
 
   double get custoLinha => custoPorGramaResolvido * quantidadeG;
   String get nome => nomeResolvido.isEmpty ? 'Item' : nomeResolvido;
@@ -29,7 +33,15 @@ class ItemFicha with _$ItemFicha {
 
     final ing = r.get<List<RecordModel>>('expand.ingrediente', []);
     final rec = r.get<List<RecordModel>>('expand.receita', []);
-    if (ing.isNotEmpty) {
+    final emb = r.get<List<RecordModel>>('expand.embalagem', []);
+    if (emb.isNotEmpty) {
+      final e = emb.first;
+      nome = e.getStringValue('nome');
+      final preco = e.getDoubleValue('preco_compra');
+      final pecas = e.getDoubleValue('unidades_compra');
+      final rende = e.getDoubleValue('rende_unidades');
+      cpg = (preco / (pecas > 0 ? pecas : 1)) / (rende > 0 ? rende : 1);
+    } else if (ing.isNotEmpty) {
       final e = ing.first;
       nome = e.getStringValue('nome');
       final preco = e.getDoubleValue('preco');
@@ -54,6 +66,7 @@ class ItemFicha with _$ItemFicha {
       slot: SlotFicha.fromApi(r.getStringValue('slot')),
       ingredienteId: nn('ingrediente'),
       receitaId: nn('receita'),
+      embalagemId: nn('embalagem'),
       quantidadeG: r.getDoubleValue('quantidade_g'),
       nomeResolvido: nome,
       custoPorGramaResolvido: cpg,

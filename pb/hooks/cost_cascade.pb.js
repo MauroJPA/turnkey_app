@@ -97,6 +97,49 @@ onRecordAfterCreateSuccess(aoMudarLinhaFicha, 'itens_ficha');
 onRecordAfterUpdateSuccess(aoMudarLinhaFicha, 'itens_ficha');
 onRecordAfterDeleteSuccess(aoMudarLinhaFicha, 'itens_ficha');
 
+// Embalagens: ao mudar o custo (preço / peças / rendimento), atualiza o cache
+// `custo_unitario` e re-corre as fichas que a usam.
+onRecordAfterCreateSuccess((e) => {
+  try {
+    require(`${__hooks}/cascade.js`).runCascade(e.app, 'embalagem', e.record.id);
+  } catch (err) {
+    console.log('[cascata] embalagem: ' + err);
+  }
+  e.next();
+}, 'embalagens');
+
+onRecordAfterUpdateSuccess((e) => {
+  try {
+    const EPS = 0.001;
+    const num = (rec, f) => {
+      try {
+        return rec.getFloat(f);
+      } catch (_) {
+        return 0;
+      }
+    };
+    const b = e.record.original();
+    const mudou =
+      Math.abs(num(e.record, 'preco_compra') - num(b, 'preco_compra')) > EPS ||
+      Math.abs(
+        num(e.record, 'unidades_compra') - num(b, 'unidades_compra'),
+      ) > EPS ||
+      Math.abs(
+        num(e.record, 'rende_unidades') - num(b, 'rende_unidades'),
+      ) > EPS;
+    if (mudou) {
+      require(`${__hooks}/cascade.js`).runCascade(
+        e.app,
+        'embalagem',
+        e.record.id,
+      );
+    }
+  } catch (err) {
+    console.log('[cascata] embalagem: ' + err);
+  }
+  e.next();
+}, 'embalagens');
+
 onRecordAfterUpdateSuccess((e) => {
   try {
     const EPS = 0.001;
