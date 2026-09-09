@@ -63,6 +63,7 @@ pb/
 | `1706227200_seed_insa.js` | semeia `ingredientes_referencia` com 1376 alimentos da **INSA BDCA v7.1 (2026)** (idempotente; nome normalizado sem acentos em `sinonimos`). |
 | `1706313600_embalagens.js` | coleção `embalagens` (caixas, sacos, saquetas, adesivos… com `preco_compra`/`unidades_compra`/`rende_unidades` → `custo_unitario` cache) + relação opcional `itens_ficha.embalagem` + valor `embalagem` no `slot`. |
 | `1706400000_historico_faturas.js` | adiciona `faturas_apagadas` aos valores de `historico.entidade_tipo` (rasto das faturas apagadas, `entidade_id = <empresaId>`). |
+| `1706486400_embalagem_kits.js` | coleções `embalagem_kits` (nome, descrição, `custo_unitario` cache) + `embalagem_kit_itens` (`kit`, `embalagem`, `quantidade`) + relação opcional `itens_ficha.kit`. Um kit junta várias embalagens numa combinação com nome; na ficha técnica escolhe-se o kit para precificar de uma vez. |
 
 Aparência (tema, cor de marca `cor_marca`, logótipo `logo`) é **por empresa** —
 editada em Configurações → Aparência, aplica-se a toda a equipa.
@@ -145,6 +146,8 @@ O ficheiro carregado é guardado com um nome no formato **`FT-NOMEFORNECEDOR-DDM
 A **nutrição de receitas e fichas é calculada em cascata** (`cascade.js`), como o custo: `receitas.nutri` = valores por 100 g de mistura crua (+ `por100g_cozido` com a perda); `fichas_tecnicas.nutri` = por 100 g de **produto acabado** (a água que sai a cozer não tem calorias — muda o peso) + `por_unidade`, e a **união dos alergénios** de toda a árvore.
 
 **Embalagens**: uma linha `itens_ficha` com `embalagem` (e `slot='embalagem'`) soma `preco_compra / unidades_compra / rende_unidades × quantidade` ao custo da ficha, **sem** contar para o peso nem para a nutrição. O `cost_cascade.pb.js` re-corre as fichas quando o custo da embalagem muda; `custo_unitario` é a cache mantida pelo `runCascade('embalagem', id)`.
+
+**Kits de embalagens**: uma linha `itens_ficha` com `kit` (também `slot='embalagem'`) soma `Σ (custo/un de cada embalagem do kit × quantidade da linha do kit) × quantidade da linha da ficha`, igualmente sem peso nem nutrição. `runCascade('kit', id)` recalcula `embalagem_kits.custo_unitario` (cache) e as fichas que usam o kit; os hooks em `embalagem_kit_itens` disparam-no ao mudar as linhas, e `runCascade('embalagem', id)` também recalcula os kits que contêm a embalagem alterada.
 
 ## ⚠️ Regras de escrita de hooks (PocketBase 0.35)
 

@@ -14,6 +14,7 @@ class ItemFicha with _$ItemFicha {
     String? ingredienteId,
     String? receitaId,
     String? embalagemId,
+    String? kitId,
     @Default(0) double quantidadeG,
     @Default('') String nomeResolvido,
     @Default(0) double custoPorGramaResolvido,
@@ -21,8 +22,12 @@ class ItemFicha with _$ItemFicha {
 
   const ItemFicha._();
 
-  /// Linha de embalagem: a quantidade é o nº de peças, não gramas.
-  bool get isEmbalagem => slot == SlotFicha.embalagem || embalagemId != null;
+  /// Linha de kit de embalagens: a quantidade é o nº de kits, não gramas.
+  bool get isKit => kitId != null;
+
+  /// Linha de embalagem (peça avulsa ou kit): a quantidade é nº de peças/kits.
+  bool get isEmbalagem =>
+      slot == SlotFicha.embalagem || embalagemId != null || kitId != null;
 
   double get custoLinha => custoPorGramaResolvido * quantidadeG;
   String get nome => nomeResolvido.isEmpty ? 'Item' : nomeResolvido;
@@ -34,7 +39,12 @@ class ItemFicha with _$ItemFicha {
     final ing = r.get<List<RecordModel>>('expand.ingrediente', []);
     final rec = r.get<List<RecordModel>>('expand.receita', []);
     final emb = r.get<List<RecordModel>>('expand.embalagem', []);
-    if (emb.isNotEmpty) {
+    final kit = r.get<List<RecordModel>>('expand.kit', []);
+    if (kit.isNotEmpty) {
+      final e = kit.first;
+      nome = e.getStringValue('nome');
+      cpg = e.getDoubleValue('custo_unitario');
+    } else if (emb.isNotEmpty) {
       final e = emb.first;
       nome = e.getStringValue('nome');
       final preco = e.getDoubleValue('preco_compra');
@@ -67,6 +77,7 @@ class ItemFicha with _$ItemFicha {
       ingredienteId: nn('ingrediente'),
       receitaId: nn('receita'),
       embalagemId: nn('embalagem'),
+      kitId: nn('kit'),
       quantidadeG: r.getDoubleValue('quantidade_g'),
       nomeResolvido: nome,
       custoPorGramaResolvido: cpg,

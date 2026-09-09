@@ -22,7 +22,7 @@ class TechSheetItemRepository {
   Future<List<ItemFicha>> listForFicha(String fichaId) async {
     final recs = await _c.getFullList(
       filter: 'ficha = "$fichaId"',
-      expand: 'ingrediente,receita,embalagem',
+      expand: 'ingrediente,receita,embalagem,kit',
       sort: 'created',
     );
     return recs.map(ItemFicha.fromRecord).toList();
@@ -34,6 +34,7 @@ class TechSheetItemRepository {
     String? ingredienteId,
     String? receitaId,
     String? embalagemId,
+    String? kitId,
     required double quantidadeG,
   }) {
     return _c.create(
@@ -44,6 +45,7 @@ class TechSheetItemRepository {
         if (ingredienteId != null) 'ingrediente': ingredienteId,
         if (receitaId != null) 'receita': receitaId,
         if (embalagemId != null) 'embalagem': embalagemId,
+        if (kitId != null) 'kit': kitId,
         'quantidade_g': quantidadeG,
       },
     );

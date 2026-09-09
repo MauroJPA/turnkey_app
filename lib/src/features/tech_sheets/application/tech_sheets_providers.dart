@@ -88,6 +88,7 @@ class FichaActions {
     String? ingredienteId,
     String? receitaId,
     String? embalagemId,
+    String? kitId,
     required double quantidadeG,
   }) async {
     await _items.add(
@@ -96,6 +97,7 @@ class FichaActions {
       ingredienteId: ingredienteId,
       receitaId: receitaId,
       embalagemId: embalagemId,
+      kitId: kitId,
       quantidadeG: quantidadeG,
     );
     _refreshDetail(fichaId);

@@ -10,17 +10,33 @@ import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../application/embalagem_kit_providers.dart';
 import '../application/embalagem_providers.dart';
 import '../domain/embalagem.dart';
+import '../domain/embalagem_kit.dart';
+import 'kit_editor_sheet.dart';
 
-class EmbalagensScreen extends ConsumerWidget {
+class EmbalagensScreen extends ConsumerStatefulWidget {
   const EmbalagensScreen({super.key});
 
-  bool _podeEditar(WidgetRef ref) =>
-      ref.read(currentPapelProvider).canEditBusiness;
+  @override
+  ConsumerState<EmbalagensScreen> createState() => _EmbalagensScreenState();
+}
 
-  Future<void> _form(BuildContext context, WidgetRef ref,
-      {Embalagem? existente}) async {
+class _EmbalagensScreenState extends ConsumerState<EmbalagensScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tab = TabController(length: 2, vsync: this)
+    ..addListener(() => setState(() {}));
+
+  @override
+  void dispose() {
+    _tab.dispose();
+    super.dispose();
+  }
+
+  bool get _podeEditar => ref.read(currentPapelProvider).canEditBusiness;
+
+  Future<void> _formEmbalagem({Embalagem? existente}) async {
     final input = await showModalBottomSheet<EmbalagemInput>(
       context: context,
       isScrollControlled: true,
@@ -36,7 +52,49 @@ class EmbalagensScreen extends ConsumerWidget {
         await a.atualizar(existente.id, input);
       }
     } on Object catch (e) {
-      if (context.mounted) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$e')));
+      }
+    }
+  }
+
+  Future<void> _novoKit() async {
+    final nomeCtrl = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Novo kit'),
+        content: TextField(
+          controller: nomeCtrl,
+          autofocus: true,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(
+            labelText: 'Nome do kit',
+            hintText: 'Ex.: Take-away, Loja, Oferta',
+          ),
+          onSubmitted: (_) => Navigator.pop(ctx, true),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Criar'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || nomeCtrl.text.trim().isEmpty) return;
+    try {
+      final kit = await ref
+          .read(embalagemKitActionsProvider)
+          .criar(EmbalagemKitInput(nome: nomeCtrl.text));
+      if (mounted) await showKitEditorSheet(context, kitId: kit.id);
+    } on Object catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('$e')));
       }
@@ -44,10 +102,8 @@ class EmbalagensScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(embalagensListProvider);
+  Widget build(BuildContext context) {
     final fmt = ref.watch(moneyFormatProvider);
-    final podeEditar = _podeEditar(ref);
 
     return Scaffold(
       appBar: AppBar(
@@ -57,83 +113,179 @@ class EmbalagensScreen extends ConsumerWidget {
         ),
         title: const Text('Embalagens'),
         actions: const [HelpActions(topic: HelpTopic.embalagens)],
+        bottom: TabBar(
+          controller: _tab,
+          tabs: const [
+            Tab(text: 'Peças'),
+            Tab(text: 'Kits'),
+          ],
+        ),
       ),
-      floatingActionButton: podeEditar
+      floatingActionButton: _podeEditar
           ? FloatingActionButton.extended(
-              onPressed: () => _form(context, ref),
+              onPressed: _tab.index == 0 ? () => _formEmbalagem() : _novoKit,
               icon: const Icon(Icons.add),
-              label: const Text('Embalagem'),
+              label: Text(_tab.index == 0 ? 'Embalagem' : 'Kit'),
             )
           : null,
-      body: AsyncValueView<List<Embalagem>>(
-        value: async,
-        onRetry: () => ref.invalidate(embalagensListProvider),
-        data: (itens) {
-          if (itens.isEmpty) {
-            return const EmptyState(
-              icon: Icons.inventory_2_outlined,
-              titulo: 'Sem embalagens',
-              mensagem: 'Caixas, sacos, saquetas, adesivos, fita… com o custo, '
-                  'para entrar nas fichas técnicas.',
-            );
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.only(bottom: 88),
-            itemCount: itens.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
-            itemBuilder: (_, i) {
-              final e = itens[i];
-              final sub = [
-                if (e.tipo.isNotEmpty) e.tipo,
-                'compra ${fmt(e.precoCompra)} / ${_n(e.unidadesCompra)} pç',
-                if (e.rendeUnidades > 1)
-                  'rende ${_n(e.rendeUnidades)} un',
-                if (e.fornecedor.isNotEmpty) e.fornecedor,
-              ].join(' · ');
-              return ListTile(
-                title: Text(e.nome),
-                subtitle: Text(sub),
-                trailing: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(fmt(e.custoUnidade),
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                    Text('por unidade',
-                        style: Theme.of(context).textTheme.bodySmall),
-                  ],
-                ),
-                onTap: podeEditar
-                    ? () => _form(context, ref, existente: e)
-                    : null,
-                onLongPress: podeEditar
-                    ? () async {
-                        final ok = await confirmDialog(
-                          context,
-                          titulo: 'Apagar embalagem?',
-                          mensagem:
-                              'Remove "${e.nome}". As fichas que a usam perdem '
-                              'esse custo.',
-                          confirmar: 'Apagar',
-                          destrutivo: true,
-                        );
-                        if (ok) {
-                          await ref
-                              .read(embalagemActionsProvider)
-                              .apagar(e.id);
-                        }
-                      }
-                    : null,
-              );
-            },
-          );
-        },
+      body: TabBarView(
+        controller: _tab,
+        children: [
+          _PecasTab(podeEditar: _podeEditar, fmt: fmt, onEdit: _formEmbalagem),
+          _KitsTab(podeEditar: _podeEditar, fmt: fmt),
+        ],
       ),
     );
   }
+}
+
+class _PecasTab extends ConsumerWidget {
+  const _PecasTab({
+    required this.podeEditar,
+    required this.fmt,
+    required this.onEdit,
+  });
+  final bool podeEditar;
+  final MoneyFmt fmt;
+  final Future<void> Function({Embalagem? existente}) onEdit;
 
   static String _n(double v) =>
       v == v.roundToDouble() ? v.toStringAsFixed(0) : '$v';
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(embalagensListProvider);
+    return AsyncValueView<List<Embalagem>>(
+      value: async,
+      onRetry: () => ref.invalidate(embalagensListProvider),
+      data: (itens) {
+        if (itens.isEmpty) {
+          return const EmptyState(
+            icon: Icons.inventory_2_outlined,
+            titulo: 'Sem embalagens',
+            mensagem: 'Caixas, sacos, saquetas, adesivos, fita… com o custo, '
+                'para entrar nas fichas técnicas.',
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.only(bottom: 88),
+          itemCount: itens.length,
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemBuilder: (_, i) {
+            final e = itens[i];
+            final sub = [
+              if (e.tipo.isNotEmpty) e.tipo,
+              'compra ${fmt(e.precoCompra)} / ${_n(e.unidadesCompra)} pç',
+              if (e.rendeUnidades > 1) 'rende ${_n(e.rendeUnidades)} un',
+              if (e.fornecedor.isNotEmpty) e.fornecedor,
+            ].join(' · ');
+            return ListTile(
+              title: Text(e.nome),
+              subtitle: Text(sub),
+              trailing: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(fmt(e.custoUnidade),
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text('por unidade',
+                      style: Theme.of(context).textTheme.bodySmall),
+                ],
+              ),
+              onTap: podeEditar ? () => onEdit(existente: e) : null,
+              onLongPress: podeEditar
+                  ? () async {
+                      final ok = await confirmDialog(
+                        context,
+                        titulo: 'Apagar embalagem?',
+                        mensagem:
+                            'Remove "${e.nome}". As fichas e kits que a usam '
+                            'perdem esse custo.',
+                        confirmar: 'Apagar',
+                        destrutivo: true,
+                      );
+                      if (ok) {
+                        await ref
+                            .read(embalagemActionsProvider)
+                            .apagar(e.id);
+                      }
+                    }
+                  : null,
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _KitsTab extends ConsumerWidget {
+  const _KitsTab({required this.podeEditar, required this.fmt});
+  final bool podeEditar;
+  final MoneyFmt fmt;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(embalagemKitsListProvider);
+    return AsyncValueView<List<EmbalagemKit>>(
+      value: async,
+      onRetry: () => ref.invalidate(embalagemKitsListProvider),
+      data: (kits) {
+        if (kits.isEmpty) {
+          return const EmptyState(
+            icon: Icons.widgets_outlined,
+            titulo: 'Sem kits',
+            mensagem: 'Um kit junta várias embalagens numa combinação com '
+                'nome (ex.: "Take-away" = 1 saqueta + 1 caixa + 2 adesivos). '
+                'Na ficha técnica escolhes o kit para precificar de uma vez.',
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.only(bottom: 88),
+          itemCount: kits.length,
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemBuilder: (_, i) {
+            final k = kits[i];
+            return ListTile(
+              title: Text(k.nome),
+              subtitle: k.descricao.isEmpty ? null : Text(k.descricao),
+              trailing: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(fmt(k.custoUnitario),
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text('por unidade',
+                      style: Theme.of(context).textTheme.bodySmall),
+                ],
+              ),
+              onTap: podeEditar
+                  ? () => showKitEditorSheet(context, kitId: k.id)
+                  : null,
+              onLongPress: podeEditar
+                  ? () async {
+                      final ok = await confirmDialog(
+                        context,
+                        titulo: 'Apagar kit?',
+                        mensagem:
+                            'Remove "${k.nome}". As fichas que o usam perdem '
+                            'esse custo.',
+                        confirmar: 'Apagar',
+                        destrutivo: true,
+                      );
+                      if (ok) {
+                        await ref
+                            .read(embalagemKitActionsProvider)
+                            .apagar(k.id);
+                      }
+                    }
+                  : null,
+            );
+          },
+        );
+      },
+    );
+  }
 }
 
 class _EmbalagemForm extends StatefulWidget {

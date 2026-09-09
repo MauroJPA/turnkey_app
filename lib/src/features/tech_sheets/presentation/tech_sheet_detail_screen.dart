@@ -63,6 +63,7 @@ class _TechSheetDetailScreenState
                 picked.kind == PickedKind.subReceita ? picked.id : null,
             embalagemId:
                 picked.kind == PickedKind.embalagem ? picked.id : null,
+            kitId: picked.kind == PickedKind.kit ? picked.id : null,
             quantidadeG: picked.quantidadeG,
           ),
     );
@@ -80,7 +81,11 @@ class _TechSheetDetailScreenState
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
-            labelText: item.isEmbalagem ? 'Peças' : 'Gramas',
+            labelText: item.isKit
+                ? 'Kits'
+                : item.isEmbalagem
+                    ? 'Peças'
+                    : 'Gramas',
           ),
         ),
         actions: [
@@ -310,12 +315,15 @@ class _SlotSection extends StatelessWidget {
               dense: true,
               title: Text(item.nome),
               subtitle: Text(
-                item.isEmbalagem
-                    ? '${item.quantidadeG.toStringAsFixed(0)} pç · '
+                item.isKit
+                    ? '${item.quantidadeG.toStringAsFixed(0)} kit · '
                         '${fmt(item.custoLinha)}'
-                    : '${item.quantidadeG.toStringAsFixed(0)} g · '
-                        '${detail.percentagem(item).toStringAsFixed(1)}% · '
-                        '${fmt(item.custoLinha)}',
+                    : item.isEmbalagem
+                        ? '${item.quantidadeG.toStringAsFixed(0)} pç · '
+                            '${fmt(item.custoLinha)}'
+                        : '${item.quantidadeG.toStringAsFixed(0)} g · '
+                            '${detail.percentagem(item).toStringAsFixed(1)}% · '
+                            '${fmt(item.custoLinha)}',
               ),
               onTap: podeEditar ? () => onEditQty(item) : null,
               trailing: podeEditar

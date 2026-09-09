@@ -189,6 +189,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       '"Uma peça embala quantas unidades?": um saco embala 1; uma caixa de 6 embala 6. O custo por unidade de produto divide-se por esse número.',
       'Na ficha técnica, adiciona a embalagem como uma linha (tipo "Embalagem") e o custo entra no total do produto — sem afetar o peso nem a informação nutricional.',
       '"+" cria; toque edita; toque e segure apaga.',
+      'Separador "Kits": junta várias embalagens numa combinação com nome (ex.: "Take-away" = 1 saqueta + 1 caixa + 1 saco + 2 adesivos). Na ficha técnica escolhes o kit para precificar tudo de uma vez. O custo do kit atualiza-se sozinho quando muda o preço de qualquer embalagem que o compõe.',
     ],
   ),
   HelpTopic.formatos: (
