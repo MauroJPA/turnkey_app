@@ -32,109 +32,18 @@ routerAdd(
     }
 
     const body = e.requestInfo().body || {};
-    const imagem = (body.imagem || '').toString();
-    const mime = (body.mime || 'image/jpeg').toString();
-    if (!imagem) throw new BadRequestError('Falta a imagem (base64).');
-
-    const tipo = fatura.getString('tipo') || 'fatura';
-    const isLista = tipo === 'lista_precos';
-
-    // Análise por IA — fornecedor selecionável por TURNKEY_AI_PROVIDER
-    // (gemini por omissão; anthropic disponível). Ver pb/hooks/ai.js.
-    const ai = require(`${__hooks}/ai.js`);
-    const r = ai.analisarImagemIA({
-      imagemBase64: imagem,
-      mime: mime,
-      tarefa: 'fatura',
-      isLista: isLista,
+    const core = require(`${__hooks}/faturas_core.js`);
+    const r = core.analisarFatura(e.app, id, {
+      imagemBase64: (body.imagem || '').toString(),
+      mime: (body.mime || 'image/jpeg').toString(),
     });
+    if (!r.ok) throw new ApiError(r.code || 502, r.message, null);
 
-    if (!r.ok) {
-      // 503 = problema de configuração do servidor: não marca a fatura.
-      if (r.code === 503) throw new ApiError(503, r.message, null);
-      fatura.set('estado', 'erro');
-      fatura.set(
-        'dados_ia',
-        r.raw ? { erro: r.message, bruto: r.raw } : { erro: r.message },
-      );
-      e.app.save(fatura);
-      throw new ApiError(502, r.message, null);
-    }
-
-    const dados = r.dados;
-
-    // --- deteção de fatura duplicada (não se aplica a listas de preços) -----
-    if (!isLista) {
-      const forn = String(dados.fornecedor || fatura.getString('fornecedor') || '');
-      const num = String(dados.numero || fatura.getString('numero') || '');
-      const dataF = String(dados.data || fatura.getString('data_fatura') || '').substring(0, 10);
-      const totalF =
-        typeof dados.total === 'number' ? dados.total : fatura.getFloat('total');
-      const norm = (s) =>
-        String(s || '').toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
-      const fN = norm(forn);
-      if (fN && (norm(num) || dataF)) {
-        const candidatos = e.app.findRecordsByFilter(
-          'faturas',
-          "empresa = {:e} && id != {:id} && tipo = 'fatura' && estado != 'erro'",
-          '',
-          200,
-          0,
-          { e: empresaId, id: id },
-        );
-        let dup = null;
-        for (const c of candidatos) {
-          if (norm(c.getString('fornecedor')) !== fN) continue;
-          const cData = String(c.getString('data_fatura') || '').substring(0, 10);
-          if (norm(num)) {
-            if (norm(c.getString('numero')) === norm(num) &&
-                (!dataF || !cData || cData === dataF)) {
-              dup = c;
-              break;
-            }
-          } else if (dataF && cData === dataF && totalF > 0 &&
-                     Math.abs(c.getFloat('total') - totalF) < 0.01) {
-            dup = c;
-            break;
-          }
-        }
-        if (dup) {
-          fatura.set('estado', 'erro');
-          fatura.set('dados_ia', {
-            erro:
-              'Fatura duplicada: ja existe "' +
-              (num || dataF) +
-              '" de ' +
-              forn +
-              '.',
-            duplicada_de: dup.id,
-            linhas: dados.linhas || [],
-          });
-          e.app.save(fatura);
-          throw new ApiError(
-            409,
-            'Fatura duplicada de ' + forn + ' (' + (num || dataF) + ').',
-            null,
-          );
-        }
-      }
-    }
-
-    fatura.set('dados_ia', dados);
-    fatura.set('estado', 'analisada');
-    if (!fatura.getString('fornecedor') && dados.fornecedor)
-      fatura.set('fornecedor', String(dados.fornecedor));
-    if (!fatura.getString('numero') && dados.numero)
-      fatura.set('numero', String(dados.numero));
-    if (!fatura.get('total') && typeof dados.total === 'number')
-      fatura.set('total', dados.total);
-    if (!fatura.get('iva') && typeof dados.iva === 'number')
-      fatura.set('iva', dados.iva);
-    if (!fatura.getString('data_fatura') && dados.data)
-      fatura.set('data_fatura', String(dados.data));
-    e.app.save(fatura);
-
-    return e.json(200, { estado: 'analisada', provider: r.provider, dados: dados });
+    return e.json(200, {
+      estado: 'analisada',
+      provider: r.provider,
+      dados: r.dados,
+    });
   },
   $apis.requireAuth('users', '_superusers'),
 );

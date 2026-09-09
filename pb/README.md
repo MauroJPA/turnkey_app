@@ -96,6 +96,13 @@ Em dev, o `pb/serve.ps1` carrega estas variáveis de um ficheiro `pb/.env`
 (NSSM `AppEnvironmentExtra` no Windows, `Environment=`/`EnvironmentFile=` no
 systemd). Detalhe em [`DEPLOY.md`](DEPLOY.md).
 
+**Scanner de faturas** (`faturas_scan.pb.js`): com `TURNKEY_SCAN_DIR` (pasta
+que o scanner alimenta por *scan-to-folder*) + `TURNKEY_SCAN_EMPRESA` (id da
+empresa), um cron a cada 5 min cria uma `faturas` (`estado='nova'`,
+`notas='Scanner: <ficheiro>'`) por cada JPG/PNG/WebP/PDF, chama
+`faturas_core.js analisarFatura` e move o original para `<pasta>/processadas/`.
+Sem chave de IA a fatura fica em `nova` para revisão manual.
+
 ### Endpoints (Fase 2 — `inventario.pb.js`)
 
 Todos exigem `requireAuth('users', '_superusers')`; um `users` não-viewer só age
