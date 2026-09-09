@@ -62,6 +62,7 @@ pb/
 | `1706140800_nutricao.js` | `ingredientes`: 8 valores nutricionais (por 100 g/ml) + `nutri_base`/`nutri_densidade`/`nutri_origem`/`nutri_atualizado_em` + `alergenios`/`alergenios_tracos` (os 14 da UE). `receitas`: `perda_cozedura_pct` + cache JSON `nutri`. `fichas_tecnicas`: cache JSON `nutri`. Nova coleção partilhada `ingredientes_referencia` (só-leitura). |
 | `1706227200_seed_insa.js` | semeia `ingredientes_referencia` com 1376 alimentos da **INSA BDCA v7.1 (2026)** (idempotente; nome normalizado sem acentos em `sinonimos`). |
 | `1706313600_embalagens.js` | coleção `embalagens` (caixas, sacos, saquetas, adesivos… com `preco_compra`/`unidades_compra`/`rende_unidades` → `custo_unitario` cache) + relação opcional `itens_ficha.embalagem` + valor `embalagem` no `slot`. |
+| `1706400000_historico_faturas.js` | adiciona `faturas_apagadas` aos valores de `historico.entidade_tipo` (rasto das faturas apagadas, `entidade_id = <empresaId>`). |
 
 Aparência (tema, cor de marca `cor_marca`, logótipo `logo`) é **por empresa** —
 editada em Configurações → Aparência, aplica-se a toda a equipa.

@@ -96,4 +96,10 @@ class InvoiceActions {
     await _repo.apagar(id);
     _ref.invalidate(faturasListProvider);
   }
+
+  Future<int> limparInvalidas() async {
+    final n = await _repo.limparInvalidas();
+    _ref.invalidate(faturasListProvider);
+    return n;
+  }
 }

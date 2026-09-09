@@ -14,6 +14,8 @@ import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../../core/widgets/history_sheet.dart';
+import '../../settings/application/empresa_providers.dart';
 import '../application/invoice_providers.dart';
 import '../domain/fatura.dart';
 import 'contabilidade_sheet.dart';
@@ -122,6 +124,27 @@ class InvoicesScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _limparInvalidas(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = await confirmDialog(
+      context,
+      titulo: 'Limpar faturas?',
+      mensagem: 'Apaga todas as faturas em estado "Nova" (por analisar) e as '
+          'que estão com "Erro". Fica registo em "Faturas apagadas".',
+      confirmar: 'Limpar',
+      destrutivo: true,
+    );
+    if (!ok) return;
+    try {
+      final n = await ref.read(invoiceActionsProvider).limparInvalidas();
+      messenger.showSnackBar(
+        SnackBar(content: Text('$n fatura(s) apagada(s).')),
+      );
+    } on Object catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(faturasListProvider);
@@ -137,6 +160,41 @@ class InvoicesScreen extends ConsumerWidget {
             icon: const Icon(Icons.folder_shared_outlined),
             onPressed: () => showContabilidadeSheet(context, ref),
           ),
+          if (podeEditar)
+            PopupMenuButton<String>(
+              onSelected: (v) {
+                if (v == 'limpar') _limparInvalidas(context, ref);
+                if (v == 'historico') {
+                  final emp = ref.read(currentEmpresaProvider).valueOrNull;
+                  if (emp != null) {
+                    showHistorySheet(
+                      context,
+                      tipo: 'faturas_apagadas',
+                      id: emp.id,
+                      titulo: 'Faturas apagadas',
+                    );
+                  }
+                }
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(
+                  value: 'limpar',
+                  child: ListTile(
+                    leading: Icon(Icons.delete_sweep_outlined),
+                    title: Text('Limpar vazias e com erro'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'historico',
+                  child: ListTile(
+                    leading: Icon(Icons.history),
+                    title: Text('Faturas apagadas'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
+            ),
           const HelpActions(topic: HelpTopic.faturas),
         ],
       ),
