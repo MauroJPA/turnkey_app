@@ -50,6 +50,24 @@ void main() {
     expect(manual.sacos, isNull);
   });
 
+  test('material: manual + categoria => vai para o inventário "Outros"', () {
+    const ing = ShoppingItem(
+      id: 'a', ingredienteId: 'i1', descricao: 'Farinha', comprarG: 2000);
+    const semCat = ShoppingItem(
+      id: 'b', descricao: 'Sabão', comprarG: 2, unidade: 'un');
+    const material = ShoppingItem(
+      id: 'c',
+      descricao: 'Bancada inox',
+      comprarG: 1,
+      unidade: 'un',
+      categoria: 'Equipamento',
+    );
+    expect(ing.material, isFalse); // é ingrediente
+    expect(semCat.material, isFalse); // manual sem categoria não conta
+    expect(material.material, isTrue);
+    expect(material.categoria, 'Equipamento');
+  });
+
   test('copyWith mantém identidade e só troca comprarG/comprado', () {
     const item = ShoppingItem(
       id: 'a1',

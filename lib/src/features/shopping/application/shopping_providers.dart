@@ -31,6 +31,7 @@ class ShoppingActions {
     String fornecedor = '',
     double quantidade = 0,
     String unidade = 'un',
+    String categoria = '',
     String notas = '',
   }) async {
     await _repo.addManual(
@@ -38,6 +39,24 @@ class ShoppingActions {
       fornecedor: fornecedor,
       quantidade: quantidade,
       unidade: unidade,
+      categoria: categoria,
+      notas: notas,
+    );
+    _refresh();
+  }
+
+  Future<void> adicionarIngrediente({
+    required String ingredienteId,
+    required String descricao,
+    String fornecedor = '',
+    double quantidadeG = 0,
+    String notas = '',
+  }) async {
+    await _repo.addIngrediente(
+      ingredienteId: ingredienteId,
+      descricao: descricao,
+      fornecedor: fornecedor,
+      quantidadeG: quantidadeG,
       notas: notas,
     );
     _refresh();

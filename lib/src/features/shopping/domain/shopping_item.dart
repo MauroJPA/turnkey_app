@@ -21,6 +21,7 @@ class ShoppingItem {
     this.custoEstimado = 0,
     this.notas = '',
     this.unidade = '',
+    this.categoria = '',
   });
 
   final String id;
@@ -39,9 +40,16 @@ class ShoppingItem {
   /// caso contrário é um item manual contado nessa unidade.
   final String unidade;
 
+  /// Categoria de "material da loja" (ver `kCategoriasMaterial`). Vazio para
+  /// ingredientes.
+  final String categoria;
+
   bool get emGramas => unidade.isEmpty || unidade == 'g';
 
   bool get manual => ingredienteId == null;
+
+  /// Item que não é ingrediente de receita — vai para o inventário "Outros".
+  bool get material => manual && categoria.isNotEmpty;
 
   /// Rótulo do fornecedor para agrupar (nunca vazio).
   String get grupo => fornecedor.trim().isEmpty ? 'Sem fornecedor' : fornecedor;
@@ -78,6 +86,7 @@ class ShoppingItem {
       custoEstimado: r.getDoubleValue('custo_estimado'),
       notas: r.getStringValue('notas'),
       unidade: r.getStringValue('unidade'),
+      categoria: r.getStringValue('categoria'),
     );
   }
 
@@ -94,5 +103,6 @@ class ShoppingItem {
         custoEstimado: custoEstimado,
         notas: notas,
         unidade: unidade,
+        categoria: categoria,
       );
 }

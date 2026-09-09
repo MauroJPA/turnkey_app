@@ -2,6 +2,17 @@ import 'package:pocketbase/pocketbase.dart';
 
 enum StockTipo { ingrediente, ficha, livre }
 
+/// Categorias para itens que não são de receita — o "inventário geral da loja"
+/// (mesas, bancadas, facas, sabão, sacos de lixo…).
+const kCategoriasMaterial = <String>[
+  'Consumível',
+  'Limpeza',
+  'Equipamento',
+  'Mobiliário',
+  'Ferramenta',
+  'Outro',
+];
+
 /// Uma linha de inventário: um ingrediente, uma ficha, ou um item livre
 /// (qualquer coisa da empresa: sabão, sacos de lixo, uma tesoura…).
 class StockItem {
@@ -15,6 +26,7 @@ class StockItem {
     this.localizacao = '',
     this.inventarioId,
     this.unidadeLivre = '',
+    this.categoria = '',
   });
 
   final StockTipo tipo;
@@ -35,6 +47,9 @@ class StockItem {
 
   /// Unidade dos itens livres (`un`, `caixa`, …).
   final String unidadeLivre;
+
+  /// Categoria dos itens livres (ver [kCategoriasMaterial]). Vazio nos outros.
+  final String categoria;
 
   String get unidade => switch (tipo) {
         StockTipo.ingrediente => 'g',
@@ -67,6 +82,7 @@ class StockItem {
       localizacao: localizacao ?? this.localizacao,
       inventarioId: inventarioId,
       unidadeLivre: unidadeLivre,
+      categoria: categoria,
     );
   }
 }

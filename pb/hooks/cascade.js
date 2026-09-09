@@ -505,6 +505,7 @@ function aplicarMovimento(app, item, delta, motivo, opts) {
     linha.set('quantidade', 0);
     if (livre && item.unidade) linha.set('unidade', item.unidade);
   }
+  if (livre && item.categoria) linha.set('categoria', item.categoria);
 
   let q = linha.getFloat('quantidade') + delta;
   if (q < 0) q = 0;
@@ -515,6 +516,7 @@ function aplicarMovimento(app, item, delta, motivo, opts) {
   mov.set('empresa', item.empresaId);
   mov.set(alvoCampo, alvoId);
   if (livre && item.unidade) mov.set('unidade', item.unidade);
+  if (livre && item.categoria) mov.set('categoria', item.categoria);
   mov.set('delta', delta);
   mov.set('motivo', motivo);
   if (opts.producaoId) mov.set('producao', opts.producaoId);

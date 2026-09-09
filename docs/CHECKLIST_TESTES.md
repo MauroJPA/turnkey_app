@@ -121,8 +121,13 @@ antes de começar, para carregar as últimas migrations.
 - [ ] **Só ingredientes** — os produtos/intermédios (Gookie, Massa, Brigadeiro)
       **não** aparecem aqui.
 - [ ] Marcar a caixa de um ingrediente: entra no Inventário (ver ponto 10).
-- [ ] Botão **"+"** → item manual: quantidade + **unidade** (un/kg/caixa/…) +
-      **nota** livre. Aparece "3 caixa Nome" com a nota por baixo.
+- [ ] Botão **"+"** → primeiro o seletor **Ingrediente / Material da loja**:
+  - [ ] **Ingrediente**: pesquisa e escolhe da lista, quantidade em **g ou kg**;
+        ao dar o visto entra no stock de **ingredientes**;
+  - [ ] **Material da loja**: nome + **Categoria** (Consumível / Limpeza /
+        Equipamento / Mobiliário / Ferramenta / Outro) + quantidade + unidade +
+        fornecedor + nota. A linha mostra "categoria · …"; ao dar o visto entra
+        no inventário **"Outros"** com essa categoria (ver ponto 10).
 - [ ] Menu **⋮**: "Reorganizar lista" (remove comprados + recalcula) e
       "Limpar lista" (apaga tudo) — ambos pedem confirmação.
 
@@ -130,12 +135,16 @@ antes de começar, para carregar as últimas migrations.
 
 - [ ] Chips: Tudo / Ingredientes / Produtos / **Outros**.
 - [ ] Ingredientes em g/kg, produtos em unidades.
+- [ ] No chip "Outros" cada item mostra a **categoria** no subtítulo; pesquisar
+      por "equipamento", "faca", etc. encontra-os.
 - [ ] Ícone de aviso quando abaixo do mínimo.
 - [ ] Tocar num item → folha de ajuste: Entrada/Saída, **motivo por omissão**
       (Entrada→Compra, Saída→Venda), notas, mínimo.
 - [ ] Toque longo (ou toque, se leitura) → histórico de movimentos.
-- [ ] Botão **"Item livre"**: nome + quantidade + unidade + mínimo +
-      localização → aparece com o chip "Outros" e ajusta-se como os outros.
+- [ ] Botão **"Item livre"**: nome + **categoria** + quantidade + unidade +
+      mínimo + localização → aparece com o chip "Outros".
+- [ ] Um "Material da loja" comprado na lista de compras aparece aqui em
+      "Outros" com a categoria certa e um movimento de **Compra** no histórico.
 
 ## 11. Fim a fim (o ciclo todo)
 

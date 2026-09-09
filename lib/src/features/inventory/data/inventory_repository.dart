@@ -88,6 +88,7 @@ class InventoryRepository {
           localizacao: r.getStringValue('localizacao'),
           inventarioId: r.id,
           unidadeLivre: r.getStringValue('unidade'),
+          categoria: r.getStringValue('categoria'),
         ),
       );
     }
@@ -99,6 +100,7 @@ class InventoryRepository {
     String? fichaId,
     String? descricao,
     String? unidade,
+    String? categoria,
     double delta = 0,
     MotivoMovimento motivo = MotivoMovimento.ajuste,
     String? notas,
@@ -113,6 +115,7 @@ class InventoryRepository {
         if (fichaId != null) 'ficha': fichaId,
         if (descricao != null) 'descricao': descricao,
         if (unidade != null) 'unidade': unidade,
+        if (categoria != null) 'categoria': categoria,
         'delta': delta,
         'motivo': motivo.api,
         if (notas != null && notas.isNotEmpty) 'notas': notas,

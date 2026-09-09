@@ -52,6 +52,7 @@ class InventoryActions {
   Future<void> criarItemLivre({
     required String descricao,
     required String unidade,
+    String categoria = '',
     double quantidadeInicial = 0,
     double? minimo,
     String? localizacao,
@@ -59,6 +60,7 @@ class InventoryActions {
     await _ref.read(inventoryRepositoryProvider).ajustar(
           descricao: descricao,
           unidade: unidade,
+          categoria: categoria.isEmpty ? null : categoria,
           delta: quantidadeInicial,
           motivo: MotivoMovimento.ajuste,
           minimo: minimo,

@@ -54,6 +54,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       await ref.read(inventoryActionsProvider).criarItemLivre(
             descricao: r.descricao,
             unidade: r.unidade,
+            categoria: r.categoria,
             quantidadeInicial: r.quantidade,
             minimo: r.minimo,
             localizacao: r.localizacao,
@@ -131,8 +132,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               onRetry: () => ref.invalidate(stockListProvider),
               data: (all) {
                 final items = all.where((i) {
-                  final mq = _q.isEmpty ||
-                      i.nome.toLowerCase().contains(_q.toLowerCase());
+                  final q = _q.toLowerCase();
+                  final mq = q.isEmpty ||
+                      i.nome.toLowerCase().contains(q) ||
+                      i.categoria.toLowerCase().contains(q);
                   final mf = _filtro == null || i.tipo == _filtro;
                   return mq && mf;
                 }).toList();
@@ -155,7 +158,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                           switch (i.tipo) {
                             StockTipo.ficha => 'Produto',
                             StockTipo.ingrediente => 'Ingrediente',
-                            StockTipo.livre => 'Outro',
+                            StockTipo.livre =>
+                              i.categoria.isEmpty ? 'Outro' : i.categoria,
                           },
                           if (i.valor > 0) 'valor ${fmt(i.valor)}',
                           if (i.localizacao.isNotEmpty) i.localizacao,
@@ -418,6 +422,7 @@ class _HistoricoSheet extends ConsumerWidget {
 typedef _ItemLivre = ({
   String descricao,
   String unidade,
+  String categoria,
   double quantidade,
   double minimo,
   String localizacao,
@@ -437,6 +442,7 @@ class _ItemLivreSheetState extends State<_ItemLivreSheet> {
   final _min = TextEditingController();
   final _local = TextEditingController();
   String _unidade = 'un';
+  String _categoria = kCategoriasMaterial.first;
 
   static const _unidades = ['un', 'caixa', 'pacote', 'litro', 'kg', 'rolo'];
 
@@ -458,6 +464,7 @@ class _ItemLivreSheetState extends State<_ItemLivreSheet> {
     Navigator.pop(context, (
       descricao: d,
       unidade: _unidade,
+      categoria: _categoria,
       quantidade: _n(_qtd),
       minimo: _n(_min),
       localizacao: _local.text.trim(),
@@ -490,6 +497,17 @@ class _ItemLivreSheetState extends State<_ItemLivreSheet> {
             autofocus: true,
             textCapitalization: TextCapitalization.sentences,
             decoration: const InputDecoration(labelText: 'Nome *'),
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            value: _categoria,
+            decoration: const InputDecoration(labelText: 'Categoria'),
+            items: [
+              for (final c in kCategoriasMaterial)
+                DropdownMenuItem(value: c, child: Text(c)),
+            ],
+            onChanged: (v) =>
+                setState(() => _categoria = v ?? kCategoriasMaterial.first),
           ),
           const SizedBox(height: 12),
           Row(

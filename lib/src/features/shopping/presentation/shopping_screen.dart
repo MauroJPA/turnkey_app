@@ -8,6 +8,9 @@ import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../ingredients/application/ingredients_providers.dart';
+import '../../ingredients/domain/ingredient.dart';
+import '../../inventory/domain/stock_item.dart' show kCategoriasMaterial;
 import '../application/shopping_providers.dart';
 import '../domain/shopping_item.dart';
 
@@ -73,21 +76,33 @@ class ShoppingScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _addManual(BuildContext context, WidgetRef ref) async {
-    final r = await showModalBottomSheet<_ManualItem>(
+  Future<void> _add(BuildContext context, WidgetRef ref) async {
+    final r = await showModalBottomSheet<_NovoItem>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => const _ManualItemSheet(),
+      builder: (_) => const _NovoItemSheet(),
     );
     if (r == null || r.descricao.isEmpty) return;
-    await ref.read(shoppingActionsProvider).adicionarManual(
-          descricao: r.descricao,
-          fornecedor: r.fornecedor,
-          quantidade: r.quantidade,
-          unidade: r.unidade,
-          notas: r.notas,
-        );
+    final a = ref.read(shoppingActionsProvider);
+    if (r.ehIngrediente && r.ingredienteId != null) {
+      await a.adicionarIngrediente(
+        ingredienteId: r.ingredienteId!,
+        descricao: r.descricao,
+        fornecedor: r.fornecedor,
+        quantidadeG: r.quantidade,
+        notas: r.notas,
+      );
+    } else {
+      await a.adicionarManual(
+        descricao: r.descricao,
+        fornecedor: r.fornecedor,
+        quantidade: r.quantidade,
+        unidade: r.unidade,
+        categoria: r.categoria,
+        notas: r.notas,
+      );
+    }
   }
 
   Future<void> _editarComprar(
@@ -172,7 +187,7 @@ class ShoppingScreen extends ConsumerWidget {
       ),
       floatingActionButton: podeEditar
           ? FloatingActionButton.extended(
-              onPressed: () => _addManual(context, ref),
+              onPressed: () => _add(context, ref),
               icon: const Icon(Icons.add),
               label: const Text('Item'),
             )
@@ -326,7 +341,7 @@ class _Linha extends StatelessWidget {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(detalhe),
+          Text(item.material ? '${item.categoria} · $detalhe' : detalhe),
           if (item.notas.isNotEmpty)
             Text(
               item.notas,
@@ -370,31 +385,45 @@ class _Linha extends StatelessWidget {
   }
 }
 
-typedef _ManualItem = ({
+typedef _NovoItem = ({
+  bool ehIngrediente,
+  String? ingredienteId,
   String descricao,
   String fornecedor,
-  double quantidade,
+  double quantidade, // ingrediente: gramas; material: na unidade
   String unidade,
+  String categoria,
   String notas,
 });
 
-/// Folha "Novo item" da lista de compras — para qualquer coisa da empresa
-/// (não só ingredientes): sacos de lixo, sabão, uma tesoura…
-class _ManualItemSheet extends StatefulWidget {
-  const _ManualItemSheet();
+/// Folha "Novo item" da lista de compras. Primeiro escolhe-se se é um
+/// **ingrediente** de receita (entra no stock de ingredientes ao dar o visto)
+/// ou **material da loja** (equipamento, consumível, mobiliário… — entra no
+/// inventário "Outros" com a categoria escolhida).
+class _NovoItemSheet extends ConsumerStatefulWidget {
+  const _NovoItemSheet();
 
   @override
-  State<_ManualItemSheet> createState() => _ManualItemSheetState();
+  ConsumerState<_NovoItemSheet> createState() => _NovoItemSheetState();
 }
 
-class _ManualItemSheetState extends State<_ManualItemSheet> {
+class _NovoItemSheetState extends ConsumerState<_NovoItemSheet> {
+  bool _ehIngrediente = true;
+
+  // material
   final _desc = TextEditingController();
   final _forn = TextEditingController();
   final _qtd = TextEditingController(text: '1');
   final _notas = TextEditingController();
   String _unidade = 'un';
+  String _categoria = kCategoriasMaterial.first;
 
-  static const _unidades = ['un', 'g', 'kg', 'caixa', 'pacote', 'litro'];
+  // ingrediente
+  final _busca = TextEditingController();
+  Ingrediente? _ing;
+  String _unidadeIng = 'g'; // g | kg
+
+  static const _unidades = ['un', 'caixa', 'pacote', 'litro', 'kg', 'rolo'];
 
   @override
   void dispose() {
@@ -402,92 +431,262 @@ class _ManualItemSheetState extends State<_ManualItemSheet> {
     _forn.dispose();
     _qtd.dispose();
     _notas.dispose();
+    _busca.dispose();
     super.dispose();
   }
 
+  double _num(TextEditingController c) =>
+      double.tryParse(c.text.replaceAll(',', '.').trim()) ?? 0;
+
   void _guardar() {
+    if (_ehIngrediente) {
+      if (_ing == null) return;
+      final g = _num(_qtd) * (_unidadeIng == 'kg' ? 1000 : 1);
+      Navigator.pop(context, (
+        ehIngrediente: true,
+        ingredienteId: _ing!.id,
+        descricao: _ing!.nome,
+        fornecedor: _ing!.fornecedor,
+        quantidade: g,
+        unidade: 'g',
+        categoria: '',
+        notas: _notas.text.trim(),
+      ));
+      return;
+    }
     final d = _desc.text.trim();
     if (d.isEmpty) return;
     Navigator.pop(context, (
+      ehIngrediente: false,
+      ingredienteId: null,
       descricao: d,
       fornecedor: _forn.text.trim(),
-      quantidade:
-          double.tryParse(_qtd.text.replaceAll(',', '.').trim()) ?? 0,
+      quantidade: _num(_qtd),
       unidade: _unidade,
+      categoria: _categoria,
       notas: _notas.text.trim(),
     ));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 8,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text('Novo item', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _desc,
-            autofocus: true,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(labelText: 'O que comprar *'),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _forn,
-            decoration: const InputDecoration(labelText: 'Fornecedor / loja'),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _qtd,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(labelText: 'Quantidade'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  value: _unidade,
-                  decoration: const InputDecoration(labelText: 'Unidade'),
-                  items: [
-                    for (final u in _unidades)
-                      DropdownMenuItem(value: u, child: Text(u)),
-                  ],
-                  onChanged: (v) => setState(() => _unidade = v ?? 'un'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _notas,
-            minLines: 2,
-            maxLines: 4,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'Nota (opcional)',
-              hintText: 'Ex.: tesoura de bico fino — a faca demora muito',
-              alignLabelWithHint: true,
+    final valido = _ehIngrediente ? _ing != null : _desc.text.trim().isNotEmpty;
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.8,
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 8,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Novo item', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 12),
+            SegmentedButton<bool>(
+              segments: const [
+                ButtonSegment(value: true, label: Text('Ingrediente')),
+                ButtonSegment(value: false, label: Text('Material da loja')),
+              ],
+              selected: {_ehIngrediente},
+              onSelectionChanged: (s) =>
+                  setState(() => _ehIngrediente = s.first),
             ),
-          ),
-          const SizedBox(height: 16),
-          FilledButton(
-            onPressed: _guardar,
-            child: const Text('Adicionar'),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Expanded(
+              child: _ehIngrediente
+                  ? _corpoIngrediente()
+                  : SingleChildScrollView(child: _corpoMaterial()),
+            ),
+            const SizedBox(height: 8),
+            FilledButton(
+              onPressed: valido ? _guardar : null,
+              child: const Text('Adicionar'),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _corpoIngrediente() {
+    if (_ing != null) {
+      return SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            InputDecorator(
+              decoration: const InputDecoration(labelText: 'Ingrediente'),
+              child: Row(
+                children: [
+                  Expanded(child: Text(_ing!.nome)),
+                  TextButton(
+                    onPressed: () => setState(() => _ing = null),
+                    child: const Text('mudar'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _qtd,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration:
+                        const InputDecoration(labelText: 'Quantidade'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _unidadeIng,
+                    decoration: const InputDecoration(labelText: 'Unidade'),
+                    items: const [
+                      DropdownMenuItem(value: 'g', child: Text('g')),
+                      DropdownMenuItem(value: 'kg', child: Text('kg')),
+                    ],
+                    onChanged: (v) =>
+                        setState(() => _unidadeIng = v ?? 'g'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _notas,
+              minLines: 2,
+              maxLines: 4,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Nota (opcional)',
+                alignLabelWithHint: true,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    final async = ref.watch(ingredientsListProvider(false));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: _busca,
+          autofocus: true,
+          onChanged: (_) => setState(() {}),
+          decoration: const InputDecoration(
+            prefixIcon: Icon(Icons.search),
+            hintText: 'Procurar ingrediente',
+            isDense: true,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: async.when(
+            loading: () =>
+                const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('$e')),
+            data: (todos) {
+              final q = _busca.text.trim().toLowerCase();
+              final itens = todos
+                  .where((i) =>
+                      q.isEmpty || i.nome.toLowerCase().contains(q))
+                  .toList();
+              if (itens.isEmpty) {
+                return const Center(child: Text('Sem ingredientes.'));
+              }
+              return ListView.builder(
+                itemCount: itens.length,
+                itemBuilder: (_, i) => ListTile(
+                  dense: true,
+                  title: Text(itens[i].nome),
+                  subtitle: Text([
+                    if (itens[i].marca.isNotEmpty) itens[i].marca,
+                    if (itens[i].fornecedor.isNotEmpty) itens[i].fornecedor,
+                  ].join(' · ')),
+                  onTap: () => setState(() => _ing = itens[i]),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _corpoMaterial() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: _desc,
+          autofocus: true,
+          textCapitalization: TextCapitalization.sentences,
+          onChanged: (_) => setState(() {}),
+          decoration: const InputDecoration(
+            labelText: 'O que comprar *',
+            hintText: 'Ex.: bancada inox, faca de chef, sabão',
+          ),
+        ),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<String>(
+          value: _categoria,
+          decoration: const InputDecoration(labelText: 'Categoria'),
+          items: [
+            for (final c in kCategoriasMaterial)
+              DropdownMenuItem(value: c, child: Text(c)),
+          ],
+          onChanged: (v) =>
+              setState(() => _categoria = v ?? kCategoriasMaterial.first),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _forn,
+          decoration: const InputDecoration(labelText: 'Fornecedor / loja'),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _qtd,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'Quantidade'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: DropdownButtonFormField<String>(
+                value: _unidade,
+                decoration: const InputDecoration(labelText: 'Unidade'),
+                items: [
+                  for (final u in _unidades)
+                    DropdownMenuItem(value: u, child: Text(u)),
+                ],
+                onChanged: (v) => setState(() => _unidade = v ?? 'un'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _notas,
+          minLines: 2,
+          maxLines: 4,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(
+            labelText: 'Nota (opcional)',
+            hintText: 'Ex.: tesoura de bico fino — a faca demora muito',
+            alignLabelWithHint: true,
+          ),
+        ),
+      ],
     );
   }
 }

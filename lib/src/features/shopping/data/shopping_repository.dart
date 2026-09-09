@@ -32,11 +32,14 @@ class ShoppingRepository {
     return recs.map(ShoppingItem.fromRecord).toList();
   }
 
+  /// Item "material da loja" (não é ingrediente de receita): entra no
+  /// inventário "Outros" com a [categoria] ao dar o visto.
   Future<void> addManual({
     required String descricao,
     String fornecedor = '',
     double quantidade = 0,
     String unidade = 'un',
+    String categoria = '',
     String notas = '',
   }) async {
     await _c.create(body: {
@@ -46,6 +49,28 @@ class ShoppingRepository {
       'quantidade_necessaria_g': quantidade,
       'quantidade_comprar_g': quantidade,
       'unidade': unidade,
+      'categoria': categoria,
+      'notas': notas,
+      'comprado': false,
+    });
+  }
+
+  /// Linha ligada a um ingrediente de receita (quantidade em gramas).
+  Future<void> addIngrediente({
+    required String ingredienteId,
+    required String descricao,
+    String fornecedor = '',
+    double quantidadeG = 0,
+    String notas = '',
+  }) async {
+    await _c.create(body: {
+      'empresa': _empresaId,
+      'ingrediente': ingredienteId,
+      'descricao': descricao,
+      'fornecedor': fornecedor,
+      'quantidade_necessaria_g': quantidadeG,
+      'quantidade_comprar_g': quantidadeG,
+      'unidade': 'g',
       'notas': notas,
       'comprado': false,
     });
@@ -55,19 +80,34 @@ class ShoppingRepository {
     await _c.update(id, body: {'quantidade_comprar_g': gramas});
   }
 
-  /// Marca/desmarca como comprado. Ao marcar, entra no inventário
-  /// (`+comprarG`, motivo `compra`); ao desmarcar, reverte (`-comprarG`,
-  /// motivo `ajuste`). Itens manuais sem ingrediente não mexem no stock.
+  /// Marca/desmarca como comprado. Ao marcar, entra no inventário certo
+  /// (ingrediente → stock de ingredientes; "material da loja" com categoria →
+  /// inventário "Outros"); ao desmarcar, reverte. Itens manuais sem categoria
+  /// não mexem no stock.
   Future<void> definirComprado(ShoppingItem item, bool comprado) async {
     if (comprado == item.comprado) return;
+    final delta = comprado ? item.comprarG : -item.comprarG;
+    final notas = comprado
+        ? 'Lista de compras'
+        : 'Correção — desmarcado da lista de compras';
+    final motivo =
+        comprado ? MotivoMovimento.compra : MotivoMovimento.ajuste;
+
     if (item.ingredienteId != null && item.comprarG > 0) {
       await _inventory.ajustar(
         ingredienteId: item.ingredienteId,
-        delta: comprado ? item.comprarG : -item.comprarG,
-        motivo: comprado ? MotivoMovimento.compra : MotivoMovimento.ajuste,
-        notas: comprado
-            ? 'Lista de compras'
-            : 'Correção — desmarcado da lista de compras',
+        delta: delta,
+        motivo: motivo,
+        notas: notas,
+      );
+    } else if (item.material && item.comprarG > 0) {
+      await _inventory.ajustar(
+        descricao: item.descricao,
+        unidade: item.unidade.isEmpty ? 'un' : item.unidade,
+        categoria: item.categoria,
+        delta: delta,
+        motivo: motivo,
+        notas: notas,
       );
     }
     await _c.update(item.id, body: {'comprado': comprado});

@@ -58,6 +58,7 @@ pb/
 | `1705795200_inventario_itens_livres.js` | `inventario`/`movimentos_inventario`: `descricao`, `unidade` (itens livres) + índice `(empresa, descricao)` |
 | `1705881600_sugestoes.js` | `sugestoes` (qualquer utilizador cria; só a Admin UI lê) |
 | `1705968000_faturas.js` | `faturas` (foto + `dados_ia` + `estado`), `faturas_itens` (linhas emparelhadas com ingredientes) — ambas só escritas por endpoint |
+| `1706054400_material_loja.js` | `categoria` em `lista_compras` / `inventario` / `movimentos_inventario` (material da loja: equipamentos, consumíveis, mobiliário…) |
 
 Aparência (tema, cor de marca `cor_marca`, logótipo `logo`) é **por empresa** —
 editada em Configurações → Aparência, aplica-se a toda a equipa.
@@ -97,7 +98,7 @@ sobre a sua empresa.
 
 | Método | Rota | Efeito |
 |---|---|---|
-| `POST` | `/api/turnkey/inventario/ajustar` | `{ ingrediente?\|ficha?\|descricao?(item livre) + unidade?, delta, motivo, notas?, producao?, minimo?, localizacao? }` → upsert da linha `inventario` (`quantidade = max(0, q+delta)`) + `movimentos_inventario`. `delta` 0 é aceite se vier `minimo`/`localizacao`/`unidade`. |
+| `POST` | `/api/turnkey/inventario/ajustar` | `{ ingrediente?\|ficha?\|descricao?(item livre) + unidade? + categoria?, delta, motivo, notas?, producao?, minimo?, localizacao? }` → upsert da linha `inventario` (`quantidade = max(0, q+delta)`) + `movimentos_inventario`. `categoria` é o "material da loja" (ver `kCategoriasMaterial`). `delta` 0 é aceite se vier `minimo`/`localizacao`/`unidade`/`categoria`. |
 | `GET` | `/api/turnkey/fichas/resolver` | `?massa=&formato=&recheio=` → ficha técnica correspondente + `componentes:[{slot,nome,gPorUnidade}]` (recheios/coberturas/extra) ou `{fichaId:''}`. |
 | `GET` | `/api/turnkey/producoes/{id}/plano` | explosão agregada (sub-receitas + espelhos de fabrico próprio + **recheio do formato**: `N = round(kg·1000/massa_g)`, `N·recheio_g` do recheio) → `{ necessarios:[{ingredienteId,nome,fornecedor,gramas,custo,emStock,aComprar,embalagemG,aComprarSacos}], produzir:[{receitaId,nome,kg,unidades,formato,recheio,prioridade,horaLimite}], custoTotal }`. |
 | `POST` | `/api/turnkey/producoes/{id}/lista-compras` | mesma agregação → upsert em `lista_compras`; `quantidade_necessaria_g` = necessidade exata, `quantidade_comprar_g` = `ceil(falta/embalagem)·embalagem` (sacos inteiros), grava `embalagem_g` → `{ linhas }`. |

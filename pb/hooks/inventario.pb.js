@@ -40,7 +40,8 @@ routerAdd(
     const temMeta =
       body.minimo !== undefined ||
       body.localizacao !== undefined ||
-      body.unidade !== undefined;
+      body.unidade !== undefined ||
+      body.categoria !== undefined;
     if ((!isFinite(delta) || delta === 0) && !temMeta) {
       throw new BadRequestError('Nada para alterar.');
     }
@@ -63,6 +64,7 @@ routerAdd(
             fichaId: body.ficha || null,
             descricao: descricaoLivre || null,
             unidade: body.unidade || null,
+            categoria: body.categoria || null,
           },
           delta,
           motivo,
@@ -93,6 +95,9 @@ routerAdd(
         }
         if (body.unidade !== undefined) {
           row.set('unidade', String(body.unidade));
+        }
+        if (body.categoria !== undefined) {
+          row.set('categoria', String(body.categoria));
         }
         tx.save(row);
         quantidade = row.getFloat('quantidade');
