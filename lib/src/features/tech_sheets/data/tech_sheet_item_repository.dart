@@ -22,7 +22,7 @@ class TechSheetItemRepository {
   Future<List<ItemFicha>> listForFicha(String fichaId) async {
     final recs = await _c.getFullList(
       filter: 'ficha = "$fichaId"',
-      expand: 'ingrediente,receita',
+      expand: 'ingrediente,receita,embalagem',
       sort: 'created',
     );
     return recs.map(ItemFicha.fromRecord).toList();
@@ -33,6 +33,7 @@ class TechSheetItemRepository {
     required SlotFicha slot,
     String? ingredienteId,
     String? receitaId,
+    String? embalagemId,
     required double quantidadeG,
   }) {
     return _c.create(
@@ -42,6 +43,7 @@ class TechSheetItemRepository {
         'slot': slot.api,
         if (ingredienteId != null) 'ingrediente': ingredienteId,
         if (receitaId != null) 'receita': receitaId,
+        if (embalagemId != null) 'embalagem': embalagemId,
         'quantidade_g': quantidadeG,
       },
     );

@@ -250,6 +250,20 @@ antes de começar, para carregar as últimas migrations.
 - [ ] Mudar a nutrição de um ingrediente recalcula receitas e fichas em cascata
       (como o custo).
 
+## 15. Embalagens
+
+- [ ] Início → **Embalagens**. "+" cria: nome, tipo, **preço da compra**,
+      **peças na compra**, **"1 peça embala N unidades"**, fornecedor. A prévia
+      mostra o **custo por unidade de produto**.
+- [ ] Ex.: Caixa de 6, pacote de 100 caixas a 120 € → 1,20 €/caixa →
+      **0,20 €/unidade**. A lista mostra esse valor.
+- [ ] Numa **ficha técnica**: a secção **"Embalagem"** tem "Adicionar" → só
+      mostra embalagens → pergunta **"Peças por unidade de produto"** (normal 1).
+- [ ] A linha aparece como "N pç · €X" (sem gramas nem %). O **custo da ficha
+      sobe** por esse valor; o **peso do produto NÃO muda**.
+- [ ] Mudar o preço da embalagem → o custo de todas as fichas que a usam
+      recalcula sozinho.
+
 ---
 
 ## Notas / ajustes pedidos

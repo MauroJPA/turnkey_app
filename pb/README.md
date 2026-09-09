@@ -61,6 +61,7 @@ pb/
 | `1706054400_material_loja.js` | `categoria` em `lista_compras` / `inventario` / `movimentos_inventario` (material da loja: equipamentos, consumíveis, mobiliário…) |
 | `1706140800_nutricao.js` | `ingredientes`: 8 valores nutricionais (por 100 g/ml) + `nutri_base`/`nutri_densidade`/`nutri_origem`/`nutri_atualizado_em` + `alergenios`/`alergenios_tracos` (os 14 da UE). `receitas`: `perda_cozedura_pct` + cache JSON `nutri`. `fichas_tecnicas`: cache JSON `nutri`. Nova coleção partilhada `ingredientes_referencia` (só-leitura). |
 | `1706227200_seed_insa.js` | semeia `ingredientes_referencia` com 1376 alimentos da **INSA BDCA v7.1 (2026)** (idempotente; nome normalizado sem acentos em `sinonimos`). |
+| `1706313600_embalagens.js` | coleção `embalagens` (caixas, sacos, saquetas, adesivos… com `preco_compra`/`unidades_compra`/`rende_unidades` → `custo_unitario` cache) + relação opcional `itens_ficha.embalagem` + valor `embalagem` no `slot`. |
 
 Aparência (tema, cor de marca `cor_marca`, logótipo `logo`) é **por empresa** —
 editada em Configurações → Aparência, aplica-se a toda a equipa.
@@ -127,6 +128,8 @@ O ficheiro carregado é guardado com um nome no formato **`FT-NOMEFORNECEDOR-DDM
 | `POST` | `/api/turnkey/ingredientes/{id}/rotulo` | body `{ imagem: <base64>, mime }`. Via `ai.js` lê o rótulo (foto/PDF) → preenche `nutri_*` + `nutri_base`/`nutri_densidade` + `nutri_origem='rotulo'` + os 14 alergénios (canonizados) no ingrediente e grava (a cascata nutricional dispara sozinha). `503` sem chave, `400` sem imagem, `502` erro da IA. |
 
 A **nutrição de receitas e fichas é calculada em cascata** (`cascade.js`), como o custo: `receitas.nutri` = valores por 100 g de mistura crua (+ `por100g_cozido` com a perda); `fichas_tecnicas.nutri` = por 100 g de **produto acabado** (a água que sai a cozer não tem calorias — muda o peso) + `por_unidade`, e a **união dos alergénios** de toda a árvore.
+
+**Embalagens**: uma linha `itens_ficha` com `embalagem` (e `slot='embalagem'`) soma `preco_compra / unidades_compra / rende_unidades × quantidade` ao custo da ficha, **sem** contar para o peso nem para a nutrição. O `cost_cascade.pb.js` re-corre as fichas quando o custo da embalagem muda; `custo_unitario` é a cache mantida pelo `runCascade('embalagem', id)`.
 
 ## ⚠️ Regras de escrita de hooks (PocketBase 0.35)
 

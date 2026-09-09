@@ -48,7 +48,10 @@ class _TechSheetDetailScreenState
   }
 
   Future<void> _addTo(SlotFicha slot) async {
-    final picked = await showItemPickerSheet(context);
+    final picked = await showItemPickerSheet(
+      context,
+      apenasEmbalagem: slot == SlotFicha.embalagem,
+    );
     if (picked == null) return;
     await _run(
       () => ref.read(fichaActionsProvider).addItem(
@@ -58,6 +61,8 @@ class _TechSheetDetailScreenState
                 picked.kind == PickedKind.ingrediente ? picked.id : null,
             receitaId:
                 picked.kind == PickedKind.subReceita ? picked.id : null,
+            embalagemId:
+                picked.kind == PickedKind.embalagem ? picked.id : null,
             quantidadeG: picked.quantidadeG,
           ),
     );
@@ -74,7 +79,9 @@ class _TechSheetDetailScreenState
           controller: ctrl,
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(labelText: 'Gramas'),
+          decoration: InputDecoration(
+            labelText: item.isEmbalagem ? 'Peças' : 'Gramas',
+          ),
         ),
         actions: [
           TextButton(
@@ -303,9 +310,12 @@ class _SlotSection extends StatelessWidget {
               dense: true,
               title: Text(item.nome),
               subtitle: Text(
-                '${item.quantidadeG.toStringAsFixed(0)} g · '
-                '${detail.percentagem(item).toStringAsFixed(1)}% · '
-                '${fmt(item.custoLinha)}',
+                item.isEmbalagem
+                    ? '${item.quantidadeG.toStringAsFixed(0)} pç · '
+                        '${fmt(item.custoLinha)}'
+                    : '${item.quantidadeG.toStringAsFixed(0)} g · '
+                        '${detail.percentagem(item).toStringAsFixed(1)}% · '
+                        '${fmt(item.custoLinha)}',
               ),
               onTap: podeEditar ? () => onEditQty(item) : null,
               trailing: podeEditar

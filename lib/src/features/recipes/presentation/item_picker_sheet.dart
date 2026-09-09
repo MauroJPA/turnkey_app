@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/widgets/async_value_view.dart';
 import '../../ingredients/application/ingredients_providers.dart';
+import '../../packaging/application/embalagem_providers.dart';
 import '../application/recipes_providers.dart';
 
-enum PickedKind { ingrediente, subReceita }
+enum PickedKind { ingrediente, subReceita, embalagem }
 
 class PickedItem {
   PickedItem({
@@ -20,12 +21,15 @@ class PickedItem {
   final double quantidadeG;
 }
 
-/// Escolhe um ingrediente ou sub-receita e a quantidade em gramas.
+/// Escolhe um ingrediente / sub-receita / embalagem e a quantidade.
 /// Se [apenasVincular] for `true`, não pergunta a quantidade (devolve 0).
+/// Se [apenasEmbalagem] for `true`, mostra só embalagens (para o slot de
+/// embalagem da ficha técnica).
 Future<PickedItem?> showItemPickerSheet(
   BuildContext context, {
   String? excludeRecipeId,
   bool apenasVincular = false,
+  bool apenasEmbalagem = false,
 }) {
   return showModalBottomSheet<PickedItem>(
     context: context,
@@ -34,21 +38,29 @@ Future<PickedItem?> showItemPickerSheet(
     builder: (_) => _ItemPickerSheet(
       excludeRecipeId: excludeRecipeId,
       apenasVincular: apenasVincular,
+      apenasEmbalagem: apenasEmbalagem,
     ),
   );
 }
 
 class _ItemPickerSheet extends ConsumerStatefulWidget {
-  const _ItemPickerSheet({this.excludeRecipeId, this.apenasVincular = false});
+  const _ItemPickerSheet({
+    this.excludeRecipeId,
+    this.apenasVincular = false,
+    this.apenasEmbalagem = false,
+  });
   final String? excludeRecipeId;
   final bool apenasVincular;
+  final bool apenasEmbalagem;
 
   @override
   ConsumerState<_ItemPickerSheet> createState() => _ItemPickerSheetState();
 }
 
 class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
-  PickedKind _kind = PickedKind.ingrediente;
+  late PickedKind _kind = widget.apenasEmbalagem
+      ? PickedKind.embalagem
+      : PickedKind.ingrediente;
   String _q = '';
 
   Future<PickedItem?> _askQty(
@@ -56,7 +68,8 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
     if (widget.apenasVincular) {
       return PickedItem(kind: kind, id: id, nome: nome, quantidadeG: 0);
     }
-    final ctrl = TextEditingController();
+    final ehEmb = kind == PickedKind.embalagem;
+    final ctrl = TextEditingController(text: ehEmb ? '1' : '');
     final qtd = await showDialog<double>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -65,7 +78,9 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
           controller: ctrl,
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(labelText: 'Gramas'),
+          decoration: InputDecoration(
+            labelText: ehEmb ? 'Peças por unidade de produto' : 'Gramas',
+          ),
           onSubmitted: (_) => Navigator.pop(
             ctx,
             double.tryParse(ctrl.text.replaceAll(',', '.')),
@@ -94,6 +109,7 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
   Widget build(BuildContext context) {
     final ingredientes = ref.watch(ingredientsListProvider(false));
     final receitas = ref.watch(recipesListProvider(false));
+    final embalagens = ref.watch(embalagensListProvider);
 
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.8,
@@ -101,20 +117,21 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           children: [
-            SegmentedButton<PickedKind>(
-              segments: const [
-                ButtonSegment(
-                  value: PickedKind.ingrediente,
-                  label: Text('Ingredientes'),
-                ),
-                ButtonSegment(
-                  value: PickedKind.subReceita,
-                  label: Text('Receitas'),
-                ),
-              ],
-              selected: {_kind},
-              onSelectionChanged: (s) => setState(() => _kind = s.first),
-            ),
+            if (!widget.apenasEmbalagem)
+              SegmentedButton<PickedKind>(
+                segments: const [
+                  ButtonSegment(
+                    value: PickedKind.ingrediente,
+                    label: Text('Ingredientes'),
+                  ),
+                  ButtonSegment(
+                    value: PickedKind.subReceita,
+                    label: Text('Receitas'),
+                  ),
+                ],
+                selected: {_kind},
+                onSelectionChanged: (s) => setState(() => _kind = s.first),
+              ),
             const SizedBox(height: 8),
             TextField(
               onChanged: (v) => setState(() => _q = v),
@@ -126,7 +143,48 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
             ),
             const SizedBox(height: 8),
             Expanded(
-              child: _kind == PickedKind.ingrediente
+              child: _kind == PickedKind.embalagem
+                  ? AsyncValueView(
+                      value: embalagens,
+                      data: (all) {
+                        final items = all
+                            .where((e) => e.nome
+                                .toLowerCase()
+                                .contains(_q.toLowerCase()))
+                            .toList();
+                        if (items.isEmpty) {
+                          return const Center(
+                            child: Text(
+                              'Sem embalagens. Cria em Início → Embalagens.',
+                              textAlign: TextAlign.center,
+                            ),
+                          );
+                        }
+                        return ListView(
+                          children: [
+                            for (final e in items)
+                              ListTile(
+                                title: Text(e.nome),
+                                subtitle: Text([
+                                  if (e.tipo.isNotEmpty) e.tipo,
+                                  '≈ € ${e.custoUnidade.toStringAsFixed(4)}/un',
+                                ].join(' · ')),
+                                onTap: () async {
+                                  final r = await _askQty(
+                                    PickedKind.embalagem,
+                                    e.id,
+                                    e.nome,
+                                  );
+                                  if (r != null && context.mounted) {
+                                    Navigator.pop(context, r);
+                                  }
+                                },
+                              ),
+                          ],
+                        );
+                      },
+                    )
+                  : _kind == PickedKind.ingrediente
                   ? AsyncValueView(
                       value: ingredientes,
                       data: (all) {
