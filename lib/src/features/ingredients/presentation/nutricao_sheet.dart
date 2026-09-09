@@ -361,6 +361,36 @@ class _InsaPickerState extends State<_InsaPicker> {
   void _buscar() =>
       setState(() => _fut = widget.repo.referencias(q: _q.text.trim()));
 
+  static String _norm(String s) {
+    const m = {
+      'á': 'a', 'à': 'a', 'ã': 'a', 'â': 'a', 'é': 'e', 'ê': 'e', 'í': 'i',
+      'ó': 'o', 'õ': 'o', 'ô': 'o', 'ú': 'u', 'ç': 'c',
+    };
+    var o = s.toLowerCase();
+    m.forEach((k, v) => o = o.replaceAll(k, v));
+    return o;
+  }
+
+  static Set<String> _toks(String s) => _norm(s)
+      .replaceAll(RegExp(r'[^a-z0-9 ]'), ' ')
+      .split(RegExp(r'\s+'))
+      .where((t) => t.length > 2)
+      .toSet();
+
+  /// Ordena as referências pela semelhança do nome com [termoInicial].
+  List<IngredienteReferencia> _ordenar(List<IngredienteReferencia> l) {
+    final alvo = _toks(widget.termoInicial);
+    if (alvo.isEmpty) return l;
+    double score(IngredienteReferencia r) {
+      final b = _toks(r.nome);
+      if (b.isEmpty) return 0;
+      return alvo.intersection(b).length / alvo.union(b).length;
+    }
+
+    final copia = [...l]..sort((a, b) => score(b).compareTo(score(a)));
+    return copia;
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -397,7 +427,7 @@ class _InsaPickerState extends State<_InsaPicker> {
                   if (snap.hasError) {
                     return Center(child: Text('${snap.error}'));
                   }
-                  final itens = snap.data ?? const [];
+                  final itens = _ordenar(snap.data ?? const []);
                   if (itens.isEmpty) {
                     return const Center(
                       child: Text(

@@ -229,6 +229,27 @@ antes de começar, para carregar as últimas migrations.
       **entrada de stock é feita** (a mensagem final diz "X preço(s) mantidos").
 - [ ] Re-analisar uma fatura já analisada volta a chamar a IA (repete o custo).
 
+## 14. Nutrição e alergénios
+
+- [ ] Na lista de **Ingredientes**, cada linha tem um ícone de prato (cheio se
+      já tem valores). Abre a folha "Nutrição e alergénios".
+- [ ] **Tabela INSA**: pesquisar (ex.: "açúcar", "farinha de trigo") mostra
+      resultados da INSA BDCA; escolher preenche os 8 valores.
+- [ ] **Foto do rótulo**: escolher uma foto da tabela nutricional → preenche
+      (precisa da `GEMINI_API_KEY` no servidor; sem ela dá "IA não configurada").
+- [ ] Editar valores + marcar alergénios (Contém / Pode conter) → **Guardar**.
+      Os alergénios aparecem no subtítulo da lista.
+- [ ] Numa **receita** que use esse ingrediente: ícone do prato → painel
+      "Informação nutricional (por 100 g)" com os valores somados e os
+      alergénios agregados. Se algum ingrediente não tiver dados, avisa
+      "valores incompletos — sem dados de: …".
+- [ ] Na receita, definir **perda de peso na cozedura** (ex.: 12 %) → a coluna
+      "cozido" aparece com os valores concentrados.
+- [ ] Numa **ficha técnica**: ícone do prato → **Declaração Nutricional** por
+      100 g e por unidade + "Contém: …" / "Pode conter: …". Botão **"Copiar"**.
+- [ ] Mudar a nutrição de um ingrediente recalcula receitas e fichas em cascata
+      (como o custo).
+
 ---
 
 ## Notas / ajustes pedidos

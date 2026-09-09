@@ -106,18 +106,33 @@ class IngredientRepository implements IngredientWriter {
     return Ingrediente.fromRecord(rec);
   }
 
-  /// Pesquisa na tabela partilhada de referência (ex.: INSA TCA).
+  static String _semAcentos(String s) {
+    const m = {
+      'á': 'a', 'à': 'a', 'ã': 'a', 'â': 'a', 'ä': 'a',
+      'é': 'e', 'è': 'e', 'ê': 'e', 'ë': 'e',
+      'í': 'i', 'ì': 'i', 'î': 'i', 'ï': 'i',
+      'ó': 'o', 'ò': 'o', 'õ': 'o', 'ô': 'o', 'ö': 'o',
+      'ú': 'u', 'ù': 'u', 'û': 'u', 'ü': 'u', 'ç': 'c',
+    };
+    var out = s.toLowerCase();
+    m.forEach((k, v) => out = out.replaceAll(k, v));
+    return out;
+  }
+
+  /// Pesquisa na tabela partilhada de referência (ex.: INSA BDCA). Procura no
+  /// nome e no nome normalizado (sem acentos) guardado em `sinonimos`.
   Future<List<IngredienteReferencia>> referencias({
     String q = '',
     int limite = 40,
   }) async {
     final termo = q.trim().replaceAll("'", ' ');
+    final norm = _semAcentos(termo);
     final res = await _pb.collection('ingredientes_referencia').getList(
           page: 1,
           perPage: limite,
           filter: termo.isEmpty
               ? ''
-              : "nome ~ '$termo' || sinonimos ~ '$termo'",
+              : "nome ~ '$termo' || sinonimos ~ '$norm'",
           sort: 'nome',
         );
     return res.items.map(IngredienteReferencia.fromRecord).toList();

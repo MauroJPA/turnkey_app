@@ -59,15 +59,19 @@ pb/
 | `1705881600_sugestoes.js` | `sugestoes` (qualquer utilizador cria; só a Admin UI lê) |
 | `1705968000_faturas.js` | `faturas` (foto + `dados_ia` + `estado`), `faturas_itens` (linhas emparelhadas com ingredientes) — ambas só escritas por endpoint |
 | `1706054400_material_loja.js` | `categoria` em `lista_compras` / `inventario` / `movimentos_inventario` (material da loja: equipamentos, consumíveis, mobiliário…) |
+| `1706140800_nutricao.js` | `ingredientes`: 8 valores nutricionais (por 100 g/ml) + `nutri_base`/`nutri_densidade`/`nutri_origem`/`nutri_atualizado_em` + `alergenios`/`alergenios_tracos` (os 14 da UE). `receitas`: `perda_cozedura_pct` + cache JSON `nutri`. `fichas_tecnicas`: cache JSON `nutri`. Nova coleção partilhada `ingredientes_referencia` (só-leitura). |
+| `1706227200_seed_insa.js` | semeia `ingredientes_referencia` com 1376 alimentos da **INSA BDCA v7.1 (2026)** (idempotente; nome normalizado sem acentos em `sinonimos`). |
 
 Aparência (tema, cor de marca `cor_marca`, logótipo `logo`) é **por empresa** —
 editada em Configurações → Aparência, aplica-se a toda a equipa.
 
 Hooks: `onboarding.pb.js` (semeia `configuracoes_custo` + `formatos_cookie`),
 `guards.pb.js`, `cost_cascade.pb.js`, `team.pb.js`, `inventario.pb.js`,
-`faturas.pb.js`, `admin.pb.js` (+ `cascade.js`, que exporta `runCascade`,
-`explodeCompras`, `explodeProducao`, `explodeComprasDe`, `aplicarMovimento`,
-`carregarProducao`, `resolverFicha`; + `ai.js`, que exporta `analisarFaturaIA`).
+`faturas.pb.js`, `nutricao.pb.js`, `admin.pb.js` (+ `cascade.js`, que exporta
+`runCascade` — agora também calcula/cacheia `nutri` de receitas/fichas e a união
+de alergénios —, `explodeCompras`, `explodeProducao`, `explodeComprasDe`,
+`aplicarMovimento`, `carregarProducao`, `resolverFicha`; + `ai.js`, que exporta
+`analisarImagemIA({ tarefa: 'fatura' | 'rotulo' })`).
 
 ### Variáveis de ambiente do servidor — IA de faturas
 
@@ -115,6 +119,14 @@ Auth `users` não-viewer (ou superuser); só agem sobre a empresa do autor.
 | `GET` | `/api/turnkey/faturas/export?de=&ate=` | faturas `confirmada` no intervalo → `{ faturas:[{ id, fornecedor, dataFatura, numero, total, iva, nomeFicheiro, ficheiroUrl, linhas:[...] }] }`. `nomeFicheiro` = `FT-NOMEFORNECEDOR-DDMMAAAA.ext` (nome canónico p/ contabilidade, derivado da data da fatura). Base para a exportação para contabilidade (SAF-T / zip de PDFs fica para fase seguinte — o modelo já guarda tudo). |
 
 O ficheiro carregado é guardado com um nome no formato **`FT-NOMEFORNECEDOR-DDMMAAAA`** (data da fatura). O PocketBase normaliza (minúsculas, `_`, sufixo aleatório) ao gravar; o nome canónico exacto para a contabilidade vem no campo `nomeFicheiro` do `/export`.
+
+### Endpoint (Nutrição — `nutricao.pb.js`)
+
+| Método | Rota | Efeito |
+|---|---|---|
+| `POST` | `/api/turnkey/ingredientes/{id}/rotulo` | body `{ imagem: <base64>, mime }`. Via `ai.js` lê o rótulo (foto/PDF) → preenche `nutri_*` + `nutri_base`/`nutri_densidade` + `nutri_origem='rotulo'` + os 14 alergénios (canonizados) no ingrediente e grava (a cascata nutricional dispara sozinha). `503` sem chave, `400` sem imagem, `502` erro da IA. |
+
+A **nutrição de receitas e fichas é calculada em cascata** (`cascade.js`), como o custo: `receitas.nutri` = valores por 100 g de mistura crua (+ `por100g_cozido` com a perda); `fichas_tecnicas.nutri` = por 100 g de **produto acabado** (a água que sai a cozer não tem calorias — muda o peso) + `por_unidade`, e a **união dos alergénios** de toda a árvore.
 
 ## ⚠️ Regras de escrita de hooks (PocketBase 0.35)
 

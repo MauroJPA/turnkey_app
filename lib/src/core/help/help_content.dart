@@ -43,6 +43,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Cada ingrediente tem o preço, o peso da embalagem e o fornecedor.',
       'Use "+" para adicionar um ingrediente novo. Toque num ingrediente para editar.',
       'Pode importar muitos ingredientes de uma vez a partir de um ficheiro .csv.',
+      'O ícone do prato em cada linha abre "Nutrição e alergénios": preenche à mão, escolhe da tabela INSA, ou envia uma foto do rótulo para a IA preencher. Depois a informação nutricional das receitas e fichas é calculada sozinha.',
       'Quando muda o preço de um ingrediente, o custo das receitas e das fichas é recalculado sozinho.',
     ],
   ),
