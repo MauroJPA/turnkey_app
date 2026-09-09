@@ -1,6 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pocketbase/pocketbase.dart';
 
+import '../../../core/nutrition/nutrition.dart';
+
 part 'recipe.freezed.dart';
 
 enum CategoriaReceita {
@@ -57,6 +59,8 @@ class Receita with _$Receita {
     @Default(false) bool deletado,
     @Default('') String procedimento,
     @Default(<String>[]) List<String> imagens,
+    @Default(0) double perdaCozeduraPct,
+    @Default(<String, dynamic>{}) Map<String, dynamic> nutriRaw,
   }) = _Receita;
 
   const Receita._();
@@ -68,20 +72,29 @@ class Receita with _$Receita {
       .where((l) => l.isNotEmpty)
       .toList();
 
-  factory Receita.fromRecord(RecordModel r) => Receita(
-        id: r.id,
-        nome: r.getStringValue('nome'),
-        categoria: CategoriaReceita.fromApi(r.getStringValue('categoria')),
-        rendimentoEsperado: r.getDoubleValue('rendimento_esperado'),
-        rendimentoManual: r.getBoolValue('rendimento_manual'),
-        custoReceita: r.getDoubleValue('custo_receita'),
-        custoPorGrama: r.getDoubleValue('custo_por_grama'),
-        publicarComoIngrediente:
-            r.getBoolValue('publicar_como_ingrediente'),
-        deletado: r.getBoolValue('deletado'),
-        procedimento: r.getStringValue('procedimento'),
-        imagens: r.getListValue<String>('imagens'),
-      );
+  /// Nutrição calculada (por 100 g de mistura crua) — ver `NutriCache`.
+  NutriCache get nutri => NutriCache.fromJson(nutriRaw);
+
+  factory Receita.fromRecord(RecordModel r) {
+    final rawNutri = r.data['nutri'];
+    return Receita(
+      id: r.id,
+      nome: r.getStringValue('nome'),
+      categoria: CategoriaReceita.fromApi(r.getStringValue('categoria')),
+      rendimentoEsperado: r.getDoubleValue('rendimento_esperado'),
+      rendimentoManual: r.getBoolValue('rendimento_manual'),
+      custoReceita: r.getDoubleValue('custo_receita'),
+      custoPorGrama: r.getDoubleValue('custo_por_grama'),
+      publicarComoIngrediente: r.getBoolValue('publicar_como_ingrediente'),
+      deletado: r.getBoolValue('deletado'),
+      procedimento: r.getStringValue('procedimento'),
+      imagens: r.getListValue<String>('imagens'),
+      perdaCozeduraPct: r.getDoubleValue('perda_cozedura_pct'),
+      nutriRaw: rawNutri is Map
+          ? Map<String, dynamic>.from(rawNutri)
+          : const <String, dynamic>{},
+    );
+  }
 }
 
 /// Dados de formulário para criar/editar uma receita.
@@ -93,6 +106,7 @@ class RecipeInput {
     this.rendimentoManual = false,
     this.publicarComoIngrediente = false,
     this.procedimento = '',
+    this.perdaCozeduraPct = 0,
   });
 
   final String nome;
@@ -101,6 +115,7 @@ class RecipeInput {
   final bool rendimentoManual;
   final bool publicarComoIngrediente;
   final String procedimento;
+  final double perdaCozeduraPct;
 
   factory RecipeInput.fromModel(Receita r, {String? nome}) => RecipeInput(
         nome: nome ?? r.nome,
@@ -109,6 +124,7 @@ class RecipeInput {
         rendimentoManual: r.rendimentoManual,
         publicarComoIngrediente: r.publicarComoIngrediente,
         procedimento: r.procedimento,
+        perdaCozeduraPct: r.perdaCozeduraPct,
       );
 
   Map<String, dynamic> toBody() => {
@@ -118,5 +134,6 @@ class RecipeInput {
         if (rendimentoManual) 'rendimento_esperado': rendimentoEsperado,
         'publicar_como_ingrediente': publicarComoIngrediente,
         'procedimento': procedimento.trim(),
+        'perda_cozedura_pct': perdaCozeduraPct,
       };
 }

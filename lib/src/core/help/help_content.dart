@@ -63,6 +63,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Toque numa linha para mudar a quantidade. Deslize para a esquerda para remover.',
       'Ícone do livro: escrever o passo-a-passo e juntar fotos.',
       'Ícone da agenda: enviar esta receita para produzir (vai para o carrinho da agenda).',
+      'Ícone do prato: informação nutricional calculada (por 100 g), alergénios agregados, e a % de perda de peso na cozedura (concentra os valores por 100 g de produto).',
     ],
   ),
   HelpTopic.fichas: (
@@ -79,6 +80,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Cada linha é uma parte do produto (massa, recheio, cobertura) com o peso.',
       'Em baixo vê o custo e o preço sugerido, calculado com os percentuais de Configurações.',
       'Ligue a ficha a um "Formato de cookie" para o stock de produto acabado ser calculado ao concluir uma produção.',
+      'Ícone do prato: a Declaração Nutricional calculada (por 100 g e por unidade) + alergénios. Botão "Copiar" para colar num rótulo.',
     ],
   ),
   HelpTopic.produzir: (

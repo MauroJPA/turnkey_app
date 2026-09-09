@@ -14,6 +14,7 @@ import '../../production/presentation/agenda_line_sheet.dart';
 import '../application/recipes_providers.dart';
 import '../domain/recipe_item.dart';
 import 'item_picker_sheet.dart';
+import 'nutricao_receita_sheet.dart';
 import 'procedimento_sheet.dart';
 import 'recipe_form_sheet.dart';
 
@@ -154,6 +155,15 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
               tooltip: 'Procedimento e imagens',
               icon: const Icon(Icons.menu_book_outlined),
               onPressed: () => showProcedimentoSheet(context, d.receita),
+            ),
+            orElse: () => const SizedBox.shrink(),
+          ),
+          detailAsync.maybeWhen(
+            data: (d) => IconButton(
+              tooltip: 'Informação nutricional',
+              icon: const Icon(Icons.local_dining_outlined),
+              onPressed: () =>
+                  showNutricaoReceitaSheet(context, receita: d.receita),
             ),
             orElse: () => const SizedBox.shrink(),
           ),

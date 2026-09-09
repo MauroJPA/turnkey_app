@@ -23,6 +23,7 @@ mixin _$FichaTecnica {
   double get custoProduto => throw _privateConstructorUsedError;
   double get pesoProduto => throw _privateConstructorUsedError;
   bool get deletado => throw _privateConstructorUsedError;
+  Map<String, dynamic> get nutriRaw => throw _privateConstructorUsedError;
 
   /// Create a copy of FichaTecnica
   /// with the given fields replaced by the non-null parameter values.
@@ -45,6 +46,7 @@ abstract class $FichaTecnicaCopyWith<$Res> {
     double custoProduto,
     double pesoProduto,
     bool deletado,
+    Map<String, dynamic> nutriRaw,
   });
 }
 
@@ -69,6 +71,7 @@ class _$FichaTecnicaCopyWithImpl<$Res, $Val extends FichaTecnica>
     Object? custoProduto = null,
     Object? pesoProduto = null,
     Object? deletado = null,
+    Object? nutriRaw = null,
   }) {
     return _then(
       _value.copyWith(
@@ -96,6 +99,10 @@ class _$FichaTecnicaCopyWithImpl<$Res, $Val extends FichaTecnica>
                 ? _value.deletado
                 : deletado // ignore: cast_nullable_to_non_nullable
                       as bool,
+            nutriRaw: null == nutriRaw
+                ? _value.nutriRaw
+                : nutriRaw // ignore: cast_nullable_to_non_nullable
+                      as Map<String, dynamic>,
           )
           as $Val,
     );
@@ -118,6 +125,7 @@ abstract class _$$FichaTecnicaImplCopyWith<$Res>
     double custoProduto,
     double pesoProduto,
     bool deletado,
+    Map<String, dynamic> nutriRaw,
   });
 }
 
@@ -141,6 +149,7 @@ class __$$FichaTecnicaImplCopyWithImpl<$Res>
     Object? custoProduto = null,
     Object? pesoProduto = null,
     Object? deletado = null,
+    Object? nutriRaw = null,
   }) {
     return _then(
       _$FichaTecnicaImpl(
@@ -168,6 +177,10 @@ class __$$FichaTecnicaImplCopyWithImpl<$Res>
             ? _value.deletado
             : deletado // ignore: cast_nullable_to_non_nullable
                   as bool,
+        nutriRaw: null == nutriRaw
+            ? _value._nutriRaw
+            : nutriRaw // ignore: cast_nullable_to_non_nullable
+                  as Map<String, dynamic>,
       ),
     );
   }
@@ -183,7 +196,9 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
     this.custoProduto = 0,
     this.pesoProduto = 0,
     this.deletado = false,
-  }) : super._();
+    final Map<String, dynamic> nutriRaw = const <String, dynamic>{},
+  }) : _nutriRaw = nutriRaw,
+       super._();
 
   @override
   final String id;
@@ -201,10 +216,18 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
   @override
   @JsonKey()
   final bool deletado;
+  final Map<String, dynamic> _nutriRaw;
+  @override
+  @JsonKey()
+  Map<String, dynamic> get nutriRaw {
+    if (_nutriRaw is EqualUnmodifiableMapView) return _nutriRaw;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_nutriRaw);
+  }
 
   @override
   String toString() {
-    return 'FichaTecnica(id: $id, nome: $nome, categoria: $categoria, custoProduto: $custoProduto, pesoProduto: $pesoProduto, deletado: $deletado)';
+    return 'FichaTecnica(id: $id, nome: $nome, categoria: $categoria, custoProduto: $custoProduto, pesoProduto: $pesoProduto, deletado: $deletado, nutriRaw: $nutriRaw)';
   }
 
   @override
@@ -221,7 +244,8 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
             (identical(other.pesoProduto, pesoProduto) ||
                 other.pesoProduto == pesoProduto) &&
             (identical(other.deletado, deletado) ||
-                other.deletado == deletado));
+                other.deletado == deletado) &&
+            const DeepCollectionEquality().equals(other._nutriRaw, _nutriRaw));
   }
 
   @override
@@ -233,6 +257,7 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
     custoProduto,
     pesoProduto,
     deletado,
+    const DeepCollectionEquality().hash(_nutriRaw),
   );
 
   /// Create a copy of FichaTecnica
@@ -252,6 +277,7 @@ abstract class _FichaTecnica extends FichaTecnica {
     final double custoProduto,
     final double pesoProduto,
     final bool deletado,
+    final Map<String, dynamic> nutriRaw,
   }) = _$FichaTecnicaImpl;
   const _FichaTecnica._() : super._();
 
@@ -267,6 +293,8 @@ abstract class _FichaTecnica extends FichaTecnica {
   double get pesoProduto;
   @override
   bool get deletado;
+  @override
+  Map<String, dynamic> get nutriRaw;
 
   /// Create a copy of FichaTecnica
   /// with the given fields replaced by the non-null parameter values.

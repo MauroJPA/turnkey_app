@@ -158,16 +158,27 @@ class Nutrientes {
 class NutriCache {
   const NutriCache({
     this.por100g = const Nutrientes(),
+    this.por100gCozido,
+    this.porUnidade,
     this.alergenios = const [],
     this.alergeniosTracos = const [],
     this.completo = true,
     this.semDados = const [],
     this.pesoBaseG = 0,
+    this.pesoUnidadeG = 0,
     this.perdaPct = 0,
   });
 
-  /// Valores por 100 g de produto acabado (já com a perda de cozedura).
+  /// Receita: valores por 100 g de mistura crua. Ficha: por 100 g de produto
+  /// acabado (já com a perda de cozedura).
   final Nutrientes por100g;
+
+  /// Receita: por 100 g já cozido (só preenchido quando há perda). Ficha: null.
+  final Nutrientes? por100gCozido;
+
+  /// Ficha: totais de uma unidade (a água que sai a cozer não tem calorias).
+  final Nutrientes? porUnidade;
+
   final List<String> alergenios;
   final List<String> alergeniosTracos;
 
@@ -177,6 +188,9 @@ class NutriCache {
   /// Nomes dos ingredientes sem dados (para avisar o utilizador).
   final List<String> semDados;
   final double pesoBaseG;
+
+  /// Ficha: peso de uma unidade já cozida (g).
+  final double pesoUnidadeG;
   final double perdaPct;
 
   bool get vazio => por100g.vazio && alergenios.isEmpty;
@@ -185,17 +199,20 @@ class NutriCache {
     if (j == null || j.isEmpty) return const NutriCache(completo: false);
     List<String> ls(Object? v) =>
         v is List ? v.map((e) => '$e').toList() : const [];
-    final p = j['por100g'];
+    Nutrientes? n(Object? v) => v is Map
+        ? Nutrientes.fromJson(Map<String, dynamic>.from(v))
+        : null;
     return NutriCache(
-      por100g: p is Map
-          ? Nutrientes.fromJson(Map<String, dynamic>.from(p))
-          : const Nutrientes(),
+      por100g: n(j['por100g']) ?? const Nutrientes(),
+      por100gCozido: n(j['por100g_cozido']),
+      porUnidade: n(j['por_unidade']),
       alergenios: ls(j['alergenios']),
       alergeniosTracos: ls(j['alergenios_tracos']),
       completo: j['completo'] as bool? ?? false,
       semDados: ls(j['sem_dados']),
       pesoBaseG: _d(j['peso_base_g']),
-      perdaPct: _d(j['perda_pct']),
+      pesoUnidadeG: _d(j['peso_unidade_g']),
+      perdaPct: _d(j['perda_pct'] ?? j['perda_media_pct']),
     );
   }
 }

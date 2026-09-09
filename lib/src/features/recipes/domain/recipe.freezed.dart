@@ -28,6 +28,8 @@ mixin _$Receita {
   bool get deletado => throw _privateConstructorUsedError;
   String get procedimento => throw _privateConstructorUsedError;
   List<String> get imagens => throw _privateConstructorUsedError;
+  double get perdaCozeduraPct => throw _privateConstructorUsedError;
+  Map<String, dynamic> get nutriRaw => throw _privateConstructorUsedError;
 
   /// Create a copy of Receita
   /// with the given fields replaced by the non-null parameter values.
@@ -52,6 +54,8 @@ abstract class $ReceitaCopyWith<$Res> {
     bool deletado,
     String procedimento,
     List<String> imagens,
+    double perdaCozeduraPct,
+    Map<String, dynamic> nutriRaw,
   });
 }
 
@@ -81,6 +85,8 @@ class _$ReceitaCopyWithImpl<$Res, $Val extends Receita>
     Object? deletado = null,
     Object? procedimento = null,
     Object? imagens = null,
+    Object? perdaCozeduraPct = null,
+    Object? nutriRaw = null,
   }) {
     return _then(
       _value.copyWith(
@@ -128,6 +134,14 @@ class _$ReceitaCopyWithImpl<$Res, $Val extends Receita>
                 ? _value.imagens
                 : imagens // ignore: cast_nullable_to_non_nullable
                       as List<String>,
+            perdaCozeduraPct: null == perdaCozeduraPct
+                ? _value.perdaCozeduraPct
+                : perdaCozeduraPct // ignore: cast_nullable_to_non_nullable
+                      as double,
+            nutriRaw: null == nutriRaw
+                ? _value.nutriRaw
+                : nutriRaw // ignore: cast_nullable_to_non_nullable
+                      as Map<String, dynamic>,
           )
           as $Val,
     );
@@ -154,6 +168,8 @@ abstract class _$$ReceitaImplCopyWith<$Res> implements $ReceitaCopyWith<$Res> {
     bool deletado,
     String procedimento,
     List<String> imagens,
+    double perdaCozeduraPct,
+    Map<String, dynamic> nutriRaw,
   });
 }
 
@@ -182,6 +198,8 @@ class __$$ReceitaImplCopyWithImpl<$Res>
     Object? deletado = null,
     Object? procedimento = null,
     Object? imagens = null,
+    Object? perdaCozeduraPct = null,
+    Object? nutriRaw = null,
   }) {
     return _then(
       _$ReceitaImpl(
@@ -229,6 +247,14 @@ class __$$ReceitaImplCopyWithImpl<$Res>
             ? _value._imagens
             : imagens // ignore: cast_nullable_to_non_nullable
                   as List<String>,
+        perdaCozeduraPct: null == perdaCozeduraPct
+            ? _value.perdaCozeduraPct
+            : perdaCozeduraPct // ignore: cast_nullable_to_non_nullable
+                  as double,
+        nutriRaw: null == nutriRaw
+            ? _value._nutriRaw
+            : nutriRaw // ignore: cast_nullable_to_non_nullable
+                  as Map<String, dynamic>,
       ),
     );
   }
@@ -249,7 +275,10 @@ class _$ReceitaImpl extends _Receita {
     this.deletado = false,
     this.procedimento = '',
     final List<String> imagens = const <String>[],
+    this.perdaCozeduraPct = 0,
+    final Map<String, dynamic> nutriRaw = const <String, dynamic>{},
   }) : _imagens = imagens,
+       _nutriRaw = nutriRaw,
        super._();
 
   @override
@@ -289,8 +318,20 @@ class _$ReceitaImpl extends _Receita {
   }
 
   @override
+  @JsonKey()
+  final double perdaCozeduraPct;
+  final Map<String, dynamic> _nutriRaw;
+  @override
+  @JsonKey()
+  Map<String, dynamic> get nutriRaw {
+    if (_nutriRaw is EqualUnmodifiableMapView) return _nutriRaw;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_nutriRaw);
+  }
+
+  @override
   String toString() {
-    return 'Receita(id: $id, nome: $nome, categoria: $categoria, rendimentoEsperado: $rendimentoEsperado, rendimentoManual: $rendimentoManual, custoReceita: $custoReceita, custoPorGrama: $custoPorGrama, publicarComoIngrediente: $publicarComoIngrediente, deletado: $deletado, procedimento: $procedimento, imagens: $imagens)';
+    return 'Receita(id: $id, nome: $nome, categoria: $categoria, rendimentoEsperado: $rendimentoEsperado, rendimentoManual: $rendimentoManual, custoReceita: $custoReceita, custoPorGrama: $custoPorGrama, publicarComoIngrediente: $publicarComoIngrediente, deletado: $deletado, procedimento: $procedimento, imagens: $imagens, perdaCozeduraPct: $perdaCozeduraPct, nutriRaw: $nutriRaw)';
   }
 
   @override
@@ -319,7 +360,10 @@ class _$ReceitaImpl extends _Receita {
                 other.deletado == deletado) &&
             (identical(other.procedimento, procedimento) ||
                 other.procedimento == procedimento) &&
-            const DeepCollectionEquality().equals(other._imagens, _imagens));
+            const DeepCollectionEquality().equals(other._imagens, _imagens) &&
+            (identical(other.perdaCozeduraPct, perdaCozeduraPct) ||
+                other.perdaCozeduraPct == perdaCozeduraPct) &&
+            const DeepCollectionEquality().equals(other._nutriRaw, _nutriRaw));
   }
 
   @override
@@ -336,6 +380,8 @@ class _$ReceitaImpl extends _Receita {
     deletado,
     procedimento,
     const DeepCollectionEquality().hash(_imagens),
+    perdaCozeduraPct,
+    const DeepCollectionEquality().hash(_nutriRaw),
   );
 
   /// Create a copy of Receita
@@ -360,6 +406,8 @@ abstract class _Receita extends Receita {
     final bool deletado,
     final String procedimento,
     final List<String> imagens,
+    final double perdaCozeduraPct,
+    final Map<String, dynamic> nutriRaw,
   }) = _$ReceitaImpl;
   const _Receita._() : super._();
 
@@ -385,6 +433,10 @@ abstract class _Receita extends Receita {
   String get procedimento;
   @override
   List<String> get imagens;
+  @override
+  double get perdaCozeduraPct;
+  @override
+  Map<String, dynamic> get nutriRaw;
 
   /// Create a copy of Receita
   /// with the given fields replaced by the non-null parameter values.

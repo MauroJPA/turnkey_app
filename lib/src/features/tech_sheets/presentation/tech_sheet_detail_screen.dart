@@ -15,6 +15,7 @@ import '../../recipes/presentation/item_picker_sheet.dart';
 import '../application/tech_sheets_providers.dart';
 import '../domain/tech_sheet.dart';
 import '../domain/tech_sheet_item.dart';
+import 'declaracao_nutricional_sheet.dart';
 import 'ficha_form_sheet.dart';
 
 class TechSheetDetailScreen extends ConsumerStatefulWidget {
@@ -117,6 +118,15 @@ class _TechSheetDetailScreenState
         ),
         actions: [
           const HelpActions(topic: HelpTopic.fichaDetalhe),
+          detailAsync.maybeWhen(
+            data: (d) => IconButton(
+              tooltip: 'Declaração nutricional',
+              icon: const Icon(Icons.local_dining_outlined),
+              onPressed: () =>
+                  showDeclaracaoNutricionalSheet(context, ficha: d.ficha),
+            ),
+            orElse: () => const SizedBox.shrink(),
+          ),
           detailAsync.maybeWhen(
             data: (d) => IconButton(
               tooltip: 'Histórico',

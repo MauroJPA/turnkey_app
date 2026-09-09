@@ -76,6 +76,11 @@ class RecipeActions {
     _refreshDetail(id);
   }
 
+  Future<void> setPerdaCozedura(String id, double pct) async {
+    await _repo.setPerdaCozedura(id, pct);
+    _refreshDetail(id);
+  }
+
   Future<void> adicionarImagens(
     String id,
     List<({String nome, List<int> bytes})> novas,

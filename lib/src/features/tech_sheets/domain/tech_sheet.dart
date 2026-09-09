@@ -1,6 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pocketbase/pocketbase.dart';
 
+import '../../../core/nutrition/nutrition.dart';
+
 part 'tech_sheet.freezed.dart';
 
 /// Papel de um item dentro de um produto final.
@@ -49,18 +51,29 @@ class FichaTecnica with _$FichaTecnica {
     @Default(0) double custoProduto,
     @Default(0) double pesoProduto,
     @Default(false) bool deletado,
+    @Default(<String, dynamic>{}) Map<String, dynamic> nutriRaw,
   }) = _FichaTecnica;
 
   const FichaTecnica._();
 
-  factory FichaTecnica.fromRecord(RecordModel r) => FichaTecnica(
-        id: r.id,
-        nome: r.getStringValue('nome'),
-        categoria: r.getStringValue('categoria'),
-        custoProduto: r.getDoubleValue('custo_produto'),
-        pesoProduto: r.getDoubleValue('peso_produto'),
-        deletado: r.getBoolValue('deletado'),
-      );
+  /// Declaração nutricional calculada (por 100 g de produto acabado + por
+  /// unidade) e alergénios agregados — ver `NutriCache`.
+  NutriCache get nutri => NutriCache.fromJson(nutriRaw);
+
+  factory FichaTecnica.fromRecord(RecordModel r) {
+    final rawNutri = r.data['nutri'];
+    return FichaTecnica(
+      id: r.id,
+      nome: r.getStringValue('nome'),
+      categoria: r.getStringValue('categoria'),
+      custoProduto: r.getDoubleValue('custo_produto'),
+      pesoProduto: r.getDoubleValue('peso_produto'),
+      deletado: r.getBoolValue('deletado'),
+      nutriRaw: rawNutri is Map
+          ? Map<String, dynamic>.from(rawNutri)
+          : const <String, dynamic>{},
+    );
+  }
 }
 
 class FichaInput {
