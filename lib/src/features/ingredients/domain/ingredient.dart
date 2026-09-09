@@ -1,6 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pocketbase/pocketbase.dart';
 
+import '../../../core/nutrition/nutrition.dart';
+
 part 'ingredient.freezed.dart';
 
 enum OrigemIngrediente {
@@ -32,6 +34,14 @@ class Ingrediente with _$Ingrediente {
     @Default(true) bool disponivel,
     @Default(OrigemIngrediente.comprado) OrigemIngrediente origem,
     @Default(false) bool deletado,
+    // Nutrição (por 100 g/ml) e alergénios — ver core/nutrition.
+    @Default(Nutrientes()) Nutrientes nutri,
+    @Default('100g') String nutriBase,
+    @Default(1) double nutriDensidade,
+    @Default('') String nutriOrigem,
+    DateTime? nutriAtualizadoEm,
+    @Default(<String>[]) List<String> alergenios,
+    @Default(<String>[]) List<String> alergeniosTracos,
   }) = _Ingrediente;
 
   const Ingrediente._();
@@ -40,8 +50,19 @@ class Ingrediente with _$Ingrediente {
   double get custoPorGrama =>
       gramasEmbalagem > 0 ? preco / gramasEmbalagem : 0;
 
+  /// `true` se tem pelo menos os valores nutricionais principais.
+  bool get temNutri => !nutri.vazio;
+
   factory Ingrediente.fromRecord(RecordModel r) {
     final dataRaw = r.getStringValue('preco_atualizado_em');
+    final nutriData = r.getStringValue('nutri_atualizado_em');
+    List<String> lista(String campo) {
+      final v = r.data[campo];
+      return v is List ? v.map((e) => '$e').toList() : const [];
+    }
+
+    final base = r.getStringValue('nutri_base');
+    final dens = r.getDoubleValue('nutri_densidade');
     return Ingrediente(
       id: r.id,
       nome: r.getStringValue('nome'),
@@ -54,6 +75,14 @@ class Ingrediente with _$Ingrediente {
       disponivel: r.data['disponivel'] as bool? ?? true,
       origem: OrigemIngrediente.fromApi(r.getStringValue('origem')),
       deletado: r.getBoolValue('deletado'),
+      nutri: Nutrientes.fromRecord(r),
+      nutriBase: base.isEmpty ? '100g' : base,
+      nutriDensidade: dens > 0 ? dens : 1,
+      nutriOrigem: r.getStringValue('nutri_origem'),
+      nutriAtualizadoEm:
+          nutriData.isEmpty ? null : DateTime.tryParse(nutriData),
+      alergenios: lista('alergenios'),
+      alergeniosTracos: lista('alergenios_tracos'),
     );
   }
 }
