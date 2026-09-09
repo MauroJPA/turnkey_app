@@ -180,6 +180,23 @@ class InvoiceRepository {
 
   Future<void> apagar(String id) => _c.delete(id);
 
+  /// Faturas confirmadas no intervalo (para o contabilista). Cada item tem
+  /// `fornecedor`, `dataFatura`, `numero`, `total`, `iva`, `nomeFicheiro`,
+  /// `ficheiroUrl`, `linhas`.
+  Future<List<Map<String, dynamic>>> exportContabilidade({
+    required String de,
+    required String ate,
+  }) async {
+    final res = await _pb.send(
+      '/api/turnkey/faturas/export?de=$de&ate=$ate',
+      method: 'GET',
+    );
+    final list = (res as Map)['faturas'];
+    return list is List
+        ? list.map((e) => Map<String, dynamic>.from(e as Map)).toList()
+        : <Map<String, dynamic>>[];
+  }
+
   String ficheiroUrl(Fatura f, {bool thumb = false}) {
     if (!f.temFicheiro) return '';
     final base = _pb.baseURL.endsWith('/')

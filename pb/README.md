@@ -101,7 +101,14 @@ que o scanner alimenta por *scan-to-folder*) + `TURNKEY_SCAN_EMPRESA` (id da
 empresa), um cron a cada 5 min cria uma `faturas` (`estado='nova'`,
 `notas='Scanner: <ficheiro>'`) por cada JPG/PNG/WebP/PDF, chama
 `faturas_core.js analisarFatura` e move o original para `<pasta>/processadas/`.
-Sem chave de IA a fatura fica em `nova` para revisão manual.
+Sem chave de IA a fatura fica em `nova` para revisão manual. O painel inicial
+mostra "Faturas por rever" quando há faturas `nova`/`analisada`.
+
+**Envio mensal ao contabilista** (`faturas_contab.pb.js`): cron `0 8 1 * *` —
+se `TURNKEY_CONTAB_EMAIL` estiver definido (e SMTP configurado no Admin UI),
+junta as faturas `confirmada` do mês anterior, gera `resumo-AAAA-MM.csv` e
+envia por email com os ficheiros em anexo (`FT-FORNECEDOR-DDMMAAAA.ext`). A app
+tem um resumo do mês em Faturas → ícone de pasta (com "Copiar resumo (CSV)").
 
 ### Endpoints (Fase 2 — `inventario.pb.js`)
 

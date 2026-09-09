@@ -228,6 +228,13 @@ antes de começar, para carregar as últimas migrations.
       "X preço(s) NÃO vão mudar"; depois de aplicar, o **preço mantém-se** mas a
       **entrada de stock é feita** (a mensagem final diz "X preço(s) mantidos").
 - [ ] Re-analisar uma fatura já analisada volta a chamar a IA (repete o custo).
+- [ ] **Scanner (se configurado)**: pôr um PDF na pasta `TURNKEY_SCAN_DIR` →
+      em ≤ 5 min aparece uma fatura "Nova" com nota "Scanner: …" e o original
+      passa para `processadas/`. O painel inicial mostra "Faturas por rever".
+- [ ] **Contabilidade**: em Faturas, o ícone da pasta abre o resumo do mês
+      anterior (lista + total + "Copiar resumo (CSV)"); cada linha abre o
+      ficheiro. Com `TURNKEY_CONTAB_EMAIL` + SMTP, o dia 1 envia o pacote por
+      email.
 
 ## 14. Nutrição e alergénios
 

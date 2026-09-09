@@ -16,6 +16,7 @@ import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../application/invoice_providers.dart';
 import '../domain/fatura.dart';
+import 'contabilidade_sheet.dart';
 
 class InvoicesScreen extends ConsumerWidget {
   const InvoicesScreen({super.key});
@@ -130,7 +131,14 @@ class InvoicesScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Faturas'),
-        actions: const [HelpActions(topic: HelpTopic.faturas)],
+        actions: [
+          IconButton(
+            tooltip: 'Para a contabilidade',
+            icon: const Icon(Icons.folder_shared_outlined),
+            onPressed: () => showContabilidadeSheet(context, ref),
+          ),
+          const HelpActions(topic: HelpTopic.faturas),
+        ],
       ),
       floatingActionButton: podeEditar
           ? FloatingActionButton.extended(

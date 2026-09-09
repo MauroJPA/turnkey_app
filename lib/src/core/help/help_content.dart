@@ -165,6 +165,8 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'O ficheiro é guardado com o nome FT-FORNECEDOR-DDMMAAAA (a data da fatura), para organização e futura exportação para a contabilidade.',
       'As faturas ficam agrupadas por mês. Toca e mantém numa fatura para a apagar.',
       'O estado mostra: Nova, Analisada (IA leu), Confirmada (já aplicada) ou Erro.',
+      'Ícone da pasta (canto superior): resumo do mês para a contabilidade — lista, total e "Copiar resumo (CSV)". O envio mensal por email é automático se estiver configurado no servidor.',
+      'Se ligares um scanner à pasta configurada no servidor, as faturas entram sozinhas (aparecem como "Nova" com a nota "Scanner: …").',
     ],
   ),
   HelpTopic.faturaRevisao: (
