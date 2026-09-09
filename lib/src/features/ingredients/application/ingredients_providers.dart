@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/nutrition/nutrition.dart';
 import '../data/ingredient_repository.dart';
 import '../domain/ingredient.dart';
 
@@ -52,6 +53,36 @@ class IngredientActions {
 
   Future<void> deleteForever(String id) async {
     await _repo.hardDelete(id);
+    _refresh();
+  }
+
+  /// Lê um rótulo por IA e devolve o ingrediente já atualizado.
+  Future<Ingrediente> analisarRotulo(
+    String id, {
+    required List<int> bytes,
+    required String nome,
+  }) async {
+    final ing = await _repo.analisarRotulo(id, bytes: bytes, nome: nome);
+    _refresh();
+    return ing;
+  }
+
+  Future<void> definirNutricao(
+    String id, {
+    required Nutrientes nutri,
+    String base = '100g',
+    double densidade = 1,
+    required List<String> alergenios,
+    required List<String> alergeniosTracos,
+  }) async {
+    await _repo.definirNutricao(
+      id,
+      nutri: nutri,
+      base: base,
+      densidade: densidade,
+      alergenios: alergenios,
+      alergeniosTracos: alergeniosTracos,
+    );
     _refresh();
   }
 }

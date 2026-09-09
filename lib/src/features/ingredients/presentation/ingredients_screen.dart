@@ -14,6 +14,7 @@ import '../../import_csv/domain/import_result.dart';
 import '../application/ingredients_providers.dart';
 import '../domain/ingredient.dart';
 import 'ingredient_form_sheet.dart';
+import 'nutricao_sheet.dart';
 
 class IngredientsScreen extends ConsumerStatefulWidget {
   const IngredientsScreen({super.key});
@@ -62,6 +63,9 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
     if (input == null) return;
     await _run(() => ref.read(ingredientActionsProvider).update(i.id, input));
   }
+
+  Future<void> _nutricao(Ingrediente i) =>
+      showNutricaoSheet(context, ingrediente: i);
 
   Future<void> _import() async {
     await _run(() async {
@@ -249,6 +253,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
       if (i.marca.isNotEmpty) i.marca,
       if (i.fornecedor.isNotEmpty) i.fornecedor,
       if (!i.disponivel) 'indisponível',
+      if (i.alergenios.isNotEmpty) 'contém: ${i.alergenios.join(', ')}',
     ].join(' · ');
 
     final trailing = Column(
@@ -315,7 +320,26 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
     final tile = ListTile(
       title: Text(i.nome),
       subtitle: subtitle.isEmpty ? null : Text(subtitle),
-      trailing: trailing,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          trailing,
+          if (_podeEditar)
+            IconButton(
+              tooltip: 'Nutrição e alergénios',
+              icon: Icon(
+                i.temNutri
+                    ? Icons.local_dining
+                    : Icons.local_dining_outlined,
+                size: 20,
+                color: i.temNutri
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).disabledColor,
+              ),
+              onPressed: () => _nutricao(i),
+            ),
+        ],
+      ),
       onTap: _podeEditar ? () => _edit(i) : null,
       onLongPress: _podeEditar
           ? () => _run(
