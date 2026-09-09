@@ -18,6 +18,7 @@ enum HelpTopic {
   inventario,
   faturas,
   faturaRevisao,
+  embalagens,
   formatos,
   configuracoes,
   equipa,
@@ -175,6 +176,16 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Ação por linha: Preço (só atualiza o preço), Stock (só dá entrada), Preço + Stock, ou Ignorar.',
       'O preço só muda se esta fatura for igual ou mais recente do que a última atualização de preço desse ingrediente. Se carregares uma fatura antiga, a entrada de stock é feita à mesma, mas o preço mantém-se (fica sempre o do documento mais recente).',
       '"Aplicar aos ingredientes" grava tudo: os preços recalculam os custos das receitas e fichas em cascata.',
+    ],
+  ),
+  HelpTopic.embalagens: (
+    titulo: 'Embalagens',
+    paragrafos: [
+      'Caixas, sacos, saquetas, adesivos, fita… — tudo o que embala o produto.',
+      'Preço da compra + quantas peças vêm nessa compra → custo por peça.',
+      '"Uma peça embala quantas unidades?": um saco embala 1; uma caixa de 6 embala 6. O custo por unidade de produto divide-se por esse número.',
+      'Na ficha técnica, adiciona a embalagem como uma linha (tipo "Embalagem") e o custo entra no total do produto — sem afetar o peso nem a informação nutricional.',
+      '"+" cria; toque edita; toque e segure apaga.',
     ],
   ),
   HelpTopic.formatos: (

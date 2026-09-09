@@ -28,6 +28,8 @@ class HomeShell extends ConsumerWidget {
         'Produtos e preço de venda', Routes.techSheets),
     _Section('Faturas', Icons.document_scanner_outlined,
         'Foto da fatura → preços e stock', Routes.invoices),
+    _Section('Embalagens', Icons.inventory_2_outlined,
+        'Caixas, sacos, adesivos e o seu custo', Routes.embalagens),
     _Section('Formatos de cookie', Icons.cookie_outlined,
         'Tamanhos e recheio por unidade', Routes.cookieFormats),
     _Section('Configurações', Icons.settings_outlined,

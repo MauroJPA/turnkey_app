@@ -14,6 +14,7 @@ import '../features/inventory/presentation/inventory_screen.dart';
 import '../features/invoices/presentation/invoice_review_screen.dart';
 import '../features/invoices/presentation/invoices_screen.dart';
 import '../features/mise_en_place/presentation/mep_screen.dart';
+import '../features/packaging/presentation/embalagens_screen.dart';
 import '../features/production/presentation/cart_review_screen.dart';
 import '../features/production/presentation/production_screen.dart';
 import '../features/recipes/presentation/recipe_detail_screen.dart';
@@ -41,6 +42,7 @@ abstract class Routes {
   static const shopping = '/compras';
   static const inventory = '/inventario';
   static const invoices = '/faturas';
+  static const embalagens = '/embalagens';
   static const settings = '/opcoes';
   static const team = '/opcoes/equipa';
   static const cookieFormats = '/opcoes/formatos';
@@ -138,6 +140,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                 ),
               ),
             ],
+          ),
+          GoRoute(
+            path: Routes.embalagens,
+            builder: (_, __) => const EmbalagensScreen(),
           ),
           GoRoute(
             path: Routes.ingredients,
