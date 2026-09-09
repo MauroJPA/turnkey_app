@@ -140,6 +140,24 @@ onRecordAfterUpdateSuccess((e) => {
   e.next();
 }, 'embalagens');
 
+// Kits de embalagens: ao mudar as linhas do kit, recalcula o custo do kit
+// (cache) e as fichas que o usam.
+function aoMudarLinhaKit(e) {
+  try {
+    const kid = e.record.getString('kit');
+    if (kid) {
+      require(`${__hooks}/cascade.js`).runCascade(e.app, 'kit', kid);
+    }
+  } catch (err) {
+    console.log('[cascata] linha kit: ' + err);
+  }
+  e.next();
+}
+
+onRecordAfterCreateSuccess(aoMudarLinhaKit, 'embalagem_kit_itens');
+onRecordAfterUpdateSuccess(aoMudarLinhaKit, 'embalagem_kit_itens');
+onRecordAfterDeleteSuccess(aoMudarLinhaKit, 'embalagem_kit_itens');
+
 onRecordAfterUpdateSuccess((e) => {
   try {
     const EPS = 0.001;

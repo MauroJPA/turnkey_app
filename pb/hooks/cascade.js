@@ -248,6 +248,34 @@ function runCascade(app, kind, rootId) {
         const pecas = fnum(emb, 'unidades_compra') || 1;
         const rende = fnum(emb, 'rende_unidades') || 1;
         custo += (fnum(emb, 'preco_compra') / pecas / rende) * qtd;
+      } else if (item.getString('kit')) {
+        // kit de embalagens: qtd = nº de kits por unidade de produto; sem peso.
+        let linhas;
+        try {
+          linhas = app.findRecordsByFilter(
+            'embalagem_kit_itens',
+            'kit = {:id}',
+            '',
+            0,
+            0,
+            { id: item.getString('kit') },
+          );
+        } catch (_) {
+          linhas = [];
+        }
+        let cKit = 0;
+        for (const kl of linhas) {
+          let emb;
+          try {
+            emb = app.findRecordById('embalagens', kl.getString('embalagem'));
+          } catch (_) {
+            continue;
+          }
+          const pc = fnum(emb, 'unidades_compra') || 1;
+          const rd = fnum(emb, 'rende_unidades') || 1;
+          cKit += (fnum(emb, 'preco_compra') / pc / rd) * fnum(kl, 'quantidade');
+        }
+        custo += cKit * qtd;
       } else {
         peso += qtd;
       }
@@ -604,6 +632,49 @@ function runCascade(app, kind, rootId) {
     }
   };
 
+  // custo por unidade de produto de um kit = soma de (custo/un de cada
+  // embalagem × quantidade); atualiza o cache e re-corre as fichas que o usam.
+  const recomputeKit = (kitId) => {
+    let kit;
+    try {
+      kit = app.findRecordById('embalagem_kits', kitId);
+    } catch (_) {
+      return;
+    }
+    let linhas;
+    try {
+      linhas = app.findRecordsByFilter(
+        'embalagem_kit_itens',
+        'kit = {:id}',
+        '',
+        0,
+        0,
+        { id: kitId },
+      );
+    } catch (_) {
+      linhas = [];
+    }
+    let cu = 0;
+    for (const kl of linhas) {
+      let emb;
+      try {
+        emb = app.findRecordById('embalagens', kl.getString('embalagem'));
+      } catch (_) {
+        continue;
+      }
+      const pc = fnum(emb, 'unidades_compra') || 1;
+      const rd = fnum(emb, 'rende_unidades') || 1;
+      cu += (fnum(emb, 'preco_compra') / pc / rd) * fnum(kl, 'quantidade');
+    }
+    if (Math.abs(fnum(kit, 'custo_unitario') - cu) > cu * 1e-6 + 1e-9) {
+      kit.set('custo_unitario', cu);
+      app.save(kit);
+    }
+    for (const fid of fichasQueUsam('kit', kitId)) {
+      recomputeFicha(fid);
+    }
+  };
+
   const recomputeEmbalagem = (embId) => {
     let emb;
     try {
@@ -621,11 +692,34 @@ function runCascade(app, kind, rootId) {
     for (const fid of fichasQueUsam('embalagem', embId)) {
       recomputeFicha(fid);
     }
+    // kits que incluem esta embalagem -> recalcular (e as suas fichas).
+    let kls;
+    try {
+      kls = app.findRecordsByFilter(
+        'embalagem_kit_itens',
+        'embalagem = {:id}',
+        '',
+        0,
+        0,
+        { id: embId },
+      );
+    } catch (_) {
+      kls = [];
+    }
+    const vistos = {};
+    for (const kl of kls) {
+      const kid = kl.getString('kit');
+      if (kid && !vistos[kid]) {
+        vistos[kid] = true;
+        recomputeKit(kid);
+      }
+    }
   };
 
   if (kind === 'ingrediente') recomputeIngrediente(rootId);
   else if (kind === 'ficha') recomputeFicha(rootId);
   else if (kind === 'embalagem') recomputeEmbalagem(rootId);
+  else if (kind === 'kit') recomputeKit(rootId);
   else recomputeReceita(rootId);
 }
 
