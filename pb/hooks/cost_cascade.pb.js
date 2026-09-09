@@ -16,12 +16,42 @@ onRecordAfterUpdateSuccess((e) => {
         return 0;
       }
     };
+    const lst = (rec, f) => {
+      try {
+        const v = rec.get(f);
+        if (Array.isArray(v)) return v.map(String).slice().sort().join('|');
+        if (typeof v === 'string') return v;
+      } catch (_) {}
+      return '';
+    };
     const before = e.record.original();
-    const mudou =
+    const NUTRI = [
+      'nutri_energia_kcal', 'nutri_lipidos_g', 'nutri_saturados_g',
+      'nutri_hidratos_g', 'nutri_acucares_g', 'nutri_fibra_g',
+      'nutri_proteina_g', 'nutri_sal_g', 'nutri_densidade',
+    ];
+    let mudou =
       Math.abs(num(e.record, 'preco') - num(before, 'preco')) > EPS ||
       Math.abs(
         num(e.record, 'gramas_embalagem') - num(before, 'gramas_embalagem'),
       ) > EPS;
+    if (!mudou) {
+      for (const f of NUTRI) {
+        if (Math.abs(num(e.record, f) - num(before, f)) > 1e-6) {
+          mudou = true;
+          break;
+        }
+      }
+    }
+    if (
+      !mudou &&
+      (e.record.getString('nutri_base') !== before.getString('nutri_base') ||
+        lst(e.record, 'alergenios') !== lst(before, 'alergenios') ||
+        lst(e.record, 'alergenios_tracos') !==
+          lst(before, 'alergenios_tracos'))
+    ) {
+      mudou = true;
+    }
     if (mudou) {
       require(`${__hooks}/cascade.js`).runCascade(
         e.app,
@@ -85,6 +115,9 @@ onRecordAfterUpdateSuccess((e) => {
       r.getBool('rendimento_manual') !== before.getBool('rendimento_manual') ||
       Math.abs(
         num(r, 'rendimento_esperado') - num(before, 'rendimento_esperado'),
+      ) > EPS ||
+      Math.abs(
+        num(r, 'perda_cozedura_pct') - num(before, 'perda_cozedura_pct'),
       ) > EPS;
     if (relevante) {
       require(`${__hooks}/cascade.js`).runCascade(e.app, 'receita', r.id);

@@ -25,6 +25,126 @@ function runCascade(app, kind, rootId) {
     return g > 0 ? fnum(ing, 'preco') / g : 0;
   };
 
+  // --- nutrição (mesma cascata dos custos) --------------------------------
+  const NUT = [
+    'kcal', 'lipidos', 'saturados', 'hidratos',
+    'acucares', 'fibra', 'proteina', 'sal',
+  ];
+  const NUT_CAMPO = {
+    kcal: 'nutri_energia_kcal',
+    lipidos: 'nutri_lipidos_g',
+    saturados: 'nutri_saturados_g',
+    hidratos: 'nutri_hidratos_g',
+    acucares: 'nutri_acucares_g',
+    fibra: 'nutri_fibra_g',
+    proteina: 'nutri_proteina_g',
+    sal: 'nutri_sal_g',
+  };
+  const zeroN = () => ({
+    kcal: 0, lipidos: 0, saturados: 0, hidratos: 0,
+    acucares: 0, fibra: 0, proteina: 0, sal: 0,
+  });
+  const addEscN = (acc, src, f) => {
+    for (const k of NUT) acc[k] += (src[k] || 0) * f;
+  };
+  const vazioN = (n) => NUT.every((k) => !n[k]);
+  const por100De = (abs, pesoG) => {
+    const o = zeroN();
+    if (pesoG > 0) for (const k of NUT) o[k] = (abs[k] * 100) / pesoG;
+    return o;
+  };
+  // nutrição por 100 g de um ingrediente (converte base 100ml -> 100g)
+  const nutriIngPor100 = (ing) => {
+    const n = zeroN();
+    for (const k of NUT) n[k] = fnum(ing, NUT_CAMPO[k]);
+    if (ing.getString('nutri_base') === '100ml') {
+      const d = fnum(ing, 'nutri_densidade');
+      if (d > 0) for (const k of NUT) n[k] = n[k] / d;
+    }
+    return n;
+  };
+  const listaSel = (rec, campo) => {
+    try {
+      const v = rec.get(campo);
+      if (Array.isArray(v)) return v.map(String).filter(Boolean);
+      if (typeof v === 'string' && v) return [v];
+    } catch (_) {}
+    return [];
+  };
+  const unir = (a, b) => {
+    const s = new Set(a);
+    for (const x of b) s.add(x);
+    return Array.from(s);
+  };
+  const perdaDe = (rec) =>
+    Math.min(95, Math.max(0, fnum(rec, 'perda_cozedura_pct')));
+  // Lê um campo `json` de um record (pode vir como objeto, string ou JSONRaw).
+  const lerJson = (rec, campo) => {
+    let v;
+    try {
+      v = rec.get(campo);
+    } catch (_) {
+      return null;
+    }
+    if (v == null || v === '') return null;
+    if (
+      typeof v === 'object' &&
+      !Array.isArray(v) &&
+      Object.keys(v).length > 0
+    ) {
+      return v;
+    }
+    try {
+      return JSON.parse(String(v));
+    } catch (_) {}
+    return typeof v === 'object' ? v : null;
+  };
+  // nutri (por 100 g cru) em cache de uma receita já recalculada
+  const receitaNutriPor100 = (recId) => {
+    let rec;
+    try {
+      rec = app.findRecordById('receitas', recId);
+    } catch (_) {
+      return null;
+    }
+    const j = lerJson(rec, 'nutri');
+    if (!j || typeof j !== 'object') return null;
+    const p = j.por100g || {};
+    const n = zeroN();
+    for (const k of NUT) n[k] = Number(p[k] || 0);
+    return {
+      por100: n,
+      perda: perdaDe(rec),
+      alergenios: Array.isArray(j.alergenios) ? j.alergenios : [],
+      tracos: Array.isArray(j.alergenios_tracos) ? j.alergenios_tracos : [],
+      completo: j.completo !== false,
+    };
+  };
+  const nutriIgual = (aRaw, b) => {
+    const a =
+      aRaw && typeof aRaw === 'object' && Object.keys(aRaw).length
+        ? aRaw
+        : (() => {
+            try {
+              return JSON.parse(String(aRaw));
+            } catch (_) {
+              return null;
+            }
+          })();
+    if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false;
+    const pa = a.por100g || {};
+    const pb = b.por100g || {};
+    for (const k of NUT) {
+      if (Math.abs(Number(pa[k] || 0) - Number(pb[k] || 0)) > 1e-4) return false;
+    }
+    const j = (x) => (x || []).slice().sort().join('|');
+    return (
+      j(a.alergenios) === j(b.alergenios) &&
+      j(a.alergenios_tracos) === j(b.alergenios_tracos) &&
+      (a.completo !== false) === (b.completo !== false)
+    );
+  };
+
   const parentRecipeIds = (field, id) => {
     const rows = app.findRecordsByFilter(
       'itens_receita',
@@ -129,6 +249,70 @@ function runCascade(app, kind, rootId) {
         { custo: custo, peso: peso },
       );
     }
+
+    // --- nutrição da ficha (por 100 g de PRODUTO ACABADO) -------------
+    const absF = zeroN();
+    let pesoCru = 0;
+    let perdaPond = 0;
+    let alergF = [];
+    let tracosF = [];
+    let completoF = true;
+    const semDadosF = [];
+    for (const item of itens) {
+      const qtd = fnum(item, 'quantidade_g');
+      if (qtd <= 0) continue;
+      pesoCru += qtd;
+      const ingRel = item.getString('ingrediente');
+      const recRel = item.getString('receita');
+      if (ingRel) {
+        let ing;
+        try {
+          ing = app.findRecordById('ingredientes', ingRel);
+        } catch (_) {
+          continue;
+        }
+        const n100 = nutriIngPor100(ing);
+        if (vazioN(n100)) {
+          completoF = false;
+          semDadosF.push(ing.getString('nome') || ingRel);
+        }
+        addEscN(absF, n100, qtd / 100);
+        alergF = unir(alergF, listaSel(ing, 'alergenios'));
+        tracosF = unir(tracosF, listaSel(ing, 'alergenios_tracos'));
+      } else if (recRel) {
+        const sub = receitaNutriPor100(recRel);
+        if (sub) {
+          addEscN(absF, sub.por100, qtd / 100);
+          alergF = unir(alergF, sub.alergenios);
+          tracosF = unir(tracosF, sub.tracos);
+          if (!sub.completo) completoF = false;
+          perdaPond += qtd * sub.perda;
+        } else {
+          completoF = false;
+        }
+      }
+    }
+    const perdaMedia = pesoCru > 0 ? perdaPond / pesoCru : 0;
+    const pesoFinal = pesoCru * (1 - perdaMedia / 100);
+    tracosF = tracosF.filter((t) => alergF.indexOf(t) < 0);
+    // A água que sai a cozer não tem calorias: os totais da unidade mantêm-se;
+    // muda o peso -> o "por 100 g" sobe.
+    const novoNutriF = {
+      por100g: por100De(absF, pesoFinal),
+      por_unidade: absF,
+      peso_cru_g: pesoCru,
+      peso_unidade_g: pesoFinal,
+      perda_media_pct: perdaMedia,
+      alergenios: alergF.slice().sort(),
+      alergenios_tracos: tracosF.slice().sort(),
+      completo: completoF && pesoCru > 0,
+      sem_dados: semDadosF,
+      atualizado_em: new Date().toISOString(),
+    };
+    if (!nutriIgual(lerJson(ficha, 'nutri'), novoNutriF)) {
+      ficha.set('nutri', novoNutriF);
+      app.save(ficha);
+    }
   };
 
   const fichasQueUsam = (field, id) => {
@@ -153,7 +337,7 @@ function runCascade(app, kind, rootId) {
     return out;
   };
 
-  const sincronizarEspelho = (receita, custo, rendimento, cpg) => {
+  const sincronizarEspelho = (receita, custo, rendimento, cpg, nutri) => {
     const publicar = receita.getBool('publicar_como_ingrediente');
     const empresaId = receita.getString('empresa');
 
@@ -189,6 +373,19 @@ function runCascade(app, kind, rootId) {
     espelho.set('custo_por_grama', cpg);
     espelho.set('disponivel', true);
     espelho.set('deletado', false);
+    // Nutrição do espelho = por 100 g do intermédio JÁ FEITO (cozido): quem o
+    // usa mede-o em gramas do produto acabado (ex.: "20 g de brigadeiro").
+    if (nutri && nutri.por100g_cozido) {
+      for (const k of NUT) {
+        espelho.set(NUT_CAMPO[k], Number(nutri.por100g_cozido[k] || 0));
+      }
+      espelho.set('nutri_base', '100g');
+      espelho.set('nutri_densidade', 1);
+      espelho.set('nutri_origem', 'receita');
+      espelho.set('nutri_atualizado_em', new Date().toISOString());
+      espelho.set('alergenios', nutri.alergenios || []);
+      espelho.set('alergenios_tracos', nutri.alergenios_tracos || []);
+    }
     app.save(espelho);
 
     recomputeIngrediente(espelho.id);
@@ -279,7 +476,69 @@ function runCascade(app, kind, rootId) {
       );
     }
 
-    sincronizarEspelho(receita, custo, rendimento, cpgReceita);
+    // --- nutrição da receita (por 100 g de mistura crua) ---------------
+    const absN = zeroN();
+    let pesoN = 0;
+    let alergN = [];
+    let tracosN = [];
+    let completoN = true;
+    const semDadosN = [];
+    for (const item of itens) {
+      const qtd = fnum(item, 'quantidade_g');
+      if (qtd <= 0) continue;
+      pesoN += qtd;
+      const ingRel = item.getString('ingrediente');
+      const subRel = item.getString('sub_receita');
+      if (ingRel) {
+        let ing;
+        try {
+          ing = app.findRecordById('ingredientes', ingRel);
+        } catch (_) {
+          continue;
+        }
+        const n100 = nutriIngPor100(ing);
+        if (vazioN(n100)) {
+          completoN = false;
+          semDadosN.push(ing.getString('nome') || ingRel);
+        }
+        addEscN(absN, n100, qtd / 100);
+        alergN = unir(alergN, listaSel(ing, 'alergenios'));
+        tracosN = unir(tracosN, listaSel(ing, 'alergenios_tracos'));
+      } else if (subRel) {
+        const sub = receitaNutriPor100(subRel);
+        if (sub) {
+          addEscN(absN, sub.por100, qtd / 100);
+          alergN = unir(alergN, sub.alergenios);
+          tracosN = unir(tracosN, sub.tracos);
+          if (!sub.completo) completoN = false;
+        } else {
+          completoN = false;
+        }
+      }
+    }
+    const por100 = por100De(absN, pesoN);
+    const perdaPct = perdaDe(receita);
+    const fCoz = perdaPct < 95 ? 1 / (1 - perdaPct / 100) : 1;
+    const por100Coz = zeroN();
+    for (const k of NUT) por100Coz[k] = por100[k] * fCoz;
+    tracosN = tracosN.filter((t) => alergN.indexOf(t) < 0);
+    const novoNutri = {
+      por100g: por100,
+      por100g_cozido: por100Coz,
+      perda_pct: perdaPct,
+      peso_base_g: pesoN,
+      alergenios: alergN.slice().sort(),
+      alergenios_tracos: tracosN.slice().sort(),
+      completo: completoN && pesoN > 0,
+      sem_dados: semDadosN,
+      atualizado_em: new Date().toISOString(),
+    };
+    if (!nutriIgual(lerJson(receita, 'nutri'), novoNutri)) {
+      receita.set('nutri', novoNutri);
+      app.save(receita);
+    }
+
+    sincronizarEspelho(receita, custo, rendimento, cpgReceita, novoNutri);
 
     for (const rid of parentRecipeIds('sub_receita', id)) recomputeReceita(rid);
 
