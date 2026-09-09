@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/nutrition/nutri_widgets.dart';
+import '../../ingredients/application/ingredients_providers.dart';
+import '../../ingredients/presentation/nutricao_sheet.dart';
+import '../application/tech_sheets_providers.dart';
 import '../domain/tech_sheet.dart';
 
 Future<void> showDeclaracaoNutricionalSheet(
@@ -16,12 +20,35 @@ Future<void> showDeclaracaoNutricionalSheet(
   );
 }
 
-class _Sheet extends StatelessWidget {
+class _Sheet extends ConsumerStatefulWidget {
   const _Sheet({required this.ficha});
   final FichaTecnica ficha;
 
   @override
+  ConsumerState<_Sheet> createState() => _SheetState();
+}
+
+class _SheetState extends ConsumerState<_Sheet> {
+  Future<void> _corrigir(({String id, String nome}) alvo) async {
+    final ings = ref.read(ingredientsListProvider(false)).valueOrNull ?? const [];
+    final ing = ings.where((i) => i.id == alvo.id).firstOrNull;
+    if (ing == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Não encontrei "${alvo.nome}".')),
+      );
+      return;
+    }
+    await showNutricaoSheet(context, ingrediente: ing);
+    if (!mounted) return;
+    ref.invalidate(fichaDetailProvider(widget.ficha.id));
+    ref.invalidate(ingredientsListProvider);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final ficha =
+        ref.watch(fichaDetailProvider(widget.ficha.id)).valueOrNull?.ficha ??
+            widget.ficha;
     final n = ficha.nutri;
     final porUnidade = n.porUnidade;
     final resumo = alergeniosResumo(n.alergenios, n.alergeniosTracos);
@@ -69,7 +96,7 @@ class _Sheet extends StatelessWidget {
             ),
             Text(ficha.nome, style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 12),
-            if (n.vazio)
+            if (n.vazio && n.semDados.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 16),
                 child: Text(
@@ -78,27 +105,39 @@ class _Sheet extends StatelessWidget {
                 ),
               )
             else ...[
-              NutriTabela(
-                col1Titulo: 'por 100 g',
-                col1: n.por100g,
-                col2Titulo: porUnidade != null
-                    ? (n.pesoUnidadeG > 0
-                        ? 'unidade (${n.pesoUnidadeG.toStringAsFixed(0)} g)'
-                        : 'unidade')
-                    : null,
-                col2: porUnidade,
-              ),
+              if (!n.vazio)
+                NutriTabela(
+                  col1Titulo: 'por 100 g',
+                  col1: n.por100g,
+                  col2Titulo: porUnidade != null
+                      ? (n.pesoUnidadeG > 0
+                          ? 'unidade (${n.pesoUnidadeG.toStringAsFixed(0)} g)'
+                          : 'unidade')
+                      : null,
+                  col2: porUnidade,
+                ),
               if (!n.completo) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'Valores incompletos — sem dados de: '
-                  '${n.semDados.take(6).join(', ')}'
-                  '${n.semDados.length > 6 ? '…' : ''}',
+                  n.vazio
+                      ? 'Sem valores porque estes ingredientes ainda não têm '
+                          'nutrição. Toca para preencher (vai em cascata pelas '
+                          'massas e ingredientes):'
+                      : 'Valores incompletos — toca para preencher a nutrição de:',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.error,
                     fontSize: 12,
                   ),
                 ),
+                for (final sd in n.semDados)
+                  ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.error_outline, size: 18),
+                    title: Text(sd.nome),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: sd.id.isEmpty ? null : () => _corrigir(sd),
+                  ),
               ],
               if (resumo.isNotEmpty) ...[
                 const SizedBox(height: 12),

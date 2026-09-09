@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/nutrition/nutri_widgets.dart';
+import '../../ingredients/application/ingredients_providers.dart';
+import '../../ingredients/presentation/nutricao_sheet.dart';
 import '../application/recipes_providers.dart';
 import '../domain/recipe.dart';
 
@@ -59,11 +61,29 @@ class _SheetState extends ConsumerState<_Sheet> {
     }
   }
 
+  Future<void> _corrigir(({String id, String nome}) alvo) async {
+    final ings = ref.read(ingredientsListProvider(false)).valueOrNull ?? const [];
+    final ing = ings.where((i) => i.id == alvo.id).firstOrNull;
+    if (ing == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Não encontrei "${alvo.nome}".')),
+      );
+      return;
+    }
+    await showNutricaoSheet(context, ingrediente: ing);
+    if (!mounted) return;
+    ref.invalidate(recipeDetailProvider(widget.receita.id));
+    ref.invalidate(ingredientsListProvider);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final n = widget.receita.nutri;
+    final receita =
+        ref.watch(recipeDetailProvider(widget.receita.id)).valueOrNull?.receita ??
+            widget.receita;
+    final n = receita.nutri;
     final cozido = n.por100gCozido;
-    final temPerda = widget.receita.perdaCozeduraPct > 0 && cozido != null;
+    final temPerda = receita.perdaCozeduraPct > 0 && cozido != null;
     final resumo = alergeniosResumo(n.alergenios, n.alergeniosTracos);
 
     return Padding(
@@ -101,14 +121,21 @@ class _SheetState extends ConsumerState<_Sheet> {
               if (!n.completo) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'Valores incompletos — sem dados de: '
-                  '${n.semDados.take(6).join(', ')}'
-                  '${n.semDados.length > 6 ? '…' : ''}',
+                  'Valores incompletos — toca para preencher a nutrição de:',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.error,
                     fontSize: 12,
                   ),
                 ),
+                for (final sd in n.semDados)
+                  ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.error_outline, size: 18),
+                    title: Text(sd.nome),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: sd.id.isEmpty ? null : () => _corrigir(sd),
+                  ),
               ],
               if (resumo.isNotEmpty) ...[
                 const SizedBox(height: 10),

@@ -118,7 +118,22 @@ function runCascade(app, kind, rootId) {
       alergenios: Array.isArray(j.alergenios) ? j.alergenios : [],
       tracos: Array.isArray(j.alergenios_tracos) ? j.alergenios_tracos : [],
       completo: j.completo !== false,
+      semDados: Array.isArray(j.sem_dados) ? j.sem_dados : [],
     };
+  };
+  // dedup de {id, nome} (tolera entradas string de caches antigos)
+  const dedupSemDados = (arr) => {
+    const vistos = new Set();
+    const out = [];
+    for (const x of arr) {
+      const e = typeof x === 'string' ? { id: '', nome: x } : x;
+      const k = e.id || e.nome;
+      if (k && !vistos.has(k)) {
+        vistos.add(k);
+        out.push(e);
+      }
+    }
+    return out;
   };
   const nutriIgual = (aRaw, b) => {
     const a =
@@ -291,7 +306,7 @@ function runCascade(app, kind, rootId) {
         const n100 = nutriIngPor100(ing);
         if (vazioN(n100)) {
           completoF = false;
-          semDadosF.push(ing.getString('nome') || ingRel);
+          semDadosF.push({ id: ingRel, nome: ing.getString('nome') || ingRel });
         }
         addEscN(absF, n100, qtd / 100);
         alergF = unir(alergF, listaSel(ing, 'alergenios'));
@@ -302,7 +317,10 @@ function runCascade(app, kind, rootId) {
           addEscN(absF, sub.por100, qtd / 100);
           alergF = unir(alergF, sub.alergenios);
           tracosF = unir(tracosF, sub.tracos);
-          if (!sub.completo) completoF = false;
+          if (!sub.completo) {
+            completoF = false;
+            for (const sd of sub.semDados) semDadosF.push(sd);
+          }
           perdaPond += qtd * sub.perda;
         } else {
           completoF = false;
@@ -323,7 +341,7 @@ function runCascade(app, kind, rootId) {
       alergenios: alergF.slice().sort(),
       alergenios_tracos: tracosF.slice().sort(),
       completo: completoF && pesoCru > 0,
-      sem_dados: semDadosF,
+      sem_dados: dedupSemDados(semDadosF),
       atualizado_em: new Date().toISOString(),
     };
     if (!nutriIgual(lerJson(ficha, 'nutri'), novoNutriF)) {
@@ -516,7 +534,7 @@ function runCascade(app, kind, rootId) {
         const n100 = nutriIngPor100(ing);
         if (vazioN(n100)) {
           completoN = false;
-          semDadosN.push(ing.getString('nome') || ingRel);
+          semDadosN.push({ id: ingRel, nome: ing.getString('nome') || ingRel });
         }
         addEscN(absN, n100, qtd / 100);
         alergN = unir(alergN, listaSel(ing, 'alergenios'));
@@ -527,7 +545,10 @@ function runCascade(app, kind, rootId) {
           addEscN(absN, sub.por100, qtd / 100);
           alergN = unir(alergN, sub.alergenios);
           tracosN = unir(tracosN, sub.tracos);
-          if (!sub.completo) completoN = false;
+          if (!sub.completo) {
+            completoN = false;
+            for (const sd of sub.semDados) semDadosN.push(sd);
+          }
         } else {
           completoN = false;
         }
@@ -547,7 +568,7 @@ function runCascade(app, kind, rootId) {
       alergenios: alergN.slice().sort(),
       alergenios_tracos: tracosN.slice().sort(),
       completo: completoN && pesoN > 0,
-      sem_dados: semDadosN,
+      sem_dados: dedupSemDados(semDadosN),
       atualizado_em: new Date().toISOString(),
     };
     if (!nutriIgual(lerJson(receita, 'nutri'), novoNutri)) {

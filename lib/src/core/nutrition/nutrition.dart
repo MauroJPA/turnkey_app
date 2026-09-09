@@ -185,8 +185,9 @@ class NutriCache {
   /// `false` se algum ingrediente da árvore não tem valores nutricionais.
   final bool completo;
 
-  /// Nomes dos ingredientes sem dados (para avisar o utilizador).
-  final List<String> semDados;
+  /// Ingredientes (em toda a árvore) sem valores nutricionais — para avisar e
+  /// permitir abrir cada um e corrigir.
+  final List<({String id, String nome})> semDados;
   final double pesoBaseG;
 
   /// Ficha: peso de uma unidade já cozida (g).
@@ -202,6 +203,19 @@ class NutriCache {
     Nutrientes? n(Object? v) => v is Map
         ? Nutrientes.fromJson(Map<String, dynamic>.from(v))
         : null;
+    List<({String id, String nome})> sd(Object? v) {
+      if (v is! List) return const [];
+      return v.map<({String id, String nome})>((e) {
+        if (e is Map) {
+          return (
+            id: (e['id'] ?? '').toString(),
+            nome: (e['nome'] ?? '').toString(),
+          );
+        }
+        return (id: '', nome: '$e');
+      }).where((x) => x.nome.isNotEmpty).toList();
+    }
+
     return NutriCache(
       por100g: n(j['por100g']) ?? const Nutrientes(),
       por100gCozido: n(j['por100g_cozido']),
@@ -209,7 +223,7 @@ class NutriCache {
       alergenios: ls(j['alergenios']),
       alergeniosTracos: ls(j['alergenios_tracos']),
       completo: j['completo'] as bool? ?? false,
-      semDados: ls(j['sem_dados']),
+      semDados: sd(j['sem_dados']),
       pesoBaseG: _d(j['peso_base_g']),
       pesoUnidadeG: _d(j['peso_unidade_g']),
       perdaPct: _d(j['perda_pct'] ?? j['perda_media_pct']),
