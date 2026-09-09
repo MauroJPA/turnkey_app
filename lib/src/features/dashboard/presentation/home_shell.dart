@@ -9,6 +9,8 @@ import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../inventory/application/inventory_providers.dart';
+import '../../invoices/application/invoice_providers.dart';
+import '../../invoices/domain/fatura.dart';
 import '../../schedule/application/schedule_providers.dart';
 import '../../schedule/domain/production_plan.dart';
 import '../../settings/application/empresa_providers.dart';
@@ -52,6 +54,12 @@ class HomeShell extends ConsumerWidget {
     final stock = ref.watch(stockListProvider).valueOrNull;
     final planos = ref.watch(plansListProvider).valueOrNull;
     final compras = ref.watch(shoppingListProvider).valueOrNull;
+    final faturas = ref.watch(faturasListProvider).valueOrNull;
+    final faturasPorRever = faturas
+        ?.where((f) =>
+            f.estado == FaturaEstado.nova ||
+            f.estado == FaturaEstado.analisada)
+        .length;
 
     final stockBaixo = stock?.where((s) => s.stockBaixo).length;
     final hoje = DateTime.now();
@@ -163,6 +171,15 @@ class HomeShell extends ConsumerWidget {
             destaque: (porComprar?.isNotEmpty ?? false),
             onTap: () => context.go(Routes.shopping),
           ),
+          if ((faturasPorRever ?? 0) > 0)
+            _StatCard(
+              icon: Icons.rule_folder_outlined,
+              titulo: 'Faturas por rever',
+              valor: '$faturasPorRever',
+              subtitulo: 'confirma os dados lidos pela IA',
+              destaque: true,
+              onTap: () => context.go(Routes.invoices),
+            ),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),

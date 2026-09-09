@@ -34,6 +34,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Stock baixo: quantos ingredientes ou produtos estão abaixo do mínimo. Toque para abrir o Inventário.',
       'Produções: quantas produções tem planeadas. Toque para abrir a Agenda.',
       'A comprar: quanto falta comprar e o valor estimado. Toque para abrir a Lista de compras.',
+      'Faturas por rever: aparece quando há faturas (do scanner ou carregadas) à espera de confirmação. Toque para abrir.',
       'Em baixo tem os atalhos para todas as secções.',
     ],
   ),
