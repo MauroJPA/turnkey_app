@@ -48,13 +48,7 @@ class InvoiceReviewScreen extends ConsumerWidget {
             return _Erro(fatura: fatura);
           }
           if (fatura.linhasIa.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.all(24),
-              child: Text(
-                'A IA ainda não devolveu linhas. Se acabaste de criar a '
-                'fatura, aguarda uns segundos e recarrega.',
-              ),
-            );
+            return _SemLinhas(fatura: fatura);
           }
           return ingsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
@@ -128,6 +122,50 @@ class _Erro extends ConsumerWidget {
                 label: const Text('Apagar fatura'),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SemLinhas extends ConsumerWidget {
+  const _SemLinhas({required this.fatura});
+  final Fatura fatura;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.receipt_long_outlined,
+              size: 40, color: Theme.of(context).colorScheme.outline),
+          const SizedBox(height: 12),
+          const Text(
+            'A IA não devolveu nenhuma linha desta fatura. Se acabaste de a '
+            'criar, aguarda uns segundos e recarrega; se a foto está tremida '
+            'ou cortada, apaga e volta a carregar uma melhor.',
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          FilledButton.icon(
+            onPressed: () async {
+              final ok = await confirmDialog(
+                context,
+                titulo: 'Apagar esta fatura?',
+                mensagem: 'Remove o registo e o ficheiro carregado. '
+                    'Fica registo em "Faturas apagadas".',
+                confirmar: 'Apagar',
+                destrutivo: true,
+              );
+              if (!ok) return;
+              await ref.read(invoiceActionsProvider).apagar(fatura.id);
+              if (context.mounted && context.canPop()) context.pop();
+            },
+            icon: const Icon(Icons.delete_outline),
+            label: const Text('Apagar fatura'),
           ),
         ],
       ),

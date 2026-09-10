@@ -180,15 +180,25 @@ class InvoiceRepository {
 
   Future<void> apagar(String id) => _c.delete(id);
 
-  /// Apaga as faturas vazias (estado `nova`) ou com `erro`. Devolve quantas.
+  /// Apaga as faturas que não dão para usar: estado `nova` (por analisar),
+  /// `erro`, e `analisada` em que a IA não conseguiu devolver nenhuma linha.
+  /// Nunca toca nas `confirmada`. Devolve quantas apagou.
   Future<int> limparInvalidas() async {
     final recs = await _c.getFullList(
-      filter: 'empresa = "$_empresaId" && (estado = "nova" || estado = "erro")',
+      filter: 'empresa = "$_empresaId" && '
+          '(estado = "nova" || estado = "erro" || estado = "analisada")',
     );
+    var n = 0;
     for (final r in recs) {
+      final f = Fatura.fromRecord(r);
+      // 'analisada' só se apaga quando a IA não trouxe linhas aproveitáveis.
+      if (f.estado == FaturaEstado.analisada && f.linhasIa.isNotEmpty) {
+        continue;
+      }
       await _c.delete(r.id);
+      n++;
     }
-    return recs.length;
+    return n;
   }
 
   /// Faturas confirmadas no intervalo (para o contabilista). Cada item tem

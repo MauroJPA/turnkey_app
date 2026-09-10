@@ -129,8 +129,9 @@ class InvoicesScreen extends ConsumerWidget {
     final ok = await confirmDialog(
       context,
       titulo: 'Limpar faturas?',
-      mensagem: 'Apaga todas as faturas em estado "Nova" (por analisar) e as '
-          'que estão com "Erro". Fica registo em "Faturas apagadas".',
+      mensagem: 'Apaga as faturas por analisar ("Nova"), as que ficaram com '
+          '"Erro" e as analisadas em que a IA não encontrou nenhuma linha. '
+          'Fica registo em "Faturas apagadas".',
       confirmar: 'Limpar',
       destrutivo: true,
     );
@@ -181,7 +182,7 @@ class InvoicesScreen extends ConsumerWidget {
                   value: 'limpar',
                   child: ListTile(
                     leading: Icon(Icons.delete_sweep_outlined),
-                    title: Text('Limpar vazias e com erro'),
+                    title: Text('Limpar vazias, com erro e sem linhas'),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
