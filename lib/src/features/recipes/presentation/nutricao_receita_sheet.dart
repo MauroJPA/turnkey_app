@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/nutrition/nutri_widgets.dart';
@@ -18,8 +17,7 @@ Future<void> showNutricaoReceitaSheet(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    useRootNavigator: true,
-    useSafeArea: true,
+    constraints: const BoxConstraints(maxWidth: 640),
     builder: (_) => _Sheet(receita: receita),
   );
 }
@@ -35,28 +33,47 @@ class _Sheet extends ConsumerStatefulWidget {
 enum _EstadoItem { ok, rever, falta, pendente }
 
 class _SheetState extends ConsumerState<_Sheet> {
-  late final _perda = TextEditingController(
-    text: widget.receita.perdaCozeduraPct == 0
-        ? ''
-        : widget.receita.perdaCozeduraPct.toStringAsFixed(0),
-  );
   bool _busy = false;
 
-  @override
-  void dispose() {
-    _perda.dispose();
-    super.dispose();
-  }
-
-  Future<void> _guardarPerda() async {
-    final v = double.tryParse(_perda.text.replaceAll(',', '.').trim()) ?? 0;
-    if (v == widget.receita.perdaCozeduraPct) return;
+  Future<void> _editarPerda(Receita receita) async {
+    final ctrl = TextEditingController(
+      text: receita.perdaCozeduraPct == 0
+          ? ''
+          : receita.perdaCozeduraPct.toStringAsFixed(0),
+    );
+    final novo = await showDialog<double>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Perda de cozedura'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          keyboardType:
+              const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(labelText: 'Perda', suffixText: '%'),
+          onSubmitted: (_) => Navigator.pop(
+              ctx, double.tryParse(ctrl.text.replaceAll(',', '.'))),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(
+                ctx, double.tryParse(ctrl.text.replaceAll(',', '.'))),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+    if (novo == null || novo == receita.perdaCozeduraPct || !mounted) return;
     setState(() => _busy = true);
     try {
       await ref
           .read(recipeActionsProvider)
-          .setPerdaCozedura(widget.receita.id, v);
-      if (mounted) Navigator.pop(context);
+          .setPerdaCozedura(widget.receita.id, novo);
+      if (mounted) ref.invalidate(recipeDetailProvider(widget.receita.id));
     } on Object catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -143,17 +160,20 @@ class _SheetState extends ConsumerState<_Sheet> {
         .where((i) => _estado(i, ings, recs) != _EstadoItem.ok)
         .length;
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 8,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    final media = MediaQuery.of(context);
+    final larguraSheet = media.size.width < 640 ? media.size.width : 640.0;
+
+    return SizedBox(
+      width: larguraSheet,
+      height: media.size.height * 0.72,
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 8,
+          bottom: media.viewInsets.bottom + 16,
+        ),
+        child: ListView(
           children: [
             Text('Informação nutricional',
                 style: Theme.of(context).textTheme.titleLarge),
@@ -191,7 +211,7 @@ class _SheetState extends ConsumerState<_Sheet> {
             if (linhas.isEmpty && detailAsync.isLoading)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 16),
-                child: Center(child: CircularProgressIndicator()),
+                child: Text('A carregar…'),
               )
             else if (linhas.isEmpty)
               const Padding(
@@ -206,39 +226,19 @@ class _SheetState extends ConsumerState<_Sheet> {
                   onTap: _busy ? null : () => _abrir(it),
                 ),
             const Divider(height: 28),
-            Text('Perda de peso na cozedura',
+            Text('Perda de peso na cozedura: '
+                '${receita.perdaCozeduraPct.toStringAsFixed(0)} %',
                 style: Theme.of(context).textTheme.labelLarge),
             const SizedBox(height: 4),
             Text(
               'A água que sai a cozer concentra os valores por 100 g de '
-              'produto. Deixa a 0 se não coze.',
+              'produto acabado.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                SizedBox(
-                  width: 120,
-                  child: TextField(
-                    controller: _perda,
-                    keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-                    ],
-                    decoration: const InputDecoration(
-                      labelText: 'Perda',
-                      suffixText: '%',
-                      isDense: true,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                FilledButton(
-                  onPressed: _busy ? null : _guardarPerda,
-                  child: const Text('Guardar'),
-                ),
-              ],
+            OutlinedButton(
+              onPressed: _busy ? null : () => _editarPerda(receita),
+              child: const Text('Mudar a perda de cozedura'),
             ),
           ],
         ),
@@ -276,19 +276,33 @@ class _ItemTile extends StatelessWidget {
           'linha por definir',
         ),
     };
-    return ListTile(
-      dense: true,
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(ic, size: 20, color: cor),
-      title: Text(it.nome),
-      subtitle: Text(
-        '${ehSub ? 'Subproduto Gookie' : 'Ingrediente'} · '
-        '${it.quantidadeG.toStringAsFixed(0)} g · $txt',
+    final tocavel = estado != _EstadoItem.pendente;
+    return InkWell(
+      onTap: tocavel ? onTap : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            Icon(ic, size: 20, color: cor),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(it.nome),
+                  Text(
+                    '${ehSub ? 'Subproduto Gookie' : 'Ingrediente'} · '
+                    '${it.quantidadeG.toStringAsFixed(0)} g · $txt',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            if (tocavel) const Icon(Icons.chevron_right),
+          ],
+        ),
       ),
-      trailing: estado == _EstadoItem.pendente
-          ? null
-          : const Icon(Icons.chevron_right),
-      onTap: estado == _EstadoItem.pendente ? null : onTap,
     );
   }
 }

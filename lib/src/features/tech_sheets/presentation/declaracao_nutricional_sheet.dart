@@ -19,8 +19,7 @@ Future<void> showDeclaracaoNutricionalSheet(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    useRootNavigator: true,
-    useSafeArea: true,
+    constraints: const BoxConstraints(maxWidth: 640),
     builder: (_) => _Sheet(ficha: ficha),
   );
 }
@@ -146,13 +145,19 @@ class _SheetState extends ConsumerState<_Sheet> {
                   ),
                 ),
                 for (final sd in n.semDados)
-                  ListTile(
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.error_outline, size: 18),
-                    title: Text(sd.nome),
-                    trailing: const Icon(Icons.chevron_right),
+                  InkWell(
                     onTap: () => _corrigir(sd),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline, size: 18),
+                          const SizedBox(width: 12),
+                          Expanded(child: Text(sd.nome)),
+                          const Icon(Icons.chevron_right),
+                        ],
+                      ),
+                    ),
                   ),
               ],
               if (resumo.isNotEmpty) ...[

@@ -18,8 +18,7 @@ Future<void> showNutricaoSheet(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    useRootNavigator: true,
-    useSafeArea: true,
+    constraints: const BoxConstraints(maxWidth: 640),
     builder: (_) => _NutricaoSheet(ingrediente: ingrediente),
   );
 }
@@ -313,19 +312,36 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
                   ],
                 ),
                 for (final c in cands.take(5))
-                  ListTile(
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(c.nome),
-                    subtitle: Text([
-                      if (c.grupo.isNotEmpty) c.grupo,
-                      '${c.nutri.kcal.toStringAsFixed(0)} kcal',
-                      if (c.alergenios.isNotEmpty)
-                        'contém: ${c.alergenios.join(', ')}',
-                    ].join(' · ')),
-                    trailing: Text('≈ ${c.percentagem}%',
-                        style: Theme.of(context).textTheme.bodySmall),
+                  InkWell(
                     onTap: _busy ? null : () => _aplicarCandidato(c),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(c.nome),
+                                Text(
+                                  [
+                                    if (c.grupo.isNotEmpty) c.grupo,
+                                    '${c.nutri.kcal.toStringAsFixed(0)} kcal',
+                                    if (c.alergenios.isNotEmpty)
+                                      'contém: ${c.alergenios.join(', ')}',
+                                  ].join(' · '),
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text('≈ ${c.percentagem}%',
+                              style: Theme.of(context).textTheme.bodySmall),
+                        ],
+                      ),
+                    ),
                   ),
               ],
             ),
