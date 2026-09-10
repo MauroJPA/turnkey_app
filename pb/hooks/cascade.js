@@ -921,6 +921,11 @@ function aplicarMovimento(app, item, delta, motivo, opts) {
   let q = linha.getFloat('quantidade') + delta;
   if (q < 0) q = 0;
   linha.set('quantidade', q);
+  // "mais usados": conta quando o item é consumido/produzido numa produção.
+  if (motivo === 'consumo_producao' || motivo === 'saida_producao') {
+    linha.set('usos', linha.getFloat('usos') + 1);
+    linha.set('ultimo_uso', new Date().toISOString());
+  }
   app.save(linha);
 
   const mov = new Record(app.findCollectionByNameOrId('movimentos_inventario'));

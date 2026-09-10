@@ -41,7 +41,8 @@ routerAdd(
       body.minimo !== undefined ||
       body.localizacao !== undefined ||
       body.unidade !== undefined ||
-      body.categoria !== undefined;
+      body.categoria !== undefined ||
+      body.favorito !== undefined;
     if ((!isFinite(delta) || delta === 0) && !temMeta) {
       throw new BadRequestError('Nada para alterar.');
     }
@@ -98,6 +99,9 @@ routerAdd(
         }
         if (body.categoria !== undefined) {
           row.set('categoria', String(body.categoria));
+        }
+        if (body.favorito !== undefined) {
+          row.set('favorito', !!body.favorito);
         }
         tx.save(row);
         quantidade = row.getFloat('quantidade');
