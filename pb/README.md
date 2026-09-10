@@ -78,6 +78,13 @@ de alergénios —, `explodeCompras`, `explodeProducao`, `explodeComprasDe`,
 `aplicarMovimento`, `carregarProducao`, `resolverFicha`; + `ai.js`, que exporta
 `analisarImagemIA({ tarefa: 'fatura' | 'rotulo' })`).
 
+`dev_autoverify.pb.js`: **só em dev** — com `TURNKEY_DEV=1` no ambiente, as
+contas `users` novas ficam logo `verified` (não é preciso email/SMTP para
+entrar). O `pb/serve.ps1` local já põe `TURNKEY_DEV=1`; em produção não
+defina esta variável. (O login em si nunca depende de `verified` — o
+`authRule` da coleção `users` é vazio — mas isto evita o estado
+"não verificado" enquanto se desenvolve.)
+
 ### Variáveis de ambiente do servidor — IA de faturas
 
 A análise de faturas (`faturas.pb.js` → `ai.js`) tem o **fornecedor de IA

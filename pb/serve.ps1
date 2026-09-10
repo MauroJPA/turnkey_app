@@ -26,6 +26,10 @@ if (Test-Path $envFile) {
   }
 }
 
+# Conveniencia de dev: contas novas ficam logo verificadas
+# (ver hooks\dev_autoverify.pb.js). Nunca usar em producao.
+if (-not $env:TURNKEY_DEV) { $env:TURNKEY_DEV = "1" }
+
 $aiProvider = $env:TURNKEY_AI_PROVIDER
 if (-not $aiProvider) { $aiProvider = "gemini" }
 if ($aiProvider -match "anthropic|claude") {
