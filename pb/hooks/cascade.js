@@ -110,15 +110,39 @@ function runCascade(app, kind, rootId) {
     const j = lerJson(rec, 'nutri');
     if (!j || typeof j !== 'object') return null;
     const p = j.por100g || {};
+    const pc = j.por100g_cozido || {};
     const n = zeroN();
-    for (const k of NUT) n[k] = Number(p[k] || 0);
+    const nc = zeroN();
+    for (const k of NUT) {
+      n[k] = Number(p[k] || 0);
+      nc[k] = Number(pc[k] || 0);
+    }
     return {
       por100: n,
+      por100Cozido: nc,
       perda: perdaDe(rec),
       alergenios: Array.isArray(j.alergenios) ? j.alergenios : [],
       tracos: Array.isArray(j.alergenios_tracos) ? j.alergenios_tracos : [],
       completo: j.completo !== false,
       semDados: Array.isArray(j.sem_dados) ? j.sem_dados : [],
+    };
+  };
+  // Se `ing` é um espelho de fabrico próprio, devolve o nutri da sua receita
+  // (para tratar como sub-receita, incl. `sem_dados` em cascata); senão null.
+  const espelhoNutri = (ing) => {
+    if (!ing || ing.getString('origem') !== 'fabrico_proprio') return null;
+    const recId = ing.getString('receita_espelho');
+    if (!recId) return null;
+    const s = receitaNutriPor100(recId);
+    if (s) return s;
+    return {
+      por100: zeroN(),
+      por100Cozido: zeroN(),
+      perda: 0,
+      alergenios: [],
+      tracos: [],
+      completo: false,
+      semDados: [{ id: recId, nome: ing.getString('nome') || recId }],
     };
   };
   // dedup de {id, nome} (tolera entradas string de caches antigos)
@@ -329,6 +353,22 @@ function runCascade(app, kind, rootId) {
         try {
           ing = app.findRecordById('ingredientes', ingRel);
         } catch (_) {
+          continue;
+        }
+        // espelho de fabrico próprio -> desce pela receita (como sub-receita)
+        const esp = espelhoNutri(ing);
+        if (esp) {
+          const pe =
+            esp.por100Cozido && !vazioN(esp.por100Cozido)
+              ? esp.por100Cozido
+              : esp.por100;
+          addEscN(absF, pe, qtd / 100);
+          alergF = unir(alergF, esp.alergenios);
+          tracosF = unir(tracosF, esp.tracos);
+          if (!esp.completo) {
+            completoF = false;
+            for (const sd of esp.semDados) semDadosF.push(sd);
+          }
           continue;
         }
         const n100 = nutriIngPor100(ing);
@@ -557,6 +597,21 @@ function runCascade(app, kind, rootId) {
         try {
           ing = app.findRecordById('ingredientes', ingRel);
         } catch (_) {
+          continue;
+        }
+        const esp = espelhoNutri(ing);
+        if (esp) {
+          const pe =
+            esp.por100Cozido && !vazioN(esp.por100Cozido)
+              ? esp.por100Cozido
+              : esp.por100;
+          addEscN(absN, pe, qtd / 100);
+          alergN = unir(alergN, esp.alergenios);
+          tracosN = unir(tracosN, esp.tracos);
+          if (!esp.completo) {
+            completoN = false;
+            for (const sd of esp.semDados) semDadosN.push(sd);
+          }
           continue;
         }
         const n100 = nutriIngPor100(ing);

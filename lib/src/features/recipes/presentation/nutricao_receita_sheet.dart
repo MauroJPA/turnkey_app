@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/nutrition/nutri_widgets.dart';
 import '../../ingredients/application/ingredients_providers.dart';
-import '../../ingredients/presentation/nutricao_sheet.dart';
 import '../application/recipes_providers.dart';
 import '../domain/recipe.dart';
+import 'corrigir_nutri.dart';
 
 Future<void> showNutricaoReceitaSheet(
   BuildContext context, {
@@ -62,18 +62,11 @@ class _SheetState extends ConsumerState<_Sheet> {
   }
 
   Future<void> _corrigir(({String id, String nome}) alvo) async {
-    final ings = ref.read(ingredientsListProvider(false)).valueOrNull ?? const [];
-    final ing = ings.where((i) => i.id == alvo.id).firstOrNull;
-    if (ing == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Não encontrei "${alvo.nome}".')),
-      );
-      return;
-    }
-    await showNutricaoSheet(context, ingrediente: ing);
+    await corrigirNutriEmCascata(context, ref, alvo: alvo);
     if (!mounted) return;
     ref.invalidate(recipeDetailProvider(widget.receita.id));
     ref.invalidate(ingredientsListProvider);
+    ref.invalidate(recipesListProvider);
   }
 
   @override
@@ -134,7 +127,7 @@ class _SheetState extends ConsumerState<_Sheet> {
                     leading: const Icon(Icons.error_outline, size: 18),
                     title: Text(sd.nome),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: sd.id.isEmpty ? null : () => _corrigir(sd),
+                    onTap: () => _corrigir(sd),
                   ),
               ],
               if (resumo.isNotEmpty) ...[
