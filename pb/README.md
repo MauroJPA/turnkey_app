@@ -65,6 +65,7 @@ pb/
 | `1706400000_historico_faturas.js` | adiciona `faturas_apagadas` aos valores de `historico.entidade_tipo` (rasto das faturas apagadas, `entidade_id = <empresaId>`). |
 | `1706486400_embalagem_kits.js` | coleções `embalagem_kits` (nome, descrição, `custo_unitario` cache) + `embalagem_kit_itens` (`kit`, `embalagem`, `quantidade`) + relação opcional `itens_ficha.kit`. Um kit junta várias embalagens numa combinação com nome; na ficha técnica escolhe-se o kit para precificar de uma vez. |
 | `1706572800_ref_alergenios.js` | campo `alergenios` em `ingredientes_referencia`, preenchido por inferência de palavras-chave sobre nome/grupo (match por token com plurais; expressões multi-palavra por substring; guardas p/ "chocolate"≠"choco", "compota"≠"pota", farinha de milho/arroz sem glúten). Sugestão, não oficial. |
+| `1706659200_inventario_uso.js` | `inventario`: `favorito` (bool), `usos` (number), `ultimo_uso` (date). `usos`+`ultimo_uso` são incrementados por `cascade.js aplicarMovimento` (motivos `consumo_producao`/`saida_producao`) e por `inventario_uso.pb.js` (`onRecordAfterCreateSuccess` em `lista_compras`). `favorito` grava-se via `/api/turnkey/inventario/ajustar`. Vistas "Favoritos" e "Mais usados" no ecrã de Inventário. |
 
 Aparência (tema, cor de marca `cor_marca`, logótipo `logo`) é **por empresa** —
 editada em Configurações → Aparência, aplica-se a toda a equipa.

@@ -32,6 +32,7 @@ class InventoryActions {
     String? notas,
     double? minimo,
     String? localizacao,
+    bool? favorito,
   }) async {
     await _ref.read(inventoryRepositoryProvider).ajustar(
           ingredienteId:
@@ -43,9 +44,22 @@ class InventoryActions {
           notas: notas,
           minimo: minimo,
           localizacao: localizacao,
+          favorito: favorito,
         );
     _ref.invalidate(stockListProvider);
     _ref.invalidate(movimentosProvider);
+  }
+
+  /// Marca/desmarca um item como favorito.
+  Future<void> alternarFavorito(StockItem item) async {
+    await _ref.read(inventoryRepositoryProvider).ajustar(
+          ingredienteId:
+              item.tipo == StockTipo.ingrediente ? item.id : null,
+          fichaId: item.tipo == StockTipo.ficha ? item.id : null,
+          descricao: item.tipo == StockTipo.livre ? item.id : null,
+          favorito: !item.favorito,
+        );
+    _ref.invalidate(stockListProvider);
   }
 
   /// Cria (ou atualiza) um item livre no inventário.

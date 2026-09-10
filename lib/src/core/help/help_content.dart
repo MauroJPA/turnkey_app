@@ -149,8 +149,9 @@ const Map<HelpTopic, HelpEntry> helpContent = {
     titulo: 'Inventário',
     paragrafos: [
       'O stock de tudo: ingredientes (gramas), produtos acabados (unidades) e material da loja (na unidade que escolher).',
-      'O chip "Outros" é o inventário geral da loja: equipamentos, consumíveis, mobiliário, ferramentas… cada item com a sua categoria. Pesquisar pela categoria também funciona.',
-      'Botão "Item livre": adicionar qualquer coisa da empresa que não seja ingrediente nem produto — sabão, sacos de lixo, uma tesoura…',
+      'Dois separadores: "Cozinha" (ingredientes + produtos) e "Material da loja" — o inventário geral da loja: equipamentos, consumíveis, mobiliário, ferramentas… agrupado por categoria. O material que marca como comprado na lista de compras aparece aqui automaticamente.',
+      'Botão "Material": adicionar qualquer coisa da empresa que não seja ingrediente nem produto — sabão, sacos de lixo, uma tesoura…',
+      'Chips de vista: "Tudo", "Favoritos" (a estrela em cada linha fixa os itens que quer ver primeiro) e "Mais usados" (os que mais entram em produções ou na lista de compras).',
       'O triângulo de aviso aparece quando algo está abaixo do stock mínimo.',
       'Toque num item para dar entrada ou saída de stock e definir o mínimo.',
       'Toque e segure (ou toque, se não puder editar) para ver o histórico de movimentos.',

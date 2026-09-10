@@ -18,11 +18,47 @@ class InventoryScreen extends ConsumerStatefulWidget {
   ConsumerState<InventoryScreen> createState() => _InventoryScreenState();
 }
 
-class _InventoryScreenState extends ConsumerState<InventoryScreen> {
+enum _Vista { tudo, favoritos, maisUsados }
+
+class _InventoryScreenState extends ConsumerState<InventoryScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tab = TabController(length: 2, vsync: this)
+    ..addListener(() => setState(() {}));
   String _q = '';
-  StockTipo? _filtro; // null = tudo
+  _Vista _vista = _Vista.tudo;
 
   bool get _podeEditar => ref.read(currentPapelProvider).canEditBusiness;
+
+  @override
+  void dispose() {
+    _tab.dispose();
+    super.dispose();
+  }
+
+  List<StockItem> _aplicarVista(List<StockItem> xs) {
+    final q = _q.toLowerCase();
+    final out = xs.where((i) {
+      final mq = q.isEmpty ||
+          i.nome.toLowerCase().contains(q) ||
+          i.categoria.toLowerCase().contains(q);
+      final mv = switch (_vista) {
+        _Vista.tudo => true,
+        _Vista.favoritos => i.favorito,
+        _Vista.maisUsados => i.usos > 0,
+      };
+      return mq && mv;
+    }).toList();
+    if (_vista == _Vista.maisUsados) {
+      out.sort((a, b) {
+        final c = b.usos.compareTo(a.usos);
+        return c != 0 ? c : b.ultimoUso.compareTo(a.ultimoUso);
+      });
+    }
+    return out;
+  }
+
+  Future<void> _toggleFav(StockItem i) =>
+      ref.read(inventoryActionsProvider).alternarFavorito(i);
 
   Future<void> _abrirAjuste(StockItem item) async {
     await showModalBottomSheet<void>(
@@ -59,7 +95,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             minimo: r.minimo,
             localizacao: r.localizacao,
           );
-      if (mounted) setState(() => _filtro = StockTipo.livre);
     } on Object catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -72,17 +107,25 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   Widget build(BuildContext context) {
     final async = ref.watch(stockListProvider);
     final fmt = ref.watch(moneyFormatProvider);
+    final naLoja = _tab.index == 1;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Inventário'),
         actions: const [HelpActions(topic: HelpTopic.inventario)],
+        bottom: TabBar(
+          controller: _tab,
+          tabs: const [
+            Tab(text: 'Cozinha'),
+            Tab(text: 'Material da loja'),
+          ],
+        ),
       ),
-      floatingActionButton: _podeEditar
+      floatingActionButton: _podeEditar && naLoja
           ? FloatingActionButton.extended(
               onPressed: _novoItemLivre,
               icon: const Icon(Icons.add),
-              label: const Text('Item livre'),
+              label: const Text('Material'),
             )
           : null,
       body: Column(
@@ -104,23 +147,23 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               children: [
-                for (final f in [
-                  null,
-                  StockTipo.ingrediente,
-                  StockTipo.ficha,
-                  StockTipo.livre,
-                ])
+                for (final v in _Vista.values)
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: ChoiceChip(
-                      label: Text(switch (f) {
-                        null => 'Tudo',
-                        StockTipo.ingrediente => 'Ingredientes',
-                        StockTipo.ficha => 'Produtos',
-                        StockTipo.livre => 'Outros',
+                      avatar: switch (v) {
+                        _Vista.favoritos => const Icon(Icons.star, size: 18),
+                        _Vista.maisUsados =>
+                          const Icon(Icons.trending_up, size: 18),
+                        _ => null,
+                      },
+                      label: Text(switch (v) {
+                        _Vista.tudo => 'Tudo',
+                        _Vista.favoritos => 'Favoritos',
+                        _Vista.maisUsados => 'Mais usados',
                       }),
-                      selected: _filtro == f,
-                      onSelected: (_) => setState(() => _filtro = f),
+                      selected: _vista == v,
+                      onSelected: (_) => setState(() => _vista = v),
                     ),
                   ),
               ],
@@ -130,74 +173,124 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             child: AsyncValueView<List<StockItem>>(
               value: async,
               onRetry: () => ref.invalidate(stockListProvider),
-              data: (all) {
-                final items = all.where((i) {
-                  final q = _q.toLowerCase();
-                  final mq = q.isEmpty ||
-                      i.nome.toLowerCase().contains(q) ||
-                      i.categoria.toLowerCase().contains(q);
-                  final mf = _filtro == null || i.tipo == _filtro;
-                  return mq && mf;
-                }).toList();
-                if (items.isEmpty) {
-                  return const EmptyState(
-                    icon: Icons.warehouse_outlined,
-                    titulo: 'Nada a mostrar',
-                    mensagem: 'Sem itens para este filtro ou pesquisa.',
-                  );
-                }
-                return ListView.separated(
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (_, idx) {
-                    final i = items[idx];
-                    return ListTile(
-                      title: Text(i.nome),
-                      subtitle: Text(
-                        [
-                          switch (i.tipo) {
-                            StockTipo.ficha => 'Produto',
-                            StockTipo.ingrediente => 'Ingrediente',
-                            StockTipo.livre =>
-                              i.categoria.isEmpty ? 'Outro' : i.categoria,
-                          },
-                          if (i.valor > 0) 'valor ${fmt(i.valor)}',
-                          if (i.localizacao.isNotEmpty) i.localizacao,
-                        ].join(' · '),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (i.stockBaixo)
-                            Tooltip(
-                              message: 'Abaixo do mínimo',
-                              child: Icon(
-                                Icons.warning_amber_rounded,
-                                color: Theme.of(context).colorScheme.error,
-                                size: 20,
-                              ),
-                            ),
-                          const SizedBox(width: 6),
-                          Text(
-                            i.quantidadeLabel(),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      onTap: () => _podeEditar
-                          ? _abrirAjuste(i)
-                          : _historico(i),
-                      onLongPress: () => _historico(i),
-                    );
-                  },
-                );
-              },
+              data: (all) => TabBarView(
+                controller: _tab,
+                children: [
+                  _lista(
+                    _aplicarVista(
+                      all.where((i) => i.tipo != StockTipo.livre).toList(),
+                    ),
+                    fmt,
+                  ),
+                  _listaLoja(
+                    _aplicarVista(
+                      all.where((i) => i.tipo == StockTipo.livre).toList(),
+                    ),
+                    fmt,
+                  ),
+                ],
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _vazio() => EmptyState(
+        icon: Icons.warehouse_outlined,
+        titulo: 'Nada a mostrar',
+        mensagem: switch (_vista) {
+          _Vista.favoritos =>
+            'Ainda não marcaste favoritos (toca na estrela de um item).',
+          _Vista.maisUsados =>
+            'Ainda não há utilizações registadas. Aparecem quando produzes '
+                'ou quando um item vai para a lista de compras.',
+          _Vista.tudo => 'Sem itens para esta pesquisa.',
+        },
+      );
+
+  Widget _lista(List<StockItem> items, MoneyFmt fmt) {
+    if (items.isEmpty) return _vazio();
+    return ListView.separated(
+      itemCount: items.length,
+      separatorBuilder: (_, __) => const Divider(height: 1),
+      itemBuilder: (_, idx) => _row(items[idx], fmt),
+    );
+  }
+
+  Widget _listaLoja(List<StockItem> items, MoneyFmt fmt) {
+    if (items.isEmpty) return _vazio();
+    // agrupar por categoria
+    final grupos = <String, List<StockItem>>{};
+    for (final i in items) {
+      grupos.putIfAbsent(i.categoria.isEmpty ? 'Outro' : i.categoria, () => [])
+          .add(i);
+    }
+    final chaves = grupos.keys.toList()..sort();
+    return ListView(
+      children: [
+        for (final k in chaves) ...[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+            child: Text(
+              k,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+            ),
+          ),
+          for (final i in grupos[k]!) _row(i, fmt),
+          const Divider(height: 1),
+        ],
+      ],
+    );
+  }
+
+  Widget _row(StockItem i, MoneyFmt fmt) {
+    return ListTile(
+      leading: IconButton(
+        tooltip: i.favorito ? 'Tirar dos favoritos' : 'Marcar favorito',
+        icon: Icon(
+          i.favorito ? Icons.star : Icons.star_border,
+          color: i.favorito ? Theme.of(context).colorScheme.tertiary : null,
+        ),
+        onPressed: () => _toggleFav(i),
+      ),
+      title: Text(i.nome),
+      subtitle: Text(
+        [
+          switch (i.tipo) {
+            StockTipo.ficha => 'Produto',
+            StockTipo.ingrediente => 'Ingrediente',
+            StockTipo.livre => i.categoria.isEmpty ? 'Outro' : i.categoria,
+          },
+          if (i.valor > 0) 'valor ${fmt(i.valor)}',
+          if (i.usos > 0) 'usado ${i.usos.toStringAsFixed(0)}×',
+          if (i.localizacao.isNotEmpty) i.localizacao,
+        ].join(' · '),
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (i.stockBaixo)
+            Tooltip(
+              message: 'Abaixo do mínimo',
+              child: Icon(
+                Icons.warning_amber_rounded,
+                color: Theme.of(context).colorScheme.error,
+                size: 20,
+              ),
+            ),
+          const SizedBox(width: 6),
+          Text(
+            i.quantidadeLabel(),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+      onTap: () => _podeEditar ? _abrirAjuste(i) : _historico(i),
+      onLongPress: () => _historico(i),
     );
   }
 }

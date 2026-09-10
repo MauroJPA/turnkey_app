@@ -53,6 +53,9 @@ class InventoryRepository {
           minimo: row?.getDoubleValue('minimo') ?? 0,
           localizacao: row?.getStringValue('localizacao') ?? '',
           inventarioId: row?.id,
+          favorito: row?.getBoolValue('favorito') ?? false,
+          usos: row?.getDoubleValue('usos') ?? 0,
+          ultimoUso: row?.getStringValue('ultimo_uso') ?? '',
         ),
       );
     }
@@ -68,6 +71,9 @@ class InventoryRepository {
           minimo: row?.getDoubleValue('minimo') ?? 0,
           localizacao: row?.getStringValue('localizacao') ?? '',
           inventarioId: row?.id,
+          favorito: row?.getBoolValue('favorito') ?? false,
+          usos: row?.getDoubleValue('usos') ?? 0,
+          ultimoUso: row?.getStringValue('ultimo_uso') ?? '',
         ),
       );
     }
@@ -89,6 +95,9 @@ class InventoryRepository {
           inventarioId: r.id,
           unidadeLivre: r.getStringValue('unidade'),
           categoria: r.getStringValue('categoria'),
+          favorito: r.getBoolValue('favorito'),
+          usos: r.getDoubleValue('usos'),
+          ultimoUso: r.getStringValue('ultimo_uso'),
         ),
       );
     }
@@ -106,6 +115,7 @@ class InventoryRepository {
     String? notas,
     double? minimo,
     String? localizacao,
+    bool? favorito,
   }) async {
     final res = await _pb.send(
       '/api/turnkey/inventario/ajustar',
@@ -121,6 +131,7 @@ class InventoryRepository {
         if (notas != null && notas.isNotEmpty) 'notas': notas,
         if (minimo != null) 'minimo': minimo,
         if (localizacao != null) 'localizacao': localizacao,
+        if (favorito != null) 'favorito': favorito,
       },
     );
     return ((res as Map<String, dynamic>)['quantidade'] as num?)?.toDouble() ??

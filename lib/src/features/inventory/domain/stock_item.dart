@@ -27,6 +27,9 @@ class StockItem {
     this.inventarioId,
     this.unidadeLivre = '',
     this.categoria = '',
+    this.favorito = false,
+    this.usos = 0,
+    this.ultimoUso = '',
   });
 
   final StockTipo tipo;
@@ -51,6 +54,13 @@ class StockItem {
   /// Categoria dos itens livres (ver [kCategoriasMaterial]). Vazio nos outros.
   final String categoria;
 
+  /// Fixado pela pessoa para aparecer na vista "Favoritos".
+  final bool favorito;
+
+  /// Nº de vezes que entrou numa produção ou lista de compras (servidor).
+  final double usos;
+  final String ultimoUso;
+
   String get unidade => switch (tipo) {
         StockTipo.ingrediente => 'g',
         StockTipo.ficha => 'un',
@@ -71,7 +81,12 @@ class StockItem {
     return '$n $unidade';
   }
 
-  StockItem copyWith({double? quantidade, double? minimo, String? localizacao}) {
+  StockItem copyWith({
+    double? quantidade,
+    double? minimo,
+    String? localizacao,
+    bool? favorito,
+  }) {
     return StockItem(
       tipo: tipo,
       id: id,
@@ -83,6 +98,9 @@ class StockItem {
       inventarioId: inventarioId,
       unidadeLivre: unidadeLivre,
       categoria: categoria,
+      favorito: favorito ?? this.favorito,
+      usos: usos,
+      ultimoUso: ultimoUso,
     );
   }
 }
