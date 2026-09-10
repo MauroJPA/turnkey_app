@@ -42,6 +42,10 @@ class Ingrediente with _$Ingrediente {
     DateTime? nutriAtualizadoEm,
     @Default(<String>[]) List<String> alergenios,
     @Default(<String>[]) List<String> alergeniosTracos,
+    /// Se preenchido, este "ingrediente" é na verdade um produto Gookie — um
+    /// espelho da receita com este id. A nutrição vem da receita, não se
+    /// preenche aqui.
+    String? receitaEspelhoId,
   }) = _Ingrediente;
 
   const Ingrediente._();
@@ -49,6 +53,11 @@ class Ingrediente with _$Ingrediente {
   /// Preço por grama — base de todos os cálculos de custo.
   double get custoPorGrama =>
       gramasEmbalagem > 0 ? preco / gramasEmbalagem : 0;
+
+  /// É um produto feito pela Gookie (espelho de uma receita).
+  bool get eProdutoGookie =>
+      origem == OrigemIngrediente.fabricoProprio &&
+      (receitaEspelhoId?.isNotEmpty ?? false);
 
   /// `true` se tem pelo menos os valores nutricionais principais.
   bool get temNutri => !nutri.vazio;
@@ -87,6 +96,9 @@ class Ingrediente with _$Ingrediente {
           nutriData.isEmpty ? null : DateTime.tryParse(nutriData),
       alergenios: lista('alergenios'),
       alergeniosTracos: lista('alergenios_tracos'),
+      receitaEspelhoId: r.getStringValue('receita_espelho').isEmpty
+          ? null
+          : r.getStringValue('receita_espelho'),
     );
   }
 }

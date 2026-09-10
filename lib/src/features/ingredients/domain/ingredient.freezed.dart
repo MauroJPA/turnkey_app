@@ -37,6 +37,11 @@ mixin _$Ingrediente {
   List<String> get alergenios => throw _privateConstructorUsedError;
   List<String> get alergeniosTracos => throw _privateConstructorUsedError;
 
+  /// Se preenchido, este "ingrediente" é na verdade um produto Gookie — um
+  /// espelho da receita com este id. A nutrição vem da receita, não se
+  /// preenche aqui.
+  String? get receitaEspelhoId => throw _privateConstructorUsedError;
+
   /// Create a copy of Ingrediente
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -70,6 +75,7 @@ abstract class $IngredienteCopyWith<$Res> {
     DateTime? nutriAtualizadoEm,
     List<String> alergenios,
     List<String> alergeniosTracos,
+    String? receitaEspelhoId,
   });
 }
 
@@ -106,6 +112,7 @@ class _$IngredienteCopyWithImpl<$Res, $Val extends Ingrediente>
     Object? nutriAtualizadoEm = freezed,
     Object? alergenios = null,
     Object? alergeniosTracos = null,
+    Object? receitaEspelhoId = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -181,6 +188,10 @@ class _$IngredienteCopyWithImpl<$Res, $Val extends Ingrediente>
                 ? _value.alergeniosTracos
                 : alergeniosTracos // ignore: cast_nullable_to_non_nullable
                       as List<String>,
+            receitaEspelhoId: freezed == receitaEspelhoId
+                ? _value.receitaEspelhoId
+                : receitaEspelhoId // ignore: cast_nullable_to_non_nullable
+                      as String?,
           )
           as $Val,
     );
@@ -215,6 +226,7 @@ abstract class _$$IngredienteImplCopyWith<$Res>
     DateTime? nutriAtualizadoEm,
     List<String> alergenios,
     List<String> alergeniosTracos,
+    String? receitaEspelhoId,
   });
 }
 
@@ -250,6 +262,7 @@ class __$$IngredienteImplCopyWithImpl<$Res>
     Object? nutriAtualizadoEm = freezed,
     Object? alergenios = null,
     Object? alergeniosTracos = null,
+    Object? receitaEspelhoId = freezed,
   }) {
     return _then(
       _$IngredienteImpl(
@@ -325,6 +338,10 @@ class __$$IngredienteImplCopyWithImpl<$Res>
             ? _value._alergeniosTracos
             : alergeniosTracos // ignore: cast_nullable_to_non_nullable
                   as List<String>,
+        receitaEspelhoId: freezed == receitaEspelhoId
+            ? _value.receitaEspelhoId
+            : receitaEspelhoId // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -352,6 +369,7 @@ class _$IngredienteImpl extends _Ingrediente {
     this.nutriAtualizadoEm,
     final List<String> alergenios = const <String>[],
     final List<String> alergeniosTracos = const <String>[],
+    this.receitaEspelhoId,
   }) : _alergenios = alergenios,
        _alergeniosTracos = alergeniosTracos,
        super._();
@@ -420,9 +438,15 @@ class _$IngredienteImpl extends _Ingrediente {
     return EqualUnmodifiableListView(_alergeniosTracos);
   }
 
+  /// Se preenchido, este "ingrediente" é na verdade um produto Gookie — um
+  /// espelho da receita com este id. A nutrição vem da receita, não se
+  /// preenche aqui.
+  @override
+  final String? receitaEspelhoId;
+
   @override
   String toString() {
-    return 'Ingrediente(id: $id, nome: $nome, caracteristica: $caracteristica, marca: $marca, fornecedor: $fornecedor, preco: $preco, gramasEmbalagem: $gramasEmbalagem, precoAtualizadoEm: $precoAtualizadoEm, disponivel: $disponivel, origem: $origem, deletado: $deletado, nutri: $nutri, nutriBase: $nutriBase, nutriDensidade: $nutriDensidade, nutriOrigem: $nutriOrigem, nutriAtualizadoEm: $nutriAtualizadoEm, alergenios: $alergenios, alergeniosTracos: $alergeniosTracos)';
+    return 'Ingrediente(id: $id, nome: $nome, caracteristica: $caracteristica, marca: $marca, fornecedor: $fornecedor, preco: $preco, gramasEmbalagem: $gramasEmbalagem, precoAtualizadoEm: $precoAtualizadoEm, disponivel: $disponivel, origem: $origem, deletado: $deletado, nutri: $nutri, nutriBase: $nutriBase, nutriDensidade: $nutriDensidade, nutriOrigem: $nutriOrigem, nutriAtualizadoEm: $nutriAtualizadoEm, alergenios: $alergenios, alergeniosTracos: $alergeniosTracos, receitaEspelhoId: $receitaEspelhoId)';
   }
 
   @override
@@ -463,11 +487,13 @@ class _$IngredienteImpl extends _Ingrediente {
             const DeepCollectionEquality().equals(
               other._alergeniosTracos,
               _alergeniosTracos,
-            ));
+            ) &&
+            (identical(other.receitaEspelhoId, receitaEspelhoId) ||
+                other.receitaEspelhoId == receitaEspelhoId));
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     runtimeType,
     id,
     nome,
@@ -487,7 +513,8 @@ class _$IngredienteImpl extends _Ingrediente {
     nutriAtualizadoEm,
     const DeepCollectionEquality().hash(_alergenios),
     const DeepCollectionEquality().hash(_alergeniosTracos),
-  );
+    receitaEspelhoId,
+  ]);
 
   /// Create a copy of Ingrediente
   /// with the given fields replaced by the non-null parameter values.
@@ -518,6 +545,7 @@ abstract class _Ingrediente extends Ingrediente {
     final DateTime? nutriAtualizadoEm,
     final List<String> alergenios,
     final List<String> alergeniosTracos,
+    final String? receitaEspelhoId,
   }) = _$IngredienteImpl;
   const _Ingrediente._() : super._();
 
@@ -557,6 +585,12 @@ abstract class _Ingrediente extends Ingrediente {
   List<String> get alergenios;
   @override
   List<String> get alergeniosTracos;
+
+  /// Se preenchido, este "ingrediente" é na verdade um produto Gookie — um
+  /// espelho da receita com este id. A nutrição vem da receita, não se
+  /// preenche aqui.
+  @override
+  String? get receitaEspelhoId;
 
   /// Create a copy of Ingrediente
   /// with the given fields replaced by the non-null parameter values.

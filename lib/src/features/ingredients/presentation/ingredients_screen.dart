@@ -13,6 +13,8 @@ import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../import_csv/application/ingredient_import_service.dart';
 import '../../import_csv/domain/import_result.dart';
+import '../../recipes/application/recipes_providers.dart';
+import '../../recipes/presentation/nutricao_receita_sheet.dart';
 import '../application/ingredients_providers.dart';
 import '../domain/ingredient.dart';
 import 'ingredient_form_sheet.dart';
@@ -67,8 +69,20 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
     await _run(() => ref.read(ingredientActionsProvider).update(i.id, input));
   }
 
-  Future<void> _nutricao(Ingrediente i) =>
-      showNutricaoSheet(context, ingrediente: i);
+  Future<void> _nutricao(Ingrediente i) async {
+    // Produto Gookie: a nutrição vem da receita — abre a folha da receita
+    // (que lista os ingredientes/subprodutos a preencher, em cascata).
+    if (i.eProdutoGookie) {
+      final recs = ref.read(recipesListProvider(false)).valueOrNull;
+      final rec =
+          recs?.where((r) => r.id == i.receitaEspelhoId).firstOrNull;
+      if (rec != null) {
+        await showNutricaoReceitaSheet(context, receita: rec);
+        return;
+      }
+    }
+    if (mounted) await showNutricaoSheet(context, ingrediente: i);
+  }
 
   Future<void> _autoInsa() async {
     final ok = await confirmDialog(
@@ -174,6 +188,9 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
   @override
   Widget build(BuildContext context) {
     final listAsync = ref.watch(ingredientsListProvider(_trash));
+    // mantém as receitas carregadas para o redireccionamento dos produtos
+    // Gookie (_nutricao).
+    ref.watch(recipesListProvider(false));
 
     return Scaffold(
       appBar: AppBar(
