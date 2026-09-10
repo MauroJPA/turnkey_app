@@ -53,6 +53,10 @@ class Ingrediente with _$Ingrediente {
   /// `true` se tem pelo menos os valores nutricionais principais.
   bool get temNutri => !nutri.vazio;
 
+  /// O emparelhamento automático com a INSA não teve a certeza — falta a
+  /// pessoa escolher o alimento certo (ou preencher à mão / por foto).
+  bool get precisaRevisaoInsa => nutriOrigem == 'insa_revisao';
+
   factory Ingrediente.fromRecord(RecordModel r) {
     final dataRaw = r.getStringValue('preco_atualizado_em');
     final nutriData = r.getStringValue('nutri_atualizado_em');

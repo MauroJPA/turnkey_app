@@ -7,7 +7,7 @@ pb/migrations/*.js   -> schema (coleções, campos, regras)
 pb/hooks/*           -> lógica (cascata de custos, onboarding, equipa, admin)
 ```
 
-As 33 migrations aplicam-se limpas a uma base de dados vazia (verificado). A
+As 34 migrations aplicam-se limpas a uma base de dados vazia (verificado). A
 `1706227200_seed_insa.js` insere 1376 alimentos na `ingredientes_referencia`
 (demora alguns segundos no 1.º arranque; é idempotente).
 

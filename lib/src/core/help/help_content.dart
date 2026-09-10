@@ -46,6 +46,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Use "+" para adicionar um ingrediente novo. Toque num ingrediente para editar.',
       'Pode importar muitos ingredientes de uma vez a partir de um ficheiro .csv.',
       'O ícone do prato em cada linha abre "Nutrição e alergénios": preenche à mão, escolhe da tabela INSA, ou envia uma foto do rótulo para a IA preencher. Depois a informação nutricional das receitas e fichas é calculada sozinha.',
+      'O botão ✨ no topo ("Preencher nutrição pela tabela INSA") percorre os ingredientes SEM nutrição e, quando encontra na tabela INSA um alimento claramente igual, preenche os valores e os alergénios. Os que ficam em dúvida ficam marcados "por rever" (ícone diferente) — abre cada um e escolhe da lista de alimentos parecidos. Confirma sempre: os alergénios da INSA são uma sugestão pelo nome.',
       'Quando muda o preço de um ingrediente, o custo das receitas e das fichas é recalculado sozinho.',
     ],
   ),

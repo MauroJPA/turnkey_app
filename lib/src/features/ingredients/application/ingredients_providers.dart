@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/nutrition/nutrition.dart';
 import '../data/ingredient_repository.dart';
+import '../domain/auto_insa.dart';
 import '../domain/ingredient.dart';
 
 /// Lista de ingredientes ativos (ou da lixeira, se [trash] for `true`).
@@ -67,6 +68,18 @@ class IngredientActions {
     return ing;
   }
 
+  /// Corre o emparelhamento automático com a INSA. Devolve o resumo
+  /// (quantos preenchidos, quais ficaram por rever).
+  Future<ResumoAutoInsa> autoPreencherInsa({List<String>? ids}) async {
+    final r = await _repo.autoInsa(ids: ids);
+    _refresh();
+    return r;
+  }
+
+  /// Só devolve os candidatos INSA para um ingrediente (não grava).
+  Future<ResumoAutoInsa> sugestoesInsa(String id) =>
+      _repo.autoInsa(ids: [id], dryRun: true);
+
   Future<void> definirNutricao(
     String id, {
     required Nutrientes nutri,
@@ -74,6 +87,7 @@ class IngredientActions {
     double densidade = 1,
     required List<String> alergenios,
     required List<String> alergeniosTracos,
+    String origem = 'manual',
   }) async {
     await _repo.definirNutricao(
       id,
@@ -82,6 +96,7 @@ class IngredientActions {
       densidade: densidade,
       alergenios: alergenios,
       alergeniosTracos: alergeniosTracos,
+      origem: origem,
     );
     _refresh();
   }

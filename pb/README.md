@@ -64,6 +64,7 @@ pb/
 | `1706313600_embalagens.js` | coleção `embalagens` (caixas, sacos, saquetas, adesivos… com `preco_compra`/`unidades_compra`/`rende_unidades` → `custo_unitario` cache) + relação opcional `itens_ficha.embalagem` + valor `embalagem` no `slot`. |
 | `1706400000_historico_faturas.js` | adiciona `faturas_apagadas` aos valores de `historico.entidade_tipo` (rasto das faturas apagadas, `entidade_id = <empresaId>`). |
 | `1706486400_embalagem_kits.js` | coleções `embalagem_kits` (nome, descrição, `custo_unitario` cache) + `embalagem_kit_itens` (`kit`, `embalagem`, `quantidade`) + relação opcional `itens_ficha.kit`. Um kit junta várias embalagens numa combinação com nome; na ficha técnica escolhe-se o kit para precificar de uma vez. |
+| `1706572800_ref_alergenios.js` | campo `alergenios` em `ingredientes_referencia`, preenchido por inferência de palavras-chave sobre nome/grupo (match por token com plurais; expressões multi-palavra por substring; guardas p/ "chocolate"≠"choco", "compota"≠"pota", farinha de milho/arroz sem glúten). Sugestão, não oficial. |
 
 Aparência (tema, cor de marca `cor_marca`, logótipo `logo`) é **por empresa** —
 editada em Configurações → Aparência, aplica-se a toda a equipa.
@@ -142,6 +143,7 @@ O ficheiro carregado é guardado com um nome no formato **`FT-NOMEFORNECEDOR-DDM
 | Método | Rota | Efeito |
 |---|---|---|
 | `POST` | `/api/turnkey/ingredientes/{id}/rotulo` | body `{ imagem: <base64>, mime }`. Via `ai.js` lê o rótulo (foto/PDF) → preenche `nutri_*` + `nutri_base`/`nutri_densidade` + `nutri_origem='rotulo'` + os 14 alergénios (canonizados) no ingrediente e grava (a cascata nutricional dispara sozinha). `503` sem chave, `400` sem imagem, `502` erro da IA. |
+| `POST` | `/api/turnkey/ingredientes/auto-insa` | body `{ ids?: string[], dryRun?: bool }`. Emparelha cada ingrediente (sem `ids`: os da empresa **sem** nutrição) com `ingredientes_referencia` por semelhança de nome (recall+precision de tokens + bónus de palavra-cabeça/prefixo/nome exato). Vencedor destacado (`best≥0.8` e margem `≥0.2`) → grava `nutri_*` + `alergenios` + `nutri_origem='insa'`. Caso contrário → `nutri_origem='insa_revisao'` (não estraga `manual`/`rotulo`/`insa`) e devolve os 6 candidatos mais próximos. `dryRun` não escreve. Resposta `{ aplicados, total, resultados:[{ ingredienteId, nome, estado:'preenchido'|'revisao'|'sem_candidato', referencia?, candidatos:[{id,nome,grupo,score,nutri,alergenios}] }] }`. |
 
 A **nutrição de receitas e fichas é calculada em cascata** (`cascade.js`), como o custo: `receitas.nutri` = valores por 100 g de mistura crua (+ `por100g_cozido` com a perda); `fichas_tecnicas.nutri` = por 100 g de **produto acabado** (a água que sai a cozer não tem calorias — muda o peso) + `por_unidade`, e a **união dos alergénios** de toda a árvore.
 

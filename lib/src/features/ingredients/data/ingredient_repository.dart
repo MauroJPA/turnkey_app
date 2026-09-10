@@ -6,6 +6,7 @@ import 'package:pocketbase/pocketbase.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/nutrition/nutrition.dart';
 import '../../../core/pocketbase/pb_client.dart';
+import '../domain/auto_insa.dart';
 import '../domain/ingredient.dart';
 import '../domain/ingrediente_referencia.dart';
 
@@ -104,6 +105,24 @@ class IngredientRepository implements IngredientWriter {
       'alergenios_tracos': alergeniosTracos,
     });
     return Ingrediente.fromRecord(rec);
+  }
+
+  /// Emparelha ingredientes com a tabela INSA no servidor. Sem [ids], processa
+  /// os que ainda não têm nutrição. Com [dryRun] só devolve os candidatos
+  /// (não grava nada) — usado para mostrar sugestões na folha de nutrição.
+  Future<ResumoAutoInsa> autoInsa({
+    List<String>? ids,
+    bool dryRun = false,
+  }) async {
+    final res = await _pb.send(
+      '/api/turnkey/ingredientes/auto-insa',
+      method: 'POST',
+      body: {
+        if (ids != null) 'ids': ids,
+        'dryRun': dryRun,
+      },
+    );
+    return ResumoAutoInsa.fromJson(Map<String, dynamic>.from(res as Map));
   }
 
   static String _semAcentos(String s) {

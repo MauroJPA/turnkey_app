@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/nutrition/nutrition.dart';
 import '../application/ingredients_providers.dart';
 import '../data/ingredient_repository.dart';
+import '../domain/auto_insa.dart';
 import '../domain/ingredient.dart';
 import '../domain/ingrediente_referencia.dart';
 
@@ -46,6 +47,11 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
   String _origem = '';
   DateTime? _atualizado;
 
+  /// Sugestões da INSA carregadas quando o ingrediente ainda não tem nutrição
+  /// (ou ficou marcado para revisão).
+  Future<ResumoAutoInsa>? _sugestoes;
+  bool _sugestoesFechadas = false;
+
   @override
   void initState() {
     super.initState();
@@ -59,6 +65,20 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
     );
     _origem = i.nutriOrigem;
     _atualizado = i.nutriAtualizadoEm;
+    if (!i.temNutri || i.precisaRevisaoInsa) {
+      _sugestoes =
+          ref.read(ingredientActionsProvider).sugestoesInsa(i.id);
+    }
+  }
+
+  void _aplicarCandidato(InsaCandidato c) {
+    _preencher(c.nutri, base: '100g', al: c.alergenios, tr: const []);
+    _origem = 'insa';
+    _atualizado = DateTime.now();
+    setState(() => _sugestoesFechadas = true);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Preenchido de "${c.nome}" (INSA). Confirma.')),
+    );
   }
 
   @override
@@ -121,8 +141,11 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
       ),
     );
     if (r == null) return;
-    _preencher(r.nutri, base: '100g');
+    _preencher(r.nutri, base: '100g', al: r.alergenios, tr: const []);
+    _origem = 'insa';
+    _atualizado = DateTime.now();
     if (mounted) {
+      setState(() => _sugestoesFechadas = true);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Preenchido de "${r.nome}" (INSA). Confirma.')),
       );
@@ -182,6 +205,7 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
             alergenios: _alerg.toList(),
             alergeniosTracos:
                 _tracos.where((t) => !_alerg.contains(t)).toList(),
+            origem: _origem == 'insa' || _origem == 'rotulo' ? _origem : 'manual',
           );
       if (mounted) Navigator.pop(context);
     } on Object catch (e) {
@@ -221,10 +245,99 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
         ],
       );
 
+  Widget _sugestoesInsa() {
+    return FutureBuilder<ResumoAutoInsa>(
+      future: _sugestoes,
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              children: [
+                SizedBox(
+                  height: 16,
+                  width: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 10),
+                Text('A procurar na tabela INSA…'),
+              ],
+            ),
+          );
+        }
+        final r = snap.data?.resultados.isNotEmpty == true
+            ? snap.data!.resultados.first
+            : null;
+        final cands = r?.candidatos ?? const <InsaCandidato>[];
+        if (cands.isEmpty) {
+          if (snap.hasError) return const SizedBox.shrink();
+          return Card(
+            margin: const EdgeInsets.only(top: 12),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(
+                'A tabela INSA não tem nada parecido com este nome. '
+                'Preenche à mão ou usa a foto do rótulo.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          );
+        }
+        return Card(
+          margin: const EdgeInsets.only(top: 12),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.auto_awesome,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.primary),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Parecidos na tabela INSA — escolhe o que corresponde',
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Ignorar sugestões',
+                      icon: const Icon(Icons.close, size: 18),
+                      onPressed: () =>
+                          setState(() => _sugestoesFechadas = true),
+                    ),
+                  ],
+                ),
+                for (final c in cands.take(5))
+                  ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(c.nome),
+                    subtitle: Text([
+                      if (c.grupo.isNotEmpty) c.grupo,
+                      '${c.nutri.kcal.toStringAsFixed(0)} kcal',
+                      if (c.alergenios.isNotEmpty)
+                        'contém: ${c.alergenios.join(', ')}',
+                    ].join(' · ')),
+                    trailing: Text('≈ ${c.percentagem}%',
+                        style: Theme.of(context).textTheme.bodySmall),
+                    onTap: _busy ? null : () => _aplicarCandidato(c),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final origemTxt = switch (_origem) {
       'insa' => 'valores de referência (INSA)',
+      'insa_revisao' => 'sugestão da INSA por confirmar',
       'rotulo' => 'lido do rótulo por IA',
       'openfoodfacts' => 'Open Food Facts',
       'manual' => 'introduzido à mão',
@@ -266,6 +379,7 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
                 ),
               ],
             ),
+            if (_sugestoes != null && !_sugestoesFechadas) _sugestoesInsa(),
             const SizedBox(height: 12),
             SegmentedButton<String>(
               segments: const [
