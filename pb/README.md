@@ -66,6 +66,8 @@ pb/
 | `1706486400_embalagem_kits.js` | coleções `embalagem_kits` (nome, descrição, `custo_unitario` cache) + `embalagem_kit_itens` (`kit`, `embalagem`, `quantidade`) + relação opcional `itens_ficha.kit`. Um kit junta várias embalagens numa combinação com nome; na ficha técnica escolhe-se o kit para precificar de uma vez. |
 | `1706572800_ref_alergenios.js` | campo `alergenios` em `ingredientes_referencia`, preenchido por inferência de palavras-chave sobre nome/grupo (match por token com plurais; expressões multi-palavra por substring; guardas p/ "chocolate"≠"choco", "compota"≠"pota", farinha de milho/arroz sem glúten). Sugestão, não oficial. |
 | `1706659200_inventario_uso.js` | `inventario`: `favorito` (bool), `usos` (number), `ultimo_uso` (date). `usos`+`ultimo_uso` são incrementados por `cascade.js aplicarMovimento` (motivos `consumo_producao`/`saida_producao`) e por `inventario_uso.pb.js` (`onRecordAfterCreateSuccess` em `lista_compras`). `favorito` grava-se via `/api/turnkey/inventario/ajustar`. Vistas "Favoritos" e "Mais usados" no ecrã de Inventário. |
+| `1706745600_users_authalert_off.js` | desliga o email "Login from a new location" da coleção `users` (ERP interno; SMTP muitas vezes ausente). |
+| `1706832000_ingrediente_nutri_foto.js` | campo `nutri_foto` (file, thumb 0x240) em `ingredientes` — foto da tabela nutricional do rótulo. A lista de ingredientes distingue visualmente `Ingrediente.fonteNutri`: vazia / por rever (INSA) / INSA / à mão / à mão+foto. |
 
 Aparência (tema, cor de marca `cor_marca`, logótipo `logo`) é **por empresa** —
 editada em Configurações → Aparência, aplica-se a toda a equipa.

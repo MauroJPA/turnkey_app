@@ -68,6 +68,24 @@ class IngredientActions {
     return ing;
   }
 
+  /// Anexa/substitui a foto da tabela nutricional (sem IA).
+  Future<Ingrediente> anexarFotoNutri(
+    String id, {
+    required List<int> bytes,
+    required String nome,
+  }) async {
+    final ing = await _repo.anexarFotoNutri(id, bytes: bytes, nome: nome);
+    _refresh();
+    return ing;
+  }
+
+  /// Remove a foto da tabela nutricional.
+  Future<Ingrediente> removerFotoNutri(String id) async {
+    final ing = await _repo.removerFotoNutri(id);
+    _refresh();
+    return ing;
+  }
+
   /// Corre o emparelhamento automático com a INSA. Devolve o resumo
   /// (quantos preenchidos, quais ficaram por rever).
   Future<ResumoAutoInsa> autoPreencherInsa({List<String>? ids}) async {

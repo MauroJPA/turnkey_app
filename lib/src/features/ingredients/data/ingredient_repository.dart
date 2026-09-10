@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import 'package:pocketbase/pocketbase.dart';
 
 import '../../../core/auth/current_user.dart';
@@ -71,7 +72,8 @@ class IngredientRepository implements IngredientWriter {
   }
 
   /// Lê um rótulo (foto/PDF) por IA e preenche os campos nutricionais +
-  /// alergénios do ingrediente. Devolve o ingrediente atualizado.
+  /// alergénios do ingrediente. Guarda também a foto em `nutri_foto`.
+  /// Devolve o ingrediente atualizado.
   Future<Ingrediente> analisarRotulo(
     String id, {
     required List<int> bytes,
@@ -82,7 +84,41 @@ class IngredientRepository implements IngredientWriter {
       method: 'POST',
       body: {'imagem': base64Encode(bytes), 'mime': _mimeRotulo(nome)},
     );
+    try {
+      await anexarFotoNutri(id, bytes: bytes, nome: nome);
+    } on Object {
+      // a leitura por IA já gravou os valores; guardar a foto é best-effort
+    }
     return getById(id);
+  }
+
+  /// Anexa (ou substitui) a foto da tabela nutricional do ingrediente.
+  Future<Ingrediente> anexarFotoNutri(
+    String id, {
+    required List<int> bytes,
+    required String nome,
+  }) async {
+    final rec = await _c.update(
+      id,
+      files: [
+        http.MultipartFile.fromBytes('nutri_foto', bytes, filename: nome),
+      ],
+    );
+    return Ingrediente.fromRecord(rec);
+  }
+
+  /// Remove a foto da tabela nutricional.
+  Future<Ingrediente> removerFotoNutri(String id) async =>
+      Ingrediente.fromRecord(await _c.update(id, body: {'nutri_foto': null}));
+
+  /// URL do ficheiro da foto da tabela nutricional (vazio se não houver).
+  String fotoNutriUrl(String id, String fotoNome, {bool thumb = false}) {
+    if (fotoNome.isEmpty) return '';
+    final base = _pb.baseURL.endsWith('/')
+        ? _pb.baseURL.substring(0, _pb.baseURL.length - 1)
+        : _pb.baseURL;
+    final u = '$base/api/files/ingredientes/$id/$fotoNome';
+    return thumb ? '$u?thumb=0x240' : u;
   }
 
   /// Grava a nutrição/alergénios editados à mão (origem = manual).

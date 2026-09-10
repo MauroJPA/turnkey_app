@@ -5,6 +5,33 @@ import '../../../core/nutrition/nutrition.dart';
 
 part 'ingredient.freezed.dart';
 
+/// Como a informação nutricional de um ingrediente foi obtida — para
+/// distinguir facilmente na lista.
+enum FonteNutri {
+  /// Sem valores.
+  vazia,
+
+  /// O emparelhamento automático com a INSA não teve a certeza.
+  porRever,
+
+  /// Preenchida com valores da Tabela da Composição de Alimentos (INSA).
+  insa,
+
+  /// Introduzida à mão (ou lida por IA) — sem foto do rótulo anexada.
+  manual,
+
+  /// Introduzida à mão / lida por IA, COM foto da tabela nutricional anexada.
+  comFoto;
+
+  String get label => switch (this) {
+        FonteNutri.vazia => 'sem nutrição',
+        FonteNutri.porRever => 'por rever (INSA)',
+        FonteNutri.insa => 'da tabela INSA',
+        FonteNutri.manual => 'preenchida à mão',
+        FonteNutri.comFoto => 'à mão + foto do rótulo',
+      };
+}
+
 enum OrigemIngrediente {
   comprado,
   fabricoProprio;
@@ -42,6 +69,8 @@ class Ingrediente with _$Ingrediente {
     DateTime? nutriAtualizadoEm,
     @Default(<String>[]) List<String> alergenios,
     @Default(<String>[]) List<String> alergeniosTracos,
+    /// Nome do ficheiro da foto da tabela nutricional (rótulo), se houver.
+    @Default('') String nutriFoto,
     /// Se preenchido, este "ingrediente" é na verdade um produto Gookie — um
     /// espelho da receita com este id. A nutrição vem da receita, não se
     /// preenche aqui.
@@ -62,9 +91,21 @@ class Ingrediente with _$Ingrediente {
   /// `true` se tem pelo menos os valores nutricionais principais.
   bool get temNutri => !nutri.vazio;
 
+  /// Tem foto da tabela nutricional (rótulo) anexada.
+  bool get temNutriFoto => nutriFoto.isNotEmpty;
+
   /// O emparelhamento automático com a INSA não teve a certeza — falta a
   /// pessoa escolher o alimento certo (ou preencher à mão / por foto).
   bool get precisaRevisaoInsa => nutriOrigem == 'insa_revisao';
+
+  /// Estado da nutrição para mostrar na lista (ver [FonteNutri]).
+  FonteNutri get fonteNutri {
+    if (precisaRevisaoInsa) return FonteNutri.porRever;
+    if (!temNutri) return FonteNutri.vazia;
+    if (nutriOrigem == 'insa') return FonteNutri.insa;
+    if (temNutriFoto) return FonteNutri.comFoto;
+    return FonteNutri.manual;
+  }
 
   factory Ingrediente.fromRecord(RecordModel r) {
     final dataRaw = r.getStringValue('preco_atualizado_em');
@@ -96,6 +137,7 @@ class Ingrediente with _$Ingrediente {
           nutriData.isEmpty ? null : DateTime.tryParse(nutriData),
       alergenios: lista('alergenios'),
       alergeniosTracos: lista('alergenios_tracos'),
+      nutriFoto: r.getStringValue('nutri_foto'),
       receitaEspelhoId: r.getStringValue('receita_espelho').isEmpty
           ? null
           : r.getStringValue('receita_espelho'),

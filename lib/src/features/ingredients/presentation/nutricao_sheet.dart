@@ -47,6 +47,8 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
   bool _busy = false;
   String _origem = '';
   DateTime? _atualizado;
+  late bool _temFoto;
+  late String _fotoNome;
 
   /// Sugestões da INSA carregadas quando o ingrediente ainda não tem nutrição
   /// (ou ficou marcado para revisão).
@@ -66,6 +68,8 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
     );
     _origem = i.nutriOrigem;
     _atualizado = i.nutriAtualizadoEm;
+    _temFoto = i.temNutriFoto;
+    _fotoNome = i.nutriFoto;
     if (!i.temNutri || i.precisaRevisaoInsa) {
       _sugestoes =
           ref.read(ingredientActionsProvider).sugestoesInsa(i.id);
@@ -182,6 +186,8 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
       );
       _origem = 'rotulo';
       _atualizado = DateTime.now();
+      _temFoto = atualizado.temNutriFoto;
+      _fotoNome = atualizado.nutriFoto;
       if (mounted) {
         messenger.showSnackBar(const SnackBar(
           content: Text('Rótulo lido. Confere os valores e guarda.'),
@@ -193,6 +199,112 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<void> _anexarFoto() async {
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
+      withData: true,
+    );
+    final f = picked?.files.single;
+    if (f?.bytes == null || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      final atualizado = await ref
+          .read(ingredientActionsProvider)
+          .anexarFotoNutri(
+            widget.ingrediente.id,
+            bytes: f!.bytes!.toList(),
+            nome: f.name,
+          );
+      if (mounted) {
+        setState(() {
+          _temFoto = true;
+          _fotoNome = atualizado.nutriFoto;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Foto da tabela nutricional anexada.')),
+        );
+      }
+    } on Object catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$e')));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _removerFoto() async {
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(ingredientActionsProvider)
+          .removerFotoNutri(widget.ingrediente.id);
+      if (mounted) setState(() => _temFoto = false);
+    } on Object catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$e')));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Widget _fotoSeccao() {
+    final url = _temFoto
+        ? ref.read(ingredientRepositoryProvider).fotoNutriUrl(
+              widget.ingrediente.id,
+              _fotoNome,
+              thumb: true,
+            )
+        : '';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Foto da tabela nutricional',
+            style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: 4),
+        if (_temFoto)
+          Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: Image.network(
+                    url,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      child: const Icon(Icons.description_outlined),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: _busy ? null : _anexarFoto,
+                child: const Text('Substituir'),
+              ),
+              TextButton(
+                onPressed: _busy ? null : _removerFoto,
+                child: const Text('Remover'),
+              ),
+            ],
+          )
+        else
+          OutlinedButton.icon(
+            onPressed: _busy ? null : _anexarFoto,
+            icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
+            label: const Text('Anexar foto (sem IA)'),
+          ),
+      ],
+    );
   }
 
   Future<void> _guardar() async {
@@ -439,6 +551,8 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
                 style: Theme.of(context).textTheme.labelLarge),
             const SizedBox(height: 4),
             _chips(_tracos, (n) => setState(() => _tracos = n)),
+            const SizedBox(height: 14),
+            _fotoSeccao(),
             if (origemTxt.isNotEmpty) ...[
               const SizedBox(height: 12),
               Text(

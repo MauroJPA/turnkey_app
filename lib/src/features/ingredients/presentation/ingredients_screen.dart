@@ -185,6 +185,41 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
     }).toList();
   }
 
+  /// Legenda dos ícones de nutrição (o ícone à direita de cada ingrediente).
+  Widget _legendaNutri() {
+    final cs = Theme.of(context).colorScheme;
+    final itens = <(IconData, Color, String)>[
+      (Icons.local_dining_outlined, Theme.of(context).disabledColor, 'sem'),
+      (Icons.rule, cs.error, 'por rever'),
+      (Icons.menu_book, cs.primary, 'INSA'),
+      (Icons.edit_note, cs.secondary, 'à mão'),
+      (Icons.photo_camera, cs.tertiary, 'à mão + foto'),
+    ];
+    return SizedBox(
+      height: 30,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        children: [
+          Text('Nutrição:  ',
+              style: Theme.of(context).textTheme.bodySmall),
+          for (final (ic, cor, txt) in itens)
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(ic, size: 15, color: cor),
+                  const SizedBox(width: 3),
+                  Text(txt, style: Theme.of(context).textTheme.bodySmall),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final listAsync = ref.watch(ingredientsListProvider(_trash));
@@ -302,6 +337,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                           ],
                         ),
                       ),
+                    if (!_trash && _podeEditar) _legendaNutri(),
                     Expanded(
                       child: items.isEmpty
                           ? Center(
@@ -410,25 +446,24 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
         children: [
           trailing,
           if (_podeEditar)
-            IconButton(
-              tooltip: i.precisaRevisaoInsa
-                  ? 'Escolher o alimento certo da tabela INSA (por rever)'
-                  : 'Nutrição e alergénios',
-              icon: Icon(
-                i.precisaRevisaoInsa
-                    ? Icons.rule
-                    : i.temNutri
-                        ? Icons.local_dining
-                        : Icons.local_dining_outlined,
-                size: 20,
-                color: i.precisaRevisaoInsa
-                    ? Theme.of(context).colorScheme.tertiary
-                    : i.temNutri
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).disabledColor,
-              ),
-              onPressed: () => _nutricao(i),
-            ),
+            Builder(builder: (context) {
+              final cs = Theme.of(context).colorScheme;
+              final (IconData ic, Color cor) = switch (i.fonteNutri) {
+                FonteNutri.vazia => (
+                    Icons.local_dining_outlined,
+                    Theme.of(context).disabledColor,
+                  ),
+                FonteNutri.porRever => (Icons.rule, cs.error),
+                FonteNutri.insa => (Icons.menu_book, cs.primary),
+                FonteNutri.manual => (Icons.edit_note, cs.secondary),
+                FonteNutri.comFoto => (Icons.photo_camera, cs.tertiary),
+              };
+              return IconButton(
+                tooltip: 'Nutrição: ${i.fonteNutri.label}',
+                icon: Icon(ic, size: 20, color: cor),
+                onPressed: () => _nutricao(i),
+              );
+            }),
         ],
       ),
       onTap: _podeEditar ? () => _edit(i) : null,
