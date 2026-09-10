@@ -18,6 +18,8 @@ Future<void> showNutricaoSheet(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
+    useRootNavigator: true,
+    useSafeArea: true,
     builder: (_) => _NutricaoSheet(ingrediente: ingrediente),
   );
 }
