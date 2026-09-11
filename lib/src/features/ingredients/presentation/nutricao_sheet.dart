@@ -356,7 +356,7 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
 
   Widget _chips(Set<String> sel, void Function(Set<String>) onCh) => Wrap(
         spacing: 6,
-        runSpacing: -6,
+        runSpacing: 6,
         children: [
           for (final a in kAlergenios)
             FilterChip(
