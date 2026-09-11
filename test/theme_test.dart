@@ -21,12 +21,20 @@ void main() {
     }
   });
 
-  test('presets: 5 cores, todas distintas', () {
-    expect(AppTheme.presets.length, 5);
+  test('presets: várias cores, todas distintas e com nome', () {
+    expect(AppTheme.presets.length, greaterThanOrEqualTo(8));
     final rgb = AppTheme.presets
         .map((p) => p.cor.toARGB32() & 0xFFFFFF)
         .toSet();
     expect(rgb.length, AppTheme.presets.length);
+    expect(AppTheme.presets.every((p) => p.nome.isNotEmpty), isTrue);
+    // a cor de marca por omissão continua entre as opções
+    expect(
+      AppTheme.presets.any(
+        (p) => (p.cor.toARGB32() & 0xFFFFFF) == (AppTheme.seed.toARGB32() & 0xFFFFFF),
+      ),
+      isTrue,
+    );
   });
 
   test('TemaApp.fromApi tolerante e .modo correto', () {
