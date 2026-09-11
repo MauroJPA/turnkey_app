@@ -36,10 +36,37 @@ class AppTheme {
     (nome: 'Grafite', cor: Color(0xFF6E6E73)),
   ];
 
-  static ThemeData light([Color? brand]) =>
-      _base(Brightness.light, brand ?? seed);
-  static ThemeData dark([Color? brand]) =>
-      _base(Brightness.dark, brand ?? seed);
+  static ThemeData light(
+    Color? brand, {
+    Color? secundaria,
+    Color? fundo,
+    Color? texto,
+    String? fontFamily,
+  }) =>
+      _base(
+        Brightness.light,
+        brand ?? seed,
+        secundaria: secundaria,
+        fundo: fundo,
+        texto: texto,
+        fontFamily: fontFamily,
+      );
+
+  static ThemeData dark(
+    Color? brand, {
+    Color? secundaria,
+    Color? fundo,
+    Color? texto,
+    String? fontFamily,
+  }) =>
+      _base(
+        Brightness.dark,
+        brand ?? seed,
+        secundaria: secundaria,
+        fundo: fundo,
+        texto: texto,
+        fontFamily: fontFamily,
+      );
 
   /// Interpreta uma cor hex (`#RRGGBB` ou `RRGGBB`); `null` se inválida.
   static Color? parseHex(String value) {
@@ -56,16 +83,42 @@ class AppTheme {
     return '#${rgb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
   }
 
-  static ThemeData _base(Brightness brightness, Color seedColor) {
+  static ThemeData _base(
+    Brightness brightness,
+    Color seedColor, {
+    Color? secundaria,
+    Color? fundo,
+    Color? texto,
+    String? fontFamily,
+  }) {
     final isDark = brightness == Brightness.dark;
-    final scheme = ColorScheme.fromSeed(
+    var scheme = ColorScheme.fromSeed(
       seedColor: seedColor,
       brightness: brightness,
     );
 
+    // Distribuição de cores avançada (Configurações → Aparência): a cor de
+    // marca continua a gerar a paleta base (M3 `fromSeed`, garante contraste),
+    // mas secundária/texto podem ser trocadas independentemente por cima.
+    if (secundaria != null) {
+      scheme = scheme.copyWith(
+        secondary: secundaria,
+        secondaryContainer: Color.alphaBlend(
+          secundaria.withValues(alpha: isDark ? 0.32 : 0.16),
+          isDark ? Colors.black : Colors.white,
+        ),
+      );
+    }
+    if (texto != null) {
+      scheme = scheme.copyWith(
+        onSurface: texto,
+        onSurfaceVariant: texto.withValues(alpha: 0.7),
+      );
+    }
+
     // Fundo suave, cartões mais claros por cima — a mesma leitura do
     // "grouped table view" do iOS (fundo cinza, cartões brancos).
-    final background = scheme.surfaceContainerLow;
+    final background = fundo ?? scheme.surfaceContainerLow;
     final surfaceCard = isDark ? scheme.surfaceContainer : scheme.surface;
 
     final rounded = RoundedRectangleBorder(
@@ -113,6 +166,7 @@ class AppTheme {
       scaffoldBackgroundColor: background,
       canvasColor: background,
       textTheme: textTheme,
+      fontFamily: fontFamily,
       splashFactory: InkSparkle.splashFactory,
       visualDensity: VisualDensity.standard,
 

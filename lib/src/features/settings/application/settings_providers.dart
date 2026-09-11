@@ -39,6 +39,39 @@ class SettingsActions {
     _ref.invalidate(currentEmpresaProvider);
   }
 
+  Future<void> saveAparencia({
+    required String corMarca,
+    required TemaApp tema,
+    required String corSecundaria,
+    required String corFundo,
+    required String corTexto,
+    required bool logoVisivel,
+    required Alinhamento logoAlinhamento,
+    required double logoTamanho,
+    required bool nomeVisivel,
+    required Alinhamento nomeAlinhamento,
+    required double nomeTamanho,
+    required String fonteFamilia,
+  }) async {
+    final id = requireEmpresaId(_ref);
+    await _ref.read(empresaRepositoryProvider).updateAparencia(
+          id,
+          corMarca: corMarca,
+          tema: tema,
+          corSecundaria: corSecundaria,
+          corFundo: corFundo,
+          corTexto: corTexto,
+          logoVisivel: logoVisivel,
+          logoAlinhamento: logoAlinhamento,
+          logoTamanho: logoTamanho,
+          nomeVisivel: nomeVisivel,
+          nomeAlinhamento: nomeAlinhamento,
+          nomeTamanho: nomeTamanho,
+          fonteFamilia: fonteFamilia,
+        );
+    _ref.invalidate(currentEmpresaProvider);
+  }
+
   Future<void> definirLogo({
     required String nome,
     required List<int> bytes,
@@ -53,6 +86,23 @@ class SettingsActions {
   Future<void> removerLogo() async {
     final id = requireEmpresaId(_ref);
     await _ref.read(empresaRepositoryProvider).removerLogo(id);
+    _ref.invalidate(currentEmpresaProvider);
+  }
+
+  Future<void> definirFonte({
+    required String nome,
+    required List<int> bytes,
+  }) async {
+    final id = requireEmpresaId(_ref);
+    await _ref
+        .read(empresaRepositoryProvider)
+        .definirFonte(id, nome: nome, bytes: bytes);
+    _ref.invalidate(currentEmpresaProvider);
+  }
+
+  Future<void> removerFonte() async {
+    final id = requireEmpresaId(_ref);
+    await _ref.read(empresaRepositoryProvider).removerFonte(id);
     _ref.invalidate(currentEmpresaProvider);
   }
 

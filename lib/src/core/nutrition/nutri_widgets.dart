@@ -152,3 +152,47 @@ String declaracaoTexto({
   }
   return b.toString();
 }
+
+String _esc(String s) => s
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
+
+/// Declaração nutricional em HTML simples — corpo de página para
+/// [abrirImpressao] (`core/printing/print_html.dart`). Visual provisório;
+/// será substituído por um template a fornecer.
+String declaracaoHtml({
+  required String titulo,
+  required Nutrientes por100g,
+  Nutrientes? porUnidade,
+  double pesoUnidadeG = 0,
+  required List<String> alergenios,
+  required List<String> alergeniosTracos,
+  bool completo = true,
+}) {
+  final col2Titulo = porUnidade != null
+      ? 'por unidade${pesoUnidadeG > 0 ? ' (${_g(pesoUnidadeG, casas: 0)} g)' : ''}'
+      : null;
+  final linhas = StringBuffer();
+  for (final l in _linhas) {
+    final v1 = l.valor(por100g);
+    final v2 = porUnidade != null ? l.valor(porUnidade) : null;
+    linhas.writeln(
+      '<tr><td class="${l.indent ? 'indent' : ''}">${_esc(l.rotulo)}</td>'
+      '<td class="valor">${_esc(v1)}</td>'
+      '${v2 != null ? '<td class="valor">${_esc(v2)}</td>' : ''}</tr>',
+    );
+  }
+  final al = alergeniosResumo(alergenios, alergeniosTracos);
+  return '''
+<h1>Declaração nutricional</h1>
+<p class="sub">${_esc(titulo)}</p>
+<table>
+<tr><th></th><th>por 100 g</th>${col2Titulo != null ? '<th>${_esc(col2Titulo)}</th>' : ''}</tr>
+$linhas
+</table>
+${al.isNotEmpty ? '<p class="alergenios">${_esc(al)}</p>' : ''}
+${!completo ? '<p class="aviso">(!) Valores incompletos — há ingredientes sem informação nutricional.</p>' : ''}
+<p class="aviso">Cálculo a partir dos valores dos ingredientes (Reg. (UE) 1169/2011). Confirma com os rótulos.</p>
+''';
+}

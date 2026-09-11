@@ -57,6 +57,24 @@ enum RegraArredondamento {
       );
 }
 
+/// Onde o logótipo/nome da marca aparece na barra superior.
+enum Alinhamento {
+  esquerda,
+  centro,
+  direita;
+
+  static Alinhamento fromName(String? name) => Alinhamento.values.firstWhere(
+        (a) => a.name == name,
+        orElse: () => Alinhamento.esquerda,
+      );
+
+  String get label => switch (this) {
+        Alinhamento.esquerda => 'Esquerda',
+        Alinhamento.centro => 'Centro',
+        Alinhamento.direita => 'Direita',
+      };
+}
+
 @freezed
 class Empresa with _$Empresa {
   const factory Empresa({
@@ -69,11 +87,25 @@ class Empresa with _$Empresa {
     @Default('') String plano,
     @Default(TemaApp.sistema) TemaApp tema,
     @Default('') String logo,
+    @Default('') String corSecundaria,
+    @Default('') String corFundo,
+    @Default('') String corTexto,
+    @Default(false) bool logoOculto,
+    @Default(Alinhamento.esquerda) Alinhamento logoAlinhamento,
+    @Default(28) double logoTamanho,
+    @Default(false) bool nomeOculto,
+    @Default(Alinhamento.esquerda) Alinhamento nomeAlinhamento,
+    @Default(18) double nomeTamanho,
+    @Default('') String fonteFamilia,
+    @Default('') String fonteFicheiro,
   }) = _Empresa;
 
   const Empresa._();
 
   bool get temLogo => logo.isNotEmpty;
+  bool get temFontePersonalizada => fonteFicheiro.isNotEmpty;
+  bool get logoVisivel => !logoOculto;
+  bool get nomeVisivel => !nomeOculto;
 
   factory Empresa.fromRecord(RecordModel r) => Empresa(
         id: r.id,
@@ -86,5 +118,20 @@ class Empresa with _$Empresa {
         plano: r.getStringValue('plano'),
         tema: TemaApp.fromApi(r.getStringValue('tema')),
         logo: r.getStringValue('logo'),
+        corSecundaria: r.getStringValue('cor_secundaria'),
+        corFundo: r.getStringValue('cor_fundo'),
+        corTexto: r.getStringValue('cor_texto'),
+        logoOculto: r.getBoolValue('logo_oculto'),
+        logoAlinhamento: Alinhamento.fromName(r.getStringValue('logo_alinhamento')),
+        logoTamanho: r.getDoubleValue('logo_tamanho') > 0
+            ? r.getDoubleValue('logo_tamanho')
+            : 28,
+        nomeOculto: r.getBoolValue('nome_oculto'),
+        nomeAlinhamento: Alinhamento.fromName(r.getStringValue('nome_alinhamento')),
+        nomeTamanho: r.getDoubleValue('nome_tamanho') > 0
+            ? r.getDoubleValue('nome_tamanho')
+            : 18,
+        fonteFamilia: r.getStringValue('fonte_familia'),
+        fonteFicheiro: r.getStringValue('fonte_ficheiro'),
       );
 }

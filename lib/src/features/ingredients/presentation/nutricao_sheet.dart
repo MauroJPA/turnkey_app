@@ -81,8 +81,24 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
     _origem = 'insa';
     _atualizado = DateTime.now();
     setState(() => _sugestoesFechadas = true);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Preenchido de "${c.nome}" (INSA). Confirma.')),
+    _snack('Preenchido de "${c.nome}" (INSA). Confirma.');
+  }
+
+  /// Aviso curto, dispensável ao tocar (não bloqueia o "Guardar" por baixo).
+  void _snack(String texto, {Duration duration = const Duration(seconds: 3)}) {
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        duration: duration,
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 84),
+        content: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: messenger.hideCurrentSnackBar,
+          child: Text(texto),
+        ),
+      ),
     );
   }
 
@@ -151,9 +167,7 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
     _atualizado = DateTime.now();
     if (mounted) {
       setState(() => _sugestoesFechadas = true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Preenchido de "${r.nome}" (INSA). Confirma.')),
-      );
+      _snack('Preenchido de "${r.nome}" (INSA). Confirma.');
     }
   }
 
@@ -166,8 +180,17 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
     final f = picked?.files.single;
     if (f?.bytes == null || !mounted) return;
     setState(() => _busy = true);
-    final messenger = ScaffoldMessenger.of(context)
-      ..showSnackBar(const SnackBar(content: Text('A ler o rótulo…')));
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(SnackBar(
+      duration: const Duration(seconds: 30),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 84),
+      content: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: messenger.hideCurrentSnackBar,
+        child: const Text('A ler o rótulo…'),
+      ),
+    ));
     try {
       final atualizado = await ref
           .read(ingredientActionsProvider)
@@ -189,13 +212,11 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
       _temFoto = atualizado.temNutriFoto;
       _fotoNome = atualizado.nutriFoto;
       if (mounted) {
-        messenger.showSnackBar(const SnackBar(
-          content: Text('Rótulo lido. Confere os valores e guarda.'),
-        ));
+        _snack('Rótulo lido. Confere os valores e guarda.');
       }
     } on Object catch (e) {
       messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(SnackBar(content: Text('$e')));
+      if (mounted) _snack('$e');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -223,15 +244,10 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
           _temFoto = true;
           _fotoNome = atualizado.nutriFoto;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Foto da tabela nutricional anexada.')),
-        );
+        _snack('Foto da tabela nutricional anexada.');
       }
     } on Object catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
-      }
+      if (mounted) _snack('$e');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -245,10 +261,7 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
           .removerFotoNutri(widget.ingrediente.id);
       if (mounted) setState(() => _temFoto = false);
     } on Object catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
-      }
+      if (mounted) _snack('$e');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -269,7 +282,10 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
             style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: 4),
         if (_temFoto)
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(6),
@@ -286,7 +302,6 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
               TextButton(
                 onPressed: _busy ? null : _anexarFoto,
                 child: const Text('Substituir'),
@@ -308,6 +323,7 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
   }
 
   Future<void> _guardar() async {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     setState(() => _busy = true);
     try {
       await ref.read(ingredientActionsProvider).definirNutricao(
@@ -322,10 +338,7 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
           );
       if (mounted) Navigator.pop(context);
     } on Object catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
-      }
+      if (mounted) _snack('$e');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -528,9 +541,9 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
               crossAxisCount: 2,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 8,
+              mainAxisSpacing: 6,
               crossAxisSpacing: 8,
-              childAspectRatio: 3.4,
+              childAspectRatio: 5.2,
               children: [
                 _campo('Energia', _kcal, 'kcal'),
                 _campo('Lípidos', _lip, 'g'),

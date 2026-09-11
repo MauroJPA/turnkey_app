@@ -15,6 +15,7 @@ import '../../schedule/application/schedule_providers.dart';
 import '../../schedule/domain/production_plan.dart';
 import '../../settings/application/empresa_providers.dart';
 import '../../settings/data/empresa_repository.dart';
+import '../../settings/domain/empresa.dart';
 import '../../shopping/application/shopping_providers.dart';
 
 /// Ecrã inicial: painel com os números que precisam de atenção + atalhos.
@@ -76,29 +77,7 @@ class HomeShell extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 12,
-        title: Row(
-          children: [
-            if (logoUrl.isNotEmpty) ...[
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: Image.network(
-                  logoUrl,
-                  width: 28,
-                  height: 28,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                ),
-              ),
-              const SizedBox(width: 8),
-            ],
-            Flexible(
-              child: Text(
-                empresa?.nome ?? 'Turnkey',
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
+        title: _marcaAppBar(context, empresa, logoUrl),
         actions: [
           const HelpActions(topic: HelpTopic.dashboard),
           IconButton(
@@ -303,6 +282,77 @@ class _StatCard extends StatelessWidget {
     );
   }
 }
+
+/// Logótipo e/ou nome da marca na barra superior, com a posição, tamanho e
+/// visibilidade escolhidos em Configurações → Aparência.
+Widget _marcaAppBar(BuildContext context, Empresa? empresa, String logoUrl) {
+  final mostrarLogo = (empresa?.logoVisivel ?? true) && logoUrl.isNotEmpty;
+  final mostrarNome = empresa?.nomeVisivel ?? true;
+  final tamanhoLogo = empresa?.logoTamanho ?? 28;
+
+  final logo = !mostrarLogo
+      ? null
+      : ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: Image.network(
+            logoUrl,
+            width: tamanhoLogo,
+            height: tamanhoLogo,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          ),
+        );
+  final texto = !mostrarNome
+      ? null
+      : Text(
+          empresa?.nome ?? 'Turnkey',
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontSize: empresa?.nomeTamanho ?? 18,
+              ),
+        );
+  if (logo == null && texto == null) return const SizedBox.shrink();
+
+  final logoAlinh = empresa?.logoAlinhamento ?? Alinhamento.esquerda;
+  final nomeAlinh = empresa?.nomeAlinhamento ?? Alinhamento.esquerda;
+
+  // Mesma posição (ou só um dos dois visível) — ficam juntos numa linha.
+  if (logo == null || texto == null || logoAlinh == nomeAlinh) {
+    final conteudo = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (logo != null) logo,
+        if (logo != null && texto != null) const SizedBox(width: 8),
+        if (texto != null) Flexible(child: texto),
+      ],
+    );
+    return SizedBox(
+      width: double.infinity,
+      child: Align(
+        alignment: _alignFor(logo != null ? logoAlinh : nomeAlinh),
+        child: conteudo,
+      ),
+    );
+  }
+
+  // Posições diferentes — cada um fica na sua zona da barra.
+  return SizedBox(
+    width: double.infinity,
+    child: Stack(
+      alignment: Alignment.center,
+      children: [
+        Align(alignment: _alignFor(logoAlinh), child: logo),
+        Align(alignment: _alignFor(nomeAlinh), child: texto),
+      ],
+    ),
+  );
+}
+
+Alignment _alignFor(Alinhamento a) => switch (a) {
+      Alinhamento.esquerda => Alignment.centerLeft,
+      Alinhamento.centro => Alignment.center,
+      Alinhamento.direita => Alignment.centerRight,
+    };
 
 class _Section {
   const _Section(this.label, this.icon, this.descricao, this.route);

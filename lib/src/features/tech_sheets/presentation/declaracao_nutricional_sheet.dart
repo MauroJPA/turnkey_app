@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/nutrition/nutri_widgets.dart';
+import '../../../core/printing/print_html.dart';
 import '../../ingredients/application/ingredients_providers.dart';
 import '../../ingredients/presentation/nutricao_sheet.dart';
 import '../../recipes/application/recipes_providers.dart';
@@ -96,7 +97,23 @@ class _SheetState extends ConsumerState<_Sheet> {
                   child: Text('Declaração nutricional',
                       style: Theme.of(context).textTheme.titleLarge),
                 ),
-                if (!n.vazio)
+                if (!n.vazio) ...[
+                  IconButton(
+                    tooltip: 'Imprimir',
+                    icon: const Icon(Icons.print_outlined, size: 20),
+                    onPressed: () => abrirImpressao(
+                      'Declaração nutricional — ${ficha.nome}',
+                      declaracaoHtml(
+                        titulo: ficha.nome,
+                        por100g: n.por100g,
+                        porUnidade: porUnidade,
+                        pesoUnidadeG: n.pesoUnidadeG,
+                        alergenios: n.alergenios,
+                        alergeniosTracos: n.alergeniosTracos,
+                        completo: n.completo,
+                      ),
+                    ),
+                  ),
                   TextButton.icon(
                     icon: const Icon(Icons.copy, size: 18),
                     label: const Text('Copiar'),
@@ -107,6 +124,7 @@ class _SheetState extends ConsumerState<_Sheet> {
                       );
                     },
                   ),
+                ],
               ],
             ),
             Text(ficha.nome, style: Theme.of(context).textTheme.bodySmall),

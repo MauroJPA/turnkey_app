@@ -68,9 +68,14 @@ pb/
 | `1706659200_inventario_uso.js` | `inventario`: `favorito` (bool), `usos` (number), `ultimo_uso` (date). `usos`+`ultimo_uso` são incrementados por `cascade.js aplicarMovimento` (motivos `consumo_producao`/`saida_producao`) e por `inventario_uso.pb.js` (`onRecordAfterCreateSuccess` em `lista_compras`). `favorito` grava-se via `/api/turnkey/inventario/ajustar`. Vistas "Favoritos" e "Mais usados" no ecrã de Inventário. |
 | `1706745600_users_authalert_off.js` | desliga o email "Login from a new location" da coleção `users` (ERP interno; SMTP muitas vezes ausente). |
 | `1706832000_ingrediente_nutri_foto.js` | campo `nutri_foto` (file, thumb 0x240) em `ingredientes` — foto da tabela nutricional do rótulo. A lista de ingredientes distingue visualmente `Ingrediente.fonteNutri`: vazia / por rever (INSA) / INSA / à mão / à mão+foto. |
+| `1706918400_empresas_personalizacao.js` | `empresas`: `cor_secundaria`/`cor_fundo`/`cor_texto` (hex, opcionais — vazio = derivado automaticamente da cor de marca); `logo_oculto`/`logo_alinhamento`/`logo_tamanho` e `nome_oculto`/`nome_alinhamento`/`nome_tamanho` (posição/tamanho/visibilidade do logótipo e do nome na barra superior — bool guarda o "oculto", não o "visível", porque o valor por omissão de um campo bool é `false`); `fonte_familia` (text) + `fonte_ficheiro` (file, .ttf/.otf) para tipo de letra personalizado. |
 
-Aparência (tema, cor de marca `cor_marca`, logótipo `logo`) é **por empresa** —
-editada em Configurações → Aparência, aplica-se a toda a equipa.
+Aparência (tema, distribuição de cores, logótipo, nome da marca — posição/
+tamanho/visibilidade — e tipo de letra) é **por empresa** — editada em
+Configurações → Aparência, aplica-se a toda a equipa. O tipo de letra
+personalizado carrega-se em runtime no cliente via `dart:ui`'s
+`loadFontFromList` (sem pacote `google_fonts`, para não depender de internet
+no Mini PC); sem ficheiro enviado, usa-se a fonte do sistema.
 
 Hooks: `onboarding.pb.js` (semeia `configuracoes_custo` + `formatos_cookie`),
 `guards.pb.js`, `cost_cascade.pb.js`, `team.pb.js`, `inventario.pb.js`,
