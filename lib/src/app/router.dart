@@ -10,6 +10,7 @@ import '../features/cookie_formats/presentation/cookie_formats_screen.dart';
 import '../features/dashboard/presentation/home_shell.dart';
 import '../features/dashboard/presentation/main_shell.dart';
 import '../features/finance/presentation/custos_fixos_screen.dart';
+import '../features/finance/presentation/dre_screen.dart';
 import '../features/finance/presentation/painel_financeiro_screen.dart';
 import '../features/ingredients/presentation/ingredients_screen.dart';
 import '../features/inventory/presentation/inventory_screen.dart';
@@ -48,6 +49,7 @@ abstract class Routes {
   static const invoices = '/faturas';
   static const sales = '/vendas';
   static const painelFinanceiro = '/financeiro';
+  static const dre = '/financeiro/dre';
   static const custosFixos = '/financeiro/custos-fixos';
   static const embalagens = '/embalagens';
   static const settings = '/opcoes';
@@ -163,6 +165,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: Routes.painelFinanceiro,
             builder: (_, __) => const PainelFinanceiroScreen(),
+          ),
+          GoRoute(
+            path: Routes.dre,
+            builder: (_, __) => const DreScreen(),
           ),
           GoRoute(
             path: Routes.custosFixos,

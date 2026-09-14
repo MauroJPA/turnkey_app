@@ -35,7 +35,14 @@ class _PainelFinanceiroScreenState
           onPressed: () => context.go(Routes.home),
         ),
         title: const Text('Painel financeiro'),
-        actions: const [HelpActions(topic: HelpTopic.painelFinanceiro)],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.description_outlined),
+            tooltip: 'Ver DRE',
+            onPressed: () => context.push(Routes.dre),
+          ),
+          const HelpActions(topic: HelpTopic.painelFinanceiro),
+        ],
       ),
       body: Column(
         children: [

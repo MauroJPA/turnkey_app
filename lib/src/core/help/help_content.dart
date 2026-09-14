@@ -21,6 +21,7 @@ enum HelpTopic {
   vendas,
   custosFixos,
   painelFinanceiro,
+  dre,
   embalagens,
   formatos,
   configuracoes,
@@ -215,6 +216,14 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       '"Distribuição teórica" mostra, com as percentagens atuais de Configurações → Percentuais de custo, para onde o valor vendido deveria ir (matéria-prima, salário, aluguel...). É um modelo, não o dinheiro que saiu de verdade — isso são os Custos fixos, mostrados por cima.',
       'A seta ao lado de cada número compara com o período anterior de igual duração (ex.: esta semana vs. a semana passada).',
       'Se houver vendas sem produto identificado (ex.: de uma importação de CSV), o custo delas não é conhecido — aparece um aviso e o lucro fica sobrestimado nessa medida.',
+    ],
+  ),
+  HelpTopic.dre: (
+    titulo: 'DRE',
+    paragrafos: [
+      'DRE = Demonstração de Resultados do Exercício: o mesmo cálculo do painel financeiro, mas no formato de relatório clássico de contabilidade (receita → custo → lucro bruto → despesas → resultado).',
+      'Escolhe o período (esta semana, este mês, mês passado) e toca no ícone de impressão para abrir uma versão simples para imprimir ou guardar como PDF.',
+      'Se houver vendas sem produto identificado, o custo delas não entra no cálculo e aparece um aviso — o resultado fica sobrestimado nessa medida.',
     ],
   ),
   HelpTopic.embalagens: (
