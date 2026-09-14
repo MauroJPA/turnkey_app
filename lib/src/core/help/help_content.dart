@@ -19,6 +19,7 @@ enum HelpTopic {
   faturas,
   faturaRevisao,
   vendas,
+  custosFixos,
   embalagens,
   formatos,
   configuracoes,
@@ -194,6 +195,15 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Ícone de importar (canto superior): carrega um ficheiro .csv com colunas data, produto, quantidade, preço. Cada linha é ligada automaticamente à ficha técnica com o nome mais parecido; sem correspondência clara, fica só com a descrição (aparece com um aviso na venda).',
       'Define o "Preço de venda" de cada produto na sua Ficha Técnica — fica disponível como sugestão ao registar vendas e mostra a margem sobre o custo.',
       'Toca numa venda para ver as linhas e, se precisares, apagá-la.',
+    ],
+  ),
+  HelpTopic.custosFixos: (
+    titulo: 'Custos fixos',
+    paragrafos: [
+      'Regista aqui os custos reais que saem todos os meses: aluguel, salários, seguros, subscrições, etc.',
+      'Isto é diferente dos percentuais em Configurações → Percentuais de custo: aqueles só servem para sugerir o preço de venda a partir do custo de matéria-prima. Aqui é o valor real, para o painel financeiro e o DRE.',
+      '"Fixo" ou "Variável": marca se o custo é sempre o mesmo (aluguel) ou varia com o volume (ex.: comissões).',
+      'Arquivar mantém o histórico sem contar no total atual; só apagar remove por completo.',
     ],
   ),
   HelpTopic.embalagens: (

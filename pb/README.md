@@ -70,6 +70,7 @@ pb/
 | `1706832000_ingrediente_nutri_foto.js` | campo `nutri_foto` (file, thumb 0x240) em `ingredientes` — foto da tabela nutricional do rótulo. A lista de ingredientes distingue visualmente `Ingrediente.fonteNutri`: vazia / por rever (INSA) / INSA / à mão / à mão+foto. |
 | `1706918400_empresas_personalizacao.js` | `empresas`: `cor_secundaria`/`cor_fundo`/`cor_texto` (hex, opcionais — vazio = derivado automaticamente da cor de marca); `logo_oculto`/`logo_alinhamento`/`logo_tamanho` e `nome_oculto`/`nome_alinhamento`/`nome_tamanho` (posição/tamanho/visibilidade do logótipo e do nome na barra superior — bool guarda o "oculto", não o "visível", porque o valor por omissão de um campo bool é `false`); `fonte_familia` (text) + `fonte_ficheiro` (file, .ttf/.otf) para tipo de letra personalizado. |
 | `1707004800_vendas.js` | `fichas_tecnicas.preco_venda` (number — preço real definido pelo utilizador; até aqui só existia o preço *sugerido*, calculado ao vivo a partir de `configuracoes_custo`, nunca persistido). Coleções `vendas` (`data`, `origem`: manual/csv/vendus, `total` cache, `numero_documento`, `notas`) e `vendas_itens` (`venda`, `ficha` opcional, `descricao`, `quantidade`, `preco_unitario`, `total_linha` cache, `custo_unitario_snapshot`) — base do painel financeiro/DRE e da análise de sabores mais vendidos (Financeiro, F-FIN-1). `historico.entidade_tipo` ganha o valor `venda`. |
+| `1707091200_custos_fixos.js` | Coleção `custos_fixos` (Financeiro, F-FIN-2) — custos reais e recorrentes (aluguel, salários…) em valor mensal, `tipo` fixo/variável, `arquivado` (guarda o "arquivado", não o "ativo", pelo mesmo motivo do `logo_oculto`). Diferente dos percentuais de `configuracoes_custo`, que só sugerem o preço de venda. |
 
 Aparência (tema, distribuição de cores, logótipo, nome da marca — posição/
 tamanho/visibilidade — e tipo de letra) é **por empresa** — editada em
@@ -205,3 +206,9 @@ Todas as coleções de negócio:
 | list / view | `@request.auth.id != "" && empresa = @request.auth.empresa` |
 | create | `@request.auth.id != "" && @request.body.empresa = @request.auth.empresa` |
 | update / delete | `@request.auth.id != "" && empresa = @request.auth.empresa` + (M6) papel |
+
+⚠️ **`~`/`!~` são LIKE (substring), não regex.** `papel ~ 'owner|admin'`
+**nunca** dá verdade (o pipe é procurado literalmente). Para "papel é X ou Y",
+usar sempre o OR explícito: `(@request.auth.papel = 'owner' || @request.auth.papel = 'admin')`.
+Já apanhado duas vezes — `1704672000_fix_config_rule.js` (`configuracoes_custo`)
+e `1707091200_custos_fixos.js` (`custos_fixos`, corrigido antes de aplicar).

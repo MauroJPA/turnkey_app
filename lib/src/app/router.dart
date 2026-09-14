@@ -9,6 +9,7 @@ import '../features/auth/presentation/onboarding_screen.dart';
 import '../features/cookie_formats/presentation/cookie_formats_screen.dart';
 import '../features/dashboard/presentation/home_shell.dart';
 import '../features/dashboard/presentation/main_shell.dart';
+import '../features/finance/presentation/custos_fixos_screen.dart';
 import '../features/ingredients/presentation/ingredients_screen.dart';
 import '../features/inventory/presentation/inventory_screen.dart';
 import '../features/invoices/presentation/invoice_review_screen.dart';
@@ -45,6 +46,7 @@ abstract class Routes {
   static const inventory = '/inventario';
   static const invoices = '/faturas';
   static const sales = '/vendas';
+  static const custosFixos = '/financeiro/custos-fixos';
   static const embalagens = '/embalagens';
   static const settings = '/opcoes';
   static const team = '/opcoes/equipa';
@@ -155,6 +157,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                 ),
               ),
             ],
+          ),
+          GoRoute(
+            path: Routes.custosFixos,
+            builder: (_, __) => const CustosFixosScreen(),
           ),
           GoRoute(
             path: Routes.embalagens,
