@@ -104,6 +104,7 @@ VendaCsvParseResult parseVendasCsv(String content, List<FichaTecnica> fichas) {
         descricao: produto,
         quantidade: quantidade,
         precoUnitario: preco,
+        custoUnitarioSnapshot: ficha?.custoProduto ?? 0,
       ),
     );
   }

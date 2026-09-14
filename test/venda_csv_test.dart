@@ -2,12 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:turnkey_app/src/features/sales/domain/venda_csv.dart';
 import 'package:turnkey_app/src/features/tech_sheets/domain/tech_sheet.dart';
 
-FichaTecnica _ficha(String id, String nome) =>
-    FichaTecnica(id: id, nome: nome);
+FichaTecnica _ficha(String id, String nome, {double custoProduto = 0}) =>
+    FichaTecnica(id: id, nome: nome, custoProduto: custoProduto);
 
 void main() {
   final fichas = [
-    _ficha('f1', 'Cookie de Chocolate'),
+    _ficha('f1', 'Cookie de Chocolate', custoProduto: 1.2),
     _ficha('f2', 'Cookie de Baunilha'),
     _ficha('f3', 'Brownie'),
   ];
@@ -27,6 +27,7 @@ data,produto,quantidade,preco_unitario
     expect(dia1.data, DateTime(2026, 9, 1));
     expect(dia1.itens.length, 2);
     expect(dia1.itens[0].fichaId, 'f1');
+    expect(dia1.itens[0].custoUnitarioSnapshot, 1.2);
     expect(dia1.itens[1].fichaId, 'f3');
     expect(dia1.total, closeTo(3 * 2.50 + 1 * 3.00, 0.001));
 
@@ -54,6 +55,7 @@ data,produto,quantidade,preco_unitario
     final item = r.grupos.single.itens.single;
     expect(item.fichaId, isNull);
     expect(item.descricao, 'Batido de morango');
+    expect(item.custoUnitarioSnapshot, 0);
     expect(r.totalNaoIdentificados, 1);
   });
 
