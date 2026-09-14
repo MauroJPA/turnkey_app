@@ -89,6 +89,11 @@ class SalesScreen extends ConsumerWidget {
           '${r.duplicadasIgnoradas} já importada(s) (ignoradas)',
         if (r.itensSemFicha > 0)
           '${r.itensSemFicha} linha(s) sem produto identificado',
+        if (r.vendasCriadas == 0 &&
+            r.duplicadasIgnoradas == 0 &&
+            r.totalDocumentosRecebidos > 0)
+          '(recebi ${r.totalDocumentosRecebidos} documento(s) do Vendus, '
+              'mas nenhum era do tipo esperado — contacta-me com este número)',
       ];
       messenger.showSnackBar(SnackBar(content: Text(partes.join(' · '))));
     } on Object catch (e) {

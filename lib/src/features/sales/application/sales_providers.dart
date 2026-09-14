@@ -59,6 +59,7 @@ class SalesActions {
         int duplicadasIgnoradas,
         int itensCriados,
         int itensSemFicha,
+        int totalDocumentosRecebidos,
       })> sincronizarVendus() async {
     final r = await _ref.read(salesRepositoryProvider).sincronizarVendus();
     _refresh();

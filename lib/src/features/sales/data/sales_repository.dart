@@ -111,6 +111,7 @@ class SalesRepository {
         int duplicadasIgnoradas,
         int itensCriados,
         int itensSemFicha,
+        int totalDocumentosRecebidos,
       })> sincronizarVendus() async {
     final res =
         await _pb.send('/api/turnkey/vendus/sincronizar', method: 'POST');
@@ -120,6 +121,8 @@ class SalesRepository {
       duplicadasIgnoradas: (m['duplicadasIgnoradas'] as num?)?.toInt() ?? 0,
       itensCriados: (m['itensCriados'] as num?)?.toInt() ?? 0,
       itensSemFicha: (m['itensSemFicha'] as num?)?.toInt() ?? 0,
+      totalDocumentosRecebidos:
+          (m['totalDocumentosRecebidos'] as num?)?.toInt() ?? 0,
     );
   }
 }

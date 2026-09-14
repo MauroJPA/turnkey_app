@@ -9,8 +9,9 @@
 //
 // API do Vendus: https://www.vendus.pt/ws/v1.1/documents.doc (auth por
 // parâmetro `api_key` com a API KEY gerada em Apps → API na conta Vendus).
-// Só documentos de venda reais (FT/FS/FR/FG) e não cancelados (status=N) —
-// orçamentos, guias e notas de crédito ficam de fora por agora.
+// Documentos não cancelados (status=N) que não sejam orçamentos/guias/
+// encomendas/notas de crédito ou débito (ver TIPOS_NAO_VENDA) — o resto
+// conta como venda real (FT, FS, FR, FG, VD, ...).
 //
 // Processa página a página (em vez de ir buscar tudo antes de gravar nada):
 // se uma sincronização grande falhar/expirar a meio, o que já foi
@@ -23,7 +24,25 @@
 // `{"code":"A001","message":"Tipo de documento inválido."}` para esse
 // formato — por isso filtra-se aqui, depois de receber os documentos, em
 // vez de depender do parâmetro `type` do pedido.
-var TIPOS_VENDA = { FT: true, FS: true, FR: true, FG: true };
+//
+// Em vez de uma lista fechada de tipos "de venda" (arriscado — faltou "VD",
+// Venda a Dinheiro, num teste real; pode haver outros tipos válidos que
+// desconhecemos), excluem-se só os tipos claramente NÃO são vendas
+// (orçamentos, guias, encomendas, pró-forma, consulta de mesa). Notas de
+// crédito/débito (NC/ND) também ficam de fora por agora — precisariam de
+// tratamento especial (valor negativo) que ainda não existe aqui.
+var TIPOS_NAO_VENDA = {
+  OT: true, // Orçamento
+  EC: true, // Encomenda
+  PF: true, // Fatura Pró-Forma
+  DC: true, // Consulta de Mesa
+  GA: true, // Guia de Ativos Próprios
+  GD: true, // Guia de Devolução
+  GR: true, // Guia de Remessa
+  GT: true, // Guia de Transporte
+  NC: true, // Nota de Crédito
+  ND: true, // Nota de Débito
+};
 
 // Mensagem de erro mais útil do que "HTTP 400" — o Vendus normalmente devolve
 // um corpo com o motivo (ex.: parâmetro inválido, chave sem permissões).
@@ -78,9 +97,7 @@ function buscarPagina(apiKey, opts) {
 
   var lote = resp.json;
   if (!Array.isArray(lote)) lote = [];
-  return lote.filter(function (d) {
-    return !!TIPOS_VENDA[d.type];
-  });
+  return lote;
 }
 
 // --- emparelhamento por nome (mesma lógica de match_ficha.dart) ---------
@@ -247,6 +264,8 @@ function sincronizarEmpresa(app, empresaId, opts) {
   var duplicadasIgnoradas = 0;
   var itensCriados = 0;
   var itensSemFicha = 0;
+  var totalRecebidos = 0;
+  var tiposVistos = {};
   var maisRecente = since;
   var perPage = 100;
   var page = 1;
@@ -277,11 +296,18 @@ function sincronizarEmpresa(app, empresaId, opts) {
           (vendasCriadas > 0
             ? ' (' + vendasCriadas + ' venda(s) já importada(s) antes deste erro — a próxima sincronização continua a partir daí.)'
             : ''),
+        totalDocumentosRecebidos: totalRecebidos,
+        tiposDocumentosVistos: tiposVistos,
       };
     }
 
     for (var i = 0; i < pagina.length; i++) {
       var doc = pagina[i];
+      totalRecebidos++;
+      var tipoChave = doc.type || '(sem tipo)';
+      tiposVistos[tipoChave] = (tiposVistos[tipoChave] || 0) + 1;
+      if (TIPOS_NAO_VENDA[doc.type]) continue;
+
       var vendusId = String(doc.id != null ? doc.id : '');
       if (!vendusId) continue;
 
@@ -318,6 +344,8 @@ function sincronizarEmpresa(app, empresaId, opts) {
     duplicadasIgnoradas: duplicadasIgnoradas,
     itensCriados: itensCriados,
     itensSemFicha: itensSemFicha,
+    totalDocumentosRecebidos: totalRecebidos,
+    tiposDocumentosVistos: tiposVistos,
   };
 }
 
