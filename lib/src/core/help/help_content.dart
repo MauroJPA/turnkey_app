@@ -18,6 +18,7 @@ enum HelpTopic {
   inventario,
   faturas,
   faturaRevisao,
+  vendas,
   embalagens,
   formatos,
   configuracoes,
@@ -183,6 +184,16 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Ação por linha: Preço (só atualiza o preço), Stock (só dá entrada), Preço + Stock, ou Ignorar.',
       'O preço só muda se esta fatura for igual ou mais recente do que a última atualização de preço desse ingrediente. Se carregares uma fatura antiga, a entrada de stock é feita à mesma, mas o preço mantém-se (fica sempre o do documento mais recente).',
       '"Aplicar aos ingredientes" grava tudo: os preços recalculam os custos das receitas e fichas em cascata.',
+    ],
+  ),
+  HelpTopic.vendas: (
+    titulo: 'Vendas',
+    paragrafos: [
+      'Regista aqui o que foi vendido — a base do painel financeiro, do DRE e da análise de sabores mais vendidos.',
+      '"Registar venda": escolhe a data e adiciona linhas — um produto (ficha técnica, com o preço já sugerido) ou um item livre (texto), quantidade e preço.',
+      'Ícone de importar (canto superior): carrega um ficheiro .csv com colunas data, produto, quantidade, preço. Cada linha é ligada automaticamente à ficha técnica com o nome mais parecido; sem correspondência clara, fica só com a descrição (aparece com um aviso na venda).',
+      'Define o "Preço de venda" de cada produto na sua Ficha Técnica — fica disponível como sugestão ao registar vendas e mostra a margem sobre o custo.',
+      'Toca numa venda para ver as linhas e, se precisares, apagá-la.',
     ],
   ),
   HelpTopic.embalagens: (

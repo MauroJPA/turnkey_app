@@ -54,6 +54,7 @@ class FichaTecnica with _$FichaTecnica {
     @Default('') String categoria,
     @Default(0) double custoProduto,
     @Default(0) double pesoProduto,
+    @Default(0) double precoVenda,
     @Default(false) bool deletado,
     @Default(<String, dynamic>{}) Map<String, dynamic> nutriRaw,
   }) = _FichaTecnica;
@@ -64,6 +65,12 @@ class FichaTecnica with _$FichaTecnica {
   /// unidade) e alergénios agregados — ver `NutriCache`.
   NutriCache get nutri => NutriCache.fromJson(nutriRaw);
 
+  bool get temPrecoVenda => precoVenda > 0;
+
+  /// Margem de lucro sobre o preço de venda (0 se não houver preço definido).
+  double get margemPercent =>
+      temPrecoVenda ? (1 - custoProduto / precoVenda) * 100 : 0;
+
   factory FichaTecnica.fromRecord(RecordModel r) {
     final rawNutri = r.data['nutri'];
     return FichaTecnica(
@@ -72,6 +79,7 @@ class FichaTecnica with _$FichaTecnica {
       categoria: r.getStringValue('categoria'),
       custoProduto: r.getDoubleValue('custo_produto'),
       pesoProduto: r.getDoubleValue('peso_produto'),
+      precoVenda: r.getDoubleValue('preco_venda'),
       deletado: r.getBoolValue('deletado'),
       nutriRaw: rawNutri is Map
           ? Map<String, dynamic>.from(rawNutri)

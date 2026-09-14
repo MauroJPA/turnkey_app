@@ -19,6 +19,8 @@ import '../features/production/presentation/cart_review_screen.dart';
 import '../features/production/presentation/production_screen.dart';
 import '../features/recipes/presentation/recipe_detail_screen.dart';
 import '../features/recipes/presentation/recipes_screen.dart';
+import '../features/sales/presentation/sales_screen.dart';
+import '../features/sales/presentation/venda_detail_screen.dart';
 import '../features/schedule/presentation/plan_detail_screen.dart';
 import '../features/schedule/presentation/schedule_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
@@ -42,6 +44,7 @@ abstract class Routes {
   static const shopping = '/compras';
   static const inventory = '/inventario';
   static const invoices = '/faturas';
+  static const sales = '/vendas';
   static const embalagens = '/embalagens';
   static const settings = '/opcoes';
   static const team = '/opcoes/equipa';
@@ -137,6 +140,18 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: ':id',
                 builder: (_, state) => InvoiceReviewScreen(
                   faturaId: state.pathParameters['id']!,
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: Routes.sales,
+            builder: (_, __) => const SalesScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                builder: (_, state) => VendaDetailScreen(
+                  vendaId: state.pathParameters['id']!,
                 ),
               ),
             ],

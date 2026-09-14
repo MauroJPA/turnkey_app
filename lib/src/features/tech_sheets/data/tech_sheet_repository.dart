@@ -42,6 +42,9 @@ class TechSheetRepository {
   Future<void> setDeleted(String id, {required bool deletado}) =>
       _c.update(id, body: {'deletado': deletado});
 
+  Future<void> setPrecoVenda(String id, double valor) =>
+      _c.update(id, body: {'preco_venda': valor});
+
   Future<void> hardDelete(String id) => _c.delete(id);
 
   Future<FichaTecnica> duplicate(String id) async {

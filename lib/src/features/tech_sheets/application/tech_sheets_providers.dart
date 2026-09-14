@@ -77,6 +77,11 @@ class FichaActions {
     _refreshLists();
   }
 
+  Future<void> setPrecoVenda(String id, double valor) async {
+    await _repo.setPrecoVenda(id, valor);
+    _refreshDetail(id);
+  }
+
   Future<void> deleteForever(String id) async {
     await _repo.hardDelete(id);
     _refreshLists();

@@ -111,6 +111,43 @@ class _TechSheetDetailScreenState
     );
   }
 
+  Future<void> _editarPreco(FichaTecnica ficha) async {
+    final ctrl = TextEditingController(
+      text: ficha.precoVenda > 0 ? ficha.precoVenda.toStringAsFixed(2) : '',
+    );
+    final novo = await showDialog<double>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Preço de venda'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(labelText: 'Preço', prefixText: '€ '),
+          onSubmitted: (_) => Navigator.pop(
+              ctx, double.tryParse(ctrl.text.replaceAll(',', '.'))),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(
+                ctx, double.tryParse(ctrl.text.replaceAll(',', '.'))),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+    if (novo == null || novo == ficha.precoVenda) return;
+    await _run(
+      () => ref
+          .read(fichaActionsProvider)
+          .setPrecoVenda(widget.fichaId, novo < 0 ? 0 : novo),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final detailAsync = ref.watch(fichaDetailProvider(widget.fichaId));
@@ -184,7 +221,13 @@ class _TechSheetDetailScreenState
           return ListView(
           children: [
             if (_busy) const LinearProgressIndicator(),
-            _Header(detail: d, config: config, fmt: fmt),
+            _Header(
+              detail: d,
+              config: config,
+              fmt: fmt,
+              podeEditar: _podeEditar,
+              onEditarPreco: _busy ? null : () => _editarPreco(d.ficha),
+            ),
             const Divider(height: 1),
             for (final slot in SlotFicha.values)
               _SlotSection(
@@ -213,10 +256,18 @@ class _TechSheetDetailScreenState
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.detail, required this.fmt, this.config});
+  const _Header({
+    required this.detail,
+    required this.fmt,
+    required this.podeEditar,
+    this.config,
+    this.onEditarPreco,
+  });
   final FichaDetail detail;
   final MoneyFmt fmt;
   final CostConfig? config;
+  final bool podeEditar;
+  final VoidCallback? onEditarPreco;
 
   @override
   Widget build(BuildContext context) {
@@ -235,7 +286,8 @@ class _Header extends StatelessWidget {
           ],
         );
 
-    final preco = config?.precoSugerido(detail.custoPreview);
+    final ficha = detail.ficha;
+    final sugerido = config?.precoSugerido(detail.custoPreview);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 14),
       child: Row(
@@ -243,12 +295,52 @@ class _Header extends StatelessWidget {
         children: [
           cell('Peso', '${detail.pesoTotal.toStringAsFixed(0)} g'),
           cell('Custo', fmt(detail.custoPreview)),
-          if (preco != null)
+          if (sugerido != null && !ficha.temPrecoVenda)
             cell(
               'Preço sugerido',
-              fmt(preco),
+              fmt(sugerido),
               color: Theme.of(context).colorScheme.primary,
             ),
+          InkWell(
+            onTap: podeEditar ? onEditarPreco : null,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Preço de venda',
+                          style: Theme.of(context).textTheme.bodySmall),
+                      if (podeEditar) ...[
+                        const SizedBox(width: 2),
+                        Icon(Icons.edit,
+                            size: 12,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    ficha.temPrecoVenda ? fmt(ficha.precoVenda) : 'Definir',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: ficha.temPrecoVenda
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                  if (ficha.temPrecoVenda)
+                    Text(
+                      'margem ${ficha.margemPercent.toStringAsFixed(0)}%',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
