@@ -7,23 +7,45 @@
 //     -> { ok:true, vendasCriadas, duplicadasIgnoradas, itensCriados, itensSemFicha }
 //     -> { ok:false, code, message }   (503 sem chave; 502 erro do Vendus)
 //
-// API do Vendus: https://www.vendus.pt/ws/v1.1/documents.doc (auth Bearer com
-// a API KEY gerada em Apps → API na conta Vendus). Só documentos de venda
-// reais (FT/FS/FR/FG) e não cancelados (status=N) — orçamentos, guias e notas
-// de crédito ficam de fora por agora.
+// API do Vendus: https://www.vendus.pt/ws/v1.1/documents.doc (auth por
+// parâmetro `api_key` com a API KEY gerada em Apps → API na conta Vendus).
+// Só documentos de venda reais (FT/FS/FR/FG) e não cancelados (status=N) —
+// orçamentos, guias e notas de crédito ficam de fora por agora.
 
 var TIPOS_VENDA = 'FT,FS,FR,FG';
+
+// Mensagem de erro mais útil do que "HTTP 400" — o Vendus normalmente devolve
+// um corpo com o motivo (ex.: parâmetro inválido, chave sem permissões).
+function mensagemErroVendus(resp) {
+  try {
+    if (resp.json && typeof resp.json === 'object') {
+      if (resp.json.message) return String(resp.json.message);
+      if (resp.json.error) {
+        return typeof resp.json.error === 'string'
+          ? resp.json.error
+          : JSON.stringify(resp.json.error);
+      }
+      return JSON.stringify(resp.json);
+    }
+  } catch (_) {}
+  return String(resp.raw || '').substring(0, 300);
+}
 
 function buscarDocumentos(apiKey, opts) {
   var since = (opts && opts.since) || '';
   var until = (opts && opts.until) || '';
   var page = 1;
-  var perPage = 200;
+  var perPage = 100;
   var todos = [];
 
   for (;;) {
+    // Autenticação por parâmetro (em vez de cabeçalho Bearer/Basic) — é o
+    // método mais simples e sem ambiguidade de formato; os três métodos são
+    // equivalentes segundo a documentação do Vendus.
     var url =
-      'https://www.vendus.pt/ws/v1.1/documents/?type=' +
+      'https://www.vendus.pt/ws/v1.1/documents/?api_key=' +
+      encodeURIComponent(apiKey) +
+      '&type=' +
       TIPOS_VENDA +
       '&status=N&per_page=' +
       perPage +
@@ -34,17 +56,17 @@ function buscarDocumentos(apiKey, opts) {
 
     var resp;
     try {
-      resp = $http.send({
-        url: url,
-        method: 'GET',
-        headers: { Authorization: 'Bearer ' + apiKey },
-        timeout: 60,
-      });
+      resp = $http.send({ url: url, method: 'GET', timeout: 60 });
     } catch (err) {
       throw new Error('Falha de rede ao contactar o Vendus: ' + err);
     }
     if (resp.statusCode < 200 || resp.statusCode >= 300) {
-      throw new Error('Vendus respondeu com o erro HTTP ' + resp.statusCode);
+      throw new Error(
+        'Vendus respondeu com o erro HTTP ' +
+          resp.statusCode +
+          ': ' +
+          mensagemErroVendus(resp),
+      );
     }
 
     var lote = resp.json;
