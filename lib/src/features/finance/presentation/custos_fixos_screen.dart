@@ -10,6 +10,8 @@ import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../import_csv/domain/import_result.dart';
+import '../application/custos_fixos_import_service.dart';
 import '../application/custos_fixos_providers.dart';
 import '../domain/custo_fixo.dart';
 import 'custo_fixo_form_sheet.dart';
@@ -46,6 +48,40 @@ class _CustosFixosScreenState extends ConsumerState<CustosFixosScreen> {
     }
   }
 
+  Future<void> _importarCsv() async {
+    try {
+      final resultado =
+          await ref.read(custosFixosImportServiceProvider).pickAndImport();
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Importação de custos'),
+          content: Text(
+            resultado.semErros
+                ? resultado.resumo
+                : '${resultado.resumo}\n\n'
+                    '${resultado.erros.take(10).join('\n')}'
+                    '${resultado.erros.length > 10 ? '\n…' : ''}',
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Ok'),
+            ),
+          ],
+        ),
+      );
+    } on ImportCancelled {
+      // nada escolhido — ignora
+    } on Object catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$e')));
+      }
+    }
+  }
+
   Future<void> _apagar(CustoFixo c) async {
     final ok = await confirmDialog(
       context,
@@ -72,6 +108,22 @@ class _CustosFixosScreenState extends ConsumerState<CustosFixosScreen> {
         ),
         title: const Text('Custos fixos'),
         actions: [
+          IconButton(
+            tooltip: 'Equipamentos (depreciação)',
+            icon: const Icon(Icons.kitchen_outlined),
+            onPressed: () => context.push(Routes.equipamentos),
+          ),
+          IconButton(
+            tooltip: 'Números mágicos',
+            icon: const Icon(Icons.calculate_outlined),
+            onPressed: () => context.push(Routes.numerosMagicos),
+          ),
+          if (podeEditar)
+            IconButton(
+              tooltip: 'Importar CSV',
+              icon: const Icon(Icons.upload_file_outlined),
+              onPressed: _importarCsv,
+            ),
           const HelpActions(topic: HelpTopic.custosFixos),
           IconButton(
             tooltip: _arquivados ? 'Ocultar arquivados' : 'Ver arquivados',
@@ -139,7 +191,9 @@ class _CustosFixosScreenState extends ConsumerState<CustosFixosScreen> {
                   ),
                   title: Text(c.nome),
                   subtitle: Text(
-                    '${c.tipo.label}${c.notas.isNotEmpty ? ' · ${c.notas}' : ''}',
+                    '${c.tipo.label}'
+                    '${c.diaPagamento != null ? ' · paga dia ${c.diaPagamento}' : ''}'
+                    '${c.notas.isNotEmpty ? ' · ${c.notas}' : ''}',
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,

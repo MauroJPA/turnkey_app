@@ -12,6 +12,8 @@ import '../features/dashboard/presentation/main_shell.dart';
 import '../features/finance/presentation/analise_vendas_screen.dart';
 import '../features/finance/presentation/custos_fixos_screen.dart';
 import '../features/finance/presentation/dre_screen.dart';
+import '../features/finance/presentation/equipamentos_screen.dart';
+import '../features/finance/presentation/numeros_magicos_screen.dart';
 import '../features/finance/presentation/painel_financeiro_screen.dart';
 import '../features/ingredients/presentation/ingredients_screen.dart';
 import '../features/inventory/presentation/inventory_screen.dart';
@@ -53,6 +55,8 @@ abstract class Routes {
   static const painelFinanceiro = '/financeiro';
   static const dre = '/financeiro/dre';
   static const custosFixos = '/financeiro/custos-fixos';
+  static const equipamentos = '/financeiro/equipamentos';
+  static const numerosMagicos = '/financeiro/numeros-magicos';
   static const embalagens = '/embalagens';
   static const settings = '/opcoes';
   static const team = '/opcoes/equipa';
@@ -179,6 +183,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: Routes.custosFixos,
             builder: (_, __) => const CustosFixosScreen(),
+          ),
+          GoRoute(
+            path: Routes.equipamentos,
+            builder: (_, __) => const EquipamentosScreen(),
+          ),
+          GoRoute(
+            path: Routes.numerosMagicos,
+            builder: (_, __) => const NumerosMagicosScreen(),
           ),
           GoRoute(
             path: Routes.embalagens,

@@ -9,6 +9,7 @@ class ResumoFinanceiro {
     required this.custoProdutos,
     required this.custosFixos,
     required this.custosVariaveis,
+    this.depreciacaoMensal = 0,
     required this.numVendas,
     required this.numLinhasSemFicha,
     required this.quebra,
@@ -28,6 +29,10 @@ class ResumoFinanceiro {
   /// Custos variáveis ativos (`custos_fixos.tipo = variavel`), idem.
   final double custosVariaveis;
 
+  /// Depreciação mensal dos equipamentos (`custo / vida útil`), prorateada
+  /// para a duração do período, tal como [custosFixos]/[custosVariaveis].
+  final double depreciacaoMensal;
+
   final int numVendas;
 
   /// Linhas de venda sem ficha técnica associada — o seu custo não entra em
@@ -42,7 +47,8 @@ class ResumoFinanceiro {
   final Map<String, double> quebra;
 
   double get lucroBruto => receita - custoProdutos;
-  double get despesasOperacionais => custosFixos + custosVariaveis;
+  double get despesasOperacionais =>
+      custosFixos + custosVariaveis + depreciacaoMensal;
   double get lucroLiquido => receita - custoProdutos - despesasOperacionais;
 
   double get margemLiquidaPercent =>

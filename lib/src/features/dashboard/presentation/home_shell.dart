@@ -8,6 +8,7 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../finance/application/custos_fixos_providers.dart';
 import '../../inventory/application/inventory_providers.dart';
 import '../../invoices/application/invoice_providers.dart';
 import '../../invoices/domain/fatura.dart';
@@ -37,6 +38,10 @@ class HomeShell extends ConsumerWidget {
         'Entradas, saídas e lucro por semana/mês', Routes.painelFinanceiro),
     _Section('Custos fixos', Icons.request_quote_outlined,
         'Aluguel, salários e outras despesas mensais', Routes.custosFixos),
+    _Section('Equipamentos', Icons.kitchen_outlined,
+        'Custo e depreciação mensal', Routes.equipamentos),
+    _Section('Números mágicos', Icons.calculate_outlined,
+        'Venda mínima para cobrir tudo', Routes.numerosMagicos),
     _Section('Embalagens', Icons.inventory_2_outlined,
         'Caixas, sacos, adesivos e o seu custo', Routes.embalagens),
     _Section('Formatos de cookie', Icons.cookie_outlined,
@@ -79,6 +84,14 @@ class HomeShell extends ConsumerWidget {
     final porComprar = compras?.where((c) => !c.comprado).toList();
     final valorFalta =
         porComprar?.fold<double>(0, (s, c) => s + c.custoEstimado);
+
+    final custosFixos = ref.watch(custosFixosListProvider(false)).valueOrNull;
+    final pagamentosProximos = custosFixos
+        ?.where((c) => c.diaPagamento != null)
+        .map((c) => (custo: c, dias: _diasAtePagamento(c.diaPagamento!, hoje)))
+        .where((p) => p.dias <= 7)
+        .toList()
+      ?..sort((a, b) => a.dias.compareTo(b.dias));
 
     return Scaffold(
       appBar: AppBar(
@@ -164,6 +177,18 @@ class HomeShell extends ConsumerWidget {
               subtitulo: 'confirma os dados lidos pela IA',
               destaque: true,
               onTap: () => context.go(Routes.invoices),
+            ),
+          if ((pagamentosProximos?.length ?? 0) > 0)
+            _StatCard(
+              icon: Icons.event_available_outlined,
+              titulo: 'Pagamentos por vir',
+              valor: '${pagamentosProximos!.length}',
+              subtitulo: pagamentosProximos
+                  .take(3)
+                  .map((p) => '${p.custo.nome} (${p.dias == 0 ? 'hoje' : 'em ${p.dias}d'})')
+                  .join(', '),
+              destaque: pagamentosProximos.any((p) => p.dias <= 2),
+              onTap: () => context.go(Routes.custosFixos),
             ),
           const SizedBox(height: 8),
           Padding(
@@ -352,6 +377,17 @@ Widget _marcaAppBar(BuildContext context, Empresa? empresa, String logoUrl) {
       ],
     ),
   );
+}
+
+/// Dias até ao próximo dia [diaPagamento] deste mês (ou do mês seguinte, se
+/// já tiver passado neste). `0` = hoje.
+int _diasAtePagamento(int diaPagamento, DateTime hoje) {
+  final hojeSoData = DateTime(hoje.year, hoje.month, hoje.day);
+  var proximo = DateTime(hoje.year, hoje.month, diaPagamento);
+  if (proximo.isBefore(hojeSoData)) {
+    proximo = DateTime(hoje.year, hoje.month + 1, diaPagamento);
+  }
+  return proximo.difference(hojeSoData).inDays;
 }
 
 Alignment _alignFor(Alinhamento a) => switch (a) {

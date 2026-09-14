@@ -106,6 +106,10 @@ class _DreScreenState extends ConsumerState<DreScreen> {
                     indent: true),
                 _linha(context, 'Custos variáveis', fmt(r.custosVariaveis),
                     indent: true),
+                if (r.depreciacaoMensal > 0)
+                  _linha(context, 'Depreciação de equipamentos',
+                      fmt(r.depreciacaoMensal),
+                      indent: true),
                 _linha(context, 'Total despesas operacionais',
                     fmt(r.despesasOperacionais)),
                 const Divider(height: 20),
@@ -169,6 +173,7 @@ ${linha('(-) Custo dos produtos vendidos', fmt(r.custoProdutos))}
 ${linha('(=) Lucro bruto', fmt(r.lucroBruto))}
 ${linha('Custos fixos', fmt(r.custosFixos), indent: true)}
 ${linha('Custos variáveis', fmt(r.custosVariaveis), indent: true)}
+${r.depreciacaoMensal > 0 ? linha('Depreciação de equipamentos', fmt(r.depreciacaoMensal), indent: true) : ''}
 ${linha('Total despesas operacionais', fmt(r.despesasOperacionais))}
 ${linha('(=) Resultado líquido do período', fmt(r.lucroLiquido))}
 ${linha('Margem líquida', '${r.margemLiquidaPercent.toStringAsFixed(1)}%')}

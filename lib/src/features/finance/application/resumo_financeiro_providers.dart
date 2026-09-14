@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../pricing/data/cost_config_repository.dart';
 import '../../sales/data/sales_repository.dart';
 import '../data/custos_fixos_repository.dart';
+import '../data/equipamentos_repository.dart';
 import '../domain/custo_fixo.dart';
 import '../domain/periodo.dart';
 import '../domain/resumo_financeiro.dart';
@@ -10,6 +11,7 @@ import '../domain/resumo_financeiro.dart';
 Future<ResumoFinanceiro> _calcular(Ref ref, Periodo periodo) async {
   final sales = ref.watch(salesRepositoryProvider);
   final custosFixosRepo = ref.watch(custosFixosRepositoryProvider);
+  final equipamentosRepo = ref.watch(equipamentosRepositoryProvider);
   final costConfig = await ref.watch(costConfigProvider.future);
 
   final resultado = await sales.periodo(desde: periodo.desde, ate: periodo.ate);
@@ -35,6 +37,7 @@ Future<ResumoFinanceiro> _calcular(Ref ref, Periodo periodo) async {
       await custosFixosRepo.totalMensal(tipo: TipoCusto.fixo) * fator;
   final custosVariaveis =
       await custosFixosRepo.totalMensal(tipo: TipoCusto.variavel) * fator;
+  final depreciacaoMensal = await equipamentosRepo.totalMensal() * fator;
 
   return ResumoFinanceiro(
     periodo: periodo,
@@ -42,6 +45,7 @@ Future<ResumoFinanceiro> _calcular(Ref ref, Periodo periodo) async {
     custoProdutos: custoProdutos,
     custosFixos: custosFixos,
     custosVariaveis: custosVariaveis,
+    depreciacaoMensal: depreciacaoMensal,
     numVendas: resultado.vendas.length,
     numLinhasSemFicha: semFicha,
     quebra: quebra,

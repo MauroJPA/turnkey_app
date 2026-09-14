@@ -28,6 +28,7 @@ class CustoFixo {
     this.valorMensal = 0,
     this.arquivado = false,
     this.notas = '',
+    this.diaPagamento,
   });
 
   final String id;
@@ -36,6 +37,10 @@ class CustoFixo {
   final double valorMensal;
   final bool arquivado;
   final String notas;
+
+  /// Dia do mês (1-31) em que este custo é pago — só para o lembrete de
+  /// pagamentos, não entra em nenhum cálculo.
+  final int? diaPagamento;
 
   bool get ativo => !arquivado;
 
@@ -46,6 +51,9 @@ class CustoFixo {
         valorMensal: r.getDoubleValue('valor_mensal'),
         arquivado: r.getBoolValue('arquivado'),
         notas: r.getStringValue('notas'),
+        diaPagamento: r.getIntValue('dia_pagamento') > 0
+            ? r.getIntValue('dia_pagamento')
+            : null,
       );
 }
 
@@ -56,17 +64,20 @@ class CustoFixoInput {
     required this.tipo,
     required this.valorMensal,
     this.notas = '',
+    this.diaPagamento,
   });
 
   final String nome;
   final TipoCusto tipo;
   final double valorMensal;
   final String notas;
+  final int? diaPagamento;
 
   Map<String, dynamic> toBody() => {
         'nome': nome.trim(),
         'tipo': tipo.api,
         'valor_mensal': valorMensal,
         'notas': notas.trim(),
+        'dia_pagamento': diaPagamento,
       };
 }

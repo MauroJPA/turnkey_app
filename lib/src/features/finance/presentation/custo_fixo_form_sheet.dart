@@ -32,6 +32,9 @@ class _CustoFixoFormSheetState extends State<_CustoFixoFormSheet> {
         : '',
   );
   late final _notas = TextEditingController(text: widget.existente?.notas ?? '');
+  late final _diaPagamento = TextEditingController(
+    text: widget.existente?.diaPagamento?.toString() ?? '',
+  );
   late TipoCusto _tipo = widget.existente?.tipo ?? TipoCusto.fixo;
 
   @override
@@ -39,6 +42,7 @@ class _CustoFixoFormSheetState extends State<_CustoFixoFormSheet> {
     _nome.dispose();
     _valor.dispose();
     _notas.dispose();
+    _diaPagamento.dispose();
     super.dispose();
   }
 
@@ -51,6 +55,7 @@ class _CustoFixoFormSheetState extends State<_CustoFixoFormSheet> {
         tipo: _tipo,
         valorMensal: double.parse(_valor.text.replaceAll(',', '.')),
         notas: _notas.text,
+        diaPagamento: int.tryParse(_diaPagamento.text.trim()),
       ),
     );
   }
@@ -108,6 +113,22 @@ class _CustoFixoFormSheetState extends State<_CustoFixoFormSheet> {
               validator: (v) {
                 final n = double.tryParse((v ?? '').replaceAll(',', '.'));
                 return (n == null || n <= 0) ? 'Valor inválido' : null;
+              },
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _diaPagamento,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Dia de pagamento (opcional)',
+                hintText: 'Ex.: 8 — para o lembrete no Início',
+              ),
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return null;
+                final n = int.tryParse(v.trim());
+                return (n == null || n < 1 || n > 31)
+                    ? 'Dia entre 1 e 31'
+                    : null;
               },
             ),
             const SizedBox(height: 12),

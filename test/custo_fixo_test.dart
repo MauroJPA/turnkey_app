@@ -37,7 +37,18 @@ void main() {
         'tipo': 'variavel',
         'valor_mensal': 500,
         'notas': 'nota',
+        'dia_pagamento': null,
       });
+    });
+
+    test('inclui o dia de pagamento quando definido', () {
+      final input = CustoFixoInput(
+        nome: 'Energia',
+        tipo: TipoCusto.fixo,
+        valorMensal: 140,
+        diaPagamento: 8,
+      );
+      expect(input.toBody()['dia_pagamento'], 8);
     });
   });
 }

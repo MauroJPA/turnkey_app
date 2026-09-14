@@ -121,6 +121,9 @@ class _PainelFinanceiroScreenState
                     fmt(r.custosFixos)),
                 if (r.custosVariaveis > 0)
                   _linha(context, 'Custos variáveis', fmt(r.custosVariaveis)),
+                if (r.depreciacaoMensal > 0)
+                  _linha(context, 'Depreciação de equipamentos',
+                      fmt(r.depreciacaoMensal)),
                 const Divider(height: 20),
                 _linha(context, 'Lucro bruto', fmt(r.lucroBruto), destaque: true),
                 _linha(
