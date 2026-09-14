@@ -544,7 +544,7 @@ class _NovoItemSheetState extends ConsumerState<_NovoItemSheet> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _unidadeIng,
+                    initialValue: _unidadeIng,
                     decoration: const InputDecoration(labelText: 'Unidade'),
                     items: const [
                       DropdownMenuItem(value: 'g', child: Text('g')),
@@ -635,7 +635,7 @@ class _NovoItemSheetState extends ConsumerState<_NovoItemSheet> {
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
-          value: _categoria,
+          initialValue: _categoria,
           decoration: const InputDecoration(labelText: 'Categoria'),
           items: [
             for (final c in kCategoriasMaterial)
@@ -663,7 +663,7 @@ class _NovoItemSheetState extends ConsumerState<_NovoItemSheet> {
             const SizedBox(width: 12),
             Expanded(
               child: DropdownButtonFormField<String>(
-                value: _unidade,
+                initialValue: _unidade,
                 decoration: const InputDecoration(labelText: 'Unidade'),
                 items: [
                   for (final u in _unidades)

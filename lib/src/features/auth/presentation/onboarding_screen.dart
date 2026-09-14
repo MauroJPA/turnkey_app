@@ -87,7 +87,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<Moeda>(
-                    value: _moeda,
+                    initialValue: _moeda,
                     decoration: const InputDecoration(labelText: 'Moeda'),
                     items: [
                       for (final m in Moeda.values)
@@ -100,7 +100,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<RegraArredondamento>(
-                    value: _regra,
+                    initialValue: _regra,
                     decoration: const InputDecoration(
                       labelText: 'Arredondamento de preços',
                     ),

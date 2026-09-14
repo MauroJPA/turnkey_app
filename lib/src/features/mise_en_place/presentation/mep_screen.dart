@@ -237,7 +237,7 @@ class _MiseEnPlaceScreenState extends ConsumerState<MiseEnPlaceScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: DropdownButtonFormField<FormatoCookie?>(
-                          value: _formato,
+                          initialValue: _formato,
                           decoration: const InputDecoration(
                             labelText: 'Formato',
                             helperText: 'só p/ produto final',

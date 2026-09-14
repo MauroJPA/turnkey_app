@@ -192,7 +192,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<Moeda>(
-                    value: _moeda,
+                    initialValue: _moeda,
                     decoration: const InputDecoration(labelText: 'Moeda'),
                     items: [
                       for (final m in Moeda.values)
@@ -208,7 +208,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: DropdownButtonFormField<RegraArredondamento>(
-                    value: _regra,
+                    initialValue: _regra,
                     decoration:
                         const InputDecoration(labelText: 'Arredondamento'),
                     items: const [

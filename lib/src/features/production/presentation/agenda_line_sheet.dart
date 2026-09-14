@@ -198,7 +198,11 @@ class _AgendaLinhaSheetState extends ConsumerState<_AgendaLinhaSheet> {
                 );
               }
               return DropdownButtonFormField<FormatoCookie>(
-                value: _formato,
+                // `_formato` pode ser reatribuído no build (linha 195) por
+                // uma nova sugestão antes de o utilizador escolher; a key
+                // força o remount para o `initialValue` refletir isso.
+                key: ValueKey(_formato?.id),
+                initialValue: _formato,
                 decoration: InputDecoration(
                   labelText: 'Formato',
                   helperText: (_formato != null && _formato!.id == sugerido)

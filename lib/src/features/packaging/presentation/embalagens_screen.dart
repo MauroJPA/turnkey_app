@@ -381,7 +381,7 @@ class _EmbalagemFormState extends State<_EmbalagemForm> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _tipo,
+              initialValue: _tipo,
               decoration: const InputDecoration(labelText: 'Tipo'),
               items: [
                 for (final t in kTiposEmbalagem)

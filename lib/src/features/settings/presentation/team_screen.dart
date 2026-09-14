@@ -58,13 +58,20 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
       builder: (ctx) => SimpleDialog(
         title: Text('Papel de ${m.nome.isEmpty ? m.email : m.nome}'),
         children: [
-          for (final p in Papel.values)
-            RadioListTile<Papel>(
-              value: p,
-              groupValue: m.papel,
-              title: Text(p.label),
-              onChanged: (v) => Navigator.pop(ctx, v),
+          RadioGroup<Papel>(
+            groupValue: m.papel,
+            onChanged: (v) => Navigator.pop(ctx, v),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final p in Papel.values)
+                  RadioListTile<Papel>(
+                    value: p,
+                    title: Text(p.label),
+                  ),
+              ],
             ),
+          ),
         ],
       ),
     );
@@ -214,7 +221,7 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<Papel>(
-              value: _papel,
+              initialValue: _papel,
               decoration: const InputDecoration(labelText: 'Papel'),
               items: [
                 for (final p in [Papel.admin, Papel.editor, Papel.viewer])

@@ -702,7 +702,12 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<AcaoFatura>(
-                    value: l.acao,
+                    // `l.acao` também muda por fora (ex.: ao escolher
+                    // ingrediente numa linha "ignorar" — linha 288); a
+                    // key força um remount para o `initialValue` refletir
+                    // essa mudança (deixou de ser um campo controlado).
+                    key: ValueKey('${identityHashCode(l)}_${l.acao.name}'),
+                    initialValue: l.acao,
                     decoration: const InputDecoration(
                         labelText: 'Ação', isDense: true),
                     items: [

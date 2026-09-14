@@ -405,7 +405,7 @@ class _AjusteSheetState extends ConsumerState<_AjusteSheet> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<MotivoMovimento>(
-            value: _motivo,
+            initialValue: _motivo,
             decoration: const InputDecoration(labelText: 'Motivo'),
             items: [
               for (final m in MotivoMovimento.values)
@@ -593,7 +593,7 @@ class _ItemLivreSheetState extends State<_ItemLivreSheet> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: _categoria,
+            initialValue: _categoria,
             decoration: const InputDecoration(labelText: 'Categoria'),
             items: [
               for (final c in kCategoriasMaterial)
@@ -617,7 +617,7 @@ class _ItemLivreSheetState extends State<_ItemLivreSheet> {
               const SizedBox(width: 12),
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: _unidade,
+                  initialValue: _unidade,
                   decoration: const InputDecoration(labelText: 'Unidade'),
                   items: [
                     for (final u in _unidades)
