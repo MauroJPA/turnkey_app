@@ -52,4 +52,16 @@ class SalesActions {
     await _ref.read(salesRepositoryProvider).remover(id);
     _refresh();
   }
+
+  Future<
+      ({
+        int vendasCriadas,
+        int duplicadasIgnoradas,
+        int itensCriados,
+        int itensSemFicha,
+      })> sincronizarVendus() async {
+    final r = await _ref.read(salesRepositoryProvider).sincronizarVendus();
+    _refresh();
+    return r;
+  }
 }

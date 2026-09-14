@@ -71,6 +71,7 @@ pb/
 | `1706918400_empresas_personalizacao.js` | `empresas`: `cor_secundaria`/`cor_fundo`/`cor_texto` (hex, opcionais — vazio = derivado automaticamente da cor de marca); `logo_oculto`/`logo_alinhamento`/`logo_tamanho` e `nome_oculto`/`nome_alinhamento`/`nome_tamanho` (posição/tamanho/visibilidade do logótipo e do nome na barra superior — bool guarda o "oculto", não o "visível", porque o valor por omissão de um campo bool é `false`); `fonte_familia` (text) + `fonte_ficheiro` (file, .ttf/.otf) para tipo de letra personalizado. |
 | `1707004800_vendas.js` | `fichas_tecnicas.preco_venda` (number — preço real definido pelo utilizador; até aqui só existia o preço *sugerido*, calculado ao vivo a partir de `configuracoes_custo`, nunca persistido). Coleções `vendas` (`data`, `origem`: manual/csv/vendus, `total` cache, `numero_documento`, `notas`) e `vendas_itens` (`venda`, `ficha` opcional, `descricao`, `quantidade`, `preco_unitario`, `total_linha` cache, `custo_unitario_snapshot`) — base do painel financeiro/DRE e da análise de sabores mais vendidos (Financeiro, F-FIN-1). `historico.entidade_tipo` ganha o valor `venda`. |
 | `1707091200_custos_fixos.js` | Coleção `custos_fixos` (Financeiro, F-FIN-2) — custos reais e recorrentes (aluguel, salários…) em valor mensal, `tipo` fixo/variável, `arquivado` (guarda o "arquivado", não o "ativo", pelo mesmo motivo do `logo_oculto`). Diferente dos percentuais de `configuracoes_custo`, que só sugerem o preço de venda. |
+| `1707177600_vendus.js` | `vendas.vendus_id` (Financeiro, F-FIN-6) — identifica o documento de origem no Vendus; índice único por empresa **só quando não vazio** (`WHERE vendus_id != ''`), para não afetar vendas manuais/CSV. `empresas.vendus_ultima_sincronizacao` guarda a data do documento mais recente já importado (base do `since` da sincronização seguinte). |
 
 Aparência (tema, distribuição de cores, logótipo, nome da marca — posição/
 tamanho/visibilidade — e tipo de letra) é **por empresa** — editada em
@@ -79,11 +80,22 @@ personalizado carrega-se em runtime no cliente via `dart:ui`'s
 `loadFontFromList` (sem pacote `google_fonts`, para não depender de internet
 no Mini PC); sem ficheiro enviado, usa-se a fonte do sistema.
 
-**Vendas** — registo manual (`vendas`/`vendas_itens`) ou importação de CSV
+**Vendas** — registo manual (`vendas`/`vendas_itens`), importação de CSV
 (`data,produto,quantidade,preco_unitario`; cada linha liga-se à ficha técnica
 de nome mais parecido — `melhorMatchFicha`, mesma lógica Jaccard usada para
-as faturas — ou fica só com a descrição, sem travar a importação). Ecrã
-Início → Vendas.
+as faturas — ou fica só com a descrição, sem travar a importação), ou
+sincronização com o **Vendus** (`vendus.pb.js`/`vendus_core.js`, F-FIN-6):
+botão "Sincronizar com o Vendus" no ecrã de Vendas + cron horário
+(`vendus_sync`), ambos chamam `sincronizarEmpresa()` — busca documentos de
+venda (`FT`/`FS`/`FR`/`FG`, `status=N`) desde `empresas.vendus_ultima_sincronizacao`,
+emparelha cada linha à ficha técnica pelo nome (mesmo `melhorMatchFicha`, agora
+portado para JS em `vendus_core.js` — tem de ficar igual à versão Dart em
+`match_ficha.dart`, qualquer ajuste ao algoritmo faz-se nos dois sítios), e
+regista `vendas`/`vendas_itens` (`origem='vendus'`). Documentos já importados
+(por `vendus_id`) são ignorados — idempotente, seguro correr o cron ou o
+botão manual quantas vezes for preciso. Sem `VENDUS_API_KEY`: `503` no botão,
+o cron só regista no log e tenta de novo na hora seguinte. Ecrã Início →
+Vendas.
 
 ⚠️ **Filtro de datas do PocketBase compara literais pelo formato completo**
 (`yyyy-MM-dd HH:mm:ss.SSSZ`), não semanticamente — uma data "nua" como
@@ -144,6 +156,17 @@ junta as faturas `confirmada` do mês anterior, gera `resumo-AAAA-MM.csv` e
 envia por email com os ficheiros em anexo (`FT-FORNECEDOR-DDMMAAAA.ext`). A app
 tem um resumo do mês em Faturas → ícone de pasta (com "Copiar resumo (CSV)").
 
+**Sincronização com o Vendus** (`vendus.pb.js`/`vendus_core.js`, F-FIN-6):
+
+| Variável | Para quê |
+|---|---|
+| `VENDUS_API_KEY` | API KEY gerada em Apps → API na conta Vendus. Sem ela, `/sincronizar` devolve `503` e o cron horário não faz nada (só regista no log). |
+| `VENDUS_SYNC_EMPRESA` | id da empresa para o **cron horário** (`vendus_sync`, `0 * * * *`) — o cron não tem sessão de utilizador, por isso precisa de saber a que empresa pertence (mesmo papel de `TURNKEY_SCAN_EMPRESA` no scan de faturas). O botão manual "Sincronizar com o Vendus" na app usa a empresa de quem está autenticado, não precisa desta variável. |
+
+A chave nunca chega à app — só o servidor fala com `https://www.vendus.pt/ws/v1.1/`.
+Documentos já importados (`vendus_id`) nunca se repetem; correr o botão manual
+com o cron ativo ao mesmo tempo é seguro.
+
 ### Endpoints (Fase 2 — `inventario.pb.js`)
 
 Todos exigem `requireAuth('users', '_superusers')`; um `users` não-viewer só age
@@ -168,6 +191,12 @@ Auth `users` não-viewer (ou superuser); só agem sobre a empresa do autor.
 | `GET` | `/api/turnkey/faturas/export?de=&ate=` | faturas `confirmada` no intervalo → `{ faturas:[{ id, fornecedor, dataFatura, numero, total, iva, nomeFicheiro, ficheiroUrl, linhas:[...] }] }`. `nomeFicheiro` = `FT-NOMEFORNECEDOR-DDMMAAAA.ext` (nome canónico p/ contabilidade, derivado da data da fatura). Base para a exportação para contabilidade (SAF-T / zip de PDFs fica para fase seguinte — o modelo já guarda tudo). |
 
 O ficheiro carregado é guardado com um nome no formato **`FT-NOMEFORNECEDOR-DDMMAAAA`** (data da fatura). O PocketBase normaliza (minúsculas, `_`, sufixo aleatório) ao gravar; o nome canónico exacto para a contabilidade vem no campo `nomeFicheiro` do `/export`.
+
+### Endpoint (Financeiro — `vendus.pb.js`)
+
+| Método | Rota | Efeito |
+|---|---|---|
+| `POST` | `/api/turnkey/vendus/sincronizar` | Auth `users` não-viewer. Busca documentos de venda novos no Vendus (desde `empresas.vendus_ultima_sincronizacao`), emparelha cada linha à ficha técnica pelo nome e grava `vendas`/`vendas_itens` (`origem='vendus'`). Devolve `{ vendasCriadas, duplicadasIgnoradas, itensCriados, itensSemFicha }`. `503` sem `VENDUS_API_KEY`. |
 
 ### Endpoint (Nutrição — `nutricao.pb.js`)
 

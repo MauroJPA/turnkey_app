@@ -56,6 +56,28 @@ class SalesScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _sincronizarVendus(BuildContext context, WidgetRef ref) async {
+    try {
+      final r =
+          await ref.read(salesActionsProvider).sincronizarVendus();
+      if (!context.mounted) return;
+      final partes = [
+        '${r.vendasCriadas} venda(s) nova(s)',
+        if (r.duplicadasIgnoradas > 0)
+          '${r.duplicadasIgnoradas} já importada(s) (ignoradas)',
+        if (r.itensSemFicha > 0)
+          '${r.itensSemFicha} linha(s) sem produto identificado',
+      ];
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(partes.join(' · '))));
+    } on Object catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$e')));
+      }
+    }
+  }
+
   Future<void> _novaVenda(BuildContext context, WidgetRef ref) async {
     final criada = await showVendaFormSheet(context);
     if (criada == true) ref.invalidate(salesListProvider);
@@ -81,12 +103,18 @@ class SalesScreen extends ConsumerWidget {
             onPressed: () => context.push(Routes.analiseVendas),
           ),
           const HelpActions(topic: HelpTopic.vendas),
-          if (podeEditar)
+          if (podeEditar) ...[
+            IconButton(
+              tooltip: 'Sincronizar com o Vendus',
+              icon: const Icon(Icons.cloud_sync_outlined),
+              onPressed: () => _sincronizarVendus(context, ref),
+            ),
             IconButton(
               tooltip: 'Importar CSV',
               icon: const Icon(Icons.upload_file_outlined),
               onPressed: () => _importarCsv(context, ref),
             ),
+          ],
         ],
       ),
       floatingActionButton: podeEditar

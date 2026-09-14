@@ -101,4 +101,25 @@ class SalesRepository {
   }
 
   Future<void> remover(String id) => _vendas.delete(id);
+
+  /// Traz vendas novas do Vendus (documentos desde a última sincronização),
+  /// emparelhando cada linha com a ficha técnica pelo nome — servidor faz
+  /// tudo (a API KEY nunca chega à app); ver `pb/hooks/vendus.pb.js`.
+  Future<
+      ({
+        int vendasCriadas,
+        int duplicadasIgnoradas,
+        int itensCriados,
+        int itensSemFicha,
+      })> sincronizarVendus() async {
+    final res =
+        await _pb.send('/api/turnkey/vendus/sincronizar', method: 'POST');
+    final m = res as Map;
+    return (
+      vendasCriadas: (m['vendasCriadas'] as num?)?.toInt() ?? 0,
+      duplicadasIgnoradas: (m['duplicadasIgnoradas'] as num?)?.toInt() ?? 0,
+      itensCriados: (m['itensCriados'] as num?)?.toInt() ?? 0,
+      itensSemFicha: (m['itensSemFicha'] as num?)?.toInt() ?? 0,
+    );
+  }
 }

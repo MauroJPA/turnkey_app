@@ -7,7 +7,7 @@ pb/migrations/*.js   -> schema (coleções, campos, regras)
 pb/hooks/*           -> lógica (cascata de custos, onboarding, equipa, admin)
 ```
 
-As 36 migrations aplicam-se limpas a uma base de dados vazia (verificado). A
+As 37 migrations aplicam-se limpas a uma base de dados vazia (verificado). A
 `1706227200_seed_insa.js` insere 1376 alimentos na `ingredientes_referencia`
 (demora alguns segundos no 1.º arranque; é idempotente).
 
@@ -74,6 +74,18 @@ O Mini PC corre **PocketBase v0.35.0**. Confirma:
    - Confirmar depois de arrancar:
      `curl -X POST http://127.0.0.1:8090/api/turnkey/faturas/x/analisar` →
      deve dar `401` (falta auth), **não** `503`. Um `503` = chave não carregada.
+
+   **Sincronização com o Vendus** (`vendus.pb.js`): opcional — sem estas
+   variáveis, o botão "Sincronizar com o Vendus" na app dá `503` e o cron
+   horário não faz nada.
+   - `VENDUS_API_KEY`: gerada em Apps → API na conta Vendus.
+   - `VENDUS_SYNC_EMPRESA`: id da empresa (`empresas.id`), só necessário para
+     o **cron horário** (`0 * * * *`) — o botão manual usa a empresa de quem
+     está autenticado. Sem esta variável, o cron não faz nada mas o botão
+     continua a funcionar normalmente.
+   - Mesmo mecanismo de variáveis de ambiente da IA de faturas acima (dev:
+     `pb/.env`; NSSM: `AppEnvironmentExtra`; systemd: `Environment=`).
+   - Saída de internet para `www.vendus.pt`.
 
 4. **Verificar** no Admin UI (`/_/`) que existem as coleções:
    `empresas, configuracoes_custo, ingredientes, receitas, itens_receita,
