@@ -7,7 +7,7 @@ pb/migrations/*.js   -> schema (coleções, campos, regras)
 pb/hooks/*           -> lógica (cascata de custos, onboarding, equipa, admin)
 ```
 
-As 37 migrations aplicam-se limpas a uma base de dados vazia (verificado). A
+As 38 migrations aplicam-se limpas a uma base de dados vazia (verificado). A
 `1706227200_seed_insa.js` insere 1376 alimentos na `ingredientes_referencia`
 (demora alguns segundos no 1.º arranque; é idempotente).
 
@@ -92,7 +92,8 @@ O Mini PC corre **PocketBase v0.35.0**. Confirma:
    fichas_tecnicas, itens_ficha, historico, inventario, movimentos_inventario,
    producoes, producao_itens, lista_compras, formatos_cookie, sugestoes,
    faturas, faturas_itens, ingredientes_referencia, embalagens,
-   embalagem_kits, embalagem_kit_itens, vendas, vendas_itens, custos_fixos`
+   embalagem_kits, embalagem_kit_itens, vendas, vendas_itens, custos_fixos,
+   equipamentos`
    e que `users` tem os campos `nome`, `empresa`, `papel`. A migração
    `1705104000_formatos_cookie.js` **semeia** Mini/Recheado/Simples em cada
    empresa existente (e o onboarding fá-lo para novas).
