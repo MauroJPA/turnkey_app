@@ -9,6 +9,7 @@ import '../features/auth/presentation/onboarding_screen.dart';
 import '../features/cookie_formats/presentation/cookie_formats_screen.dart';
 import '../features/dashboard/presentation/home_shell.dart';
 import '../features/dashboard/presentation/main_shell.dart';
+import '../features/finance/presentation/analise_vendas_screen.dart';
 import '../features/finance/presentation/custos_fixos_screen.dart';
 import '../features/finance/presentation/dre_screen.dart';
 import '../features/finance/presentation/painel_financeiro_screen.dart';
@@ -48,6 +49,7 @@ abstract class Routes {
   static const inventory = '/inventario';
   static const invoices = '/faturas';
   static const sales = '/vendas';
+  static const analiseVendas = '/vendas/analise';
   static const painelFinanceiro = '/financeiro';
   static const dre = '/financeiro/dre';
   static const custosFixos = '/financeiro/custos-fixos';
@@ -154,6 +156,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: Routes.sales,
             builder: (_, __) => const SalesScreen(),
             routes: [
+              GoRoute(
+                path: 'analise',
+                builder: (_, __) => const AnaliseVendasScreen(),
+              ),
               GoRoute(
                 path: ':id',
                 builder: (_, state) => VendaDetailScreen(

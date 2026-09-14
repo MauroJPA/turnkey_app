@@ -19,6 +19,7 @@ enum HelpTopic {
   faturas,
   faturaRevisao,
   vendas,
+  analiseVendas,
   custosFixos,
   painelFinanceiro,
   dre,
@@ -197,6 +198,15 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Ícone de importar (canto superior): carrega um ficheiro .csv com colunas data, produto, quantidade, preço. Cada linha é ligada automaticamente à ficha técnica com o nome mais parecido; sem correspondência clara, fica só com a descrição (aparece com um aviso na venda).',
       'Define o "Preço de venda" de cada produto na sua Ficha Técnica — fica disponível como sugestão ao registar vendas e mostra a margem sobre o custo.',
       'Toca numa venda para ver as linhas e, se precisares, apagá-la.',
+    ],
+  ),
+  HelpTopic.analiseVendas: (
+    titulo: 'Análise de vendas',
+    paragrafos: [
+      'Mostra o que se vendeu por sabor/produto (ficha técnica) no período escolhido: quantidade, receita e a margem real (com base no custo guardado em cada venda, não no custo atual).',
+      '"Mais vendido" é o que teve mais unidades; "Maior margem" é o que deu mais lucro por cada euro vendido — não são sempre o mesmo produto.',
+      'A seta ao lado de cada linha compara a quantidade vendida com o período anterior de igual duração — sobe ou desce a dizer se aquele sabor está a vender mais ou menos.',
+      '"Sem produto identificado" junta as linhas de venda que não foram ligadas a nenhuma ficha técnica (ex.: de uma importação de CSV sem correspondência) — não têm margem calculada.',
     ],
   ),
   HelpTopic.custosFixos: (

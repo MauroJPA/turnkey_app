@@ -57,18 +57,22 @@ class ComparacaoFinanceira {
   final ResumoFinanceiro atual;
   final ResumoFinanceiro anterior;
 
-  double? get variacaoReceitaPercent => _variacao(
+  double? get variacaoReceitaPercent => variacaoPercent(
         anterior.receita,
         atual.receita,
       );
 
-  double? get variacaoLucroPercent => _variacao(
+  double? get variacaoLucroPercent => variacaoPercent(
         anterior.lucroLiquido,
         atual.lucroLiquido,
       );
+}
 
-  static double? _variacao(double antes, double depois) {
-    if (antes == 0) return null;
-    return ((depois - antes) / antes.abs()) * 100;
-  }
+/// Variação percentual de [antes] para [depois] — `null` se [antes] for 0
+/// (não há base de comparação). Usa `antes.abs()` no denominador para que o
+/// sinal reflita sempre a direção real da variação, mesmo quando [antes] é
+/// negativo (ex.: passar de um prejuízo a um lucro continua a dar positivo).
+double? variacaoPercent(double antes, double depois) {
+  if (antes == 0) return null;
+  return ((depois - antes) / antes.abs()) * 100;
 }

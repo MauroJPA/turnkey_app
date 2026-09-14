@@ -75,6 +75,11 @@ class SalesScreen extends ConsumerWidget {
         ),
         title: const Text('Vendas'),
         actions: [
+          IconButton(
+            tooltip: 'Análise de vendas',
+            icon: const Icon(Icons.bar_chart_outlined),
+            onPressed: () => context.push(Routes.analiseVendas),
+          ),
           const HelpActions(topic: HelpTopic.vendas),
           if (podeEditar)
             IconButton(
