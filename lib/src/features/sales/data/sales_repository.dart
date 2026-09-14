@@ -44,6 +44,26 @@ class SalesRepository {
     return recs.map(VendaItem.fromRecord).toList();
   }
 
+  /// Vendas e respetivas linhas entre [desde] e [ate] (inclusive) — para o
+  /// painel financeiro. Filtra as linhas do lado do cliente (por id da
+  /// venda) em vez de um filtro por relação (`venda.data`), que o PocketBase
+  /// não garante comparar semanticamente; para uma empresa deste porte o
+  /// volume de `vendas_itens` é pequeno, por isso é seguro trazer tudo.
+  Future<({List<Venda> vendas, List<VendaItem> itens})> periodo({
+    required DateTime desde,
+    required DateTime ate,
+  }) async {
+    final vendas = await list(desde: desde, ate: ate);
+    if (vendas.isEmpty) return (vendas: vendas, itens: <VendaItem>[]);
+    final idsValidos = vendas.map((v) => v.id).toSet();
+    final todosItens = await _itens.getFullList(filter: 'empresa = "$_empresaId"');
+    final itens = todosItens
+        .map(VendaItem.fromRecord)
+        .where((it) => idsValidos.contains(it.vendaId))
+        .toList();
+    return (vendas: vendas, itens: itens);
+  }
+
   /// Cria uma venda com as suas linhas (o total é a soma das linhas).
   Future<Venda> criar({
     required DateTime data,

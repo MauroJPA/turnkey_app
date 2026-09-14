@@ -20,6 +20,7 @@ enum HelpTopic {
   faturaRevisao,
   vendas,
   custosFixos,
+  painelFinanceiro,
   embalagens,
   formatos,
   configuracoes,
@@ -204,6 +205,16 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Isto é diferente dos percentuais em Configurações → Percentuais de custo: aqueles só servem para sugerir o preço de venda a partir do custo de matéria-prima. Aqui é o valor real, para o painel financeiro e o DRE.',
       '"Fixo" ou "Variável": marca se o custo é sempre o mesmo (aluguel) ou varia com o volume (ex.: comissões).',
       'Arquivar mantém o histórico sem contar no total atual; só apagar remove por completo.',
+    ],
+  ),
+  HelpTopic.painelFinanceiro: (
+    titulo: 'Painel financeiro',
+    paragrafos: [
+      'Junta as Vendas e os Custos fixos num só sítio: quanto entrou, quanto saiu e o lucro, por semana ou mês.',
+      '"Custo dos produtos vendidos" é o custo real da matéria-prima do que foi vendido (guardado em cada venda no momento em que foi registada).',
+      '"Distribuição teórica" mostra, com as percentagens atuais de Configurações → Percentuais de custo, para onde o valor vendido deveria ir (matéria-prima, salário, aluguel...). É um modelo, não o dinheiro que saiu de verdade — isso são os Custos fixos, mostrados por cima.',
+      'A seta ao lado de cada número compara com o período anterior de igual duração (ex.: esta semana vs. a semana passada).',
+      'Se houver vendas sem produto identificado (ex.: de uma importação de CSV), o custo delas não é conhecido — aparece um aviso e o lucro fica sobrestimado nessa medida.',
     ],
   ),
   HelpTopic.embalagens: (

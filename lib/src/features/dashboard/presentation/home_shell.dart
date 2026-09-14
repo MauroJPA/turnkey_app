@@ -33,6 +33,8 @@ class HomeShell extends ConsumerWidget {
         'Foto da fatura → preços e stock', Routes.invoices),
     _Section('Vendas', Icons.point_of_sale_outlined,
         'Registo de vendas e sabores mais vendidos', Routes.sales),
+    _Section('Painel financeiro', Icons.insights_outlined,
+        'Entradas, saídas e lucro por semana/mês', Routes.painelFinanceiro),
     _Section('Custos fixos', Icons.request_quote_outlined,
         'Aluguel, salários e outras despesas mensais', Routes.custosFixos),
     _Section('Embalagens', Icons.inventory_2_outlined,
