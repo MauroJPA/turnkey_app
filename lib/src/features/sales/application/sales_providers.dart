@@ -60,8 +60,10 @@ class SalesActions {
         int itensCriados,
         int itensSemFicha,
         int totalDocumentosRecebidos,
-      })> sincronizarVendus() async {
-    final r = await _ref.read(salesRepositoryProvider).sincronizarVendus();
+      })> sincronizarVendus({DateTime? desde, DateTime? ate}) async {
+    final r = await _ref
+        .read(salesRepositoryProvider)
+        .sincronizarVendus(desde: desde, ate: ate);
     _refresh();
     return r;
   }

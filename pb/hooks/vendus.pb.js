@@ -8,8 +8,15 @@
 // mesma lógica da importação CSV.
 //
 //   POST /api/turnkey/vendus/sincronizar
+//     body opcional: { desde?: "YYYY-MM-DD", ate?: "YYYY-MM-DD" }
 //     -> { vendasCriadas, duplicadasIgnoradas, itensCriados, itensSemFicha }
 //     -> 503 se faltar VENDUS_API_KEY no ambiente do servidor
+//
+// Sem `desde`, continua a partir de `empresas.vendus_ultima_sincronizacao`
+// (ou dos últimos 90 dias, se for a primeira vez). Com `desde`, ignora esse
+// progresso e volta a pedir ao Vendus a partir dessa data — útil para
+// reimportar histórico mais antigo (ex.: se a marca de progresso avançou
+// antes de tempo, como aconteceu por causa de um bug já corrigido).
 //
 //   VENDUS_API_KEY         API KEY gerada em Apps → API na conta Vendus
 //   VENDUS_SYNC_EMPRESA    id da empresa para o cron horário (sem auth de
@@ -31,8 +38,11 @@ routerAdd(
       throw new ForbiddenError('Sem permissão.');
     }
     const empresaId = auth.getString('empresa');
+    const body = e.requestInfo().body || {};
+    const desde = (body.desde || '').toString().substring(0, 10);
+    const ate = (body.ate || '').toString().substring(0, 10);
     const core = require(`${__hooks}/vendus_core.js`);
-    const r = core.sincronizarEmpresa(e.app, empresaId, {});
+    const r = core.sincronizarEmpresa(e.app, empresaId, { desde: desde, ate: ate });
     if (!r.ok) {
       // Diagnóstico útil no próprio erro: quantos documentos o Vendus
       // devolveu e que tipos tinham, para perceber se o filtro de tipo de

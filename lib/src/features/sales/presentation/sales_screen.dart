@@ -56,7 +56,12 @@ class SalesScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _sincronizarVendus(BuildContext context, WidgetRef ref) async {
+  Future<void> _sincronizarVendus(
+    BuildContext context,
+    WidgetRef ref, {
+    DateTime? desde,
+    DateTime? ate,
+  }) async {
     final messenger = ScaffoldMessenger.of(context);
     messenger.showSnackBar(
       const SnackBar(
@@ -80,7 +85,9 @@ class SalesScreen extends ConsumerWidget {
       ),
     );
     try {
-      final r = await ref.read(salesActionsProvider).sincronizarVendus();
+      final r = await ref
+          .read(salesActionsProvider)
+          .sincronizarVendus(desde: desde, ate: ate);
       messenger.hideCurrentSnackBar();
       if (!context.mounted) return;
       final partes = [
@@ -102,6 +109,27 @@ class SalesScreen extends ConsumerWidget {
         messenger.showSnackBar(SnackBar(content: Text('$e')));
       }
     }
+  }
+
+  Future<void> _reimportarHistorico(BuildContext context, WidgetRef ref) async {
+    final hoje = DateTime.now();
+    final intervalo = await showDateRangePicker(
+      context: context,
+      initialDateRange: DateTimeRange(
+        start: hoje.subtract(const Duration(days: 90)),
+        end: hoje,
+      ),
+      firstDate: DateTime(hoje.year - 3),
+      lastDate: hoje,
+      helpText: 'Reimportar vendas do Vendus — desde / até',
+    );
+    if (intervalo == null || !context.mounted) return;
+    await _sincronizarVendus(
+      context,
+      ref,
+      desde: intervalo.start,
+      ate: intervalo.end,
+    );
   }
 
   Future<void> _novaVenda(BuildContext context, WidgetRef ref) async {
@@ -130,10 +158,19 @@ class SalesScreen extends ConsumerWidget {
           ),
           const HelpActions(topic: HelpTopic.vendas),
           if (podeEditar) ...[
-            IconButton(
+            PopupMenuButton<void>(
               tooltip: 'Sincronizar com o Vendus',
               icon: const Icon(Icons.cloud_sync_outlined),
-              onPressed: () => _sincronizarVendus(context, ref),
+              itemBuilder: (ctx) => [
+                PopupMenuItem(
+                  onTap: () => _sincronizarVendus(context, ref),
+                  child: const Text('Sincronizar (desde a última vez)'),
+                ),
+                PopupMenuItem(
+                  onTap: () => _reimportarHistorico(context, ref),
+                  child: const Text('Reimportar histórico (escolher data)'),
+                ),
+              ],
             ),
             IconButton(
               tooltip: 'Importar CSV',

@@ -102,9 +102,14 @@ class SalesRepository {
 
   Future<void> remover(String id) => _vendas.delete(id);
 
-  /// Traz vendas novas do Vendus (documentos desde a última sincronização),
-  /// emparelhando cada linha com a ficha técnica pelo nome — servidor faz
-  /// tudo (a API KEY nunca chega à app); ver `pb/hooks/vendus.pb.js`.
+  /// Traz vendas novas do Vendus, emparelhando cada linha com a ficha
+  /// técnica pelo nome — servidor faz tudo (a API KEY nunca chega à app);
+  /// ver `pb/hooks/vendus.pb.js`.
+  ///
+  /// Sem [desde]/[ate], continua a partir da última sincronização (ou dos
+  /// últimos 90 dias, se for a primeira vez). Com [desde] (e opcionalmente
+  /// [ate]), ignora esse progresso e volta a pedir ao Vendus nesse
+  /// intervalo — para reimportar histórico mais antigo.
   Future<
       ({
         int vendasCriadas,
@@ -112,9 +117,15 @@ class SalesRepository {
         int itensCriados,
         int itensSemFicha,
         int totalDocumentosRecebidos,
-      })> sincronizarVendus() async {
-    final res =
-        await _pb.send('/api/turnkey/vendus/sincronizar', method: 'POST');
+      })> sincronizarVendus({DateTime? desde, DateTime? ate}) async {
+    final res = await _pb.send(
+      '/api/turnkey/vendus/sincronizar',
+      method: 'POST',
+      body: {
+        if (desde != null) 'desde': ymd(desde),
+        if (ate != null) 'ate': ymd(ate),
+      },
+    );
     final m = res as Map;
     return (
       vendasCriadas: (m['vendasCriadas'] as num?)?.toInt() ?? 0,

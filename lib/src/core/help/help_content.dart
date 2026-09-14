@@ -195,6 +195,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
     paragrafos: [
       'Regista aqui o que foi vendido — a base do painel financeiro, do DRE e da análise de sabores mais vendidos.',
       'Ícone da nuvem (canto superior): sincroniza com o Vendus — traz as vendas novas desde a última vez, emparelhadas automaticamente com as fichas técnicas pelo nome. Só funciona se a chave do Vendus estiver configurada no servidor; se houver linhas sem correspondência, aparece um aviso no resumo.',
+      '"Reimportar histórico (escolher data)" (no mesmo ícone da nuvem): volta a pedir ao Vendus as vendas num intervalo de datas à escolha (desde/até), em vez de continuar de onde a última sincronização ficou — útil para trazer vendas mais antigas que ainda não estão na app.',
       '"Registar venda": escolhe a data e adiciona linhas — um produto (ficha técnica, com o preço já sugerido) ou um item livre (texto), quantidade e preço.',
       'Ícone de importar (canto superior): carrega um ficheiro .csv com colunas data, produto, quantidade, preço. Cada linha é ligada automaticamente à ficha técnica com o nome mais parecido; sem correspondência clara, fica só com a descrição (aparece com um aviso na venda).',
       'Define o "Preço de venda" de cada produto na sua Ficha Técnica — fica disponível como sugestão ao registar vendas e mostra a margem sobre o custo.',
