@@ -12,7 +12,12 @@
 // Só documentos de venda reais (FT/FS/FR/FG) e não cancelados (status=N) —
 // orçamentos, guias e notas de crédito ficam de fora por agora.
 
-var TIPOS_VENDA = 'FT,FS,FR,FG';
+// A documentação do Vendus diz que `type` aceita uma lista separada por
+// vírgulas (`type=FT,FS,FR,FG`), mas na prática a API real devolveu
+// `{"code":"A001","message":"Tipo de documento inválido."}` para esse
+// formato — por isso filtra-se aqui, depois de receber os documentos, em
+// vez de depender do parâmetro `type` do pedido.
+var TIPOS_VENDA = { FT: true, FS: true, FR: true, FG: true };
 
 // Mensagem de erro mais útil do que "HTTP 400" — o Vendus normalmente devolve
 // um corpo com o motivo (ex.: parâmetro inválido, chave sem permissões).
@@ -45,8 +50,6 @@ function buscarDocumentos(apiKey, opts) {
     var url =
       'https://www.vendus.pt/ws/v1.1/documents/?api_key=' +
       encodeURIComponent(apiKey) +
-      '&type=' +
-      TIPOS_VENDA +
       '&status=N&per_page=' +
       perPage +
       '&page=' +
@@ -75,7 +78,10 @@ function buscarDocumentos(apiKey, opts) {
     if (lote.length < perPage || page > 50) break;
     page++;
   }
-  return todos;
+
+  return todos.filter(function (d) {
+    return !!TIPOS_VENDA[d.type];
+  });
 }
 
 // --- emparelhamento por nome (mesma lógica de match_ficha.dart) ---------
