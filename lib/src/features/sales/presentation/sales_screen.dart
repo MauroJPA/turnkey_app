@@ -57,9 +57,31 @@ class SalesScreen extends ConsumerWidget {
   }
 
   Future<void> _sincronizarVendus(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      const SnackBar(
+        duration: Duration(minutes: 5),
+        content: Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'A sincronizar com o Vendus… pode demorar um pouco '
+                'se houver muitas vendas por trazer.',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
     try {
-      final r =
-          await ref.read(salesActionsProvider).sincronizarVendus();
+      final r = await ref.read(salesActionsProvider).sincronizarVendus();
+      messenger.hideCurrentSnackBar();
       if (!context.mounted) return;
       final partes = [
         '${r.vendasCriadas} venda(s) nova(s)',
@@ -68,12 +90,11 @@ class SalesScreen extends ConsumerWidget {
         if (r.itensSemFicha > 0)
           '${r.itensSemFicha} linha(s) sem produto identificado',
       ];
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(partes.join(' · '))));
+      messenger.showSnackBar(SnackBar(content: Text(partes.join(' · '))));
     } on Object catch (e) {
+      messenger.hideCurrentSnackBar();
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        messenger.showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }

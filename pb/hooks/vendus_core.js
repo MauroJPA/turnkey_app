@@ -11,6 +11,12 @@
 // parâmetro `api_key` com a API KEY gerada em Apps → API na conta Vendus).
 // Só documentos de venda reais (FT/FS/FR/FG) e não cancelados (status=N) —
 // orçamentos, guias e notas de crédito ficam de fora por agora.
+//
+// Processa página a página (em vez de ir buscar tudo antes de gravar nada):
+// se uma sincronização grande falhar/expirar a meio, o que já foi
+// processado fica gravado e `vendus_ultima_sincronizacao` avança até aí —
+// a tentativa seguinte continua de onde ficou, em vez de repetir sempre o
+// mesmo trabalho e falhar sempre no mesmo sítio.
 
 // A documentação do Vendus diz que `type` aceita uma lista separada por
 // vírgulas (`type=FT,FS,FR,FG`), mas na prática a API real devolveu
@@ -36,50 +42,43 @@ function mensagemErroVendus(resp) {
   return String(resp.raw || '').substring(0, 300);
 }
 
-function buscarDocumentos(apiKey, opts) {
-  var since = (opts && opts.since) || '';
-  var until = (opts && opts.until) || '';
-  var page = 1;
-  var perPage = 100;
-  var todos = [];
+// Busca UMA página. Nunca deixar a chave/URL chegar à mensagem de erro — o
+// erro de rede do Go inclui o URL completo pedido (`Get "...&api_key=...":
+// ...`), e essa mensagem acaba por chegar à interface da app.
+function buscarPagina(apiKey, opts) {
+  var url =
+    'https://www.vendus.pt/ws/v1.1/documents/?api_key=' +
+    encodeURIComponent(apiKey) +
+    '&status=N&per_page=' +
+    opts.perPage +
+    '&page=' +
+    opts.page;
+  if (opts.since) url += '&since=' + encodeURIComponent(opts.since);
+  if (opts.until) url += '&until=' + encodeURIComponent(opts.until);
 
-  for (;;) {
-    // Autenticação por parâmetro (em vez de cabeçalho Bearer/Basic) — é o
-    // método mais simples e sem ambiguidade de formato; os três métodos são
-    // equivalentes segundo a documentação do Vendus.
-    var url =
-      'https://www.vendus.pt/ws/v1.1/documents/?api_key=' +
-      encodeURIComponent(apiKey) +
-      '&status=N&per_page=' +
-      perPage +
-      '&page=' +
-      page;
-    if (since) url += '&since=' + encodeURIComponent(since);
-    if (until) url += '&until=' + encodeURIComponent(until);
-
-    var resp;
-    try {
-      resp = $http.send({ url: url, method: 'GET', timeout: 60 });
-    } catch (err) {
-      throw new Error('Falha de rede ao contactar o Vendus: ' + err);
-    }
-    if (resp.statusCode < 200 || resp.statusCode >= 300) {
-      throw new Error(
-        'Vendus respondeu com o erro HTTP ' +
-          resp.statusCode +
-          ': ' +
-          mensagemErroVendus(resp),
-      );
-    }
-
-    var lote = resp.json;
-    if (!Array.isArray(lote)) lote = [];
-    todos = todos.concat(lote);
-    if (lote.length < perPage || page > 50) break;
-    page++;
+  var resp;
+  try {
+    resp = $http.send({ url: url, method: 'GET', timeout: 45 });
+  } catch (err) {
+    var msg = String(err);
+    var motivo =
+      msg.indexOf('deadline exceeded') !== -1 || msg.indexOf('timeout') !== -1
+        ? 'demorou demasiado tempo a responder'
+        : 'falha de rede';
+    throw new Error('Não consegui contactar o Vendus (' + motivo + ').');
+  }
+  if (resp.statusCode < 200 || resp.statusCode >= 300) {
+    throw new Error(
+      'Vendus respondeu com o erro HTTP ' +
+        resp.statusCode +
+        ': ' +
+        mensagemErroVendus(resp),
+    );
   }
 
-  return todos.filter(function (d) {
+  var lote = resp.json;
+  if (!Array.isArray(lote)) lote = [];
+  return lote.filter(function (d) {
     return !!TIPOS_VENDA[d.type];
   });
 }
@@ -140,6 +139,50 @@ function melhorMatchFicha(descricaoVenda, fichas, minScore) {
   return melhorScore >= minScore ? melhor : null;
 }
 
+// Cria a `venda`+`vendas_itens` de um documento. Devolve quantos itens
+// ficaram sem ficha, para o resumo final.
+function importarDocumento(app, empresaId, doc, fichas) {
+  var vendusId = String(doc.id != null ? doc.id : '');
+  var dataDoc = String(doc.date || doc.local_time || '').substring(0, 10);
+  var itens = Array.isArray(doc.items) ? doc.items : [];
+  var semFicha = 0;
+
+  app.runInTransaction(function (tx) {
+    var venda = new Record(tx.findCollectionByNameOrId('vendas'));
+    venda.set('empresa', empresaId);
+    venda.set('data', dataDoc || new Date().toISOString().substring(0, 10));
+    venda.set('origem', 'vendus');
+    venda.set('total', Number(doc.amount_gross || 0));
+    venda.set('numero_documento', String(doc.number || ''));
+    venda.set('vendus_id', vendusId);
+    tx.save(venda);
+
+    for (var j = 0; j < itens.length; j++) {
+      var it = itens[j];
+      var titulo = String(it.title || '');
+      var qtd = Number(it.qty || 0);
+      var amounts = it.amounts || {};
+      var precoUnit = Number(amounts.gross_unit || 0);
+      var totalLinha = Number(amounts.gross_total || qtd * precoUnit);
+      var match = melhorMatchFicha(titulo, fichas, 0.34);
+      if (!match) semFicha++;
+
+      var item = new Record(tx.findCollectionByNameOrId('vendas_itens'));
+      item.set('empresa', empresaId);
+      item.set('venda', venda.id);
+      if (match) item.set('ficha', match.id);
+      item.set('descricao', titulo);
+      item.set('quantidade', qtd);
+      item.set('preco_unitario', precoUnit);
+      item.set('total_linha', totalLinha);
+      item.set('custo_unitario_snapshot', match ? match.custoProduto : 0);
+      tx.save(item);
+    }
+  });
+
+  return { dataDoc: dataDoc, itens: itens.length, semFicha: semFicha };
+}
+
 // --- sincronização --------------------------------------------------------
 
 function sincronizarEmpresa(app, empresaId, opts) {
@@ -157,14 +200,16 @@ function sincronizarEmpresa(app, empresaId, opts) {
 
   var since = (opts && opts.desde) || empresa.getString('vendus_ultima_sincronizacao') || '';
   since = since ? String(since).substring(0, 10) : '';
-  var until = (opts && opts.ate) || '';
-
-  var docs;
-  try {
-    docs = buscarDocumentos(apiKey, { since: since, until: until });
-  } catch (err) {
-    return { ok: false, code: 502, message: String(err) };
+  if (!since) {
+    // Primeira sincronização desta empresa: não pedir a história completa
+    // da conta Vendus (podem ser milhares de documentos, muito lento) — só
+    // os últimos 90 dias. Vendas mais antigas continuam disponíveis por
+    // registo manual/CSV.
+    var noventaDiasAtras = new Date();
+    noventaDiasAtras.setDate(noventaDiasAtras.getDate() - 90);
+    since = noventaDiasAtras.toISOString().substring(0, 10);
   }
+  var until = (opts && opts.ate) || '';
 
   var fichasRecs = app.findRecordsByFilter(
     'fichas_tecnicas',
@@ -183,80 +228,89 @@ function sincronizarEmpresa(app, empresaId, opts) {
     };
   });
 
+  // Pré-carrega os `vendus_id` já importados (uma query, não uma por
+  // documento) para a verificação de duplicados ser instantânea.
+  var jaImportados = {};
+  var existentesRecs = app.findRecordsByFilter(
+    'vendas',
+    "empresa = {:e} && vendus_id != ''",
+    '',
+    0,
+    0,
+    { e: empresaId },
+  );
+  for (var k = 0; k < existentesRecs.length; k++) {
+    jaImportados[existentesRecs[k].getString('vendus_id')] = true;
+  }
+
   var vendasCriadas = 0;
   var duplicadasIgnoradas = 0;
   var itensCriados = 0;
   var itensSemFicha = 0;
   var maisRecente = since;
+  var perPage = 100;
+  var page = 1;
 
-  for (var i = 0; i < docs.length; i++) {
-    var doc = docs[i];
-    var vendusId = String(doc.id != null ? doc.id : '');
-    if (!vendusId) continue;
-    var dataDoc = String(doc.date || doc.local_time || '').substring(0, 10);
-    if (dataDoc && (!maisRecente || dataDoc > maisRecente)) maisRecente = dataDoc;
-
-    var existentes = app.findRecordsByFilter(
-      'vendas',
-      'empresa = {:e} && vendus_id = {:v}',
-      '',
-      1,
-      0,
-      { e: empresaId, v: vendusId },
-    );
-    if (existentes.length > 0) {
-      duplicadasIgnoradas++;
-      continue;
+  var guardarProgresso = function () {
+    if (maisRecente && maisRecente !== since) {
+      empresa.set('vendus_ultima_sincronizacao', maisRecente);
+      app.save(empresa);
     }
+  };
 
-    var itens = Array.isArray(doc.items) ? doc.items : [];
-    if (!itens.length) continue;
-
+  for (;;) {
+    var pagina;
     try {
-      app.runInTransaction(function (tx) {
-        var venda = new Record(tx.findCollectionByNameOrId('vendas'));
-        venda.set('empresa', empresaId);
-        venda.set('data', dataDoc || new Date().toISOString().substring(0, 10));
-        venda.set('origem', 'vendus');
-        venda.set('total', Number(doc.amount_gross || 0));
-        venda.set('numero_documento', String(doc.number || ''));
-        venda.set('vendus_id', vendusId);
-        tx.save(venda);
-
-        for (var j = 0; j < itens.length; j++) {
-          var it = itens[j];
-          var titulo = String(it.title || '');
-          var qtd = Number(it.qty || 0);
-          var amounts = it.amounts || {};
-          var precoUnit = Number(amounts.gross_unit || 0);
-          var totalLinha = Number(amounts.gross_total || qtd * precoUnit);
-          var match = melhorMatchFicha(titulo, fichas, 0.34);
-
-          var item = new Record(tx.findCollectionByNameOrId('vendas_itens'));
-          item.set('empresa', empresaId);
-          item.set('venda', venda.id);
-          if (match) item.set('ficha', match.id);
-          item.set('descricao', titulo);
-          item.set('quantidade', qtd);
-          item.set('preco_unitario', precoUnit);
-          item.set('total_linha', totalLinha);
-          item.set('custo_unitario_snapshot', match ? match.custoProduto : 0);
-          tx.save(item);
-
-          itensCriados++;
-          if (!match) itensSemFicha++;
-        }
+      pagina = buscarPagina(apiKey, {
+        since: since,
+        until: until,
+        page: page,
+        perPage: perPage,
       });
-      vendasCriadas++;
     } catch (err) {
-      console.log('[vendus] falha ao importar documento ' + vendusId + ': ' + err);
+      guardarProgresso();
+      return {
+        ok: false,
+        code: 502,
+        message:
+          String(err) +
+          (vendasCriadas > 0
+            ? ' (' + vendasCriadas + ' venda(s) já importada(s) antes deste erro — a próxima sincronização continua a partir daí.)'
+            : ''),
+      };
     }
+
+    for (var i = 0; i < pagina.length; i++) {
+      var doc = pagina[i];
+      var vendusId = String(doc.id != null ? doc.id : '');
+      if (!vendusId) continue;
+
+      var dataDoc = String(doc.date || doc.local_time || '').substring(0, 10);
+      if (dataDoc && dataDoc > maisRecente) maisRecente = dataDoc;
+
+      if (jaImportados[vendusId]) {
+        duplicadasIgnoradas++;
+        continue;
+      }
+      var itens = Array.isArray(doc.items) ? doc.items : [];
+      if (!itens.length) continue;
+
+      try {
+        var r = importarDocumento(app, empresaId, doc, fichas);
+        jaImportados[vendusId] = true;
+        vendasCriadas++;
+        itensCriados += r.itens;
+        itensSemFicha += r.semFicha;
+      } catch (err) {
+        console.log('[vendus] falha ao importar documento ' + vendusId + ': ' + err);
+      }
+    }
+
+    if (pagina.length < perPage || page > 50) break;
+    page++;
   }
 
-  if (maisRecente && maisRecente !== since) {
-    empresa.set('vendus_ultima_sincronizacao', maisRecente);
-    app.save(empresa);
-  }
+  guardarProgresso();
 
   return {
     ok: true,
@@ -271,5 +325,4 @@ module.exports = {
   sincronizarEmpresa: sincronizarEmpresa,
   melhorMatchFicha: melhorMatchFicha,
   scoreMatchFicha: scoreMatchFicha,
-  buscarDocumentos: buscarDocumentos,
 };
