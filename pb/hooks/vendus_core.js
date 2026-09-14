@@ -31,6 +31,11 @@
 // (orçamentos, guias, encomendas, pró-forma, consulta de mesa). Notas de
 // crédito/débito (NC/ND) também ficam de fora por agora — precisariam de
 // tratamento especial (valor negativo) que ainda não existe aqui.
+//
+// RG (Recibo) também fica de fora: confirmado com dados reais que uma
+// venda paga gera DOIS documentos — a fatura (FT) e o seu recibo (RG),
+// com o mesmo valor e data, o RG referenciando a FT em `related_docs`.
+// Contar os dois duplicava a receita.
 var TIPOS_NAO_VENDA = {
   OT: true, // Orçamento
   EC: true, // Encomenda
@@ -42,6 +47,7 @@ var TIPOS_NAO_VENDA = {
   GT: true, // Guia de Transporte
   NC: true, // Nota de Crédito
   ND: true, // Nota de Débito
+  RG: true, // Recibo (já contado através da fatura correspondente)
 };
 
 // Mensagem de erro mais útil do que "HTTP 400" — o Vendus normalmente devolve
@@ -61,23 +67,14 @@ function mensagemErroVendus(resp) {
   return String(resp.raw || '').substring(0, 300);
 }
 
-// Busca UMA página. Nunca deixar a chave/URL chegar à mensagem de erro — o
-// erro de rede do Go inclui o URL completo pedido (`Get "...&api_key=...":
-// ...`), e essa mensagem acaba por chegar à interface da app.
-function buscarPagina(apiKey, opts) {
-  var url =
-    'https://www.vendus.pt/ws/v1.1/documents/?api_key=' +
-    encodeURIComponent(apiKey) +
-    '&status=N&per_page=' +
-    opts.perPage +
-    '&page=' +
-    opts.page;
-  if (opts.since) url += '&since=' + encodeURIComponent(opts.since);
-  if (opts.until) url += '&until=' + encodeURIComponent(opts.until);
-
+// Chamada HTTP partilhada. Nunca deixar a chave/URL chegar à mensagem de
+// erro — o erro de rede do Go inclui o URL completo pedido (`Get
+// "...&api_key=...": ...`), e essa mensagem acaba por chegar à interface
+// da app.
+function chamarVendus(url, timeout) {
   var resp;
   try {
-    resp = $http.send({ url: url, method: 'GET', timeout: 45 });
+    resp = $http.send({ url: url, method: 'GET', timeout: timeout });
   } catch (err) {
     var msg = String(err);
     var motivo =
@@ -94,10 +91,37 @@ function buscarPagina(apiKey, opts) {
         mensagemErroVendus(resp),
     );
   }
+  return resp.json;
+}
 
-  var lote = resp.json;
-  if (!Array.isArray(lote)) lote = [];
-  return lote;
+// Busca UMA página da LISTA de documentos — só cabeçalho (id, tipo, data,
+// valor total), sem as linhas de produto (ver buscarDetalheDocumento).
+function buscarPagina(apiKey, opts) {
+  var url =
+    'https://www.vendus.pt/ws/v1.1/documents/?api_key=' +
+    encodeURIComponent(apiKey) +
+    '&status=N&per_page=' +
+    opts.perPage +
+    '&page=' +
+    opts.page;
+  if (opts.since) url += '&since=' + encodeURIComponent(opts.since);
+  if (opts.until) url += '&until=' + encodeURIComponent(opts.until);
+
+  var lote = chamarVendus(url, 45);
+  return Array.isArray(lote) ? lote : [];
+}
+
+// Busca UM documento completo (com as linhas de produto em `items`) — a
+// lista de documentos (buscarPagina) não as traz, mesmo com
+// `view=detailed` (esse parâmetro só acrescenta cliente/pagamento).
+function buscarDetalheDocumento(apiKey, id) {
+  var url =
+    'https://www.vendus.pt/ws/v1.1/documents/' +
+    encodeURIComponent(String(id)) +
+    '/?api_key=' +
+    encodeURIComponent(apiKey);
+  var doc = chamarVendus(url, 30);
+  return doc && typeof doc === 'object' ? doc : {};
 }
 
 // --- emparelhamento por nome (mesma lógica de match_ficha.dart) ---------
@@ -156,12 +180,12 @@ function melhorMatchFicha(descricaoVenda, fichas, minScore) {
   return melhorScore >= minScore ? melhor : null;
 }
 
-// Cria a `venda`+`vendas_itens` de um documento. Devolve quantos itens
+// Cria a `venda`+`vendas_itens` de um documento (já com os `itens`
+// completos, vindos de buscarDetalheDocumento). Devolve quantos itens
 // ficaram sem ficha, para o resumo final.
-function importarDocumento(app, empresaId, doc, fichas) {
+function importarDocumento(app, empresaId, doc, itens, fichas) {
   var vendusId = String(doc.id != null ? doc.id : '');
   var dataDoc = String(doc.date || doc.local_time || '').substring(0, 10);
-  var itens = Array.isArray(doc.items) ? doc.items : [];
   var semFicha = 0;
 
   app.runInTransaction(function (tx) {
@@ -306,27 +330,49 @@ function sincronizarEmpresa(app, empresaId, opts) {
       totalRecebidos++;
       var tipoChave = doc.type || '(sem tipo)';
       tiposVistos[tipoChave] = (tiposVistos[tipoChave] || 0) + 1;
-      if (TIPOS_NAO_VENDA[doc.type]) continue;
+      var dataDoc = String(doc.date || doc.local_time || '').substring(0, 10);
+
+      // Tipos que não são vendas (orçamentos, guias, recibos...) — não há
+      // nada a tentar de novo, avança a marca de progresso e segue.
+      if (TIPOS_NAO_VENDA[doc.type]) {
+        if (dataDoc && dataDoc > maisRecente) maisRecente = dataDoc;
+        continue;
+      }
 
       var vendusId = String(doc.id != null ? doc.id : '');
       if (!vendusId) continue;
 
-      var dataDoc = String(doc.date || doc.local_time || '').substring(0, 10);
-      if (dataDoc && dataDoc > maisRecente) maisRecente = dataDoc;
-
       if (jaImportados[vendusId]) {
         duplicadasIgnoradas++;
+        if (dataDoc && dataDoc > maisRecente) maisRecente = dataDoc;
         continue;
       }
-      var itens = Array.isArray(doc.items) ? doc.items : [];
-      if (!itens.length) continue;
+
+      // A lista só dá o cabeçalho — as linhas de produto vêm só ao pedir o
+      // documento individual. Falha aqui NÃO avança `maisRecente`, para
+      // este documento ser tentado outra vez na próxima sincronização.
+      var detalhe;
+      try {
+        detalhe = buscarDetalheDocumento(apiKey, vendusId);
+      } catch (err) {
+        console.log(
+          '[vendus] falha ao buscar detalhe do documento ' + vendusId + ': ' + err,
+        );
+        continue;
+      }
+      var itens = Array.isArray(detalhe.items) ? detalhe.items : [];
+      if (!itens.length) {
+        if (dataDoc && dataDoc > maisRecente) maisRecente = dataDoc;
+        continue;
+      }
 
       try {
-        var r = importarDocumento(app, empresaId, doc, fichas);
+        var r = importarDocumento(app, empresaId, doc, itens, fichas);
         jaImportados[vendusId] = true;
         vendasCriadas++;
         itensCriados += r.itens;
         itensSemFicha += r.semFicha;
+        if (dataDoc && dataDoc > maisRecente) maisRecente = dataDoc;
       } catch (err) {
         console.log('[vendus] falha ao importar documento ' + vendusId + ': ' + err);
       }
