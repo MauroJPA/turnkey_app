@@ -20,6 +20,7 @@ enum HelpTopic {
   faturaRevisao,
   vendas,
   analiseVendas,
+  encomendas,
   custosFixos,
   equipamentos,
   numerosMagicos,
@@ -43,6 +44,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'A comprar: quanto falta comprar e o valor estimado. Toque para abrir a Lista de compras.',
       'Faturas por rever: aparece quando há faturas (do scanner ou carregadas) à espera de confirmação. Toque para abrir.',
       'Pagamentos por vir: custos fixos com "dia de pagamento" marcado, quando faltar uma semana ou menos. Toque para abrir Custos fixos.',
+      'Encomendas por vir: encomendas que faltam menos horas do que o configurado em Encomendas. Toque para abrir a lista.',
       'Em baixo tem os atalhos para todas as secções.',
     ],
   ),
@@ -86,6 +88,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Uma ficha técnica é o produto final que vende — por exemplo "Cookie Boston".',
       'Junta uma massa, um recheio e/ou uma cobertura, e diz o peso de cada parte.',
       'Serve para saber o custo e o preço de venda sugerido, e para o stock de produto acabado.',
+      'Na lista, cada ficha mostra os dois preços: "sugerido" (calculado a partir do custo e dos Percentuais de custo) e "venda" (o preço real que praticas). Toca no preço de venda para o editar sem precisar de abrir a ficha.',
     ],
   ),
   HelpTopic.fichaDetalhe: (
@@ -212,6 +215,18 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       '"Mais vendido" é o que teve mais unidades; "Maior margem" é o que deu mais lucro por cada euro vendido — não são sempre o mesmo produto.',
       'A seta ao lado de cada linha compara a quantidade vendida com o período anterior de igual duração — sobe ou desce a dizer se aquele sabor está a vender mais ou menos.',
       '"Sem produto identificado" junta as linhas de venda que não foram ligadas a nenhuma ficha técnica (ex.: de uma importação de CSV sem correspondência) — não têm margem calculada.',
+    ],
+  ),
+  HelpTopic.encomendas: (
+    titulo: 'Encomendas',
+    paragrafos: [
+      'Regista aqui os pedidos dos clientes para uma data e hora específicas — diferente das Vendas, que é o registo do que já foi vendido/pago.',
+      'Cada encomenda tem produtos (fichas técnicas) com quantidade, e passa pelos estados Nova → Em produção → Pronta → Entregue (ou Cancelada, em qualquer altura).',
+      '"Encomendas por vir" no Início destaca as que faltam menos horas do que o configurado (ícone de engrenagem em Encomendas) — fica vermelho quando falta menos de 1 hora.',
+      'Ícone de impressora no detalhe da encomenda: abre o talão para imprimir na fábrica, com a data/hora bem grande para não passar ao lado. O tamanho do talão (térmico 80mm ou A4) e se deve imprimir sozinho ao criar também se configuram ali.',
+      'Sem impressora na fábrica? A lista de encomendas em si já serve — abre bem num tablet.',
+      'O "Valor total" é sugerido automaticamente a partir do preço de venda das fichas técnicas escolhidas, mas pode ser editado ou deixado em branco. "Registar pagamento" guarda quanto já foi pago — a encomenda mostra Por pagar/Pago parcialmente/Pago, e isso também aparece no talão impresso (que acompanha a encomenda até ao cliente).',
+      'Menu (⋮) no detalhe da encomenda: Editar (cliente, data/hora, produtos, valor), Registar pagamento, Cancelar ou Apagar.',
     ],
   ),
   HelpTopic.custosFixos: (

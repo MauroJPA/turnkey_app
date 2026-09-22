@@ -20,6 +20,8 @@ import '../features/inventory/presentation/inventory_screen.dart';
 import '../features/invoices/presentation/invoice_review_screen.dart';
 import '../features/invoices/presentation/invoices_screen.dart';
 import '../features/mise_en_place/presentation/mep_screen.dart';
+import '../features/orders/presentation/encomenda_detail_screen.dart';
+import '../features/orders/presentation/encomendas_screen.dart';
 import '../features/packaging/presentation/embalagens_screen.dart';
 import '../features/production/presentation/cart_review_screen.dart';
 import '../features/production/presentation/production_screen.dart';
@@ -51,6 +53,7 @@ abstract class Routes {
   static const inventory = '/inventario';
   static const invoices = '/faturas';
   static const sales = '/vendas';
+  static const encomendas = '/encomendas';
   static const analiseVendas = '/vendas/analise';
   static const painelFinanceiro = '/financeiro';
   static const dre = '/financeiro/dre';
@@ -168,6 +171,18 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: ':id',
                 builder: (_, state) => VendaDetailScreen(
                   vendaId: state.pathParameters['id']!,
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: Routes.encomendas,
+            builder: (_, __) => const EncomendasScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                builder: (_, state) => EncomendaDetailScreen(
+                  encomendaId: state.pathParameters['id']!,
                 ),
               ),
             ],

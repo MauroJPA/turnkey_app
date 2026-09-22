@@ -12,6 +12,8 @@ import '../../finance/application/custos_fixos_providers.dart';
 import '../../inventory/application/inventory_providers.dart';
 import '../../invoices/application/invoice_providers.dart';
 import '../../invoices/domain/fatura.dart';
+import '../../orders/application/encomendas_providers.dart';
+import '../../orders/data/configuracoes_encomendas_repository.dart';
 import '../../schedule/application/schedule_providers.dart';
 import '../../schedule/domain/production_plan.dart';
 import '../../settings/application/empresa_providers.dart';
@@ -34,6 +36,8 @@ class HomeShell extends ConsumerWidget {
         'Foto da fatura → preços e stock', Routes.invoices),
     _Section('Vendas', Icons.point_of_sale_outlined,
         'Registo de vendas e sabores mais vendidos', Routes.sales),
+    _Section('Encomendas', Icons.event_note_outlined,
+        'Pedidos dos clientes por data/hora', Routes.encomendas),
     _Section('Painel financeiro', Icons.insights_outlined,
         'Entradas, saídas e lucro por semana/mês', Routes.painelFinanceiro),
     _Section('Custos fixos', Icons.request_quote_outlined,
@@ -92,6 +96,17 @@ class HomeShell extends ConsumerWidget {
         .where((p) => p.dias <= 7)
         .toList()
       ?..sort((a, b) => a.dias.compareTo(b.dias));
+
+    final encomendas = ref.watch(encomendasListProvider(false)).valueOrNull;
+    final lembreteHoras = ref
+            .watch(configuracaoEncomendasProvider)
+            .valueOrNull
+            ?.lembreteHoras ??
+        4;
+    final encomendasPorVir = encomendas
+        ?.where((e) => e.estado.ativa && e.horasAte(hoje) <= lembreteHoras)
+        .toList()
+      ?..sort((a, b) => a.dataHora.compareTo(b.dataHora));
 
     return Scaffold(
       appBar: AppBar(
@@ -189,6 +204,18 @@ class HomeShell extends ConsumerWidget {
                   .join(', '),
               destaque: pagamentosProximos.any((p) => p.dias <= 2),
               onTap: () => context.go(Routes.custosFixos),
+            ),
+          if ((encomendasPorVir?.length ?? 0) > 0)
+            _StatCard(
+              icon: Icons.event_note_outlined,
+              titulo: 'Encomendas por vir',
+              valor: '${encomendasPorVir!.length}',
+              subtitulo: encomendasPorVir
+                  .take(3)
+                  .map((e) => e.clienteNome)
+                  .join(', '),
+              destaque: encomendasPorVir.any((e) => e.horasAte(hoje) <= 1),
+              onTap: () => context.go(Routes.encomendas),
             ),
           const SizedBox(height: 8),
           Padding(

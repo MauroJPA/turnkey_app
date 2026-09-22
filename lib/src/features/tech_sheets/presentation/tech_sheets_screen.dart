@@ -43,6 +43,41 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
     }
   }
 
+  Future<void> _editarPrecoVenda(FichaTecnica f) async {
+    final ctrl = TextEditingController(
+      text: f.precoVenda > 0 ? f.precoVenda.toStringAsFixed(2) : '',
+    );
+    final novo = await showDialog<double>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Preço de venda — ${f.nome}'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(labelText: 'Preço', prefixText: '€ '),
+          onSubmitted: (_) => Navigator.pop(
+              ctx, double.tryParse(ctrl.text.replaceAll(',', '.'))),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(
+                ctx, double.tryParse(ctrl.text.replaceAll(',', '.'))),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+    if (novo == null || novo == f.precoVenda) return;
+    await _run(
+      () => ref.read(fichaActionsProvider).setPrecoVenda(f.id, novo < 0 ? 0 : novo),
+    );
+  }
+
   Future<void> _add() async {
     final input = await showFichaFormSheet(context);
     if (input == null) return;
@@ -184,26 +219,44 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
       'custo ${fmt(f.custoProduto)}',
     ].join(' · ');
 
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
     final tile = ListTile(
       title: Text(f.nome),
       subtitle: Text(subtitle),
-      trailing: preco == null
-          ? const Icon(Icons.chevron_right)
-          : Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  fmt(preco),
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
+      trailing: SizedBox(
+        width: 104,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            if (preco != null)
+              Text(
+                'sugerido ${fmt(preco)}',
+                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+              ),
+            InkWell(
+              onTap: _podeEditar ? () => _editarPrecoVenda(f) : null,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'venda ${f.temPrecoVenda ? fmt(f.precoVenda) : '—'}',
+                    style: tt.bodyMedium
+                        ?.copyWith(fontWeight: FontWeight.bold, color: cs.primary),
                   ),
-                ),
-                Text('sugerido',
-                    style: Theme.of(context).textTheme.bodySmall),
-              ],
+                  if (_podeEditar) ...[
+                    const SizedBox(width: 3),
+                    Icon(Icons.edit_outlined, size: 13, color: cs.primary),
+                  ],
+                ],
+              ),
             ),
+          ],
+        ),
+      ),
       onTap: () => context.go('${Routes.techSheets}/${f.id}'),
       onLongPress: _podeEditar
           ? () => _run(() => ref.read(fichaActionsProvider).duplicate(f.id))
