@@ -231,6 +231,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
     paragrafos: [
       'Cada peça de equipamento da loja (forno, balcão, computador, vitrine…) com o preço de compra e a vida útil em anos.',
       'A "depreciação mensal" é o preço de compra dividido pela vida útil em meses — é o desgaste do equipamento, em euros por mês. Soma-se automaticamente ao painel financeiro, ao DRE e aos Números mágicos como despesa, sem precisar de a registar outra vez em Custos fixos.',
+      'Ícone de upload (canto superior): importa vários equipamentos de uma vez a partir de um ficheiro .csv com as colunas nome, custo e vida útil (anos).',
       'Não é preciso substituir nada quando o equipamento acaba a vida útil — arquiva-o e cria o novo, se for o caso.',
     ],
   ),

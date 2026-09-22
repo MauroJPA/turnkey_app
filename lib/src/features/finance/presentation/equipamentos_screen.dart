@@ -10,6 +10,8 @@ import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../import_csv/domain/import_result.dart';
+import '../application/equipamentos_import_service.dart';
 import '../application/equipamentos_providers.dart';
 import '../domain/equipamento.dart';
 import 'equipamento_form_sheet.dart';
@@ -47,6 +49,40 @@ class _EquipamentosScreenState extends ConsumerState<EquipamentosScreen> {
     }
   }
 
+  Future<void> _importarCsv() async {
+    try {
+      final resultado =
+          await ref.read(equipamentosImportServiceProvider).pickAndImport();
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Importação de equipamentos'),
+          content: Text(
+            resultado.semErros
+                ? resultado.resumo
+                : '${resultado.resumo}\n\n'
+                    '${resultado.erros.take(10).join('\n')}'
+                    '${resultado.erros.length > 10 ? '\n…' : ''}',
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Ok'),
+            ),
+          ],
+        ),
+      );
+    } on ImportCancelled {
+      // nada escolhido — ignora
+    } on Object catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$e')));
+      }
+    }
+  }
+
   Future<void> _apagar(Equipamento e) async {
     final ok = await confirmDialog(
       context,
@@ -73,6 +109,12 @@ class _EquipamentosScreenState extends ConsumerState<EquipamentosScreen> {
         ),
         title: const Text('Equipamentos'),
         actions: [
+          if (podeEditar)
+            IconButton(
+              tooltip: 'Importar CSV',
+              icon: const Icon(Icons.upload_file_outlined),
+              onPressed: _importarCsv,
+            ),
           const HelpActions(topic: HelpTopic.equipamentos),
           IconButton(
             tooltip: _arquivados ? 'Ocultar arquivados' : 'Ver arquivados',
