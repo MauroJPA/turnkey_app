@@ -12,7 +12,7 @@ antes de começar, para carregar as últimas migrations (há **43**; a última �
 13 Faturas · 14 Nutrição · 15 Embalagens · **16 Vendas · 17 Análise de vendas ·
 18 Encomendas · 19 Custos fixos · 20 Equipamentos · 21 Números mágicos ·
 22 Painel financeiro · 23 DRE · 24 Configurações (empresa/percentuais) ·
-25 Equipa · 26 Navegação e permissões · 27 Produtos Gookie**.
+25 Equipa · 26 Navegação e permissões · 27 Produtos Gookie · 28 Segurança**.
 
 **Limites conhecidos do teste automático** (verifica sempre à mão): tudo o que
 abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
@@ -604,6 +604,19 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] **Lote** vem vazio (não imprime); se escreveres um, aparece na etiqueta.
 - [ ] Peso líquido aparece **na frente**; datas, lote e produtor na parte de baixo; sem ℮ se
       o interruptor estiver desligado.
+
+## 28. Segurança: aprovação de registos e integrações
+
+- [ ] Criar uma conta nova (Registar): ao entrar aparece **"A tua conta aguarda aprovação"**
+      (não o ecrã de criar empresa). "Verificar novamente" mantém-se nesse ecrã; "Sair" volta ao login.
+- [ ] No painel `/_/` (superutilizador) → **users** → marcar **aprovado** nessa conta →
+      "Verificar novamente" leva ao ecrã **A tua empresa**.
+- [ ] Configurações → **Integrações**: guardar um token; aparece "Token guardado (termina em …)"
+      e o token **não** volta a aparecer. Substituir e Remover funcionam. O papel Editor não vê
+      esta opção.
+- [ ] Vendas → **Sincronizar com o Vendus** usa o token guardado (com token real). Sem token dá a
+      mensagem "indica o token em Configurações → Integrações".
+- [ ] Abrir uma **fatura** (imagem e PDF): abre normalmente (o ficheiro agora pede um token).
 
 ---
 

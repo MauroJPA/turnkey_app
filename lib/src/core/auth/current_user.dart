@@ -29,6 +29,7 @@ final currentUserNameProvider = Provider<String?>((ref) {
   return switch (state) {
     AuthSignedIn(:final nome) => nome,
     AuthNeedsOnboarding(:final user) => user.getStringValue('email'),
+    AuthPendingApproval(:final user) => user.getStringValue('email'),
     _ => null,
   };
 });

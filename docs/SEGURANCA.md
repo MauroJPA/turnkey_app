@@ -31,15 +31,56 @@ para admin/owner e a matriz de acesso só para o owner; todos os `/api/turnkey/*
 recusam ids de outra empresa; dados inválidos/enormes não dão erro 500 nem revelam caminhos
 internos; uploads (tamanho, tipo, nome malicioso); nada de segredos no repositório nem no histórico.
 
+## Aprovação de registos (2026-09-24)
+
+Qualquer pessoa pode criar conta, mas **só entra depois de tu a aprovares**.
+
+- Uma conta nova fica com `aprovado = falso`: ao entrar vê o ecrã **"A tua conta aguarda
+  aprovação"**, não consegue criar empresa nem ver dados de ninguém.
+- **Como aprovar (só tu podes):** abre o painel de administração do PocketBase
+  (`http://127.0.0.1:8090/_/`, com a conta de **superutilizador**) → coleção **users** →
+  filtro `aprovado = false` → abre o utilizador → marca **aprovado** → Guardar. Podes também
+  fazê-lo direto na base de dados (`UPDATE users SET aprovado = 1 WHERE email = '...'`).
+  Nenhum utilizador da app (nem proprietários) consegue mudar este campo.
+- O utilizador carrega em **"Verificar novamente"** (ou volta a entrar) e segue para criar a
+  empresa.
+- Contas que já existiam ficaram aprovadas. Membros criados por um proprietário (Equipa)
+  nascem aprovados.
+- Ainda **não há aviso automático** de novos registos (não há email configurado): consulta o
+  filtro de vez em quando. Se quiseres, o próximo passo é uma página "Aprovações" na app só para
+  ti e/ou um email quando alguém se regista.
+
+## Segredos cifrados (token do Vendus e futuros)
+
+- Cada empresa introduz o **seu** token em **Configurações → Integrações** (proprietário/admin).
+  Fica em `segredos_empresa`, cifrado com **AES-256-GCM**; a coleção não tem acesso por REST,
+  a resposta da app só diz "guardado (termina em …)" — o token **nunca volta a sair** do servidor.
+- A chave que cifra é a `TURNKEY_ENC_KEY` (32 caracteres, só em `pb\.env`), **fora da base de
+  dados e dos backups**: quem roubar um backup só leva texto cifrado. Gerar:
+  `cd pb ; .\gerar-chave-cifra.ps1 -Gravar`. **Guarda uma cópia no gestor de palavras-passe** e
+  nunca a mudes depois de haver tokens (ficam ilegíveis; teria de os reintroduzir).
+- A sincronização do Vendus usa o token da própria empresa. A variável `VENDUS_API_KEY` do
+  ambiente passa a ser só um recurso para a empresa de `VENDUS_SYNC_EMPRESA` e **já não serve a
+  outras empresas** (antes, qualquer empresa podia importar vendas com a chave da Gookie).
+- Para juntar outro serviço no futuro (ex.: outro software de vendas): acrescentar o nome em
+  `pb/hooks/integracoes.pb.js` e usar `segredos.ler(app, empresaId, 'servico')`.
+- Testes: `test/security/seguranca.py`, secção 7b (o ficheiro da BD e os logs não contêm o token).
+
+## Atualização do PocketBase
+
+Feita em 2026-09-24: **0.35.0 → 0.40.4** (traz as correções de OAuth2 e da queda do servidor).
+Testada com os testes de segurança, com uma cópia dos dados reais e sem alterações necessárias
+nos hooks. Script: `pb\atualizar-pocketbase.ps1` (descarrega, confere o SHA-256, faz cópia de
+`pb_data` para `pb_data_antes_*`, guarda o binário antigo como `pocketbase.exe.antiga`).
+Um servidor já a correr só passa à nova versão quando o reiniciares.
+
 ## O que **fica por fazer** (depende de ti / do servidor)
 
-1. **Atualizar o PocketBase** (está na 0.35.0). Duas falhas publicadas em 2026: **CVE-2026-44166**
-   (pré-sequestro de conta com login OAuth2/Google — **usamos "Continuar com Google"**; corrigida na
-   0.37.4) e **GHSA-84vh-m24q-wjjx** (um erro interno pode **derrubar o servidor**; corrigida na
-   0.39.7). *Resumo de pesquisa web, a confirmar nas páginas oficiais.* Atualizar exige descarregar o
-   binário novo e voltar a correr `scripts/verificar.sh` + os testes de segurança antes de o pôr
-   na produção.
-2. **Rodar a chave do Vendus** (foi exposta antes) e confirmar as chaves de IA só em `pb\.env`.
+1. **Reiniciar o PocketBase** depois de gerar a chave de cifra (ver acima) — as migrations novas
+   (aprovação, segredos, relações, limites) só se aplicam ao reiniciar.
+2. **Rodar a chave do Vendus** (foi exposta antes): gerar uma nova no Vendus, guardá-la em
+   Configurações → Integrações e **apagar `VENDUS_API_KEY` do `pb\.env`**. Confirmar as chaves de
+   IA só em `pb\.env`.
 3. **Servidor definitivo:**
    - **HTTPS** obrigatório e cabeçalhos de segurança no proxy: `Strict-Transport-Security`,
      `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Content-Security-Policy`.
@@ -52,9 +93,7 @@ internos; uploads (tamanho, tipo, nome malicioso); nada de segredos no repositó
      como um só IP.
    - **`TURNKEY_DEV` não pode estar ligado** (`pb/serve.ps1` liga-o para desenvolvimento).
    - Manter o servidor e o Windows atualizados.
-4. **Decidir:** manter o **registo público aberto**? Qualquer pessoa pode criar conta (fica sem
-   empresa, mas pode criar uma nova). Para uso só da Gookie, fechar o registo (regra de criação
-   `null`) e criar as contas pela app (Equipa) é mais seguro.
+4. ~~Registo público~~ **Decidido:** fica aberto, mas cada conta nova tem de ser aprovada por ti.
 5. **Novas coleções/relações** têm de levar a cláusula "mesma empresa" (o teste avisa se faltar).
 6. Sessão dura 7 dias; palavras-passe: mínimo 8 (o PocketBase não bloqueia palavras-passe fracas
    comuns).

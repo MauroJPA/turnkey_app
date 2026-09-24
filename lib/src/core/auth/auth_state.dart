@@ -20,6 +20,13 @@ class AuthSignedOut extends AuthState {
   final String? message;
 }
 
+/// Conta criada mas ainda não aprovada pelo operador da plataforma.
+class AuthPendingApproval extends AuthState {
+  const AuthPendingApproval(this.user);
+
+  final RecordModel user;
+}
+
 /// Autenticado mas ainda sem empresa associada — falta o onboarding.
 class AuthNeedsOnboarding extends AuthState {
   const AuthNeedsOnboarding(this.user);

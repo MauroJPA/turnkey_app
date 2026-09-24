@@ -20,6 +20,9 @@ routerAdd(
     if (user.getString('empresa')) {
       throw new BadRequestError('Este utilizador já pertence a uma empresa.');
     }
+    if (!user.getBool('aprovado')) {
+      throw new ForbiddenError('A tua conta ainda aguarda aprovação.');
+    }
 
     const body = e.requestInfo().body || {};
     const nome = (body.nome || '').toString().trim();

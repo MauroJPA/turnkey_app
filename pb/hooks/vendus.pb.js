@@ -66,31 +66,45 @@ routerAdd(
   $apis.requireAuth('users'),
 );
 
-// De hora a hora, só se VENDUS_SYNC_EMPRESA estiver definida.
+// De hora a hora, para cada empresa com token do Vendus guardado (e ainda a
+// empresa VENDUS_SYNC_EMPRESA, se usar o token do ambiente).
+// (O handler é autocontido: não vê funções de topo do ficheiro.)
 cronAdd('vendus_sync', '0 * * * *', () => {
-  const empId = $os.getenv('VENDUS_SYNC_EMPRESA');
-  if (!empId) return;
+  const ids = {};
+  try {
+    for (const r of $app.findRecordsByFilter('segredos_empresa', "servico = 'vendus'", '', 0, 0)) {
+      ids[r.getString('empresa')] = true;
+    }
+  } catch (_) {}
+  const env = $os.getenv('VENDUS_SYNC_EMPRESA');
+  if (env) ids[env] = true;
 
   const core = require(`${__hooks}/vendus_core.js`);
-  const r = core.sincronizarEmpresa($app, empId, {});
-  if (!r.ok) {
-    console.log('[vendus] sincronização falhou: ' + r.message);
-    return;
-  }
-  if (r.vendasCriadas > 0) {
-    console.log(
-      '[vendus] ' +
-        r.vendasCriadas +
-        ' venda(s) sincronizada(s), ' +
-        r.itensSemFicha +
-        ' linha(s) sem produto identificado.',
-    );
-  } else if (r.totalDocumentosRecebidos > 0) {
-    console.log(
-      '[vendus] 0 vendas novas, ' +
-        r.totalDocumentosRecebidos +
-        ' documento(s) recebidos do Vendus. Tipos vistos: ' +
-        JSON.stringify(r.tiposDocumentosVistos || {}),
-    );
+  for (const empId of Object.keys(ids)) {
+    const r = core.sincronizarEmpresa($app, empId, {});
+    if (!r.ok) {
+      console.log('[vendus] sincronização falhou (' + empId + '): ' + r.message);
+      continue;
+    }
+    if (r.vendasCriadas > 0) {
+      console.log(
+        '[vendus] ' +
+          empId +
+          ': ' +
+          r.vendasCriadas +
+          ' venda(s) sincronizada(s), ' +
+          r.itensSemFicha +
+          ' linha(s) sem produto identificado.',
+      );
+    } else if (r.totalDocumentosRecebidos > 0) {
+      console.log(
+        '[vendus] ' +
+          empId +
+          ': 0 vendas novas, ' +
+          r.totalDocumentosRecebidos +
+          ' documento(s) recebidos do Vendus. Tipos vistos: ' +
+          JSON.stringify(r.tiposDocumentosVistos || {}),
+      );
+    }
   }
 });

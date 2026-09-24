@@ -25,7 +25,7 @@ import urllib.error
 import urllib.request
 
 RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-PB_BIN = os.path.join(RAIZ, 'pb', 'bin', 'pocketbase.exe' if os.name == 'nt' else 'pocketbase')
+PB_BIN = os.environ.get('PB_BIN') or os.path.join(RAIZ, 'pb', 'bin', 'pocketbase.exe' if os.name == 'nt' else 'pocketbase')
 URL = os.environ.get('PB_URL', 'http://127.0.0.1:8197')
 SUPER = os.environ.get('PB_SUPER', 'sec@t.local:SegTeste12345').split(':', 1)
 
@@ -125,7 +125,8 @@ def arrancar():
     base = [PB_BIN, '--dir', dados, '--migrationsDir', os.path.join(RAIZ, 'pb', 'migrations')]
     subprocess.run(base[:1] + ['superuser', 'upsert', SUPER[0], SUPER[1]] + base[1:],
                    check=True, capture_output=True)
-    env = {k: v for k, v in os.environ.items() if k != 'TURNKEY_DEV'}
+    env = {k: v for k, v in os.environ.items() if k not in ('TURNKEY_DEV', 'VENDUS_API_KEY', 'VENDUS_SYNC_EMPRESA')}
+    env['TURNKEY_ENC_KEY'] = 'K' * 32  # chave-mestra só de teste
     porta = URL.rsplit(':', 1)[1]
     proc = subprocess.Popen(
         [PB_BIN, 'serve', '--dir', dados, '--migrationsDir', os.path.join(RAIZ, 'pb', 'migrations'),
@@ -255,7 +256,7 @@ def semear(col, emp, pilha=()):
 
 
 def colecoes_com_empresa():
-    return [n for n, c in cols.items() if not n.startswith('_') and n not in ('users', 'empresas')
+    return [n for n, c in cols.items() if not n.startswith('_') and n not in ('users', 'empresas', 'segredos_empresa')
             and any(f['name'] == 'empresa' for f in c['fields'])]
 
 
@@ -654,6 +655,100 @@ def teste_implantacao():
         (ok if r.get('rateLimits', {}).get('enabled') else falha)('rate limiting ativo nas definições')
 
 
+
+# ---------------------------------------------------------------------------
+# 7. aprovação de registos e segredos cifrados
+# ---------------------------------------------------------------------------
+TOKEN_VENDUS = 'TESTE-VENDUS-TOKEN-SEGREDO-7890'
+
+
+def teste_aprovacao():
+    sec('7a. Aprovação de registos')
+    s, r, _ = call('POST', '/api/collections/users/records',
+                   {'email': 'pendente@seg.local', 'password': 'Pendente1234', 'passwordConfirm': 'Pendente1234'})
+    check(s == 200 and not r.get('aprovado'), 'registo novo fica por aprovar', str(r)[:100])
+    uid = r.get('id')
+    s, r, _ = call('POST', '/api/collections/users/records',
+                   {'email': 'espertalhao@seg.local', 'password': 'Espertalhao1', 'passwordConfirm': 'Espertalhao1', 'aprovado': True})
+    check(s != 200, 'registo não pode vir já aprovado', f'status {s}')
+    s, r, _ = call('POST', '/api/collections/users/auth-with-password', {'identity': 'pendente@seg.local', 'password': 'Pendente1234'})
+    t = r.get('token')
+    check(bool(t), 'utilizador por aprovar consegue entrar (vê o ecrã "em análise")')
+    s, _, _ = call('POST', '/api/turnkey/onboarding', {'nome': 'Empresa Pendente'}, t)
+    check(s == 403, 'por aprovar: não cria empresa', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/users/records/{uid}', {'aprovado': True}, t)
+    check(s != 200, 'por aprovar: não se aprova a si próprio', f'status {s}')
+    s, r, _ = call('GET', '/api/collections/users/records/' + uid, tok=su)
+    check(not r.get('aprovado'), 'continua por aprovar após as tentativas')
+    for col in ('ingredientes', 'receitas', 'vendas', 'faturas'):
+        s, r, _ = call('GET', f'/api/collections/{col}/records', tok=t)
+        check(s != 200 or not r.get('items'), f'por aprovar: não vê dados ({col})', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/users/records/{uid}', {'aprovado': True}, su)
+    check(s == 200, 'o operador (superutilizador) aprova')
+    s, _, _ = call('POST', '/api/turnkey/onboarding', {'nome': 'Empresa Aprovada'}, t)
+    check(s == 200, 'depois de aprovado cria a empresa', f'status {s}')
+    s, r, _ = call('POST', '/api/turnkey/team/members',
+                   {'email': 'membro-aprovado@seg.local', 'password': 'Teste12345!', 'papel': 'viewer'}, tok['ownerA'])
+    if s == 200:
+        s2, r2, _ = call('GET', f'/api/collections/users/records/{r["id"]}', tok=su)
+        check(r2.get('aprovado') is True, 'membros criados por um proprietário nascem aprovados')
+
+
+def teste_segredos():
+    sec('7b. Segredos cifrados (token do Vendus)')
+    url = '/api/turnkey/integracoes/vendus'
+    for quem in ('viewerA', 'editorA'):
+        s, _, _ = call('PUT', url, {'valor': TOKEN_VENDUS}, tok[quem])
+        check(s == 403, f'{quem} não guarda tokens', f'status {s}')
+    s, _, _ = call('PUT', url, {'valor': TOKEN_VENDUS})
+    check(s in (401, 403), 'sem sessão não guarda tokens', f'status {s}')
+    s, _, _ = call('PUT', url, {'valor': 'curto'}, tok['ownerA'])
+    check(s == 400, 'token curto recusado', f'status {s}')
+    s, _, _ = call('PUT', '/api/turnkey/integracoes/outro', {'valor': TOKEN_VENDUS}, tok['ownerA'])
+    check(s == 404, 'serviço desconhecido recusado', f'status {s}')
+    s, r, _ = call('PUT', url, {'valor': TOKEN_VENDUS}, tok['adminA'])
+    check(s == 200 and r.get('configurada') is True and r.get('sufixo') == '7890', 'admin guarda o token', f'{s} {r}')
+    check(TOKEN_VENDUS not in json.dumps(r), 'a resposta nunca devolve o token')
+    s, r, _ = call('GET', url, tok=tok['editorA'])
+    check(s == 200 and r.get('configurada') is True and TOKEN_VENDUS not in json.dumps(r), 'editor vê só o estado')
+    s, _, _ = call('GET', url, tok=tok['viewerA'])
+    check(s == 403, 'Leitura não vê a integração', f'status {s}')
+    s, r, _ = call('GET', url, tok=tok['ownerB'])
+    check(s == 200 and r.get('configurada') is False, 'a empresa B não vê o token da empresa A')
+    s, _, _ = call('DELETE', url, tok=tok['editorA'])
+    check(s == 403, 'editor não apaga o token', f'status {s}')
+    for quem in ('ownerA', 'ownerB', 'editorB'):
+        s, r, _ = call('GET', '/api/collections/segredos_empresa/records', tok=tok[quem])
+        check(s in (400, 403, 404) or not r.get('items'), f'{quem} não lê a coleção de segredos por REST', f'status {s}')
+    # cifrado em repouso
+    s, r, _ = call('GET', '/api/collections/segredos_empresa/records', tok=su)
+    itens = r.get('items', []) if isinstance(r, dict) else []
+    check(len(itens) == 1 and TOKEN_VENDUS not in json.dumps(itens) and itens[0].get('valor_cifrado'),
+          'na base de dados o token está cifrado (nem o superutilizador o vê em claro)')
+    # o ficheiro da base de dados também não o contém em claro
+    if tmp:
+        alvo = TOKEN_VENDUS.encode()
+        achou = False
+        for nome in os.listdir(os.path.join(tmp, 'data')):
+            if nome.startswith('data.db'):
+                if alvo in open(os.path.join(tmp, 'data', nome), 'rb').read():
+                    achou = True
+        check(not achou, 'o ficheiro da base de dados não contém o token em claro')
+    # sincronizar usa o token da própria empresa; outra empresa não herda
+    s, r, _ = call('POST', '/api/turnkey/vendus/sincronizar', {}, tok['ownerA'])
+    check(TOKEN_VENDUS not in json.dumps(r) if not isinstance(r, bytes) else True, 'erros do Vendus não expõem o token', f'status {s}')
+    check(s != 503, 'sincronizar usa o token guardado (decifrado no servidor)', f'status {s}')
+    s, r, _ = call('POST', '/api/turnkey/vendus/sincronizar', {}, tok['ownerB'])
+    check(s == 503, 'empresa sem token não usa o de outra (503 "não configurado")', f'status {s}')
+    s, r, _ = call('DELETE', url, tok=tok['ownerA'])
+    check(s == 200 and r.get('configurada') is False, 'proprietário remove o token')
+    s, r, _ = call('POST', '/api/turnkey/vendus/sincronizar', {}, tok['ownerA'])
+    check(s == 503, 'sem token guardado volta a 503', f'status {s}')
+    # nada de segredos no registo do servidor
+    if tmp and os.path.exists(os.path.join(tmp, 'pb.log')):
+        check(TOKEN_VENDUS not in open(os.path.join(tmp, 'pb.log'), errors='ignore').read(), 'o token não aparece nos logs do servidor')
+
+
 def main():
     arrancar()
     try:
@@ -662,6 +757,8 @@ def main():
         teste_papeis()
         teste_endpoints()
         teste_uploads()
+        teste_aprovacao()
+        teste_segredos()
         teste_implantacao()
         teste_autenticacao()  # por último: gasta o limite de tentativas
     finally:

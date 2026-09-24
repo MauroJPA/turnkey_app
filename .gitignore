@@ -37,6 +37,7 @@ migrate_working_dir/
 .env
 /pb/bin/
 /pb/pb_data/
+/pb/pb_data_antes_*/
 
 # Nota: os ficheiros gerados (*.g.dart, *.freezed.dart) SÃO versionados,
 # para um clone novo compilar sem correr o build_runner primeiro.

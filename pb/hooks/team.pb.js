@@ -48,6 +48,7 @@ routerAdd(
       u.set('empresa', empresaId);
       u.set('papel', papel);
       u.set('verified', true);
+      u.set('aprovado', true);
       tx.save(u);
       novoId = u.id;
     });
