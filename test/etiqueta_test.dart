@@ -113,6 +113,20 @@ void main() {
       expect(h, isNot(contains('refrigerado..')));
     });
 
+    test('datas em branco para escrever à caneta', () {
+      final h = etiquetaPagina(EtiquetaDados(
+        nome: 'X',
+        fabrico: DateTime(2026, 9, 24),
+        validadeDias: 7,
+        imprimirDatas: false,
+      ));
+      expect(h, contains('<b>Fabrico:</b> <span class="cx"></span>'));
+      expect(h, contains('Consumir de preferência antes de:</b> <span class="cx"></span>'));
+      expect(h, contains('Validade: 7 dias após a data de fabrico'));
+      expect(h, isNot(contains('24/09/2026')));
+      expect(h, isNot(contains('01/10/2026')));
+    });
+
     test('℮ só aparece se ligado', () {
       expect(etiquetaPagina(dados(e: true)), contains('150 g ℮'));
     });
