@@ -38,6 +38,16 @@ class MepRepository {
     return MepPlano.fromJson(Map<String, dynamic>.from(res as Map));
   }
 
+  /// Mise en place de um produto final (ficha técnica) para [unidades].
+  Future<MepPlano> planoFicha(String fichaId, int unidades) async {
+    final res = await _pb.send(
+      '/api/turnkey/fichas/$fichaId/plano',
+      method: 'GET',
+      query: {'unidades': '$unidades'},
+    );
+    return MepPlano.fromJson(Map<String, dynamic>.from(res as Map));
+  }
+
   /// Regista a produção (concluída) na agenda, dá baixa no stock e — se
   /// [gerarCompras] — envia o que faltou para a lista de compras.
   Future<({String planoId, ConclusaoResumo resumo, int linhasCompra})>
@@ -46,6 +56,7 @@ class MepRepository {
     double kg, {
     String? formatoId,
     String? recheioId,
+    String? fichaId,
     required String tituloReceita,
     bool gerarCompras = false,
   }) async {
@@ -62,6 +73,7 @@ class MepRepository {
       'quantidade_kg': kg,
       if (formatoId != null && formatoId.isNotEmpty) 'formato': formatoId,
       if (recheioId != null && recheioId.isNotEmpty) 'recheio': recheioId,
+      if (fichaId != null && fichaId.isNotEmpty) 'ficha': fichaId,
       'prioridade': 'media',
     });
 

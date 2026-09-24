@@ -14,6 +14,8 @@ class CartLinha {
     required this.unidadesPrevistas,
     this.recheioId,
     this.recheioNome,
+    this.fichaId = '',
+    this.fichaNome = '',
     this.prioridade = Prioridade.media,
     this.horaLimite = '',
   });
@@ -27,8 +29,15 @@ class CartLinha {
   final int unidadesPrevistas;
   final String? recheioId;
   final String? recheioNome;
+
+  /// Produto final (ficha técnica) escolhido; vazio = linha por receita.
+  final String fichaId;
+  final String fichaNome;
   final Prioridade prioridade;
   final String horaLimite;
+
+  /// Nome a mostrar: o produto final, ou a receita.
+  String get nome => fichaNome.isNotEmpty ? fichaNome : receitaNome;
 
   CartLinha copyWith({
     double? kg,
@@ -51,6 +60,8 @@ class CartLinha {
         unidadesPrevistas: unidadesPrevistas ?? this.unidadesPrevistas,
         recheioId: limparRecheio ? null : (recheioId ?? this.recheioId),
         recheioNome: limparRecheio ? null : (recheioNome ?? this.recheioNome),
+        fichaId: fichaId,
+        fichaNome: fichaNome,
         prioridade: prioridade ?? this.prioridade,
         horaLimite: horaLimite ?? this.horaLimite,
       );

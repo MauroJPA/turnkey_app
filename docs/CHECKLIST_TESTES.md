@@ -3,8 +3,8 @@
 Percorre esta lista na app (login `ana@teste.local`). Para cada ponto marca
 `[x]` se está OK, ou escreve a seguir o que queres ajustar. Reinicia o
 PocketBase (`pb\serve.ps1`) e faz hot-restart do `flutter run` (tecla **R**)
-antes de começar, para carregar as últimas migrations (há **40**; a última é
-`1707436800_navegacao.js`).
+antes de começar, para carregar as últimas migrations (há **41**; a última é
+`1707523200_producao_item_ficha.js`).
 
 **Índice de páginas** (uma secção por página): 0 Arranque · 1 Início ·
 2 Aparência · 3 Formatos · 4 Ingredientes · 5 Receitas · 6 Fichas · 7 Produzir ·
@@ -127,7 +127,21 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 
 ## 7. Produzir → carrinho → Agenda
 
-- [ ] O seletor mostra **todas** as receitas de fabrico próprio.
+- [ ] O seletor "O que vais produzir?" mostra primeiro os **produtos finais** das
+      fichas técnicas (ex. Boston, Boston Gigante, Provença) e, por baixo, o
+      atalho **Receitas**.
+- [ ] **Produto final**: indicar as **unidades** (não kg) → aparece "N un · X kg de
+      massa", **Produzir primeiro** (a **massa** primeiro, depois recheios e
+      coberturas com as gramas de cada um; "Abrir" abre a receita) e
+      **Ingredientes** (com o stock). Conferir à mão: massa por unidade da ficha ×
+      unidades, recheio/topo por unidade × unidades.
+- [ ] "Adicionar à agenda" (produto final) só pede prioridade e hora limite; no
+      carrinho aparece o nome do produto e "Produto final"; a produção mostra
+      o produto (não a massa) e o mise en place "por receita" correto.
+- [ ] Ao **concluir** a produção, o stock do **produto** sobe pelas unidades certas
+      (ex. Boston Gigante: 1 kg de massa ÷ 200 g = 5 un).
+- [ ] O seletor **Receitas** continua a funcionar como antes (kg → árvore de
+      ingredientes; "Adicionar à agenda" com formato/recheio).
 - [ ] Escolher receita + kg mostra a árvore com as quantidades escaladas.
 - [ ] **Verificar a escala**: pedir 4 kg de uma massa → a **soma dos
       ingredientes dá 4 kg** (proporção de cada um mantida).
@@ -214,6 +228,11 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 ## 12. Mise en place (produzir agora)
 
 - [ ] Aba **Mise** no rodapé e botão "Mise en place — produzir agora" no Início.
+- [ ] Escolher **produto final** (ficha técnica) + **unidades** mostra as caixas:
+      "Produzir primeiro" com a **massa**, os **recheios** e as **coberturas**, e
+      os ingredientes; o campo Formato desaparece (vem da ficha).
+- [ ] "Produção feita" num produto final regista a produção com o nome do produto
+      e credita as unidades no stock.
 - [ ] Escolher receita + kg (+ formato p/ produto final) mostra as caixas.
 - [ ] Seção **"Produzir primeiro"** lista os intermédios (recheios/bases);
       botão **"Abrir"** abre o mise en place desse intermédio (com o seu

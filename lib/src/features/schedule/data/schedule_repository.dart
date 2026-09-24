@@ -74,7 +74,7 @@ class ScheduleRepository {
     final recs = await _itens.getFullList(
       filter: 'producao = "$planId"',
       sort: 'created',
-      expand: 'receita,formato,recheio',
+      expand: 'receita,formato,recheio,ficha',
     );
     return recs.map(ProducaoItem.fromRecord).toList();
   }
@@ -85,6 +85,7 @@ class ScheduleRepository {
     required double quantidadeKg,
     String? formatoId,
     String? recheioId,
+    String? fichaId,
     String prioridade = 'media',
     String horaLimite = '',
     int unidadesPrevistas = 0,
@@ -96,6 +97,7 @@ class ScheduleRepository {
       'quantidade_kg': quantidadeKg,
       if (formatoId != null) 'formato': formatoId,
       if (recheioId != null) 'recheio': recheioId,
+      if (fichaId != null && fichaId.isNotEmpty) 'ficha': fichaId,
       'prioridade': prioridade,
       if (horaLimite.isNotEmpty) 'hora_limite': horaLimite,
       'unidades_previstas': unidadesPrevistas,

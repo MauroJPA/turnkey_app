@@ -106,8 +106,10 @@ const Map<HelpTopic, HelpEntry> helpContent = {
   HelpTopic.produzir: (
     titulo: 'Produzir',
     paragrafos: [
-      'Escolha uma receita e a quantidade em kg para ver quanto precisa de cada ingrediente. As quantidades são escaladas pela percentagem de cada ingrediente para dar exatamente os kg pedidos.',
-      'Botão "Adicionar à agenda": escolhe se é um "Produto final" (cookie pronto, com formato/ficha técnica → conta unidades) ou um "Intermédio" (recheio, massa, base → entra em stock a granel em gramas). Depois a prioridade e a hora limite, e junta ao carrinho.',
+      'Escolha o que produzir: um PRODUTO FINAL das fichas técnicas (Boston, Provença…) ou uma receita (massa, recheio, base).',
+      'Produto final: indique as unidades. Aparece o mise en place — "Produzir primeiro" (a massa, os recheios e as coberturas, com as gramas de cada um) e os ingredientes a pesar. "Abrir" mostra a receita de cada intermédio.',
+      'Receita: indique os kg para ver quanto precisa de cada ingrediente. As quantidades são escaladas pela percentagem de cada ingrediente para dar exatamente os kg pedidos.',
+      'Botão "Adicionar à agenda": num produto final só escolhe a prioridade e a hora limite (as unidades e a massa já estão calculadas). Numa receita escolhe se é "Produto final" (com formato/ficha técnica → conta unidades) ou "Intermédio" (recheio, massa, base → entra em stock a granel em gramas).',
       'Se já existir uma ficha técnica para essa massa, o recheio e as coberturas são preenchidos automaticamente.',
       'Quando tiver as receitas todas no carrinho, toque na barra em baixo para "Rever e agendar".',
     ],
@@ -116,7 +118,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
     titulo: 'Mise en place',
     paragrafos: [
       'Página para produzir agora, sem agendar antes.',
-      'Escolhe a receita e a quantidade em kg. Se for um produto final, escolhe o formato.',
+      'Escolhe o produto: um produto final das fichas técnicas (indicas as unidades) ou uma receita (indicas os kg; se for produto final, escolhe o formato).',
       'Aparece a lista em caixas: "Produzir primeiro" (recheios/bases — carrega em "Abrir" para ver a receita, procedimento e imagens de cada um) e "Ingredientes" (com o que tens em stock; a vermelho quando falta).',
       'Botão "Procedimento e imagens" mostra o passo-a-passo da receita escolhida.',
       'Vai marcando as caixas à medida que preparas.',

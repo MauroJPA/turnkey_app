@@ -114,6 +114,8 @@ class ProducaoItem {
     required this.quantidadeKg,
     this.formatoNome = '',
     this.recheioNome = '',
+    this.fichaId = '',
+    this.fichaNome = '',
     this.prioridade = Prioridade.media,
     this.horaLimite = '',
     this.unidadesPrevistas = 0,
@@ -122,6 +124,13 @@ class ProducaoItem {
   final String id;
   final String receitaId;
   final String nome;
+
+  /// Produto final (ficha técnica) escolhido em Produzir; vazio = por receita.
+  final String fichaId;
+  final String fichaNome;
+
+  /// Nome a mostrar: o produto final, ou a receita.
+  String get titulo => fichaNome.isNotEmpty ? fichaNome : nome;
   final double quantidadeKg;
   final String formatoNome;
   final String recheioNome;
@@ -142,6 +151,8 @@ class ProducaoItem {
       quantidadeKg: r.getDoubleValue('quantidade_kg'),
       formatoNome: expNome('formato'),
       recheioNome: expNome('recheio'),
+      fichaId: r.getStringValue('ficha'),
+      fichaNome: expNome('ficha'),
       prioridade: Prioridade.fromApi(r.getStringValue('prioridade')),
       horaLimite: r.getStringValue('hora_limite'),
       unidadesPrevistas: r.getIntValue('unidades_previstas'),

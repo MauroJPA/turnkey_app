@@ -1139,6 +1139,125 @@ function carregarProducao(e, exigeEscrita) {
   };
 }
 
+// Receita que uma linha de ficha representa: a própria `receita`, ou a
+// receita-espelho de um ingrediente de fabrico próprio. '' se for um
+// ingrediente comprado (ou vazio).
+function receitaDaLinha(app, receitaId, ingredienteId) {
+  if (receitaId) return receitaId;
+  if (!ingredienteId) return '';
+  try {
+    const ing = app.findRecordById('ingredientes', ingredienteId);
+    const esp = ing.getString('receita_espelho');
+    return ing.getString('origem') === 'fabrico_proprio' && esp ? esp : '';
+  } catch (_) {
+    return '';
+  }
+}
+
+// Dados de produção de uma ficha técnica (produto final): a massa que leva
+// por unidade, qual é a receita dessa massa e o formato. `alvoG` (massa total
+// a produzir) só serve para calcular as unidades. null se a ficha não existir
+// ou não tiver massa.
+function infoFicha(app, fichaId, alvoG) {
+  if (!fichaId) return null;
+  let ficha;
+  try {
+    ficha = app.findRecordById('fichas_tecnicas', fichaId);
+  } catch (_) {
+    return null;
+  }
+  const linhas = app.findRecordsByFilter(
+    'itens_ficha',
+    "ficha = {:f} && slot = 'massa'",
+    '',
+    0,
+    0,
+    { f: fichaId },
+  );
+  let massaG = 0;
+  let massaReceitaId = '';
+  for (const l of linhas) {
+    let g = 0;
+    try {
+      g = l.getFloat('quantidade_g');
+    } catch (_) {}
+    if (g <= 0) continue;
+    massaG += g;
+    if (!massaReceitaId) {
+      massaReceitaId = receitaDaLinha(
+        app,
+        l.getString('receita'),
+        l.getString('ingrediente'),
+      );
+    }
+  }
+  if (massaG <= 0 || !massaReceitaId) return null;
+
+  const formatoId = ficha.getString('formato');
+  let formatoNome = '';
+  if (formatoId) {
+    try {
+      formatoNome = app
+        .findRecordById('formatos_cookie', formatoId)
+        .getString('nome');
+    } catch (_) {}
+  }
+  return {
+    fichaId: fichaId,
+    nome: ficha.getString('nome'),
+    massaG: massaG,
+    massaReceitaId: massaReceitaId,
+    formatoId: formatoId,
+    formatoNome: formatoNome,
+    unidades: alvoG > 0 ? Math.round(alvoG / massaG) : 0,
+  };
+}
+
+// Mise en place de um produto final: para `unidades` unidades da ficha,
+// devolve { comprar:{[ingId]:g}, produzir:{[receitaId]:g} } — a massa, os
+// recheios, as coberturas e extras (e as sub-receitas de cada um) a produzir
+// primeiro, e os ingredientes crus a comprar/pesar.
+function planoFicha(app, fichaId, unidades) {
+  const info = infoFicha(app, fichaId, 0);
+  if (!info) return null;
+  const comprar = {};
+  const produzir = {};
+  const merge = (dst, src) => {
+    for (const k in src) dst[k] = (dst[k] || 0) + src[k];
+  };
+
+  const linhas = app.findRecordsByFilter(
+    'itens_ficha',
+    'ficha = {:f}',
+    '',
+    0,
+    0,
+    { f: fichaId },
+  );
+  for (const l of linhas) {
+    let g = 0;
+    try {
+      g = l.getFloat('quantidade_g') * unidades;
+    } catch (_) {}
+    if (g <= 0) continue;
+    const recId = receitaDaLinha(
+      app,
+      l.getString('receita'),
+      l.getString('ingrediente'),
+    );
+    if (recId) {
+      produzir[recId] = (produzir[recId] || 0) + g;
+      const ep = explodeProducao(app, recId, g);
+      merge(comprar, ep.comprar);
+      merge(produzir, ep.produzir);
+    } else if (l.getString('ingrediente')) {
+      const ingId = l.getString('ingrediente');
+      comprar[ingId] = (comprar[ingId] || 0) + g;
+    }
+  }
+  return { info: info, comprar: comprar, produzir: produzir };
+}
+
 module.exports = {
   runCascade,
   explodeCompras,
@@ -1147,4 +1266,7 @@ module.exports = {
   aplicarMovimento,
   carregarProducao,
   resolverFicha,
+  receitaDaLinha,
+  infoFicha,
+  planoFicha,
 };

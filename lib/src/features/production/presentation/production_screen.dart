@@ -7,12 +7,17 @@ import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../mise_en_place/application/mep_providers.dart';
+import '../../mise_en_place/domain/mep_plano.dart';
+import '../../mise_en_place/presentation/mep_plano_view.dart';
 import '../../recipes/domain/recipe.dart';
-import '../../recipes/presentation/recipe_picker_sheet.dart';
+import '../../tech_sheets/domain/tech_sheet.dart';
 import '../application/agenda_cart.dart';
 import '../application/production_providers.dart';
 import '../domain/production.dart';
+import 'agenda_ficha_sheet.dart';
 import 'agenda_line_sheet.dart';
+import 'produto_picker_sheet.dart';
 
 class ProductionScreen extends ConsumerStatefulWidget {
   const ProductionScreen({super.key});
@@ -23,7 +28,9 @@ class ProductionScreen extends ConsumerStatefulWidget {
 
 class _ProductionScreenState extends ConsumerState<ProductionScreen> {
   Receita? _receita;
+  FichaTecnica? _ficha;
   final _kg = TextEditingController();
+  final _feitos = <String>{};
 
   @override
   void dispose() {
@@ -36,14 +43,46 @@ class _ProductionScreenState extends ConsumerState<ProductionScreen> {
     return kg * 1000;
   }
 
+  int get _unidades => int.tryParse(_kg.text.trim()) ?? 0;
+
+  MepFichaArgs? get _fichaArgs {
+    final f = _ficha;
+    if (f == null || _unidades <= 0) return null;
+    return (fichaId: f.id, unidades: _unidades);
+  }
+
   Future<void> _escolher() async {
-    // Mostra todas as receitas de fabrico próprio — pode produzir-se um
-    // produto final (com ficha) ou um intermédio (recheio, massa, base).
-    final r = await showRecipePickerSheet(context, soFabricoProprio: false);
-    if (r != null) setState(() => _receita = r);
+    // Produtos finais (fichas técnicas) ou receitas (massa, recheio, base).
+    final p = await showProdutoPickerSheet(context);
+    if (p == null) return;
+    setState(() {
+      _feitos.clear();
+      _kg.clear();
+      switch (p) {
+        case ProdutoFicha(:final ficha):
+          _ficha = ficha;
+          _receita = null;
+        case ProdutoReceita(:final receita):
+          _receita = receita;
+          _ficha = null;
+      }
+    });
   }
 
   Future<void> _adicionarAgenda() async {
+    final args = _fichaArgs;
+    if (args != null) {
+      try {
+        final plano = await ref.read(mepPlanoFichaProvider(args).future);
+        if (mounted) await showAgendaFichaSheet(context, plano);
+      } on Object catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('$e')));
+        }
+      }
+      return;
+    }
     final receita = _receita;
     if (receita == null) return;
     final kg = double.tryParse(_kg.text.replaceAll(',', '.').trim()) ?? 0;
@@ -53,7 +92,7 @@ class _ProductionScreenState extends ConsumerState<ProductionScreen> {
   @override
   Widget build(BuildContext context) {
     final fmt = ref.watch(moneyFormatProvider);
-    final pronto = _receita != null && _alvoG > 0;
+    final pronto = _fichaArgs != null || (_receita != null && _alvoG > 0);
     final carrinho = ref.watch(agendaCartProvider);
 
     return Scaffold(
@@ -107,13 +146,15 @@ class _ProductionScreenState extends ConsumerState<ProductionScreen> {
           Card(
             child: ListTile(
               leading: const Icon(Icons.inventory_2_outlined),
-              title: Text(_receita?.nome ?? 'Escolher produto'),
-              subtitle: _receita == null
-                  ? const Text('Receita de fabrico próprio')
-                  : Text(
-                      '${_receita!.categoria.label} · rendimento base '
-                      '${_receita!.rendimentoEsperado.toStringAsFixed(0)} g',
-                    ),
+              title: Text(_ficha?.nome ?? _receita?.nome ?? 'Escolher produto'),
+              subtitle: _ficha != null
+                  ? const Text('Produto final (ficha técnica)')
+                  : _receita == null
+                      ? const Text('Produto final ou receita')
+                      : Text(
+                          '${_receita!.categoria.label} · rendimento base '
+                          '${_receita!.rendimentoEsperado.toStringAsFixed(0)} g',
+                        ),
               trailing: const Icon(Icons.expand_more),
               onTap: _escolher,
             ),
@@ -121,19 +162,42 @@ class _ProductionScreenState extends ConsumerState<ProductionScreen> {
           const SizedBox(height: 12),
           TextField(
             controller: _kg,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: 'Quantidade a produzir',
-              suffixText: 'kg',
+            keyboardType: _ficha != null
+                ? TextInputType.number
+                : const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              labelText: _ficha != null
+                  ? 'Unidades a produzir'
+                  : 'Quantidade a produzir',
+              suffixText: _ficha != null ? 'un' : 'kg',
             ),
-            onChanged: (_) => setState(() {}),
+            onChanged: (_) => setState(_feitos.clear),
           ),
           const SizedBox(height: 16),
           if (!pronto)
-            const Padding(
-              padding: EdgeInsets.only(top: 32),
+            Padding(
+              padding: const EdgeInsets.only(top: 32),
               child: Center(
-                child: Text('Escolhe um produto e indica os kg.'),
+                child: Text(
+                  _ficha != null
+                      ? 'Indica quantas unidades queres produzir.'
+                      : 'Escolhe um produto e indica a quantidade.',
+                ),
+              ),
+            )
+          else if (_fichaArgs != null)
+            AsyncValueView<MepPlano>(
+              value: ref.watch(mepPlanoFichaProvider(_fichaArgs!)),
+              onRetry: () => ref.invalidate(mepPlanoFichaProvider(_fichaArgs!)),
+              data: (plano) => MepPlanoView(
+                plano: plano,
+                feitos: _feitos,
+                mostrarProduzir: false,
+                onToggle: (id, v) => setState(() {
+                  v ? _feitos.add(id) : _feitos.remove(id);
+                }),
+                onAbrirIntermedio: (it) =>
+                    context.push('${Routes.miseEnPlace}?receita=${it.receitaId}'),
               ),
             )
           else

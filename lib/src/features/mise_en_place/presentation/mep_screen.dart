@@ -3,20 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
-import '../../../core/formatting/quantities.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../cookie_formats/application/cookie_format_providers.dart';
 import '../../cookie_formats/domain/cookie_format.dart';
+import '../../production/presentation/produto_picker_sheet.dart';
 import '../../recipes/data/recipe_repository.dart';
 import '../../recipes/domain/recipe.dart';
 import '../../recipes/presentation/procedimento_sheet.dart';
-import '../../recipes/presentation/recipe_picker_sheet.dart';
+import '../../tech_sheets/domain/tech_sheet.dart';
 import '../application/mep_providers.dart';
 import '../data/mep_repository.dart';
 import '../domain/mep_plano.dart';
+import 'mep_plano_view.dart';
 
 class MiseEnPlaceScreen extends ConsumerStatefulWidget {
   const MiseEnPlaceScreen({super.key, this.receitaId, this.kgInicial});
@@ -30,6 +31,7 @@ class MiseEnPlaceScreen extends ConsumerStatefulWidget {
 
 class _MiseEnPlaceScreenState extends ConsumerState<MiseEnPlaceScreen> {
   Receita? _receita;
+  FichaTecnica? _ficha;
   late final _kg = TextEditingController(
     text: (widget.kgInicial ?? 0) > 0
         ? widget.kgInicial!.toStringAsFixed(2)
@@ -45,8 +47,9 @@ class _MiseEnPlaceScreenState extends ConsumerState<MiseEnPlaceScreen> {
     if (widget.receitaId != null) {
       Future.microtask(() async {
         try {
-          final r =
-              await ref.read(recipeRepositoryProvider).getById(widget.receitaId!);
+          final r = await ref
+              .read(recipeRepositoryProvider)
+              .getById(widget.receitaId!);
           if (mounted) setState(() => _receita = r);
         } catch (_) {}
       });
@@ -73,16 +76,32 @@ class _MiseEnPlaceScreenState extends ConsumerState<MiseEnPlaceScreen> {
     );
   }
 
+  MepFichaArgs? get _fichaArgs {
+    final f = _ficha;
+    final un = int.tryParse(_kg.text.trim()) ?? 0;
+    if (f == null || un <= 0) return null;
+    return (fichaId: f.id, unidades: un);
+  }
+
   void _reset() => setState(_feitos.clear);
 
   Future<void> _escolherReceita() async {
-    final r = await showRecipePickerSheet(context, soFabricoProprio: false);
-    if (r != null) {
-      setState(() {
-        _receita = r;
-        _feitos.clear();
-      });
-    }
+    // Produto final (ficha técnica) ou receita.
+    final p = await showProdutoPickerSheet(context);
+    if (p == null) return;
+    setState(() {
+      _feitos.clear();
+      _kg.clear();
+      _formato = null;
+      switch (p) {
+        case ProdutoFicha(:final ficha):
+          _ficha = ficha;
+          _receita = null;
+        case ProdutoReceita(:final receita):
+          _receita = receita;
+          _ficha = null;
+      }
+    });
   }
 
   void _abrirIntermedio(MepIntermedio it) {
@@ -96,7 +115,8 @@ class _MiseEnPlaceScreenState extends ConsumerState<MiseEnPlaceScreen> {
       final ok = await confirmDialog(
         context,
         titulo: 'Ainda há itens por marcar',
-        mensagem: 'Marcaste ${_feitos.length} de $totalItems. '
+        mensagem:
+            'Marcaste ${_feitos.length} de $totalItems. '
             'Queres registar a produção na mesma?',
         confirmar: 'Continuar',
       );
@@ -127,10 +147,15 @@ class _MiseEnPlaceScreenState extends ConsumerState<MiseEnPlaceScreen> {
 
     setState(() => _busy = true);
     try {
-      final res = await ref.read(mepRepositoryProvider).produzirAgora(
+      final res = await ref
+          .read(mepRepositoryProvider)
+          .produzirAgora(
             plano.receitaId,
             plano.kg,
-            formatoId: _formato?.id,
+            formatoId: plano.fichaId.isNotEmpty
+                ? plano.formatoId
+                : _formato?.id,
+            fichaId: plano.fichaId,
             tituloReceita: plano.nome,
             gerarCompras: gerarCompras,
           );
@@ -150,11 +175,13 @@ class _MiseEnPlaceScreenState extends ConsumerState<MiseEnPlaceScreen> {
                   Text('Lista de compras: ${res.linhasCompra} linha(s)'),
                 if (res.resumo.faltas.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  Text('Avisos:',
-                      style: TextStyle(
-                        color: Theme.of(ctx).colorScheme.error,
-                        fontWeight: FontWeight.bold,
-                      )),
+                  Text(
+                    'Avisos:',
+                    style: TextStyle(
+                      color: Theme.of(ctx).colorScheme.error,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   for (final f in res.resumo.faltas) Text('• $f'),
                 ],
               ],
@@ -179,14 +206,16 @@ class _MiseEnPlaceScreenState extends ConsumerState<MiseEnPlaceScreen> {
         setState(() {
           _feitos.clear();
           _receita = null;
+          _ficha = null;
           _kg.clear();
           _formato = null;
         });
       }
     } on Object catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -214,9 +243,13 @@ class _MiseEnPlaceScreenState extends ConsumerState<MiseEnPlaceScreen> {
               children: [
                 ListTile(
                   leading: const Icon(Icons.blender_outlined),
-                  title: Text(_receita?.nome ?? 'Escolher receita'),
-                  subtitle: _receita == null
-                      ? null
+                  title: Text(
+                    _ficha?.nome ?? _receita?.nome ?? 'Escolher produto',
+                  ),
+                  subtitle: _ficha != null
+                      ? const Text('Produto final (ficha técnica)')
+                      : _receita == null
+                      ? const Text('Produto final ou receita')
                       : Text(_receita!.categoria.label),
                   trailing: const Icon(Icons.expand_more),
                   onTap: _escolherReceita,
@@ -230,34 +263,40 @@ class _MiseEnPlaceScreenState extends ConsumerState<MiseEnPlaceScreen> {
                         child: TextField(
                           controller: _kg,
                           keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true),
-                          decoration: const InputDecoration(
-                            labelText: 'Quantidade',
-                            suffixText: 'kg',
+                            decimal: true,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: _ficha != null
+                                ? 'Unidades'
+                                : 'Quantidade',
+                            suffixText: _ficha != null ? 'un' : 'kg',
                           ),
                           onChanged: (_) => _reset(),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: DropdownButtonFormField<FormatoCookie?>(
-                          initialValue: _formato,
-                          decoration: const InputDecoration(
-                            labelText: 'Formato',
-                            helperText: 'só p/ produto final',
+                      if (_ficha == null) const SizedBox(width: 12),
+                      if (_ficha == null)
+                        Expanded(
+                          child: DropdownButtonFormField<FormatoCookie?>(
+                            initialValue: _formato,
+                            decoration: const InputDecoration(
+                              labelText: 'Formato',
+                              helperText: 'só p/ produto final',
+                            ),
+                            items: [
+                              const DropdownMenuItem(
+                                value: null,
+                                child: Text('— nenhum —'),
+                              ),
+                              for (final f in formatos)
+                                DropdownMenuItem(value: f, child: Text(f.nome)),
+                            ],
+                            onChanged: (f) => setState(() {
+                              _formato = f;
+                              _feitos.clear();
+                            }),
                           ),
-                          items: [
-                            const DropdownMenuItem(
-                                value: null, child: Text('— nenhum —')),
-                            for (final f in formatos)
-                              DropdownMenuItem(value: f, child: Text(f.nome)),
-                          ],
-                          onChanged: (f) => setState(() {
-                            _formato = f;
-                            _feitos.clear();
-                          }),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -271,18 +310,41 @@ class _MiseEnPlaceScreenState extends ConsumerState<MiseEnPlaceScreen> {
               label: const Text('Procedimento e imagens desta receita'),
             ),
           const SizedBox(height: 8),
-          if (_args == null)
-            const Padding(
-              padding: EdgeInsets.only(top: 32),
+          if (_fichaArgs != null)
+            AsyncValueView<MepPlano>(
+              value: ref.watch(mepPlanoFichaProvider(_fichaArgs!)),
+              onRetry: () => ref.invalidate(mepPlanoFichaProvider(_fichaArgs!)),
+              data: (plano) => MepPlanoView(
+                plano: plano,
+                feitos: _feitos,
+                onToggle: (id, v) => setState(() {
+                  if (v) {
+                    _feitos.add(id);
+                  } else {
+                    _feitos.remove(id);
+                  }
+                }),
+                onAbrirIntermedio: _abrirIntermedio,
+                onProduzir: _busy ? null : () => _produzir(plano),
+                busy: _busy,
+              ),
+            )
+          else if (_args == null)
+            Padding(
+              padding: const EdgeInsets.only(top: 32),
               child: Center(
-                child: Text('Escolhe a receita e a quantidade.'),
+                child: Text(
+                  _ficha != null
+                      ? 'Indica quantas unidades queres produzir.'
+                      : 'Escolhe o produto e a quantidade.',
+                ),
               ),
             )
           else
             AsyncValueView<MepPlano>(
               value: ref.watch(mepPlanoProvider(_args!)),
               onRetry: () => ref.invalidate(mepPlanoProvider(_args!)),
-              data: (plano) => _Conteudo(
+              data: (plano) => MepPlanoView(
                 plano: plano,
                 feitos: _feitos,
                 onToggle: (id, v) => setState(() {
@@ -299,99 +361,6 @@ class _MiseEnPlaceScreenState extends ConsumerState<MiseEnPlaceScreen> {
             ),
         ],
       ),
-    );
-  }
-}
-
-class _Conteudo extends StatelessWidget {
-  const _Conteudo({
-    required this.plano,
-    required this.feitos,
-    required this.onToggle,
-    required this.onAbrirIntermedio,
-    required this.onProduzir,
-    required this.busy,
-  });
-
-  final MepPlano plano;
-  final Set<String> feitos;
-  final void Function(String id, bool v) onToggle;
-  final void Function(MepIntermedio) onAbrirIntermedio;
-  final VoidCallback? onProduzir;
-  final bool busy;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            [
-              '${plano.kg.toStringAsFixed(2)} kg',
-              if (plano.formato.isNotEmpty) plano.formato,
-              if (plano.unidades > 0) '≈ ${plano.unidades} unidades',
-              if (plano.recheio.isNotEmpty) 'recheio ${plano.recheio}',
-            ].join('  ·  '),
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-        ),
-        if (plano.intermedios.isNotEmpty) ...[
-          Text('Produzir primeiro',
-              style: Theme.of(context).textTheme.titleSmall),
-          for (final it in plano.intermedios)
-            Card(
-              margin: const EdgeInsets.symmetric(vertical: 3),
-              child: CheckboxListTile(
-                controlAffinity: ListTileControlAffinity.leading,
-                value: feitos.contains('int:${it.receitaId}'),
-                onChanged: (v) => onToggle('int:${it.receitaId}', v ?? false),
-                title: Text(it.nome,
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: Text(gramasParaTexto(it.gramas)),
-                secondary: TextButton(
-                  onPressed: () => onAbrirIntermedio(it),
-                  child: const Text('Abrir'),
-                ),
-              ),
-            ),
-          const SizedBox(height: 12),
-        ],
-        Text('Ingredientes', style: Theme.of(context).textTheme.titleSmall),
-        for (final c in plano.comprar)
-          Card(
-            margin: const EdgeInsets.symmetric(vertical: 3),
-            child: CheckboxListTile(
-              controlAffinity: ListTileControlAffinity.leading,
-              value: feitos.contains('ing:${c.ingredienteId}'),
-              onChanged: (v) => onToggle('ing:${c.ingredienteId}', v ?? false),
-              title: Text(c.nome, style: const TextStyle(fontSize: 16)),
-              subtitle: Text(
-                c.faltaStock
-                    ? '${gramasParaTexto(c.gramas)} · em stock só '
-                        '${gramasParaTexto(c.emStock)}'
-                    : '${gramasParaTexto(c.gramas)} · em stock',
-                style: TextStyle(
-                  color: c.faltaStock ? cs.error : cs.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ),
-        const SizedBox(height: 16),
-        FilledButton.icon(
-          onPressed: onProduzir,
-          icon: busy
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.task_alt),
-          label: const Text('Produção feita'),
-        ),
-      ],
     );
   }
 }

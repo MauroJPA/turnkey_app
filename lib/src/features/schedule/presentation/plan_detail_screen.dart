@@ -227,16 +227,20 @@ class _Body extends ConsumerWidget {
                     margin: const EdgeInsets.symmetric(vertical: 3),
                     child: ListTile(
                       title: InkWell(
-                        onTap: it.receitaId.isEmpty
-                            ? null
-                            : () => context.push(
-                                  '${Routes.recipes}/${it.receitaId}',
-                                ),
+                        onTap: it.fichaId.isNotEmpty
+                            ? () => context.push(
+                                  '${Routes.techSheets}/${it.fichaId}',
+                                )
+                            : it.receitaId.isEmpty
+                                ? null
+                                : () => context.push(
+                                      '${Routes.recipes}/${it.receitaId}',
+                                    ),
                         child: Row(
                           children: [
                             Flexible(
                               child: Text(
-                                it.nome.isEmpty ? '(receita)' : it.nome,
+                                it.titulo.isEmpty ? '(receita)' : it.titulo,
                                 style: TextStyle(
                                   color: Theme.of(context).colorScheme.primary,
                                   decoration: TextDecoration.underline,
@@ -251,6 +255,8 @@ class _Body extends ConsumerWidget {
                         [
                           if (it.formatoNome.isNotEmpty)
                             it.formatoNome
+                          else if (it.fichaId.isNotEmpty)
+                            'Produto final'
                           else
                             'Intermédio',
                           if (it.recheioNome.isNotEmpty)
@@ -270,7 +276,7 @@ class _Body extends ConsumerWidget {
                                   onPressed: () async {
                                     final kg = await _pedirKg(
                                       context,
-                                      titulo: it.nome,
+                                      titulo: it.titulo,
                                       inicial: it.quantidadeKg,
                                     );
                                     if (kg == null || kg <= 0) return;

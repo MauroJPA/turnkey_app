@@ -19,3 +19,10 @@ final mepPlanoProvider =
         recheioId: args.recheioId,
       );
 });
+
+typedef MepFichaArgs = ({String fichaId, int unidades});
+
+final mepPlanoFichaProvider =
+    FutureProvider.autoDispose.family<MepPlano, MepFichaArgs>((ref, args) {
+  return ref.watch(mepRepositoryProvider).planoFicha(args.fichaId, args.unidades);
+});

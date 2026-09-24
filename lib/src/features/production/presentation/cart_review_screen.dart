@@ -40,7 +40,7 @@ class _CartReviewScreenState extends ConsumerState<CartReviewScreen> {
         data: _data,
         titulo: _titulo.text.trim(),
         nomesReceitas:
-            linhas.map((l) => l.receitaNome).toList(),
+            linhas.map((l) => l.nome).toList(),
       );
       for (final l in linhas) {
         await repo.addItem(
@@ -49,6 +49,7 @@ class _CartReviewScreenState extends ConsumerState<CartReviewScreen> {
           quantidadeKg: l.kg,
           formatoId: l.formatoId,
           recheioId: l.recheioId,
+          fichaId: l.fichaId,
           prioridade: l.prioridade.api,
           horaLimite: l.horaLimite,
           unidadesPrevistas: l.unidadesPrevistas,
@@ -113,7 +114,7 @@ class _CartReviewScreenState extends ConsumerState<CartReviewScreen> {
                             labelText: 'Título (opcional)',
                             helperText: 'Vazio → "${tituloPadraoProducao(
                               _data,
-                              linhas.map((l) => l.receitaNome).toList(),
+                              linhas.map((l) => l.nome).toList(),
                             )}"',
                             helperMaxLines: 2,
                           ),
@@ -128,10 +129,13 @@ class _CartReviewScreenState extends ConsumerState<CartReviewScreen> {
                     margin: const EdgeInsets.symmetric(vertical: 3),
                     child: ListTile(
                       title: InkWell(
-                        onTap: () =>
-                            context.push('${Routes.recipes}/${l.receitaId}'),
+                        onTap: () => context.push(
+                          l.fichaId.isNotEmpty
+                              ? '${Routes.techSheets}/${l.fichaId}'
+                              : '${Routes.recipes}/${l.receitaId}',
+                        ),
                         child: Text(
-                          l.receitaNome,
+                          l.nome,
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.primary,
                             decoration: TextDecoration.underline,
@@ -142,6 +146,8 @@ class _CartReviewScreenState extends ConsumerState<CartReviewScreen> {
                         [
                           if (l.formatoNome.isNotEmpty)
                             l.formatoNome
+                          else if (l.fichaId.isNotEmpty)
+                            'Produto final'
                           else
                             'Intermédio (a granel)',
                           if (l.recheioNome != null) 'recheio ${l.recheioNome}',
