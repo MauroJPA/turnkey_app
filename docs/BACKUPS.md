@@ -1,6 +1,8 @@
 # Backups da base de dados — plano
 
-> Estado: **proposta para aprovar** (2026-09-24). Nada disto está instalado ainda.
+> Estado: **decidido e implementado** (2026-09-24). Falta só instalar no Mini PC — passos em `pb/backup/LEIA-ME.md`.
+>
+> **Decisões do Mauro:** destino **Google Drive** (talvez migrar mais tarde) · a chave de cifra fica **com o Mauro** · retenção **30 diários + 12 mensais** · cópia semanal para **USB** (pen ou disco; 32 GB chegam, recomendado 64 GB).
 
 ## O que é preciso guardar
 
@@ -78,13 +80,24 @@ O alerta por email reutiliza o SMTP já previsto no `pb/.env`.
 **Teste mensal:** fazer estes passos numa pasta temporária e registar quanto demorou e
 o que faltou. Um backup que nunca foi restaurado não é um backup.
 
-## Decisões que preciso de vocês
+## Decisões (tomadas)
 
-1. **Destino da cópia externa:** Backblaze B2, Google Drive ou outro?
-2. **Quem guarda a chave de cifra** e onde fica a cópia em papel?
-3. **Retenção:** 30 diários + 12 mensais chega?
-4. Há disco USB disponível e alguém responsável pela cópia semanal?
+1. **Destino externo:** Google Drive (com `scope drive.file`, só vê o que o rclone cria). Migrar para Backblaze B2 ou outro é trocar o nome do remoto.
+2. **Chave de cifra:** fica com o Mauro (gestor de palavras-passe + cópia em papel).
+3. **Retenção:** 30 diários + 12 mensais.
+4. **USB:** pen drive ou disco externo, com BitLocker; 32 GB chegam, 64 GB de margem.
 
-Depois de decidido, a implementação é: configurar o cron do PocketBase, instalar o
-`rclone`, gerar a chave, criar o script e a tarefa agendada, e fazer o primeiro teste
-de restauro.
+## O que ficou implementado
+
+| Ficheiro | Para quê |
+|---|---|
+| `pb/migrations/1707609600_backups_cron.js` | Liga o backup diário do PocketBase (03:00, guarda 7) |
+| `pb/backup/copia-externa.ps1` | Envia o último backup cifrado para o Drive, confirma, faz a retenção e avisa por email se falhar |
+| `pb/backup/instalar-tarefas.ps1` | Cria a tarefa agendada (03:30) |
+| `pb/backup/copia-usb.ps1` | Cópia semanal para o USB (mantém 12) |
+| `pb/backup/teste-restauro.ps1` | Teste mensal de restauro (nuvem ou USB) |
+| `pb/backup/LEIA-ME.md` | Instalação passo a passo |
+
+Testado aqui com um rclone simulado: envio, confirmação, falha por backup antigo /
+pasta inexistente (saída ≠ 0), cópia USB e restauro a partir de um backup real.
+**Ainda por testar no Mini PC:** o rclone a sério com a conta Google e o Agendador.

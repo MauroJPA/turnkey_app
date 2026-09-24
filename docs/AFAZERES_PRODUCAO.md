@@ -40,15 +40,18 @@ Fluxo em `docs/FLUXO_GIT.md`. Script de verificação em `scripts/verificar.sh`.
 
 ## 2. Backups automáticos da base de dados
 
-A BD é o PocketBase (SQLite em `pb_data/` + ficheiros enviados). **Plano detalhado (destino, cifra, restauro) em `docs/BACKUPS.md`**, à espera de aprovação.
+A BD é o PocketBase (SQLite em `pb_data/` + ficheiros enviados). **Decidido: Google Drive + rclone crypt + USB semanal. Plano em `docs/BACKUPS.md`, instalação em `pb/backup/LEIA-ME.md`.** Scripts e migration prontos e testados com rclone simulado.
 
-- [ ] Ativar os **backups automáticos do próprio PocketBase** (Definições → Backups: cron diário + retenção, ex. 14 diários e 8 semanais).
+- [x] Backups automáticos do próprio PocketBase por migration (03:00, guarda 7). Aplica-se ao reiniciar o servidor em produção.
 - [ ] **Cópia fora da máquina** (outro disco/nuvem/S3): um backup só no mesmo PC não protege contra falha do disco.
-- [ ] Script agendado (Agendador de Tarefas do Windows no Mini PC) que copia `pb_data` (incl. `storage/`) para o destino externo.
-- [ ] Cifrar os backups que saem da máquina (contêm dados de clientes, faturas, chaves).
-- [ ] **Testar o restauro** numa instalação limpa e registar o tempo que demora. Um backup por testar não conta.
-- [ ] Alerta se o backup diário falhar ou não aparecer.
-- [ ] Documentar em `pb/DEPLOY.md` (onde ficam, como restaurar, quem faz).
+- [x] Scripts `pb/backup/copia-externa.ps1` e `instalar-tarefas.ps1` (escritos e testados com rclone simulado).
+- [ ] **No Mini PC:** instalar o rclone, ligar ao Google Drive, criar o remoto cifrado, guardar a chave e instalar a tarefa (`pb/backup/LEIA-ME.md`).
+- [x] Cifra definida: rclone crypt (chave com o Mauro). Falta gerar a chave no Mini PC.
+- [x] Script `teste-restauro.ps1` pronto (testado a partir de um backup real).
+- [ ] Fazer o **primeiro restauro** a sério a partir da nuvem e registar o tempo. Repetir todos os meses.
+- [x] Alerta por email se falhar (opcional, variáveis `BACKUP_*` em `pb\.env`).
+- [ ] Configurar essas variáveis e o USB semanal (BitLocker + `copia-usb.ps1`).
+- [x] Documentado em `docs/BACKUPS.md` e `pb/backup/LEIA-ME.md`.
 
 ## 3. Testes de segurança (só no nosso sistema, com autorização)
 
@@ -119,6 +122,7 @@ Data de fabrico e validade
 - [ ] Servidor definitivo (Mini PC): PocketBase como serviço, arranque automático, reinício em caso de falha.
 - [ ] Domínio + **HTTPS** + acesso externo seguro (túnel/reverse proxy).
 - [ ] Variáveis de ambiente de produção (`pb/.env`): IA, Vendus, SMTP, contabilidade (ver `pb/DEPLOY.md`); **chaves novas**.
+- [ ] **`TURNKEY_DEV=0` no `pb/.env` de produção** — o `serve.ps1` liga-o por omissão (contas novas ficam “verificadas” sem email). Confirmar que está desligado.
 - [ ] Criar a empresa real, utilizadores e papéis; carregar os dados iniciais (ingredientes, receitas, fichas, formatos).
 - [ ] Definir a navegação e as permissões por nível (Configurações → Navegação e permissões).
 - [ ] Ensaio geral do ciclo completo (comprar → produzir → stock → vender) com dados reais.
