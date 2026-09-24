@@ -10,6 +10,7 @@ import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../../core/widgets/history_sheet.dart';
+import '../../../core/widgets/swipe_to_delete.dart';
 import '../../production/presentation/agenda_line_sheet.dart';
 import '../application/recipes_providers.dart';
 import '../domain/recipe_item.dart';
@@ -32,15 +33,17 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
 
   bool get _podeEditar => ref.read(currentPapelProvider).canEditBusiness;
 
-  Future<void> _run(Future<void> Function() action) async {
+  Future<bool> _run(Future<void> Function() action) async {
     setState(() => _busy = true);
     try {
       await action();
+      return true;
     } on Object catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('$e')));
       }
+      return false;
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -188,15 +191,15 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                 onPressed: _busy
                     ? null
                     : () async {
-                        final input = await showRecipeFormSheet(
+                        final res = await showRecipeFormSheet(
                           context,
                           existente: d.receita,
                         );
-                        if (input == null) return;
+                        if (res == null) return;
                         await _run(
                           () => ref
                               .read(recipeActionsProvider)
-                              .update(widget.recipeId, input),
+                              .update(widget.recipeId, res.input),
                         );
                       },
               ),
@@ -269,22 +272,15 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
 
     if (!_podeEditar) return tile;
 
-    return Dismissible(
+    return SwipeToDelete(
       key: ValueKey(item.id),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        color: Theme.of(context).colorScheme.errorContainer,
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        child: const Icon(Icons.delete_outline),
-      ),
-      confirmDismiss: (_) => confirmDialog(
+      confirmar: () => confirmDialog(
         context,
         titulo: 'Remover linha',
         mensagem: 'Remover "${item.nome}" da receita?',
         confirmar: 'Remover',
       ),
-      onDismissed: (_) => _run(
+      apagar: () => _run(
         () => ref
             .read(recipeActionsProvider)
             .removeItem(widget.recipeId, item.id),

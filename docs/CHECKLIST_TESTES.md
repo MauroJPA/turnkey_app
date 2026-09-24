@@ -77,11 +77,26 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 
 - [ ] A lista mostra os ~166 ingredientes com preço/fornecedor.
 - [ ] "+" adiciona; tocar edita; importar .csv funciona.
+- [ ] **Novo ingrediente com nutrição**: no formulário, "Informação nutricional
+      (opcional)" abre os campos (por 100 g / 100 ml): energia, lípidos,
+      saturados, hidratos, açúcares, fibra, proteína, sal, e os alergénios
+      ("Contém"). Ao adicionar, o ícone de nutrição da lista fica "à mão" e os
+      alergénios aparecem. Sem preencher nada, o ingrediente cria-se como antes.
+      A caixa "Abrir a folha completa depois" abre a folha de nutrição (INSA,
+      foto do rótulo) logo a seguir.
+- [ ] **Deslizar para a esquerda** num ingrediente pede confirmação e o item
+      **desaparece logo**, sem ecrã de erro vermelho (o mesmo em Receitas,
+      Fichas técnicas e nas linhas de uma receita).
 - [ ] Mudar o preço de um ingrediente recalcula o custo nas receitas e fichas.
 
 ## 5. Receitas
 
 - [ ] Lista com pesquisa e filtro por categoria; lixeira acessível.
+- [ ] **Nova receita** ("+"): em "Procedimento e imagens (opcional)" escreve-se o
+      procedimento (um passo por linha) e "**Anexar imagens**" junta fotos (com
+      miniaturas e ✕ para tirar) — tudo opcional. Depois de criar, a receita
+      abre já com o procedimento e as imagens (ícone do livro). Na edição
+      (lápis) só o procedimento; as imagens gerem-se no ícone do livro.
 - [ ] Abrir uma receita mostra as linhas e o custo.
 - [ ] Botão 📖 **Procedimento e imagens**: aparece a folha com os passos e as
       fotos.
@@ -119,6 +134,11 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       No detalhe, o cartão "Preço de venda" mostra a **margem %** sobre o custo.
       O preço fica como sugestão nas Vendas e Encomendas. Com papel Leitura o
       "venda" não é editável (sem ✎).
+- [ ] **CMV** no detalhe da ficha: dois valores — **CMV esperado** (o que sobra
+      para a matéria-prima nos Percentuais de custo; ex. 25,0 %) e **CMV real**
+      (custo ÷ preço de venda praticado; ex. custo 0,63 € e venda 2,00 € =
+      31,1 %). O real fica **a vermelho** quando passa o esperado e mostra
+      "defina o preço" sem preço de venda. A "Quebra do preço" repete ambos.
 - [ ] Campo **Formato do cookie** (ao criar/editar a ficha, lista Mini/Recheado/
       Simples… ou "Sem formato") → aparece na lista e no detalhe ("Formato: …").
       Serve para a produção encontrar a ficha certa: massa + recheio + formato.

@@ -28,8 +28,7 @@ class TechSheetDetailScreen extends ConsumerStatefulWidget {
       _TechSheetDetailScreenState();
 }
 
-class _TechSheetDetailScreenState
-    extends ConsumerState<TechSheetDetailScreen> {
+class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
   bool _busy = false;
 
   bool get _podeEditar => ref.read(currentPapelProvider).canEditBusiness;
@@ -40,8 +39,9 @@ class _TechSheetDetailScreenState
       await action();
     } on Object catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -55,15 +55,16 @@ class _TechSheetDetailScreenState
     );
     if (picked == null) return;
     await _run(
-      () => ref.read(fichaActionsProvider).addItem(
+      () => ref
+          .read(fichaActionsProvider)
+          .addItem(
             fichaId: widget.fichaId,
             slot: slot,
-            ingredienteId:
-                picked.kind == PickedKind.ingrediente ? picked.id : null,
-            receitaId:
-                picked.kind == PickedKind.subReceita ? picked.id : null,
-            embalagemId:
-                picked.kind == PickedKind.embalagem ? picked.id : null,
+            ingredienteId: picked.kind == PickedKind.ingrediente
+                ? picked.id
+                : null,
+            receitaId: picked.kind == PickedKind.subReceita ? picked.id : null,
+            embalagemId: picked.kind == PickedKind.embalagem ? picked.id : null,
             kitId: picked.kind == PickedKind.kit ? picked.id : null,
             quantidadeG: picked.quantidadeG,
           ),
@@ -71,8 +72,9 @@ class _TechSheetDetailScreenState
   }
 
   Future<void> _editQty(ItemFicha item) async {
-    final ctrl =
-        TextEditingController(text: item.quantidadeG.toStringAsFixed(0));
+    final ctrl = TextEditingController(
+      text: item.quantidadeG.toStringAsFixed(0),
+    );
     final novo = await showDialog<double>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -85,8 +87,8 @@ class _TechSheetDetailScreenState
             labelText: item.isKit
                 ? 'Kits'
                 : item.isEmbalagem
-                    ? 'Peças'
-                    : 'Gramas',
+                ? 'Peças'
+                : 'Gramas',
           ),
         ),
         actions: [
@@ -124,9 +126,14 @@ class _TechSheetDetailScreenState
           controller: ctrl,
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(labelText: 'Preço', prefixText: '€ '),
+          decoration: const InputDecoration(
+            labelText: 'Preço',
+            prefixText: '€ ',
+          ),
           onSubmitted: (_) => Navigator.pop(
-              ctx, double.tryParse(ctrl.text.replaceAll(',', '.'))),
+            ctx,
+            double.tryParse(ctrl.text.replaceAll(',', '.')),
+          ),
         ),
         actions: [
           TextButton(
@@ -135,7 +142,9 @@ class _TechSheetDetailScreenState
           ),
           FilledButton(
             onPressed: () => Navigator.pop(
-                ctx, double.tryParse(ctrl.text.replaceAll(',', '.'))),
+              ctx,
+              double.tryParse(ctrl.text.replaceAll(',', '.')),
+            ),
             child: const Text('Guardar'),
           ),
         ],
@@ -227,51 +236,56 @@ class _TechSheetDetailScreenState
                     if (f.id == d.ficha.formatoId) f.rotulo,
                 ].join();
           return ListView(
-          children: [
-            if (_busy) const LinearProgressIndicator(),
-            if (formatoNome.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                child: Row(
-                  children: [
-                    const Icon(Icons.cookie_outlined, size: 16),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        'Formato: $formatoNome',
-                        style: Theme.of(context).textTheme.bodySmall,
+            children: [
+              if (_busy) const LinearProgressIndicator(),
+              if (formatoNome.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.cookie_outlined, size: 16),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Formato: $formatoNome',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            _Header(
-              detail: d,
-              config: config,
-              fmt: fmt,
-              podeEditar: _podeEditar,
-              onEditarPreco: _busy ? null : () => _editarPreco(d.ficha),
-            ),
-            const Divider(height: 1),
-            for (final slot in SlotFicha.values)
-              _SlotSection(
-                slot: slot,
-                itens: d.porSlot[slot] ?? const [],
+              _Header(
                 detail: d,
-                podeEditar: _podeEditar,
-                onAdd: () => _addTo(slot),
-                onEditQty: _editQty,
-                onRemove: (item) => _run(
-                  () => ref
-                      .read(fichaActionsProvider)
-                      .removeItem(widget.fichaId, item.id),
-                ),
+                config: config,
                 fmt: fmt,
+                podeEditar: _podeEditar,
+                onEditarPreco: _busy ? null : () => _editarPreco(d.ficha),
               ),
-            if (config != null)
-              _PriceBreakdown(custo: d.custoPreview, config: config, fmt: fmt),
-            const SizedBox(height: 24),
-          ],
+              const Divider(height: 1),
+              for (final slot in SlotFicha.values)
+                _SlotSection(
+                  slot: slot,
+                  itens: d.porSlot[slot] ?? const [],
+                  detail: d,
+                  podeEditar: _podeEditar,
+                  onAdd: () => _addTo(slot),
+                  onEditQty: _editQty,
+                  onRemove: (item) => _run(
+                    () => ref
+                        .read(fichaActionsProvider)
+                        .removeItem(widget.fichaId, item.id),
+                  ),
+                  fmt: fmt,
+                ),
+              if (config != null)
+                _PriceBreakdown(
+                  custo: d.custoPreview,
+                  config: config,
+                  fmt: fmt,
+                  cmvReal: d.ficha.cmvRealPercent(d.custoPreview),
+                ),
+              const SizedBox(height: 24),
+            ],
           );
         },
       ),
@@ -296,74 +310,114 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget cell(String t, String v, {Color? color}) => Column(
-          children: [
-            Text(t, style: Theme.of(context).textTheme.bodySmall),
-            const SizedBox(height: 2),
-            Text(
-              v,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                color: color,
-              ),
-            ),
-          ],
-        );
+      children: [
+        Text(t, style: Theme.of(context).textTheme.bodySmall),
+        const SizedBox(height: 2),
+        Text(
+          v,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+            color: color,
+          ),
+        ),
+      ],
+    );
 
     final ficha = detail.ficha;
     final sugerido = config?.precoSugerido(detail.custoPreview);
+    final cmvEsperado = (config != null && config!.cmvPercent > 0)
+        ? config!.cmvPercent
+        : null;
+    final cmvReal = ficha.cmvRealPercent(detail.custoPreview);
+    final cs = Theme.of(context).colorScheme;
+    final Color? corReal = cmvReal == null || cmvEsperado == null
+        ? null
+        : (cmvReal <= cmvEsperado ? cs.primary : cs.error);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 14),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      child: Column(
         children: [
-          cell('Peso', '${detail.pesoTotal.toStringAsFixed(0)} g'),
-          cell('Custo', fmt(detail.custoPreview)),
-          if (sugerido != null && !ficha.temPrecoVenda)
-            cell(
-              'Preço sugerido',
-              fmt(sugerido),
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          InkWell(
-            onTap: podeEditar ? onEditarPreco : null,
-            borderRadius: BorderRadius.circular(8),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              cell('Peso', '${detail.pesoTotal.toStringAsFixed(0)} g'),
+              cell('Custo', fmt(detail.custoPreview)),
+              if (sugerido != null && !ficha.temPrecoVenda)
+                cell(
+                  'Preço sugerido',
+                  fmt(sugerido),
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              InkWell(
+                onTap: podeEditar ? onEditarPreco : null,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  child: Column(
                     children: [
-                      Text('Preço de venda',
-                          style: Theme.of(context).textTheme.bodySmall),
-                      if (podeEditar) ...[
-                        const SizedBox(width: 2),
-                        Icon(Icons.edit,
-                            size: 12,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant),
-                      ],
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Preço de venda',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          if (podeEditar) ...[
+                            const SizedBox(width: 2),
+                            Icon(
+                              Icons.edit,
+                              size: 12,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        ficha.temPrecoVenda ? fmt(ficha.precoVenda) : 'Definir',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: ficha.temPrecoVenda
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                      if (ficha.temPrecoVenda)
+                        Text(
+                          'margem ${ficha.margemPercent.toStringAsFixed(0)}%',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                     ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    ficha.temPrecoVenda ? fmt(ficha.precoVenda) : 'Definir',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: ficha.temPrecoVenda
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                  if (ficha.temPrecoVenda)
-                    Text(
-                      'margem ${ficha.margemPercent.toStringAsFixed(0)}%',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                ],
+                ),
               ),
-            ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              cell(
+                'CMV esperado',
+                cmvEsperado == null
+                    ? '—'
+                    : '${cmvEsperado.toStringAsFixed(1)}%',
+              ),
+              cell(
+                'CMV real',
+                cmvReal == null
+                    ? 'defina o preço'
+                    : '${cmvReal.toStringAsFixed(1)}%',
+                color: corReal,
+              ),
+            ],
           ),
         ],
       ),
@@ -405,10 +459,9 @@ class _SlotSection extends StatelessWidget {
               Expanded(
                 child: Text(
                   slot.label,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleSmall
-                      ?.copyWith(color: Theme.of(context).colorScheme.primary),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
               ),
               if (podeEditar)
@@ -433,13 +486,13 @@ class _SlotSection extends StatelessWidget {
               subtitle: Text(
                 item.isKit
                     ? '${item.quantidadeG.toStringAsFixed(0)} kit · '
-                        '${fmt(item.custoLinha)}'
+                          '${fmt(item.custoLinha)}'
                     : item.isEmbalagem
-                        ? '${item.quantidadeG.toStringAsFixed(0)} pç · '
-                            '${fmt(item.custoLinha)}'
-                        : '${item.quantidadeG.toStringAsFixed(0)} g · '
-                            '${detail.percentagem(item).toStringAsFixed(1)}% · '
-                            '${fmt(item.custoLinha)}',
+                    ? '${item.quantidadeG.toStringAsFixed(0)} pç · '
+                          '${fmt(item.custoLinha)}'
+                    : '${item.quantidadeG.toStringAsFixed(0)} g · '
+                          '${detail.percentagem(item).toStringAsFixed(1)}% · '
+                          '${fmt(item.custoLinha)}',
               ),
               onTap: podeEditar ? () => onEditQty(item) : null,
               trailing: podeEditar
@@ -460,8 +513,10 @@ class _PriceBreakdown extends StatelessWidget {
     required this.custo,
     required this.config,
     required this.fmt,
+    this.cmvReal,
   });
   final double custo;
+  final double? cmvReal;
   final CostConfig config;
   final MoneyFmt fmt;
 
@@ -474,7 +529,8 @@ class _PriceBreakdown extends StatelessWidget {
       subtitle: Text(
         config.cmvPercent <= 0
             ? 'Percentuais somam ≥ 100% — ajusta em Configurações'
-            : 'CMV ${config.cmvPercent.toStringAsFixed(1)}%',
+            : 'CMV esperado ${config.cmvPercent.toStringAsFixed(1)}%'
+                  '${cmvReal == null ? '' : ' · real ${cmvReal!.toStringAsFixed(1)}%'}',
       ),
       childrenPadding: const EdgeInsets.symmetric(horizontal: 16),
       children: [
@@ -483,10 +539,7 @@ class _PriceBreakdown extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(e.key),
-                Text(fmt(e.value)),
-              ],
+              children: [Text(e.key), Text(fmt(e.value))],
             ),
           ),
         const Divider(),

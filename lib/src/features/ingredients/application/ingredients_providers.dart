@@ -4,6 +4,7 @@ import '../../../core/nutrition/nutrition.dart';
 import '../data/ingredient_repository.dart';
 import '../domain/auto_insa.dart';
 import '../domain/ingredient.dart';
+import '../domain/nutri_ingresso.dart';
 
 /// Lista de ingredientes ativos (ou da lixeira, se [trash] for `true`).
 final ingredientsListProvider =
@@ -27,9 +28,22 @@ class IngredientActions {
     _ref.invalidate(ingredientsListProvider);
   }
 
-  Future<void> create(IngredienteInput input) async {
-    await _repo.create(input);
+  Future<Ingrediente> create(
+    IngredienteInput input, {
+    NutriIngresso? nutri,
+  }) async {
+    var criado = await _repo.create(input);
+    if (nutri != null && nutri.temDados) {
+      criado = await _repo.definirNutricao(
+        criado.id,
+        nutri: nutri.nutri,
+        base: nutri.base,
+        alergenios: nutri.alergenios,
+        alergeniosTracos: const [],
+      );
+    }
     _refresh();
+    return criado;
   }
 
   Future<void> update(String id, IngredienteInput input) async {

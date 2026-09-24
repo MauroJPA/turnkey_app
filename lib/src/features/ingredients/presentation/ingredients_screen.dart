@@ -11,6 +11,7 @@ import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../../core/widgets/swipe_to_delete.dart';
 import '../../import_csv/application/ingredient_import_service.dart';
 import '../../import_csv/domain/import_result.dart';
 import '../../recipes/application/recipes_providers.dart';
@@ -43,30 +44,43 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
 
   bool get _podeEditar => ref.read(currentPapelProvider).canEditBusiness;
 
-  Future<void> _run(Future<void> Function() action) async {
+  Future<bool> _run(Future<void> Function() action) async {
     setState(() => _busy = true);
     try {
       await action();
+      return true;
     } on Object catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('$e')));
       }
+      return false;
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _add() async {
-    final input = await showIngredientFormSheet(context);
-    if (input == null) return;
-    await _run(() => ref.read(ingredientActionsProvider).create(input));
+    final res = await showIngredientFormSheet(context);
+    if (res == null) return;
+    Ingrediente? criado;
+    await _run(() async {
+      criado = await ref
+          .read(ingredientActionsProvider)
+          .create(res.input, nutri: res.nutri);
+    });
+    final novo = criado;
+    if (res.abrirNutricao && novo != null && mounted) {
+      await showNutricaoSheet(context, ingrediente: novo);
+    }
   }
 
   Future<void> _edit(Ingrediente i) async {
-    final input = await showIngredientFormSheet(context, existente: i);
-    if (input == null) return;
-    await _run(() => ref.read(ingredientActionsProvider).update(i.id, input));
+    final res = await showIngredientFormSheet(context, existente: i);
+    if (res == null) return;
+    await _run(
+      () => ref.read(ingredientActionsProvider).update(i.id, res.input),
+    );
   }
 
   Future<void> _nutricao(Ingrediente i) async {
@@ -476,23 +490,15 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
 
     if (!_podeEditar) return tile;
 
-    return Dismissible(
+    return SwipeToDelete(
       key: ValueKey(i.id),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        color: Theme.of(context).colorScheme.errorContainer,
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        child: const Icon(Icons.delete_outline),
-      ),
-      confirmDismiss: (_) => confirmDialog(
+      confirmar: () => confirmDialog(
         context,
         titulo: 'Mover para a lixeira',
         mensagem: 'Mover "${i.nome}" para a lixeira?',
         confirmar: 'Mover',
       ),
-      onDismissed: (_) =>
-          _run(() => ref.read(ingredientActionsProvider).moveToTrash(i.id)),
+      apagar: () => _run(() => ref.read(ingredientActionsProvider).moveToTrash(i.id)),
       child: tile,
     );
   }

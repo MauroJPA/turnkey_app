@@ -9,6 +9,7 @@ import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../../core/widgets/swipe_to_delete.dart';
 import '../application/recipes_providers.dart';
 import '../domain/recipe.dart';
 import 'receitas_import_sheet.dart';
@@ -29,25 +30,31 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
 
   bool get _podeEditar => ref.read(currentPapelProvider).canEditBusiness;
 
-  Future<void> _run(Future<void> Function() action) async {
+  Future<bool> _run(Future<void> Function() action) async {
     setState(() => _busy = true);
     try {
       await action();
+      return true;
     } on Object catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('$e')));
       }
+      return false;
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _add() async {
-    final input = await showRecipeFormSheet(context);
-    if (input == null) return;
+    final res = await showRecipeFormSheet(context);
+    if (res == null) return;
     await _run(() async {
-      final r = await ref.read(recipeActionsProvider).create(input);
+      final actions = ref.read(recipeActionsProvider);
+      final r = await actions.create(res.input);
+      if (res.imagens.isNotEmpty) {
+        await actions.adicionarImagens(r.id, res.imagens);
+      }
       if (mounted) context.go('${Routes.recipes}/${r.id}');
     });
   }
@@ -228,23 +235,15 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
 
     if (!_podeEditar) return tile;
 
-    return Dismissible(
+    return SwipeToDelete(
       key: ValueKey(r.id),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        color: Theme.of(context).colorScheme.errorContainer,
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        child: const Icon(Icons.delete_outline),
-      ),
-      confirmDismiss: (_) => confirmDialog(
+      confirmar: () => confirmDialog(
         context,
         titulo: 'Mover para a lixeira',
         mensagem: 'Mover "${r.nome}" para a lixeira?',
         confirmar: 'Mover',
       ),
-      onDismissed: (_) =>
-          _run(() => ref.read(recipeActionsProvider).moveToTrash(r.id)),
+      apagar: () => _run(() => ref.read(recipeActionsProvider).moveToTrash(r.id)),
       child: tile,
     );
   }

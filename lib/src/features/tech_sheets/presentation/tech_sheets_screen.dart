@@ -9,6 +9,7 @@ import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../../core/widgets/swipe_to_delete.dart';
 import '../../cookie_formats/application/cookie_format_providers.dart';
 import '../../pricing/data/cost_config_repository.dart';
 import '../../pricing/domain/cost_config.dart';
@@ -30,15 +31,17 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
 
   bool get _podeEditar => ref.read(currentPapelProvider).canEditBusiness;
 
-  Future<void> _run(Future<void> Function() action) async {
+  Future<bool> _run(Future<void> Function() action) async {
     setState(() => _busy = true);
     try {
       await action();
+      return true;
     } on Object catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('$e')));
       }
+      return false;
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -276,23 +279,15 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
 
     if (!_podeEditar) return tile;
 
-    return Dismissible(
+    return SwipeToDelete(
       key: ValueKey(f.id),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        color: Theme.of(context).colorScheme.errorContainer,
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        child: const Icon(Icons.delete_outline),
-      ),
-      confirmDismiss: (_) => confirmDialog(
+      confirmar: () => confirmDialog(
         context,
         titulo: 'Mover para a lixeira',
         mensagem: 'Mover "${f.nome}" para a lixeira?',
         confirmar: 'Mover',
       ),
-      onDismissed: (_) =>
-          _run(() => ref.read(fichaActionsProvider).moveToTrash(f.id)),
+      apagar: () => _run(() => ref.read(fichaActionsProvider).moveToTrash(f.id)),
       child: tile,
     );
   }

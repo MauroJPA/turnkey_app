@@ -68,6 +68,14 @@ class FichaTecnica with _$FichaTecnica {
 
   bool get temPrecoVenda => precoVenda > 0;
 
+  /// CMV real: custo da matéria-prima como % do preço de venda praticado.
+  /// `null` se ainda não há preço de venda ou custo. [custo] permite usar o
+  /// custo recalculado em vez do guardado.
+  double? cmvRealPercent([double? custo]) {
+    final c = custo ?? custoProduto;
+    return temPrecoVenda && c > 0 ? c / precoVenda * 100 : null;
+  }
+
   /// Margem de lucro sobre o preço de venda (0 se não houver preço definido).
   double get margemPercent =>
       temPrecoVenda ? (1 - custoProduto / precoVenda) * 100 : 0;
