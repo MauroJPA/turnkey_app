@@ -153,23 +153,58 @@ class ListaIngredientes {
     ];
   }
 
-  /// O texto da lista em pedaços (para mostrar com negrito).
+  /// O texto da lista em pedaços (para mostrar com negrito). Se o próprio nome
+  /// já contém o alergénio ("Leite condensado", "Ovo líquido"), é essa palavra
+  /// que fica destacada, sem repetir entre parênteses; os restantes alergénios
+  /// vão a seguir, entre parênteses.
   List<SegmentoTexto> get segmentos {
     final out = <SegmentoTexto>[];
     for (var i = 0; i < itens.length; i++) {
       final it = itens[i];
       if (i > 0) out.add(const SegmentoTexto(', '));
-      out.add(SegmentoTexto(_capitalizar(it.nomeCompleto, primeiro: i == 0)));
-      if (it.alergenios.isNotEmpty) {
+      final nome = _capitalizar(it.nomeCompleto, primeiro: i == 0);
+      final noNome = <({int ini, int fim})>[];
+      final fora = <String>[];
+      for (final a in it.alergenios) {
+        final m = _acharNoNome(nome, a);
+        if (m != null && !noNome.any((r) => m.ini < r.fim && r.ini < m.fim)) {
+          noNome.add(m);
+        } else {
+          fora.add(a);
+        }
+      }
+      noNome.sort((a, b) => a.ini.compareTo(b.ini));
+      var pos = 0;
+      for (final r in noNome) {
+        if (r.ini > pos) out.add(SegmentoTexto(nome.substring(pos, r.ini)));
+        out.add(SegmentoTexto(nome.substring(r.ini, r.fim).toUpperCase(), negrito: true));
+        pos = r.fim;
+      }
+      if (pos < nome.length) out.add(SegmentoTexto(nome.substring(pos)));
+      if (fora.isNotEmpty) {
         out.add(const SegmentoTexto(' ('));
-        for (var j = 0; j < it.alergenios.length; j++) {
+        for (var j = 0; j < fora.length; j++) {
           if (j > 0) out.add(const SegmentoTexto(', '));
-          out.add(SegmentoTexto(it.alergenios[j].toUpperCase(), negrito: true));
+          out.add(SegmentoTexto(fora[j].toUpperCase(), negrito: true));
         }
         out.add(const SegmentoTexto(')'));
       }
     }
     return out;
+  }
+
+  /// Onde, no [nome], aparece o próprio alergénio como palavra inteira
+  /// (singular ou plural: "Ovos" encontra "Ovo").
+  static ({int ini, int fim})? _acharNoNome(String nome, String alergenio) {
+    var radical = _norm(alergenio);
+    if (radical.length > 3 && radical.endsWith('s')) {
+      radical = radical.substring(0, radical.length - 1);
+    }
+    for (final m in RegExp(r'[\p{L}\p{N}]+', unicode: true).allMatches(nome)) {
+      final t = _norm(m.group(0)!);
+      if (t == radical || t == '${radical}s') return (ini: m.start, fim: m.end);
+    }
+    return null;
   }
 
   /// A mesma lista em texto simples (alergénios em MAIÚSCULAS, para quando não

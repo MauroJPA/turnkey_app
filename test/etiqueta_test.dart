@@ -79,6 +79,29 @@ void main() {
       expect(h, contains('.corpo { height: 75mm'));
     });
 
+    test('largura e altura da frente configuráveis', () {
+      final d = EtiquetaDados(
+        nome: 'X',
+        fabrico: DateTime(2026, 1, 1),
+        larguraMm: 60,
+        alturaFrenteMm: 30,
+        alturaCorpoMm: 70,
+      );
+      final h = etiquetaPagina(d);
+      expect(h, contains('size: 60mm 100mm'));
+      expect(h, contains('.etq { width: 60mm; height: 100mm'));
+      expect(h, contains('.topo { height: 30mm'));
+      expect(h, contains('.corpo { height: 70mm'));
+      expect(h, contains('60 × 100 mm'));
+    });
+
+    test('token de medição só envia mensagem se for dado', () {
+      final d = EtiquetaDados(nome: 'X', fabrico: DateTime(2026, 1, 1));
+      expect(etiquetaPagina(d), contains("if ('' && "));
+      expect(etiquetaPagina(d, tokenMedicao: '123'), contains("if ('123' && "));
+      expect(etiquetaPagina(d, tokenMedicao: '123'), contains("'etq:123:'"));
+    });
+
     test('℮ só aparece se ligado', () {
       expect(etiquetaPagina(dados(e: true)), contains('150 g ℮'));
     });

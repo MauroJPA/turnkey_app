@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -40,7 +42,12 @@ class _SheetState extends ConsumerState<_Sheet> {
   bool _mostrarE = false;
   final _copias = TextEditingController(text: '1');
   final _lote = TextEditingController();
+  final _largura = TextEditingController(text: '50');
+  final _frente = TextEditingController(text: '25');
   final _altura = TextEditingController(text: '55');
+  MedidasEtiqueta? _medidas;
+  String _htmlMedido = '';
+  Timer? _debounce;
   final _produtor = TextEditingController();
   bool _loteTocado = false;
   bool _produtorCarregado = false;
@@ -56,7 +63,10 @@ class _SheetState extends ConsumerState<_Sheet> {
   void dispose() {
     _copias.dispose();
     _lote.dispose();
+    _largura.dispose();
+    _frente.dispose();
     _altura.dispose();
+    _debounce?.cancel();
     _produtor.dispose();
     super.dispose();
   }
@@ -126,8 +136,29 @@ class _SheetState extends ConsumerState<_Sheet> {
       lote: _lote.text,
       produtor: _produtor.text,
       copias: (int.tryParse(_copias.text.trim()) ?? 1).clamp(1, 500),
-      alturaCorpoMm: (int.tryParse(_altura.text.trim()) ?? 55).clamp(30, 120),
+      larguraMm: (int.tryParse(_largura.text.trim()) ?? 50).clamp(30, 120),
+      alturaFrenteMm: (int.tryParse(_frente.text.trim()) ?? 25).clamp(15, 80),
+      alturaCorpoMm: (int.tryParse(_altura.text.trim()) ?? 55).clamp(30, 150),
     );
+  }
+
+  void _agendarMedicao(String html) {
+    if (html == _htmlMedido) return;
+    _htmlMedido = html;
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () async {
+      final m = await medirEtiqueta(
+        (t) => etiquetaPagina(_dados(), tokenMedicao: t),
+      );
+      if (mounted && _htmlMedido == html) setState(() => _medidas = m);
+    });
+  }
+
+  void _usarMinimo(MedidasEtiqueta m) {
+    setState(() {
+      _frente.text = '${m.frenteMm.ceil()}';
+      _altura.text = '${m.corpoMm.ceil()}';
+    });
   }
 
   @override
@@ -140,7 +171,14 @@ class _SheetState extends ConsumerState<_Sheet> {
     }
     final ehOwner = ref.watch(currentPapelProvider).isOwner;
     final cs = Theme.of(context).colorScheme;
-    final avisos = avisosEtiqueta(_dados());
+    final dados = _dados();
+    final avisos = avisosEtiqueta(dados);
+    _agendarMedicao(etiquetaPagina(dados));
+    final medidas = _medidas;
+    final curto =
+        medidas != null &&
+        (medidas.frenteMm > dados.alturaFrenteMm + 0.5 ||
+            medidas.corpoMm > dados.alturaCorpoMm + 0.5);
 
     return Padding(
       padding: EdgeInsets.only(
@@ -157,8 +195,9 @@ class _SheetState extends ConsumerState<_Sheet> {
           ),
           const SizedBox(height: 4),
           Text(
-            '50 mm de largura: 25 mm de frente (nome, descrição e peso) e o '
-            'resto depois da dobra (informação legal).',
+            'A frente (nome, descrição e peso) fica à vista; o resto, depois da '
+            'dobra, leva a informação legal. Tamanho por omissão: 50 × 80 mm '
+            '(25 + 55).',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           if (avisos.isNotEmpty) ...[
@@ -242,15 +281,65 @@ class _SheetState extends ConsumerState<_Sheet> {
             decoration: const InputDecoration(labelText: 'Número de etiquetas'),
           ),
           const SizedBox(height: 12),
-          TextField(
-            controller: _altura,
-            keyboardType: TextInputType.number,
-            onChanged: (_) => setState(() {}),
-            decoration: const InputDecoration(
-              labelText: 'Altura da parte de baixo (mm)',
-              helperText:
-                  'A frente tem 25 mm. Se a informação não couber em 55 mm, '
-                  'aumenta (ex.: 75).',
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final (c, l) in [
+                (_largura, 'Largura (mm)'),
+                (_frente, 'Frente (mm)'),
+                (_altura, 'Parte de baixo (mm)'),
+              ]) ...[
+                Expanded(
+                  child: TextField(
+                    controller: c,
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(labelText: l),
+                  ),
+                ),
+                if (c != _altura) const SizedBox(width: 8),
+              ],
+            ],
+          ),
+          const SizedBox(height: 8),
+          Card(
+            color: curto ? cs.errorContainer : cs.surfaceContainerHighest,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    medidas == null
+                        ? 'A calcular o tamanho mínimo…'
+                        : 'Mínimo recomendado com estes dados e '
+                              '${dados.larguraMm} mm de largura: frente '
+                              '${medidas.frenteMm.ceil()} mm + parte de baixo '
+                              '${medidas.corpoMm.ceil()} mm '
+                              '(${dados.larguraMm} × '
+                              '${medidas.frenteMm.ceil() + medidas.corpoMm.ceil()} mm).',
+                    style: TextStyle(color: curto ? cs.onErrorContainer : null),
+                  ),
+                  if (curto)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        'Com o tamanho escolhido, parte do texto fica cortada.',
+                        style: TextStyle(color: cs.onErrorContainer),
+                      ),
+                    ),
+                  if (medidas != null)
+                    TextButton(
+                      onPressed: () => _usarMinimo(medidas),
+                      child: const Text('Usar o mínimo'),
+                    ),
+                  Text(
+                    'Letra de 6 pt (já perto do mínimo legal, por isso não se '
+                    'reduz). Uma etiqueta mais estreita precisa de mais altura.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 12),
