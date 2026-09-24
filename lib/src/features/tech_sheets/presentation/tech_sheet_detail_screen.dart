@@ -335,88 +335,91 @@ class _Header extends StatelessWidget {
     final Color? corReal = cmvReal == null || cmvEsperado == null
         ? null
         : (cmvReal <= cmvEsperado ? cs.primary : cs.error);
+    Widget coluna(Widget c) => Expanded(child: Center(child: c));
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 14),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
       child: Column(
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              cell('Peso', '${detail.pesoTotal.toStringAsFixed(0)} g'),
-              cell('Custo', fmt(detail.custoPreview)),
-              if (sugerido != null && !ficha.temPrecoVenda)
-                cell(
-                  'Preço sugerido',
-                  fmt(sugerido),
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              InkWell(
-                onTap: podeEditar ? onEditarPreco : null,
-                borderRadius: BorderRadius.circular(8),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
+              coluna(cell('Peso', '${detail.pesoTotal.toStringAsFixed(0)} g')),
+              coluna(cell('Custo', fmt(detail.custoPreview))),
+              coluna(
+                InkWell(
+                  onTap: podeEditar ? onEditarPreco : null,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Preço de venda',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            if (podeEditar) ...[
+                              const SizedBox(width: 3),
+                              Icon(
+                                Icons.edit,
+                                size: 12,
+                                color: cs.onSurfaceVariant,
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          ficha.temPrecoVenda
+                              ? fmt(ficha.precoVenda)
+                              : 'Definir',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: ficha.temPrecoVenda ? cs.primary : cs.error,
+                          ),
+                        ),
+                        if (ficha.temPrecoVenda)
                           Text(
-                            'Preço de venda',
+                            'margem ${ficha.margemPercent.toStringAsFixed(0)}%',
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
-                          if (podeEditar) ...[
-                            const SizedBox(width: 2),
-                            Icon(
-                              Icons.edit,
-                              size: 12,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        ficha.temPrecoVenda ? fmt(ficha.precoVenda) : 'Definir',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: ficha.temPrecoVenda
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                      if (ficha.temPrecoVenda)
-                        Text(
-                          'margem ${ficha.margemPercent.toStringAsFixed(0)}%',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              cell(
-                'CMV esperado',
-                cmvEsperado == null
-                    ? '—'
-                    : '${cmvEsperado.toStringAsFixed(1)}%',
+              coluna(
+                cell('Preço sugerido', sugerido == null ? '—' : fmt(sugerido)),
               ),
-              cell(
-                'CMV real',
-                cmvReal == null
-                    ? 'defina o preço'
-                    : '${cmvReal.toStringAsFixed(1)}%',
-                color: corReal,
+              coluna(
+                cell(
+                  'CMV esperado',
+                  cmvEsperado == null
+                      ? '—'
+                      : '${cmvEsperado.toStringAsFixed(1)}%',
+                ),
+              ),
+              coluna(
+                cell(
+                  'CMV real',
+                  cmvReal == null
+                      ? 'defina o preço'
+                      : '${cmvReal.toStringAsFixed(1)}%',
+                  color: corReal,
+                ),
               ),
             ],
           ),
@@ -535,7 +538,7 @@ class _PriceBreakdown extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     if (valor == null) {
       return SizedBox(
-        width: 92,
+        width: 84,
         child: Text('—', textAlign: TextAlign.end, style: tt.bodyMedium),
       );
     }
@@ -544,16 +547,13 @@ class _PriceBreakdown extends StatelessWidget {
       color: cor,
     );
     return SizedBox(
-      width: 92,
+      width: 84,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(fmt(valor), style: estilo),
           if (pct != null)
-            Text(
-              _pct(pct),
-              style: tt.bodySmall?.copyWith(color: cor),
-            ),
+            Text(_pct(pct), style: tt.bodySmall?.copyWith(color: cor)),
         ],
       ),
     );
@@ -571,61 +571,89 @@ class _PriceBreakdown extends StatelessWidget {
         config.cmvPercent <= 0
             ? 'Percentuais somam ≥ 100% — ajusta em Configurações'
             : 'CMV esperado ${config.cmvPercent.toStringAsFixed(1)}%'
-                '${cmvReal == null ? '' : ' · real ${cmvReal!.toStringAsFixed(1)}%'}',
+                  '${cmvReal == null ? '' : ' · real ${cmvReal!.toStringAsFixed(1)}%'}',
       ),
       childrenPadding: const EdgeInsets.symmetric(horizontal: 16),
+      expandedAlignment: Alignment.centerLeft,
+      expandedCrossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 4),
-          child: Row(
-            children: [
-              const Expanded(child: SizedBox.shrink()),
-              SizedBox(
-                width: 92,
-                child: Text('Esperado',
-                    textAlign: TextAlign.end, style: tt.labelMedium),
-              ),
-              SizedBox(
-                width: 92,
-                child: Text('Real',
-                    textAlign: TextAlign.end, style: tt.labelMedium),
-              ),
-            ],
-          ),
-        ),
-        for (final l in q.linhas)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: Text(l.nome)),
-                _celula(context, l.esperado, l.esperadoPct),
-                _celula(
-                  context,
-                  l.real,
-                  l.realPct,
-                  cor: (l.real != null && l.real! < 0) ? cs.error : null,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Flexible(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 440),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        children: [
+                          const Expanded(child: SizedBox.shrink()),
+                          SizedBox(
+                            width: 84,
+                            child: Text(
+                              'Esperado',
+                              textAlign: TextAlign.end,
+                              style: tt.labelMedium,
+                            ),
+                          ),
+                          SizedBox(
+                            width: 84,
+                            child: Text(
+                              'Real',
+                              textAlign: TextAlign.end,
+                              style: tt.labelMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    for (final l in q.linhas)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(child: Text(l.nome)),
+                            _celula(context, l.esperado, l.esperadoPct),
+                            _celula(
+                              context,
+                              l.real,
+                              l.realPct,
+                              cor: (l.real != null && l.real! < 0)
+                                  ? cs.error
+                                  : null,
+                            ),
+                          ],
+                        ),
+                      ),
+                    const Divider(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'PREÇO FINAL',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          _celula(context, q.precoEsperado, 100, negrito: true),
+                          _celula(
+                            context,
+                            q.precoReal,
+                            semReal ? null : 100,
+                            negrito: true,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        const Divider(),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'PREÇO FINAL',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-              _celula(context, q.precoEsperado, 100, negrito: true),
-              _celula(context, q.precoReal, semReal ? null : 100,
-                  negrito: true),
-            ],
-          ),
+          ],
         ),
         Padding(
           padding: const EdgeInsets.only(top: 4, bottom: 8),
@@ -633,8 +661,8 @@ class _PriceBreakdown extends StatelessWidget {
             semReal
                 ? 'Define o preço de venda para ver a coluna Real.'
                 : 'Esperado = preço sugerido pelos percentuais. Real = o preço '
-                    'de venda que praticas: a matéria-prima é o custo verdadeiro '
-                    'e a margem de lucro é o que sobra.',
+                      'de venda que praticas: a matéria-prima é o custo verdadeiro '
+                      'e a margem de lucro é o que sobra.',
             style: tt.bodySmall,
           ),
         ),
