@@ -30,11 +30,23 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
   late final _categoria =
       TextEditingController(text: widget.existente?.categoria ?? '');
   late String _formatoId = widget.existente?.formatoId ?? '';
+  late final _descricao =
+      TextEditingController(text: widget.existente?.descricao ?? '');
+  late final _validade = TextEditingController(
+    text: (widget.existente?.validadeDias ?? 0) > 0
+        ? '${widget.existente!.validadeDias}'
+        : '',
+  );
+  late final _conservacao =
+      TextEditingController(text: widget.existente?.conservacao ?? '');
 
   @override
   void dispose() {
     _nome.dispose();
     _categoria.dispose();
+    _descricao.dispose();
+    _validade.dispose();
+    _conservacao.dispose();
     super.dispose();
   }
 
@@ -46,6 +58,9 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
         nome: _nome.text,
         categoria: _categoria.text,
         formatoId: _formatoId,
+        descricao: _descricao.text,
+        validadeDias: int.tryParse(_validade.text.trim()) ?? 0,
+        conservacao: _conservacao.text,
       ),
     );
   }
@@ -109,6 +124,45 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
                   ),
               ],
               onChanged: (v) => setState(() => _formatoId = v ?? ''),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _descricao,
+              maxLength: 300,
+              minLines: 1,
+              maxLines: 3,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Descrição (para a etiqueta)',
+                helperText: 'Curta: aparece por baixo do nome.',
+              ),
+            ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _validade,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Validade (dias)',
+                      helperText: 'a contar do fabrico',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: TextFormField(
+                    controller: _conservacao,
+                    maxLength: 200,
+                    decoration: const InputDecoration(
+                      labelText: 'Conservação',
+                      helperText: 'ex.: local fresco e seco',
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             FilledButton(

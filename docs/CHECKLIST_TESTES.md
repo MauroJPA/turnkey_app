@@ -3,8 +3,8 @@
 Percorre esta lista na app (login `ana@teste.local`). Para cada ponto marca
 `[x]` se está OK, ou escreve a seguir o que queres ajustar. Reinicia o
 PocketBase (`pb\serve.ps1`) e faz hot-restart do `flutter run` (tecla **R**)
-antes de começar, para carregar as últimas migrations (há **41**; a última é
-`1707523200_producao_item_ficha.js`).
+antes de começar, para carregar as últimas migrations (há **43**; a última é
+`1707696000_ficha_rotulo.js`).
 
 **Índice de páginas** (uma secção por página): 0 Arranque · 1 Início ·
 2 Aparência · 3 Formatos · 4 Ingredientes · 5 Receitas · 6 Fichas · 7 Produzir ·
@@ -12,7 +12,7 @@ antes de começar, para carregar as últimas migrations (há **41**; a última �
 13 Faturas · 14 Nutrição · 15 Embalagens · **16 Vendas · 17 Análise de vendas ·
 18 Encomendas · 19 Custos fixos · 20 Equipamentos · 21 Números mágicos ·
 22 Painel financeiro · 23 DRE · 24 Configurações (empresa/percentuais) ·
-25 Equipa · 26 Navegação e permissões**.
+25 Equipa · 26 Navegação e permissões · 27 Produtos Gookie**.
 
 **Limites conhecidos do teste automático** (verifica sempre à mão): tudo o que
 abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
@@ -153,6 +153,9 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       = custo verdadeiro, rubricas com o mesmo %, **margem = o que sobra**; fica a
       vermelho se negativa). Última linha PREÇO FINAL (sugerido / venda). Sem
       preço de venda a coluna Real mostra "—".
+- [ ] **Dados do produto** na ficha (editar/criar): **Descrição** (curta, para a
+      etiqueta), **Validade (dias)** e **Conservação** — ficam gravados e
+      aparecem na página Produtos Gookie.
 - [ ] Campo **Formato do cookie** (ao criar/editar a ficha, lista Mini/Recheado/
       Simples… ou "Sem formato") → aparece na lista e no detalhe ("Formato: …").
       Serve para a produção encontrar a ficha certa: massa + recheio + formato.
@@ -544,6 +547,33 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       entrar, e não afetam outras pessoas.
 - [ ] Um utilizador não consegue alterar as permissões por API (só o Proprietário;
       o Administrador só o rodapé).
+
+## 27. Produtos Gookie
+
+- [ ] Início → **Produtos Gookie** (cartão na grelha; também na lista "Todas as
+      páginas") abre a lista (seta ←, **?**, rodapé).
+- [ ] Cada produto (ficha técnica) mostra: ícone **visto** se a nutrição está
+      completa ou **aviso** se falta; categoria, formato, peso por unidade,
+      validade, alergénios ("Contém: …") e o que **falta** ("Sem descrição · Sem
+      prazo de validade · …").
+- [ ] Pesquisa por nome e o filtro **"Só os que faltam completar"**.
+- [ ] Abrir um produto: **descrição**, chips (formato, g por unidade, validade),
+      **conservação**, **Declaração nutricional** (por 100 g e por unidade,
+      energia em kJ/kcal), **Ingredientes** e **Alergénios**.
+- [ ] **Lista de ingredientes** por **ordem decrescente de peso**, ingredientes
+      compostos "desmontados" até aos ingredientes base, e os **alergénios a
+      negrito em MAIÚSCULAS** entre parênteses (ex. `Manteiga (LEITE)`).
+      Conferir à mão com a receita: o de maior peso vem primeiro.
+- [ ] Cartão **"Falta completar"** só aparece se houver pendências; **Corrigir a
+      nutrição** abre a declaração e leva ao ingrediente em falta;
+      **Preencher os dados** abre a ficha (descrição, validade, conservação).
+      Depois de guardar, o cartão some.
+- [ ] Ícone **copiar**: copia nome, descrição, ingredientes, alergénios,
+      conservação, validade e a declaração nutricional em texto.
+- [ ] Ícone do lápis (só quem pode editar) abre a ficha.
+- [ ] Com o papel **Leitura**: vê tudo mas não edita. Uma página oculta em
+      Navegação e permissões desaparece.
+- [ ] *(Vem a seguir: impressão das etiquetas 50×80 mm — completa e resumida.)*
 
 ---
 

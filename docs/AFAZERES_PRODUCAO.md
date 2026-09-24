@@ -76,13 +76,16 @@ Uma página com **tudo o que a Gookie produz** (produtos finais das fichas técn
 e, se fizer sentido, intermédios), para ver de forma simples e clara a
 **declaração nutricional** e a **lista de ingredientes** e imprimir etiquetas.
 
-- [ ] Nova página no menu (entra em `paginasApp`, com permissões por nível e cor na grelha).
-- [ ] Lista com pesquisa e estado de cada produto: nutrição **completa / incompleta** (ingredientes sem dados nutricionais) e alergénios.
-- [ ] Detalhe do produto: nome, descrição, formato/peso, **declaração nutricional** (por 100 g e por unidade), **lista de ingredientes**, alergénios, conservação.
-- [ ] **Lista de ingredientes** conforme o Regulamento (UE) 1169/2011: por ordem decrescente de peso, alergénios destacados (negrito), ingredientes compostos com o seu detalhe; gerada a partir da ficha → receitas → ingredientes (a nutrição por 100 g já existe).
-- [ ] Campos novos na ficha/produto: **descrição** (curta, para a etiqueta), **prazo de validade em dias**, **modo de conservação**, texto "consumir até / de preferência antes de".
-- [ ] Avisar quando faltar informação obrigatória (ex.: ingrediente sem nutrição, sem alergénios definidos).
-- [ ] Testes de unidade da lista de ingredientes (ordem, compostos, alergénios).
+- [x] Nova página no menu (`paginasApp`, permissões por nível e cor na grelha) — branch `feature/produtos-gookie`.
+- [x] Lista com pesquisa e estado de cada produto: nutrição **completa / incompleta** e alergénios (+ filtro "só os que faltam completar").
+- [x] Detalhe do produto: nome, descrição, formato/peso, **declaração nutricional** (por 100 g e por unidade), **lista de ingredientes**, alergénios, conservação.
+- [x] **Lista de ingredientes** conforme o Regulamento (UE) 1169/2011: por ordem decrescente de peso, alergénios destacados (negrito), ingredientes compostos com o seu detalhe; gerada a partir da ficha → receitas → ingredientes (a nutrição por 100 g já existe).
+- [x] Campos novos na ficha/produto (migration `1707696000_ficha_rotulo.js`; falta ainda o texto "consumir até / de preferência antes de", que se decide na etiqueta): **descrição** (curta, para a etiqueta), **prazo de validade em dias**, **modo de conservação**, texto "consumir até / de preferência antes de".
+- [x] Avisar quando faltar informação obrigatória (ex.: ingrediente sem nutrição, sem alergénios definidos).
+- [x] Testes de unidade da lista de ingredientes (ordem, somas, alergénios) e das pendências.
+- [ ] Nome de ingrediente **para o rótulo** (hoje usa o nome interno, ex. "Chocolate Negro 50% METRO Chef"): campo opcional "nome no rótulo".
+- [ ] Ingredientes compostos comprados (ex. chocolate, com a sua própria composição): hoje entram como um só ingrediente.
+- [ ] Incluir os **intermédios** (massas, recheios) na página, se se quiser.
 
 ## 5. Impressão de etiquetas
 
