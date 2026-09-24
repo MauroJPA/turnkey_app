@@ -49,12 +49,81 @@ void main() {
     });
   });
 
+  group('lista completa vs resumida', () {
+    // O exemplo do Mauro (Provença): pesos por ordem decrescente.
+    final l = ListaIngredientes.de(const [
+      IngredienteRotulo(nome: 'Farinha de trigo T55', gramas: 400, alergenios: ['Glúten']),
+      IngredienteRotulo(nome: 'Chocolate Branco 30% Chocovic', gramas: 300, marca: 'Chocovic'),
+      IngredienteRotulo(nome: 'Manteiga', gramas: 250, alergenios: ['Leite']),
+      IngredienteRotulo(nome: 'Açucar Amarelo', gramas: 120),
+      IngredienteRotulo(nome: 'Leite Condensado', gramas: 200, alergenios: ['Leite']),
+      IngredienteRotulo(nome: 'Açucar Branco', gramas: 110),
+      IngredienteRotulo(nome: 'Ovo liquido', gramas: 100, alergenios: ['Ovos']),
+      IngredienteRotulo(nome: 'Nata', gramas: 90, alergenios: ['Leite']),
+      IngredienteRotulo(nome: 'Framboesa Congelada', gramas: 80),
+      IngredienteRotulo(nome: 'Ginja Congelada', gramas: 70),
+      IngredienteRotulo(nome: 'Mirtilo Congelado', gramas: 60),
+      IngredienteRotulo(nome: 'Morango Congelado', gramas: 50),
+      IngredienteRotulo(nome: 'Sumo de Limão', gramas: 30),
+      IngredienteRotulo(nome: 'Fermento em Pó', gramas: 20),
+      IngredienteRotulo(nome: 'Raspas de Limão', gramas: 10),
+      IngredienteRotulo(nome: 'Bicarbonato de Sódio', gramas: 8),
+      IngredienteRotulo(nome: 'Sal Grosso Iodado', gramas: 5),
+    ]);
+
+    test('completa: nomes tal como estão (congelado, marca, %)', () {
+      expect(
+        l.textoSimples,
+        'Farinha de trigo T55 (GLÚTEN), Chocolate Branco 30% Chocovic, '
+        'Manteiga (LEITE), Leite Condensado (LEITE), Açucar Amarelo, '
+        'Açucar Branco, Ovo liquido (OVOS), Nata (LEITE), '
+        'Framboesa Congelada, Ginja Congelada, Mirtilo Congelado, '
+        'Morango Congelado, Sumo de Limão, Fermento em Pó, Raspas de Limão, '
+        'Bicarbonato de Sódio, Sal Grosso Iodado',
+      );
+    });
+
+    test('resumida: nomes curtos, variantes e limão juntos', () {
+      expect(
+        l.resumida().textoSimples,
+        'Farinha de trigo (GLÚTEN), Chocolate Branco, Manteiga (LEITE), '
+        'Açucar amarelo e branco, Leite Condensado (LEITE), Ovos (OVOS), '
+        'Nata (LEITE), Framboesa, Ginja, Mirtilo, Morango, Limão, Fermento, '
+        'Bicarbonato de Sódio, Sal Grosso',
+      );
+    });
+
+    test('nomeRotulo manda sobre o nome deduzido', () {
+      final r = ListaIngredientes.de(const [
+        IngredienteRotulo(nome: 'Chocolate Negro 50% METRO Chef', gramas: 10, nomeRotulo: 'Chocolate negro'),
+        IngredienteRotulo(nome: 'Ovo liquido', gramas: 5, nomeRotulo: 'Ovos frescos'),
+      ]).resumida();
+      expect(r.textoSimples, 'Chocolate negro, Ovos frescos');
+    });
+
+    test('marca acrescenta-se na completa se faltar no nome', () {
+      final r = ListaIngredientes.de(const [
+        IngredienteRotulo(nome: 'Manteiga', gramas: 10, marca: 'Président'),
+      ]);
+      expect(r.textoSimples, 'Manteiga Président');
+    });
+
+    test('nomeCurtoAuto', () {
+      expect(nomeCurtoAuto('Chocolate Branco 30% Chocovic', marca: 'Chocovic'), 'Chocolate Branco');
+      expect(nomeCurtoAuto('Framboesa Congelada'), 'Framboesa');
+      expect(nomeCurtoAuto('Ovo liquido'), 'Ovos');
+      expect(nomeCurtoAuto('Sal Grosso Iodado'), 'Sal Grosso');
+      expect(nomeCurtoAuto('Farinha de trigo T55'), 'Farinha de trigo');
+      expect(nomeCurtoAuto('Raspas de Limão'), 'Limão');
+      expect(nomeCurtoAuto('Congelado'), 'Congelado');
+    });
+  });
+
   group('pendenciasProduto', () {
     test('ficha vazia: falta tudo', () {
       const f = FichaTecnica(id: '1', nome: 'Boston');
       expect(pendenciasProduto(f), [
         'Sem informação nutricional',
-        'Sem descrição',
         'Sem prazo de validade',
         'Sem modo de conservação',
       ]);
@@ -76,6 +145,8 @@ void main() {
       // só passa se o NutriCache reconhecer estes campos
       final p = pendenciasProduto(f);
       expect(p.contains('Sem descrição'), isFalse);
+      // a descrição é opcional: nunca conta como falta
+      expect(pendenciasProduto(const FichaTecnica(id: '2', nome: 'X')).any((e) => e.contains('descrição')), isFalse);
       expect(p.contains('Sem prazo de validade'), isFalse);
       expect(p.contains('Sem modo de conservação'), isFalse);
     });

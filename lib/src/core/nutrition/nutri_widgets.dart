@@ -150,6 +150,8 @@ String declaracaoTexto({
     b.writeln('(!) Valores incompletos — há ingredientes sem informação '
         'nutricional.');
   }
+  b.writeln('');
+  b.writeln('Valores médios de referência, aproximados (calculados a partir dos ingredientes; produto artesanal).');
   return b.toString();
 }
 
@@ -193,6 +195,6 @@ $linhas
 </table>
 ${al.isNotEmpty ? '<p class="alergenios">${_esc(al)}</p>' : ''}
 ${!completo ? '<p class="aviso">(!) Valores incompletos — há ingredientes sem informação nutricional.</p>' : ''}
-<p class="aviso">Cálculo a partir dos valores dos ingredientes (Reg. (UE) 1169/2011). Confirma com os rótulos.</p>
+<p class="aviso">Valores médios de referência, aproximados (calculados a partir dos valores dos ingredientes; produto artesanal).</p>
 ''';
 }

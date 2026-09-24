@@ -5,11 +5,26 @@ class IngredienteRotulo {
     required this.nome,
     required this.gramas,
     this.alergenios = const [],
+    this.marca = '',
+    this.nomeRotulo = '',
   });
 
+  /// Nome completo, como está no ingrediente (pode ter %, marca, "congelado").
   final String nome;
   final double gramas;
   final List<String> alergenios;
+  final String marca;
+
+  /// Nome curto/genérico escolhido para a lista resumida (opcional).
+  final String nomeRotulo;
+
+  /// Nome para a lista **completa**: o nome do ingrediente e, se a marca ainda
+  /// não estiver lá, acrescenta-se no fim.
+  String get nomeCompleto {
+    final m = marca.trim();
+    if (m.isEmpty || _norm(nome).contains(_norm(m))) return nome;
+    return '$nome $m';
+  }
 }
 
 /// Um pedaço de texto da lista, a negrito ou não (os alergénios vão a negrito
@@ -22,6 +37,10 @@ class SegmentoTexto {
 
 /// Lista de ingredientes de um produto: por **ordem decrescente de peso**, com
 /// os alergénios destacados. Ingredientes com o mesmo nome somam-se.
+///
+/// Há duas versões: a **completa** (nome de cada ingrediente tal como é, com
+/// marca, percentagens e "congelado") e a **resumida** ([resumida]: nomes
+/// curtos e genéricos, variantes juntas — para caber em etiquetas pequenas).
 class ListaIngredientes {
   const ListaIngredientes(this.itens);
 
@@ -41,25 +60,98 @@ class ListaIngredientes {
           nome: nome,
           gramas: b.gramas,
           alergenios: [...b.alergenios],
+          marca: b.marca,
+          nomeRotulo: b.nomeRotulo,
         );
       } else {
         porNome[chave] = IngredienteRotulo(
           nome: atual.nome,
           gramas: atual.gramas + b.gramas,
           alergenios: {...atual.alergenios, ...b.alergenios}.toList(),
+          marca: atual.marca,
+          nomeRotulo: atual.nomeRotulo,
         );
       }
     }
-    final lista = porNome.values.toList()
-      ..sort((a, b) {
-        final c = b.gramas.compareTo(a.gramas);
-        return c != 0 ? c : a.nome.toLowerCase().compareTo(b.nome.toLowerCase());
-      });
-    return ListaIngredientes(lista);
+    return ListaIngredientes(_ordenar(porNome.values.toList()));
   }
+
+  static List<IngredienteRotulo> _ordenar(List<IngredienteRotulo> l) => l
+    ..sort((a, b) {
+      final c = b.gramas.compareTo(a.gramas);
+      return c != 0 ? c : a.nome.toLowerCase().compareTo(b.nome.toLowerCase());
+    });
 
   /// Todos os alergénios presentes nos ingredientes.
   Set<String> get alergenios => {for (final i in itens) ...i.alergenios};
+
+  /// Versão **resumida**: nomes curtos e genéricos (o `nomeRotulo` do
+  /// ingrediente ou, sem ele, um nome deduzido), juntando os que ficam
+  /// iguais (ex. "Sumo de Limão" + "Raspas de Limão" = "Limão") e as
+  /// variantes de cor (ex. "Açucar Amarelo" + "Açucar Branco" = "Açucar
+  /// amarelo e branco"). A ordem continua a ser por peso.
+  ListaIngredientes resumida() {
+    final grupos = <String, IngredienteRotulo>{};
+    for (final i in itens) {
+      final curto = i.nomeRotulo.trim().isNotEmpty
+          ? i.nomeRotulo.trim()
+          : nomeCurtoAuto(i.nome, marca: i.marca);
+      final chave = _norm(curto);
+      final atual = grupos[chave];
+      grupos[chave] = atual == null
+          ? IngredienteRotulo(
+              nome: curto,
+              gramas: i.gramas,
+              alergenios: [...i.alergenios],
+            )
+          : IngredienteRotulo(
+              nome: atual.nome,
+              gramas: atual.gramas + i.gramas,
+              alergenios: {...atual.alergenios, ...i.alergenios}.toList(),
+            );
+    }
+    return ListaIngredientes(
+      _ordenar(_juntarVariantes(_ordenar(grupos.values.toList()))),
+    );
+  }
+
+  static const _variantes = {
+    'amarelo', 'branco', 'castanho', 'mascavado', 'negro', 'escuro', 'claro',
+  };
+
+  /// "Açucar Amarelo" + "Açucar Branco" → "Açucar amarelo e branco".
+  static List<IngredienteRotulo> _juntarVariantes(List<IngredienteRotulo> l) {
+    final porBase = <String, List<int>>{};
+    for (var i = 0; i < l.length; i++) {
+      final p = l[i].nome.trim().split(RegExp(r'\s+'));
+      if (p.length == 2 && _variantes.contains(_norm(p[1]))) {
+        porBase.putIfAbsent(_norm(p[0]), () => []).add(i);
+      }
+    }
+    final remover = <int>{};
+    final resultado = <int, IngredienteRotulo>{};
+    for (final idx in porBase.values) {
+      if (idx.length < 2) continue;
+      final primeiro = l[idx.first]; // o mais pesado (lista já ordenada)
+      final base = primeiro.nome.trim().split(RegExp(r'\s+')).first;
+      final adj = [
+        for (final i in idx) l[i].nome.trim().split(RegExp(r'\s+')).last.toLowerCase(),
+      ];
+      final texto = adj.length == 2
+          ? '${adj[0]} e ${adj[1]}'
+          : '${adj.sublist(0, adj.length - 1).join(', ')} e ${adj.last}';
+      resultado[idx.first] = IngredienteRotulo(
+        nome: '$base $texto',
+        gramas: idx.fold(0.0, (s, i) => s + l[i].gramas),
+        alergenios: {for (final i in idx) ...l[i].alergenios}.toList(),
+      );
+      remover.addAll(idx.skip(1));
+    }
+    return [
+      for (var i = 0; i < l.length; i++)
+        if (!remover.contains(i)) resultado[i] ?? l[i],
+    ];
+  }
 
   /// O texto da lista em pedaços (para mostrar com negrito).
   List<SegmentoTexto> get segmentos {
@@ -67,7 +159,7 @@ class ListaIngredientes {
     for (var i = 0; i < itens.length; i++) {
       final it = itens[i];
       if (i > 0) out.add(const SegmentoTexto(', '));
-      out.add(SegmentoTexto(_capitalizar(it.nome, primeiro: i == 0)));
+      out.add(SegmentoTexto(_capitalizar(it.nomeCompleto, primeiro: i == 0)));
       if (it.alergenios.isNotEmpty) {
         out.add(const SegmentoTexto(' ('));
         for (var j = 0; j < it.alergenios.length; j++) {
@@ -88,4 +180,50 @@ class ListaIngredientes {
     if (!primeiro || s.isEmpty) return s;
     return s[0].toUpperCase() + s.substring(1);
   }
+}
+
+/// Nome curto deduzido de um ingrediente, para a lista resumida: tira a marca,
+/// percentagens (`30%`), "congelado/a", "líquido/a", "iodado/a", "em pó" e
+/// códigos tipo `T55`; e "Sumo/Raspas/Casca/Polpa de X" fica só "X".
+String nomeCurtoAuto(String nome, {String marca = ''}) {
+  var s = nome.trim();
+  final m = marca.trim();
+  if (m.isNotEmpty) {
+    s = s.replaceAll(RegExp(RegExp.escape(m), caseSensitive: false), ' ');
+  }
+  s = s
+      .replaceAll(RegExp(r'\d+(?:[.,]\d+)?\s*%'), ' ')
+      .replaceAll(RegExp(r'\bt\d{2,3}\b', caseSensitive: false), ' ')
+      .replaceAll(
+        RegExp(
+          r'\b(congelad[oa]s?|l[ií]quid[oa]s?|iodad[oa]s?|pasteurizad[oa]s?)\b',
+          caseSensitive: false,
+        ),
+        ' ',
+      )
+      .replaceAll(RegExp(r'\bem p[óo](?=\s|$)', caseSensitive: false), ' ')
+      .replaceFirst(
+        RegExp(
+          r'^\s*(sumo|suco|raspas?|casca|polpa|pur[ée])\s+de\s+',
+          caseSensitive: false,
+        ),
+        '',
+      )
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+  if (s.isEmpty) return nome.trim();
+  if (_norm(s) == 'ovo') return 'Ovos';
+  return s;
+}
+
+/// Minúsculas sem acentos (para comparar nomes).
+String _norm(String s) {
+  const de = 'áàãâäéèêëíìîïóòõôöúùûüçñ';
+  const para = 'aaaaaeeeeiiiiooooouuuucn';
+  final b = StringBuffer();
+  for (final c in s.toLowerCase().trim().split('')) {
+    final i = de.indexOf(c);
+    b.write(i >= 0 ? para[i] : c);
+  }
+  return b.toString();
 }
