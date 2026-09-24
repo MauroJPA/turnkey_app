@@ -26,6 +26,8 @@ import '../features/orders/presentation/encomendas_screen.dart';
 import '../features/packaging/presentation/embalagens_screen.dart';
 import '../features/production/presentation/cart_review_screen.dart';
 import '../features/production/presentation/production_screen.dart';
+import '../features/products/presentation/produto_gookie_detail_screen.dart';
+import '../features/products/presentation/produtos_gookie_screen.dart';
 import '../features/recipes/presentation/recipe_detail_screen.dart';
 import '../features/recipes/presentation/recipes_screen.dart';
 import '../features/sales/presentation/sales_screen.dart';
@@ -198,6 +200,18 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: ':id',
                 builder: (_, state) => RecipeDetailScreen(
                   recipeId: state.pathParameters['id']!,
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: Routes.produtosGookie,
+            builder: (_, __) => const ProdutosGookieScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                builder: (_, state) => ProdutoGookieDetailScreen(
+                  fichaId: state.pathParameters['id']!,
                 ),
               ),
             ],

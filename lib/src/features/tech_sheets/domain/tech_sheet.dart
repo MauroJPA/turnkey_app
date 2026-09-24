@@ -57,6 +57,9 @@ class FichaTecnica with _$FichaTecnica {
     @Default(0) double precoVenda,
     @Default(false) bool deletado,
     @Default('') String formatoId,
+    @Default('') String descricao,
+    @Default(0) int validadeDias,
+    @Default('') String conservacao,
     @Default(<String, dynamic>{}) Map<String, dynamic> nutriRaw,
   }) = _FichaTecnica;
 
@@ -91,6 +94,9 @@ class FichaTecnica with _$FichaTecnica {
       precoVenda: r.getDoubleValue('preco_venda'),
       deletado: r.getBoolValue('deletado'),
       formatoId: r.getStringValue('formato'),
+      descricao: r.getStringValue('descricao'),
+      validadeDias: r.getIntValue('validade_dias'),
+      conservacao: r.getStringValue('conservacao'),
       nutriRaw: rawNutri is Map
           ? Map<String, dynamic>.from(rawNutri)
           : const <String, dynamic>{},
@@ -103,6 +109,9 @@ class FichaInput {
     required this.nome,
     this.categoria = '',
     this.formatoId = '',
+    this.descricao = '',
+    this.validadeDias = 0,
+    this.conservacao = '',
   });
 
   final String nome;
@@ -111,9 +120,18 @@ class FichaInput {
   /// Formato de cookie do produto (Mini, Recheado…); vazio = sem formato.
   final String formatoId;
 
+  /// Descrição curta (aparece na etiqueta), prazo de validade em dias a
+  /// contar do fabrico (0 = não definido) e modo de conservação.
+  final String descricao;
+  final int validadeDias;
+  final String conservacao;
+
   Map<String, dynamic> toBody() => {
         'nome': nome.trim(),
         'categoria': categoria.trim(),
         'formato': formatoId,
+        'descricao': descricao.trim(),
+        'validade_dias': validadeDias,
+        'conservacao': conservacao.trim(),
       };
 }

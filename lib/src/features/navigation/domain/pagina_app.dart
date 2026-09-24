@@ -35,6 +35,8 @@ const paginasApp = <PaginaApp>[
       'Massas, recheios, coberturas'),
   PaginaApp('fichas', Routes.techSheets, 'Fichas Técnicas',
       Icons.receipt_long_outlined, 'Produtos e preço de venda'),
+  PaginaApp('produtos', Routes.produtosGookie, 'Produtos Gookie',
+      Icons.bakery_dining_outlined, 'Declaração nutricional e ingredientes'),
   PaginaApp('faturas', Routes.invoices, 'Faturas',
       Icons.document_scanner_outlined, 'Foto da fatura → preços e stock'),
   PaginaApp('vendas', Routes.sales, 'Vendas', Icons.point_of_sale_outlined,
