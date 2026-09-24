@@ -51,6 +51,10 @@ class ProdutoGookieDetailScreen extends ConsumerWidget {
     b.writeln();
     if (lista != null && !lista.vazia) {
       b.writeln('INGREDIENTES: ${lista.textoSimples}.');
+      b.writeln('INGREDIENTES (resumido): ${lista.resumida().textoSimples}.');
+    }
+    if (f.nutri.pesoUnidadeG > 0) {
+      b.writeln('Peso líquido: ${f.nutri.pesoUnidadeG.toStringAsFixed(0)} g');
     }
     final resumo = alergeniosResumo(n.alergenios, n.alergeniosTracos);
     if (resumo.isNotEmpty) b.writeln(resumo);
@@ -137,7 +141,7 @@ class ProdutoGookieDetailScreen extends ConsumerWidget {
   }
 }
 
-class _Corpo extends StatelessWidget {
+class _Corpo extends StatefulWidget {
   const _Corpo({
     required this.ficha,
     required this.formatoNome,
@@ -155,7 +159,20 @@ class _Corpo extends StatelessWidget {
   final VoidCallback onRetryIngredientes;
 
   @override
+  State<_Corpo> createState() => _CorpoState();
+}
+
+class _CorpoState extends State<_Corpo> {
+  bool _resumida = false;
+
+  @override
   Widget build(BuildContext context) {
+    final ficha = widget.ficha;
+    final formatoNome = widget.formatoNome;
+    final ingredientes = widget.ingredientes;
+    final podeEditar = widget.podeEditar;
+    final onEditar = widget.onEditar;
+    final onRetryIngredientes = widget.onRetryIngredientes;
     final tt = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
     final n = ficha.nutri;
@@ -237,7 +254,7 @@ class _Corpo extends StatelessWidget {
               Chip(label: Text(formatoNome), visualDensity: VisualDensity.compact),
             if (n.pesoUnidadeG > 0)
               Chip(
-                label: Text('${n.pesoUnidadeG.toStringAsFixed(0)} g por unidade'),
+                label: Text('Peso líquido: ${n.pesoUnidadeG.toStringAsFixed(0)} g'),
                 visualDensity: VisualDensity.compact,
               ),
             if (ficha.validadeDias > 0)
@@ -267,8 +284,28 @@ class _Corpo extends StatelessWidget {
                 : null,
             col2: n.porUnidade,
           ),
+        if (!n.vazio)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              'Valores médios de referência, aproximados (calculados a partir dos ingredientes; produto artesanal).',
+              style: tt.bodySmall,
+            ),
+          ),
 
         titulo('Ingredientes'),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(value: false, label: Text('Completa')),
+              ButtonSegment(value: true, label: Text('Resumida')),
+            ],
+            selected: {_resumida},
+            onSelectionChanged: (s) => setState(() => _resumida = s.first),
+          ),
+        ),
+        const SizedBox(height: 8),
         AsyncValueView<ListaIngredientes>(
           value: ingredientes,
           onRetry: onRetryIngredientes,
@@ -279,11 +316,12 @@ class _Corpo extends StatelessWidget {
                 'ingredientes.',
               );
             }
+            final mostrar = _resumida ? lista.resumida() : lista;
             return Text.rich(
               TextSpan(
                 style: tt.bodyLarge,
                 children: [
-                  for (final s in lista.segmentos)
+                  for (final s in mostrar.segmentos)
                     TextSpan(
                       text: s.texto,
                       style: s.negrito
@@ -305,7 +343,9 @@ class _Corpo extends StatelessWidget {
           'Cálculo a partir dos valores dos ingredientes (Reg. (UE) '
           '1169/2011). Confirma com os rótulos dos fornecedores. A lista de '
           'ingredientes está por ordem decrescente de peso, com os alergénios '
-          'a negrito.',
+          'a negrito. "Completa" usa o nome de cada ingrediente (marca, %, '
+          'congelado…); "Resumida" usa nomes curtos e junta variantes, para '
+          'etiquetas pequenas.',
           style: tt.bodySmall,
         ),
       ],

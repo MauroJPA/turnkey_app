@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../cookie_formats/application/cookie_format_providers.dart';
+import '../../products/domain/produto_gookie.dart';
 import '../domain/tech_sheet.dart';
 
 Future<FichaInput?> showFichaFormSheet(
@@ -40,6 +41,14 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
   late final _conservacao =
       TextEditingController(text: widget.existente?.conservacao ?? '');
 
+  /// '' = sem escolha, uma das [conservacoesPadrao], ou [_outro] (texto livre).
+  static const _outro = '__outro';
+  late String _conservacaoSel = () {
+    final c = (widget.existente?.conservacao ?? '').trim();
+    if (c.isEmpty) return '';
+    return conservacoesPadrao.contains(c) ? c : _outro;
+  }();
+
   @override
   void dispose() {
     _nome.dispose();
@@ -60,7 +69,9 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
         formatoId: _formatoId,
         descricao: _descricao.text,
         validadeDias: int.tryParse(_validade.text.trim()) ?? 0,
-        conservacao: _conservacao.text,
+        conservacao: _conservacaoSel == _outro
+            ? _conservacao.text
+            : _conservacaoSel,
       ),
     );
   }
@@ -133,37 +144,40 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
               maxLines: 3,
               textCapitalization: TextCapitalization.sentences,
               decoration: const InputDecoration(
-                labelText: 'Descrição (para a etiqueta)',
-                helperText: 'Curta: aparece por baixo do nome.',
+                labelText: 'Descrição (opcional)',
+                helperText: 'Curta: aparece por baixo do nome na etiqueta.',
               ),
             ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _validade,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Validade (dias)',
-                      helperText: 'a contar do fabrico',
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: TextFormField(
-                    controller: _conservacao,
-                    maxLength: 200,
-                    decoration: const InputDecoration(
-                      labelText: 'Conservação',
-                      helperText: 'ex.: local fresco e seco',
-                    ),
-                  ),
-                ),
-              ],
+            TextFormField(
+              controller: _validade,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Validade (dias)',
+                helperText: 'a contar da data de fabrico',
+              ),
             ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              key: ValueKey('conservacao-$_conservacaoSel'),
+              initialValue: _conservacaoSel,
+              isExpanded: true,
+              decoration: const InputDecoration(labelText: 'Conservação'),
+              items: [
+                const DropdownMenuItem(value: '', child: Text('— escolher —')),
+                for (final c in conservacoesPadrao)
+                  DropdownMenuItem(value: c, child: Text(c)),
+                const DropdownMenuItem(value: _outro, child: Text('Outro…')),
+              ],
+              onChanged: (v) => setState(() => _conservacaoSel = v ?? ''),
+            ),
+            if (_conservacaoSel == _outro)
+              TextFormField(
+                controller: _conservacao,
+                maxLength: 200,
+                decoration: const InputDecoration(
+                  labelText: 'Modo de conservação',
+                ),
+              ),
             const SizedBox(height: 16),
             FilledButton(
               onPressed: _submit,

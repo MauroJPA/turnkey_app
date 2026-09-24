@@ -91,6 +91,8 @@ e, se fizer sentido, intermédios), para ver de forma simples e clara a
 
 Primeira impressora: **papel térmico autocolante**. Dois modelos, escolhidos na hora de imprimir:
 
+> **Antes de fechar o layout: confirmar a lei** — ver `docs/ROTULAGEM_LEGAL.md` (perguntas prontas para a ASAE/DGAV: isenção da declaração nutricional, lista resumida, tamanho de letra, lote, ℮). Não assumir nada como legal até haver resposta.
+
 - **Completo** — nome, descrição, declaração nutricional em tabela, lista de ingredientes, alergénios, conservação, lote, fabrico e validade, dados do produtor (o que a norma da UE pede).
 - **Resumido** — só o mínimo exigido pela norma da UE, para caber no papel mais pequeno.
 
@@ -109,6 +111,8 @@ Data de fabrico e validade
 - [ ] Gerar a etiqueta em HTML/CSS com `@page { size: 50mm 80mm }` e reaproveitar o mecanismo de impressão já usado no talão/DRE (`core/printing/print_html.dart`).
 - [ ] Ajustar os tamanhos de letra ao espaço (a norma tem tamanho mínimo de letra; em embalagens pequenas há regras próprias) e testar com a impressora real.
 - [ ] Pré-visualização na app antes de imprimir.
+- [ ] **Enviar as perguntas à ASAE/DGAV** (`docs/ROTULAGEM_LEGAL.md`) e registar as respostas.
+- [ ] Guardar os **dados do produtor** (nome, morada) e incluí-los na etiqueta; **℮** como opção por produto, só se houver controlo de peso.
 - [ ] Verificar com a norma (Reg. UE 1169/2011) e, se possível, com a ASAE/consultor: conteúdo mínimo obrigatório, isenções para embalagens pequenas, expressão da data.
 - [ ] Mais tarde: outros tamanhos de papel e impressoras (guardar o formato como configuração).
 

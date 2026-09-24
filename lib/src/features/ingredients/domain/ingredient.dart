@@ -71,6 +71,8 @@ class Ingrediente with _$Ingrediente {
     @Default(<String>[]) List<String> alergeniosTracos,
     /// Nome do ficheiro da foto da tabela nutricional (rótulo), se houver.
     @Default('') String nutriFoto,
+    /// Nome curto/genérico para a lista resumida da etiqueta (opcional).
+    @Default('') String nomeRotulo,
     /// Se preenchido, este "ingrediente" é na verdade um produto Gookie — um
     /// espelho da receita com este id. A nutrição vem da receita, não se
     /// preenche aqui.
@@ -138,6 +140,7 @@ class Ingrediente with _$Ingrediente {
       alergenios: lista('alergenios'),
       alergeniosTracos: lista('alergenios_tracos'),
       nutriFoto: r.getStringValue('nutri_foto'),
+      nomeRotulo: r.getStringValue('nome_rotulo'),
       receitaEspelhoId: r.getStringValue('receita_espelho').isEmpty
           ? null
           : r.getStringValue('receita_espelho'),
@@ -151,6 +154,7 @@ class IngredienteInput {
     required this.nome,
     this.caracteristica = '',
     this.marca = '',
+    this.nomeRotulo = '',
     this.fornecedor = '',
     this.preco = 0,
     this.gramasEmbalagem = 0,
@@ -161,6 +165,9 @@ class IngredienteInput {
   final String nome;
   final String caracteristica;
   final String marca;
+
+  /// Nome curto/genérico para a lista resumida da etiqueta (opcional).
+  final String nomeRotulo;
   final String fornecedor;
   final double preco;
   final double gramasEmbalagem;
@@ -172,6 +179,7 @@ class IngredienteInput {
         nome: nome ?? i.nome,
         caracteristica: i.caracteristica,
         marca: i.marca,
+        nomeRotulo: i.nomeRotulo,
         fornecedor: i.fornecedor,
         preco: i.preco,
         gramasEmbalagem: i.gramasEmbalagem,
@@ -183,6 +191,7 @@ class IngredienteInput {
         'nome': nome.trim(),
         'caracteristica': caracteristica.trim(),
         'marca': marca.trim(),
+        'nome_rotulo': nomeRotulo.trim(),
         'fornecedor': fornecedor.trim(),
         'preco': preco,
         'gramas_embalagem': gramasEmbalagem,

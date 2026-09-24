@@ -19,6 +19,8 @@ final produtoIngredientesProvider = FutureProvider.autoDispose
         nome: c.nome,
         gramas: c.gramas,
         alergenios: porId[c.ingredienteId]?.alergenios ?? const [],
+        marca: porId[c.ingredienteId]?.marca ?? '',
+        nomeRotulo: porId[c.ingredienteId]?.nomeRotulo ?? '',
       ),
   ]);
 });

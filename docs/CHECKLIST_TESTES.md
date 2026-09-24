@@ -560,6 +560,14 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Abrir um produto: **descrição**, chips (formato, g por unidade, validade),
       **conservação**, **Declaração nutricional** (por 100 g e por unidade,
       energia em kJ/kcal), **Ingredientes** e **Alergénios**.
+- [ ] **Ingredientes: Completa / Resumida**. Completa = nome de cada ingrediente tal
+      como está (marca, %, "congelado"). Resumida = nomes curtos e genéricos, com
+      variantes juntas (ex. `Açucar amarelo e branco`, `Limão`, `Ovos`); o campo
+      **"Nome na etiqueta resumida"** do ingrediente manda sobre o nome deduzido.
+- [ ] **Descrição é opcional**: sem descrição não aparece como falta. **Conservação**
+      é uma **seleção** (Local fresco e seco · Refrigerado · Fresco e seco ou
+      refrigerado · Congelado · Outro…).
+- [ ] Aviso "Valores médios de referência, aproximados" por baixo da tabela.
 - [ ] **Lista de ingredientes** por **ordem decrescente de peso**, ingredientes
       compostos "desmontados" até aos ingredientes base, e os **alergénios a
       negrito em MAIÚSCULAS** entre parênteses (ex. `Manteiga (LEITE)`).
