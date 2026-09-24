@@ -55,20 +55,22 @@ A BD é o PocketBase (SQLite em `pb_data/` + ficheiros enviados). **Decidido: Go
 
 ## 3. Testes de segurança (só no nosso sistema, com autorização)
 
-Ambiente: uma cópia descartável (nunca a produção). Objetivo: encontrar falhas antes de outros.
+Relatório completo e lista para a produção: **`docs/SEGURANCA.md`**. Testes repetíveis em `test/security/` (correm no `scripts/verificar.sh`).
 
-- [ ] **Isolamento entre empresas (multi-tenant)**: com dois utilizadores de empresas diferentes, tentar ler/alterar/apagar registos um do outro por API em *todas* as coleções e endpoints `/api/turnkey/*` (IDOR).
-- [ ] **Papéis**: Leitura/Editor/Administrador a tentar o que não podem (escrever, apagar, mudar papéis, gravar a matriz de permissões, ver dados financeiros).
-- [ ] **Endpoints próprios** (hooks): todos exigem autenticação? validam a empresa? o que acontece com dados inválidos/enormes?
-- [ ] **Autenticação**: limite de tentativas de login, palavras-passe fracas, expiração de sessão, recuperação de conta.
-- [ ] **Uploads** (imagens, PDFs, fontes, rótulos): tipos, tamanho máximo, nomes de ficheiro maliciosos.
-- [ ] **HTML de impressão** (talão, DRE, futuras etiquetas): garantir que texto de clientes/produtos é escapado (XSS).
-- [ ] **Segredos**: nenhuma chave no repositório nem nos logs/erros mostrados; `.env` fora do git; **rodar a chave do Vendus** (foi exposta antes) e confirmar as chaves de IA.
-- [ ] **Painel de administração** do PocketBase: não exposto à internet (ou protegido); superutilizador com palavra-passe forte.
-- [ ] **HTTPS**, cabeçalhos de segurança, CORS restrito ao domínio da app.
-- [ ] **Dependências**: verificar versões do PocketBase, pacotes Flutter e npm em busca de vulnerabilidades conhecidas.
-- [ ] Guardar os testes em `test/security/` (scripts repetíveis) e correr antes de cada versão.
-- [ ] Relatório curto: o que se encontrou, o que se corrigiu, o que fica em risco aceite.
+- [x] **Isolamento entre empresas (multi-tenant)** em todas as coleções e endpoints (IDOR) — falha encontrada e corrigida (relações entre empresas).
+- [x] **Papéis**: Leitura/Editor/Admin/Owner — corrigidos: registo público escolhia empresa/papel (**crítico**); admin rebaixava proprietários.
+- [x] **Endpoints próprios** (hooks): exigem sessão, validam a empresa, dados inválidos/enormes sem erro 500.
+- [x] **Autenticação**: limite de tentativas ligado, mesma resposta para email existente/inexistente, palavra-passe mínima 8.
+- [x] **Uploads**: tipos e tamanhos restringidos; faturas protegidas (token de ficheiro).
+- [x] **HTML de impressão**: XSS no título do talão corrigido; testes com texto malicioso.
+- [x] **Segredos**: nada no repositório nem no histórico; `.env` fora do git.
+- [ ] **Rodar a chave do Vendus** (foi exposta antes) e confirmar as chaves de IA só em `pb\.env`.
+- [ ] **Atualizar o PocketBase** (0.35.0 → ≥ 0.39.7: OAuth2 pré-sequestro e queda do servidor) e repetir os testes.
+- [ ] **Painel `/_/`**, **HTTPS**, cabeçalhos de segurança, CORS e *trusted proxy* no servidor definitivo (lista em `docs/SEGURANCA.md`).
+- [ ] Decidir se o **registo público** fica aberto.
+- [ ] Dependências Flutter/npm: rever versões (várias versões maiores atrás).
+- [x] Testes guardados em `test/security/` e ligados ao `scripts/verificar.sh`.
+- [x] Relatório curto: `docs/SEGURANCA.md`.
 
 ## 4. Página "Produtos Gookie" (nova)
 
