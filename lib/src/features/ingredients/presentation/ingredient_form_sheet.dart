@@ -1,8 +1,13 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/nutrition/nutrition.dart';
+import '../application/ingredients_providers.dart';
+import '../data/ingredient_repository.dart';
 import '../domain/ingredient.dart';
 import '../domain/nutri_ingresso.dart';
+import 'nutricao_sheet.dart';
 
 /// Folha de baixo para criar/editar um ingrediente. Ao criar, também se pode
 /// já preencher a informação nutricional (opcional).
@@ -19,16 +24,17 @@ Future<IngredienteFormResultado?> showIngredientFormSheet(
   );
 }
 
-class _IngredientFormSheet extends StatefulWidget {
+class _IngredientFormSheet extends ConsumerStatefulWidget {
   const _IngredientFormSheet({this.existente});
 
   final Ingrediente? existente;
 
   @override
-  State<_IngredientFormSheet> createState() => _IngredientFormSheetState();
+  ConsumerState<_IngredientFormSheet> createState() =>
+      _IngredientFormSheetState();
 }
 
-class _IngredientFormSheetState extends State<_IngredientFormSheet> {
+class _IngredientFormSheetState extends ConsumerState<_IngredientFormSheet> {
   final _formKey = GlobalKey<FormState>();
   late final _nome = TextEditingController(text: widget.existente?.nome ?? '');
   late final _caracteristica =
@@ -58,7 +64,12 @@ class _IngredientFormSheetState extends State<_IngredientFormSheet> {
   final _prot = TextEditingController();
   final _sal = TextEditingController();
   String _baseNutri = '100g';
+  double _densidade = 1;
   final _alerg = <String>{};
+  final _tracos = <String>{};
+  String _origemNutri = 'manual';
+  ({String nome, List<int> bytes})? _foto;
+  bool _lendo = false;
   bool _abrirNutricao = false;
 
   static String _n(double v) => v == v.roundToDouble()
@@ -91,6 +102,91 @@ class _IngredientFormSheetState extends State<_IngredientFormSheet> {
   double _num(TextEditingController c) =>
       double.tryParse(c.text.replaceAll(',', '.').trim()) ?? 0;
 
+  static String _s(double v) =>
+      v == 0 ? '' : (v == v.roundToDouble() ? v.toStringAsFixed(0) : '$v');
+
+  void _preencher(
+    Nutrientes n, {
+    required String base,
+    double densidade = 1,
+    List<String> alergenios = const [],
+    List<String> tracos = const [],
+  }) {
+    _kcal.text = _s(n.kcal);
+    _lip.text = _s(n.lipidos);
+    _sat.text = _s(n.saturados);
+    _hc.text = _s(n.hidratos);
+    _ac.text = _s(n.acucares);
+    _fib.text = _s(n.fibra);
+    _prot.text = _s(n.proteina);
+    _sal.text = _s(n.sal);
+    _baseNutri = base;
+    _densidade = densidade;
+    _alerg
+      ..clear()
+      ..addAll(alergenios);
+    _tracos
+      ..clear()
+      ..addAll(tracos);
+  }
+
+  void _aviso(String texto) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(texto)));
+  }
+
+  Future<void> _daInsa() async {
+    final r = await showInsaPicker(
+      context,
+      repo: ref.read(ingredientRepositoryProvider),
+      termoInicial: _nome.text.trim(),
+    );
+    if (r == null || !mounted) return;
+    setState(() {
+      _preencher(r.nutri, base: '100g', alergenios: r.alergenios);
+      _origemNutri = 'insa';
+    });
+    _aviso('Preenchido de "${r.nome}" (INSA). Confirma os valores.');
+  }
+
+  Future<void> _lerFoto() async {
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
+      withData: true,
+    );
+    final f = (picked != null && picked.files.isNotEmpty)
+        ? picked.files.first
+        : null;
+    if (f == null || f.bytes == null || !mounted) return;
+    final bytes = f.bytes!.toList();
+    setState(() => _lendo = true);
+    try {
+      final r = await ref
+          .read(ingredientActionsProvider)
+          .lerRotulo(bytes: bytes, nome: f.name);
+      if (!mounted) return;
+      setState(() {
+        _preencher(
+          r.nutri,
+          base: r.base,
+          densidade: r.densidade,
+          alergenios: r.alergenios,
+          tracos: r.tracos,
+        );
+        _origemNutri = 'rotulo';
+        _foto = (nome: f.name, bytes: bytes);
+      });
+      _aviso('Rótulo lido. Confere os valores antes de adicionar.');
+    } on Object catch (e) {
+      _aviso('$e');
+    } finally {
+      if (mounted) setState(() => _lendo = false);
+    }
+  }
+
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     final nutri = NutriIngresso(
@@ -105,7 +201,11 @@ class _IngredientFormSheetState extends State<_IngredientFormSheet> {
         sal: _num(_sal),
       ),
       base: _baseNutri,
+      densidade: _densidade,
       alergenios: _alerg.toList(),
+      tracos: _tracos.toList(),
+      origem: _origemNutri,
+      foto: _foto,
     );
     final criar = widget.existente == null;
     Navigator.pop(
@@ -152,6 +252,23 @@ class _IngredientFormSheetState extends State<_IngredientFormSheet> {
         title: const Text('Informação nutricional (opcional)'),
         subtitle: const Text('Valores por 100 g / 100 ml e alergénios'),
         children: [
+          if (_lendo) const LinearProgressIndicator(),
+          OutlinedButton.icon(
+            onPressed: _lendo ? null : _daInsa,
+            icon: const Icon(Icons.menu_book_outlined),
+            label: const Text('Escolher da tabela INSA'),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _lendo ? null : _lerFoto,
+            icon: const Icon(Icons.photo_camera_outlined),
+            label: Text(
+              _foto == null
+                  ? 'Foto do rótulo (preencher com IA)'
+                  : 'Rótulo lido: ${_foto!.nome} — trocar foto',
+            ),
+          ),
+          const SizedBox(height: 12),
           SegmentedButton<String>(
             segments: const [
               ButtonSegment(value: '100g', label: Text('por 100 g')),

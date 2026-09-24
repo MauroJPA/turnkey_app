@@ -84,6 +84,13 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       alergénios aparecem. Sem preencher nada, o ingrediente cria-se como antes.
       A caixa "Abrir a folha completa depois" abre a folha de nutrição (INSA,
       foto do rótulo) logo a seguir.
+  - [ ] **Escolher da tabela INSA** (dentro dessa secção): abre a pesquisa já com
+        o nome escrito; ao escolher, preenche os valores e os alergénios (a
+        confirmar) e o ingrediente fica com a nutrição "da tabela INSA".
+  - [ ] **Foto do rótulo (preencher com IA)**: escolhe a foto/PDF → "Rótulo
+        lido" preenche os campos (conferir!) e a foto fica anexada ao
+        ingrediente. Sem chave da IA no servidor mostra "IA não configurada"
+        (só à mão — seletor de ficheiros; precisa de `GEMINI_API_KEY`).
 - [ ] **Deslizar para a esquerda** num ingrediente pede confirmação e o item
       **desaparece logo**, sem ecrã de erro vermelho (o mesmo em Receitas,
       Fichas técnicas e nas linhas de uma receita).
@@ -138,7 +145,14 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       para a matéria-prima nos Percentuais de custo; ex. 25,0 %) e **CMV real**
       (custo ÷ preço de venda praticado; ex. custo 0,63 € e venda 2,00 € =
       31,1 %). O real fica **a vermelho** quando passa o esperado e mostra
-      "defina o preço" sem preço de venda. A "Quebra do preço" repete ambos.
+      "defina o preço" sem preço de venda.
+- [ ] **Quebra do preço** (abrir): tabela com as colunas **Esperado** e **Real**;
+      cada linha (Matéria-prima, Salário, Aluguel, Impostos, Serviços, Despesas
+      fixas, Taxas, Margem de lucro) mostra o **valor e a %**. Esperado = preço
+      sugerido pelos percentuais; Real = preço de venda praticado (matéria-prima
+      = custo verdadeiro, rubricas com o mesmo %, **margem = o que sobra**; fica a
+      vermelho se negativa). Última linha PREÇO FINAL (sugerido / venda). Sem
+      preço de venda a coluna Real mostra "—".
 - [ ] Campo **Formato do cookie** (ao criar/editar a ficha, lista Mini/Recheado/
       Simples… ou "Sem formato") → aparece na lista e no detalhe ("Formato: …").
       Serve para a produção encontrar a ficha certa: massa + recheio + formato.

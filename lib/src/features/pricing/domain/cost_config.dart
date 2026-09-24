@@ -3,6 +3,38 @@ import 'package:pocketbase/pocketbase.dart';
 
 part 'cost_config.freezed.dart';
 
+/// Uma linha da quebra do preço: o que cabe a cada rubrica no preço
+/// **esperado** (sugerido pelos percentuais) e no preço **real** (o de venda
+/// praticado). `real*` é `null` enquanto não há preço de venda.
+class LinhaQuebra {
+  const LinhaQuebra({
+    required this.nome,
+    required this.esperado,
+    required this.esperadoPct,
+    this.real,
+    this.realPct,
+  });
+
+  final String nome;
+  final double esperado;
+  final double esperadoPct;
+  final double? real;
+  final double? realPct;
+}
+
+/// Quebra comparada: linhas + os dois preços.
+class QuebraComparada {
+  const QuebraComparada({
+    required this.linhas,
+    required this.precoEsperado,
+    this.precoReal,
+  });
+
+  final List<LinhaQuebra> linhas;
+  final double precoEsperado;
+  final double? precoReal;
+}
+
 /// Percentuais de custo da empresa (tabela `configuracoes_custo`).
 ///
 /// A ideia (portada do `meu_app_ia`): tudo o que não é matéria-prima soma uma
@@ -66,6 +98,66 @@ class CostConfig with _$CostConfig {
     final cmv = cmvPercent;
     if (cmv <= 0) return 0;
     return custoMateriaPrima / (cmv / 100);
+  }
+
+  /// Quebra do preço esperado (percentuais) lado a lado com a do preço real.
+  ///
+  /// No real, a matéria-prima é o custo verdadeiro e as rubricas mantêm o seu
+  /// percentual do preço de venda; a **margem de lucro** é o que sobra
+  /// (positiva ou negativa) — assim as linhas somam o preço de venda.
+  QuebraComparada quebraComparada(double custo, double precoVenda) {
+    final esperado = precoSugerido(custo);
+    final temReal = precoVenda > 0;
+    final linhas = <LinhaQuebra>[
+      LinhaQuebra(
+        nome: 'Matéria-prima',
+        esperado: custo,
+        esperadoPct: cmvPercent,
+        real: temReal ? custo : null,
+        realPct: temReal ? custo / precoVenda * 100 : null,
+      ),
+    ];
+    var somaOutrosReal = 0.0;
+    for (final e in rubricas.entries) {
+      final eMargem = e.key == 'Margem de lucro';
+      double? real;
+      double? realPct;
+      if (temReal) {
+        if (eMargem) {
+          // preenchido depois, com o que sobra
+        } else {
+          real = precoVenda * e.value / 100;
+          realPct = e.value;
+          somaOutrosReal += real;
+        }
+      }
+      linhas.add(
+        LinhaQuebra(
+          nome: e.key,
+          esperado: esperado * e.value / 100,
+          esperadoPct: e.value,
+          real: real,
+          realPct: realPct,
+        ),
+      );
+    }
+    if (temReal) {
+      final i = linhas.indexWhere((l) => l.nome == 'Margem de lucro');
+      final sobra = precoVenda - custo - somaOutrosReal;
+      final antiga = linhas[i];
+      linhas[i] = LinhaQuebra(
+        nome: antiga.nome,
+        esperado: antiga.esperado,
+        esperadoPct: antiga.esperadoPct,
+        real: sobra,
+        realPct: sobra / precoVenda * 100,
+      );
+    }
+    return QuebraComparada(
+      linhas: linhas,
+      precoEsperado: esperado,
+      precoReal: temReal ? precoVenda : null,
+    );
   }
 
   /// Quebra do preço: quanto cada rubrica representa em euros.

@@ -52,45 +52,22 @@ routerAdd(
       throw new ApiError(502, r.message, null);
     }
 
-    const d = r.dados || {};
-    const n = d.nutri || {};
-    const num = (v) => {
-      const x = Number(v);
-      return isFinite(x) && x >= 0 ? x : 0;
-    };
+    const nr = require(`${__hooks}/nutri_rotulo.js`).normalizarRotulo(r.dados);
+    const n = nr.nutri;
+    const alerg = nr.alergenios;
+    const tracos = nr.alergenios_tracos;
 
-    // alergénios: só os 14 válidos (case-insensitive)
-    const VALIDOS = [
-      'Glúten', 'Crustáceos', 'Ovos', 'Peixe', 'Amendoins', 'Soja', 'Leite',
-      'Frutos de casca rija', 'Aipo', 'Mostarda', 'Sésamo', 'Sulfitos',
-      'Tremoço', 'Moluscos',
-    ];
-    const canon = (arr) => {
-      const out = [];
-      for (const a of Array.isArray(arr) ? arr : []) {
-        const s = String(a).toLowerCase().trim();
-        for (const v of VALIDOS) {
-          if (v.toLowerCase() === s && out.indexOf(v) < 0) out.push(v);
-        }
-      }
-      return out;
-    };
-    const alerg = canon(d.alergenios);
-    const tracos = canon(d.alergenios_tracos).filter(
-      (t) => alerg.indexOf(t) < 0,
-    );
-
-    ing.set('nutri_energia_kcal', num(n.energia_kcal));
-    ing.set('nutri_lipidos_g', num(n.lipidos_g));
-    ing.set('nutri_saturados_g', num(n.saturados_g));
-    ing.set('nutri_hidratos_g', num(n.hidratos_g));
-    ing.set('nutri_acucares_g', num(n.acucares_g));
-    ing.set('nutri_fibra_g', num(n.fibra_g));
-    ing.set('nutri_proteina_g', num(n.proteina_g));
-    ing.set('nutri_sal_g', num(n.sal_g));
-    ing.set('nutri_base', d.base === '100ml' ? '100ml' : '100g');
-    if (d.densidade && Number(d.densidade) > 0) {
-      ing.set('nutri_densidade', Number(d.densidade));
+    ing.set('nutri_energia_kcal', n.energia_kcal);
+    ing.set('nutri_lipidos_g', n.lipidos_g);
+    ing.set('nutri_saturados_g', n.saturados_g);
+    ing.set('nutri_hidratos_g', n.hidratos_g);
+    ing.set('nutri_acucares_g', n.acucares_g);
+    ing.set('nutri_fibra_g', n.fibra_g);
+    ing.set('nutri_proteina_g', n.proteina_g);
+    ing.set('nutri_sal_g', n.sal_g);
+    ing.set('nutri_base', nr.base);
+    if (nr.densidade > 0 && nr.densidade !== 1) {
+      ing.set('nutri_densidade', nr.densidade);
     }
     ing.set('nutri_origem', 'rotulo');
     ing.set('nutri_atualizado_em', new Date().toISOString());
@@ -113,7 +90,53 @@ routerAdd(
       base: ing.getString('nutri_base'),
       alergenios: alerg,
       alergenios_tracos: tracos,
-      ingredientes_texto: d.ingredientes_texto || '',
+      ingredientes_texto: nr.ingredientes_texto,
+    });
+  },
+  $apis.requireAuth('users', '_superusers'),
+);
+
+// --- POST /api/turnkey/nutricao/ler-rotulo -------------------------------
+// Lê um rótulo por IA SEM gravar nada (usado ao criar um ingrediente, que
+// ainda não existe). Body { imagem(base64), mime } -> valores por 100 g/ml.
+routerAdd(
+  'POST',
+  '/api/turnkey/nutricao/ler-rotulo',
+  (e) => {
+    const auth = e.auth;
+    const isSuper =
+      auth && auth.collection() && auth.collection().name === '_superusers';
+    if (!isSuper) {
+      if (!auth || auth.collection().name !== 'users') {
+        throw new ForbiddenError('Autenticação necessária.');
+      }
+      if (auth.getString('papel') === 'viewer') {
+        throw new ForbiddenError('Sem permissão.');
+      }
+    }
+    const body = e.requestInfo().body || {};
+    const imagem = (body.imagem || '').toString();
+    const mime = (body.mime || 'image/jpeg').toString();
+    if (!imagem) throw new BadRequestError('Falta a imagem (base64).');
+
+    const r = require(`${__hooks}/ai.js`).analisarImagemIA({
+      imagemBase64: imagem,
+      mime: mime,
+      tarefa: 'rotulo',
+    });
+    if (!r.ok) {
+      if (r.code === 503) throw new ApiError(503, r.message, null);
+      throw new ApiError(502, r.message, null);
+    }
+    const nr = require(`${__hooks}/nutri_rotulo.js`).normalizarRotulo(r.dados);
+    return e.json(200, {
+      provider: r.provider,
+      nutri: nr.nutri,
+      base: nr.base,
+      densidade: nr.densidade,
+      alergenios: nr.alergenios,
+      alergenios_tracos: nr.alergenios_tracos,
+      ingredientes_texto: nr.ingredientes_texto,
     });
   },
   $apis.requireAuth('users', '_superusers'),

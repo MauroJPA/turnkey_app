@@ -10,6 +10,7 @@ import '../../../core/pocketbase/pb_client.dart';
 import '../domain/auto_insa.dart';
 import '../domain/ingredient.dart';
 import '../domain/ingrediente_referencia.dart';
+import '../domain/nutri_ingresso.dart';
 
 final ingredientRepositoryProvider = Provider<IngredientRepository>((ref) {
   return IngredientRepository(
@@ -90,6 +91,19 @@ class IngredientRepository implements IngredientWriter {
       // a leitura por IA já gravou os valores; guardar a foto é best-effort
     }
     return getById(id);
+  }
+
+  /// Lê um rótulo por IA SEM gravar nada (ao criar um ingrediente novo).
+  Future<RotuloLido> lerRotulo({
+    required List<int> bytes,
+    required String nome,
+  }) async {
+    final res = await _pb.send(
+      '/api/turnkey/nutricao/ler-rotulo',
+      method: 'POST',
+      body: {'imagem': base64Encode(bytes), 'mime': _mimeRotulo(nome)},
+    );
+    return RotuloLido.fromJson(Map<String, dynamic>.from(res as Map));
   }
 
   /// Anexa (ou substitui) a foto da tabela nutricional do ingrediente.

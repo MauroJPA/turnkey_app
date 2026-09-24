@@ -38,13 +38,34 @@ class IngredientActions {
         criado.id,
         nutri: nutri.nutri,
         base: nutri.base,
+        densidade: nutri.densidade,
         alergenios: nutri.alergenios,
-        alergeniosTracos: const [],
+        alergeniosTracos: nutri.tracos,
+        origem: nutri.origem,
       );
+    }
+    final foto = nutri?.foto;
+    if (foto != null) {
+      try {
+        criado = await _repo.anexarFotoNutri(
+          criado.id,
+          bytes: foto.bytes,
+          nome: foto.nome,
+        );
+      } on Object {
+        // o ingrediente e a nutrição já estão gravados; a foto é um extra
+      }
     }
     _refresh();
     return criado;
   }
+
+  /// Lê um rótulo por IA sem gravar (formulário de novo ingrediente).
+  Future<RotuloLido> lerRotulo({
+    required List<int> bytes,
+    required String nome,
+  }) =>
+      _repo.lerRotulo(bytes: bytes, nome: nome);
 
   Future<void> update(String id, IngredienteInput input) async {
     await _repo.update(id, input);

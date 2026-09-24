@@ -152,14 +152,10 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
 
   Future<void> _daInsa() async {
     final repo = ref.read(ingredientRepositoryProvider);
-    final r = await showModalBottomSheet<IngredienteReferencia>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => _InsaPicker(
-        repo: repo,
-        termoInicial: widget.ingrediente.nome,
-      ),
+    final r = await showInsaPicker(
+      context,
+      repo: repo,
+      termoInicial: widget.ingrediente.nome,
     );
     if (r == null) return;
     _preencher(r.nutri, base: '100g', al: r.alergenios, tr: const []);
@@ -590,6 +586,20 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
       ),
     );
   }
+}
+
+/// Folha para escolher um alimento da tabela INSA (pesquisa por nome).
+Future<IngredienteReferencia?> showInsaPicker(
+  BuildContext context, {
+  required IngredientRepository repo,
+  String termoInicial = '',
+}) {
+  return showModalBottomSheet<IngredienteReferencia>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => _InsaPicker(repo: repo, termoInicial: termoInicial),
+  );
 }
 
 class _InsaPicker extends StatefulWidget {
