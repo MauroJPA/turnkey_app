@@ -27,18 +27,20 @@ Se o tempo apertar: o bloco 4 e a etiqueta *resumida* do bloco 5 são o mínimo
 
 ## 1. Branches (Git)
 
-Estado atual: uma só linha (`master`), sem fluxo definido.
+Fluxo em `docs/FLUXO_GIT.md`. Script de verificação em `scripts/verificar.sh`.
 
-- [ ] Definir o modelo: `main` (produção, só recebe merges testados) · `develop` (integração) · `feature/*` (uma por funcionalidade) · `hotfix/*` (correções urgentes em produção).
-- [ ] Criar `develop` a partir do estado atual e passar a trabalhar em `feature/*` → `develop` → `main`.
+- [x] Definir o modelo: `main` (produção, só recebe merges testados) · `develop` (integração) · `feature/*` (uma por funcionalidade) · `hotfix/*` (correções urgentes em produção).
+- [x] Criar `develop` (feito 2026-09-24; `master` renomeado para `main`, etiqueta `v1.5.0` mantida) e passar a trabalhar em `feature/*` → `develop` → `main`.
 - [ ] Etiquetar versões (`v1.0.0` na entrada em produção) e manter o `CHANGELOG.md` (está parado na 1.5.0 antiga).
 - [ ] Proteger `main`/`develop` no remoto (merge só por pull request, verificações a passar).
-- [ ] Pipeline mínimo (CI): `flutter analyze` + `flutter test` + `node --check` dos hooks + aplicar as migrations numa BD vazia.
-- [ ] Documentar o fluxo (2–3 linhas no `README.md`) e como se faz um hotfix.
+- [x] Verificação mínima local: `bash scripts/verificar.sh` (analyze + testes + `node --check` dos hooks + migrations numa BD vazia).
+- [ ] Correr essa verificação automaticamente (CI) — precisa de um repositório remoto (ver `docs/FLUXO_GIT.md`).
+- [x] Documentar o fluxo e como se faz um hotfix (`docs/FLUXO_GIT.md`).
+- [ ] Criar repositório remoto **privado** (cópia de segurança do código) e enviar `main`, `develop` e etiquetas.
 
 ## 2. Backups automáticos da base de dados
 
-A BD é o PocketBase (SQLite em `pb_data/` + ficheiros enviados).
+A BD é o PocketBase (SQLite em `pb_data/` + ficheiros enviados). **Plano detalhado (destino, cifra, restauro) em `docs/BACKUPS.md`**, à espera de aprovação.
 
 - [ ] Ativar os **backups automáticos do próprio PocketBase** (Definições → Backups: cron diário + retenção, ex. 14 diários e 8 semanais).
 - [ ] **Cópia fora da máquina** (outro disco/nuvem/S3): um backup só no mesmo PC não protege contra falha do disco.
@@ -86,7 +88,7 @@ Primeira impressora: **papel térmico autocolante**. Dois modelos, escolhidos na
 - **Completo** — nome, descrição, declaração nutricional em tabela, lista de ingredientes, alergénios, conservação, lote, fabrico e validade, dados do produtor (o que a norma da UE pede).
 - **Resumido** — só o mínimo exigido pela norma da UE, para caber no papel mais pequeno.
 
-Layout definido (etiqueta 50 × 80 mm, com dobra):
+Layout definido (etiqueta 50 × 80 mm: **25 mm** da 1.ª parte + **55 mm** depois da dobra):
 
 ```
 Nome do produto            ┐ 1.ª parte: no máximo 25 mm
@@ -106,7 +108,7 @@ Data de fabrico e validade
 
 ### Dúvidas a resolver antes de desenhar a etiqueta
 
-1. **As medidas não fecham**: a etiqueta é 50 × 80 mm, mas a 1.ª parte (25 mm) + "os restantes 75 mm" dá 100 mm. É 50 × 100 mm? Ou a 2.ª parte tem 55 mm? Qual é a orientação (50 de largura × 80 de altura)?
+1. ~~Medidas~~ **Resolvido:** 50 mm de largura × 80 mm de altura = 25 mm (nome + descrição) + 55 mm (depois da dobra). Falta confirmar que a dobra fica no sentido do comprimento (80 mm).
 2. Qual é a **impressora** (marca/modelo, resolução) e como liga (USB, rede, Bluetooth)? Se for necessário imprimir sem a janela do browser, teremos de usar outra via (ex.: comandos da própria impressora).
 3. Os **dados do produtor** (nome, morada, NIF/contacto) entram na etiqueta completa? Onde ficam guardados?
 4. Data de validade: "consumir até" ou "consumir de preferência antes de"? Varia por produto?
