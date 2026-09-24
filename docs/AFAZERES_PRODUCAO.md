@@ -106,21 +106,32 @@ Tabela nutricional, ingredientes, alergénios, etc.
 Data de fabrico e validade
 ```
 
-- [ ] Escolher o modelo (completo/resumido) e o **número de etiquetas** a imprimir.
-- [ ] Campos **data de fabrico** (por omissão, hoje) e **data de validade** (por omissão, fabrico + prazo em dias do produto), editáveis; opcionalmente **lote**.
-- [ ] Gerar a etiqueta em HTML/CSS com `@page { size: 50mm 80mm }` e reaproveitar o mecanismo de impressão já usado no talão/DRE (`core/printing/print_html.dart`).
-- [ ] Ajustar os tamanhos de letra ao espaço (a norma tem tamanho mínimo de letra; em embalagens pequenas há regras próprias) e testar com a impressora real.
-- [ ] Pré-visualização na app antes de imprimir.
+- [x] Ecrã **Etiqueta** (ícone da impressora no produto): lista **completa/resumida**, nutrição **tabela / linear / nenhuma**, **número de etiquetas**, data de fabrico (hoje), expressão da data ("de preferência antes de" / "até"), **lote** (por omissão aammdd), **℮ opcional**, **produtor** (nome e morada, guardado na empresa pelo proprietário; migration `1707868800`) e **altura da parte de baixo** (55 mm por omissão).
+- [x] Página de impressão em HTML/CSS (`@page 50mm × 80mm`, uma etiqueta por página) com **pré-visualização ampliada**, botão Imprimir e **aviso a vermelho se o texto não couber** (frente 25 mm / parte de baixo). Peso líquido vai para a **frente** (mesmo campo visual que o nome).
+- [ ] **Testar com a impressora real** (papel térmico 50 × 80 mm, escala 100 %, margens nenhumas, tamanho de letra legível). O browser tem de **permitir pop-ups** para a app.
+- [ ] **Decidir o que fazer com o espaço** (ver abaixo): 55 mm **não chega** para um produto com ~17 ingredientes.
 - [ ] **Enviar as perguntas à ASAE/DGAV** (`docs/ROTULAGEM_LEGAL.md`) e registar as respostas.
-- [ ] Guardar os **dados do produtor** (nome, morada) e incluí-los na etiqueta; **℮** como opção por produto, só se houver controlo de peso.
 - [ ] Verificar com a norma (Reg. UE 1169/2011) e, se possível, com a ASAE/consultor: conteúdo mínimo obrigatório, isenções para embalagens pequenas, expressão da data.
 - [ ] Mais tarde: outros tamanhos de papel e impressoras (guardar o formato como configuração).
 
-### Dúvidas a resolver antes de desenhar a etiqueta
+### Medição: quanto espaço ocupa mesmo (produto "Provença", 17 ingredientes, letra 6 pt)
+
+| Versão | Altura necessária | Cabe em 55 mm? |
+|---|---|---|
+| Completa + tabela | ≈ 74 mm | não |
+| Resumida + tabela | ≈ 66 mm | não |
+| Completa + linear | ≈ 60 mm | não |
+| Completa, sem declaração | ≤ 55 mm | sim (justo) |
+| Resumida + linear | ≤ 55 mm | sim |
+| Resumida, sem declaração | ≤ 55 mm | sim |
+
+Caminhos: (a) **aumentar a parte de baixo** (campo "Altura", ex. 75 mm → etiqueta 50 × 100); (b) usar **nutrição linear** + **lista resumida** (só depois de a ASAE confirmar a resumida); (c) **sem declaração nutricional**, se a ASAE confirmar a isenção. A letra de 6 pt está perto do mínimo legal (a confirmar), por isso **não se deve reduzir mais**.
+
+### Dúvidas a resolver antes de fechar a etiqueta
 
 1. ~~Medidas~~ **Resolvido:** 50 mm de largura × 80 mm de altura = 25 mm (nome + descrição) + 55 mm (depois da dobra). Falta confirmar que a dobra fica no sentido do comprimento (80 mm).
 2. Qual é a **impressora** (marca/modelo, resolução) e como liga (USB, rede, Bluetooth)? Se for necessário imprimir sem a janela do browser, teremos de usar outra via (ex.: comandos da própria impressora).
-3. Os **dados do produtor** (nome, morada, NIF/contacto) entram na etiqueta completa? Onde ficam guardados?
+3. ~~Dados do produtor~~ **Feito:** nome e morada, guardados na empresa (o proprietário grava; os outros podem escrever para essa impressão).
 4. Data de validade: "consumir até" ou "consumir de preferência antes de"? Varia por produto?
 5. Os produtos vendidos ao balcão sem embalagem também precisam de etiqueta/informação de alergénios?
 

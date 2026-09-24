@@ -581,7 +581,17 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Ícone do lápis (só quem pode editar) abre a ficha.
 - [ ] Com o papel **Leitura**: vê tudo mas não edita. Uma página oculta em
       Navegação e permissões desaparece.
-- [ ] *(Vem a seguir: impressão das etiquetas 50×80 mm — completa e resumida.)*
+- [ ] Ícone da **impressora** no produto abre **Etiqueta**. Aviso vermelho enquanto faltar
+      o **produtor** (e o que faltar na ficha).
+- [ ] Alternar **Completa/Resumida** e **Tabela/Linear/Nenhuma**; alterar data de fabrico
+      (o lote acompanha), expressão da data, nº de etiquetas, altura, ℮.
+- [ ] Escrever o produtor e **Guardar como predefinição** (só o proprietário): abrir outra
+      vez e vem preenchido.
+- [ ] **Pré-visualizar e imprimir** abre um separador (permitir pop-ups): etiqueta ampliada,
+      aviso a vermelho se não couber, botão Imprimir. No diálogo: papel **50 × 80 mm**,
+      margens nenhumas, escala 100 %. Uma etiqueta por página.
+- [ ] Peso líquido aparece **na frente**; datas, lote e produtor na parte de baixo; sem ℮ se
+      o interruptor estiver desligado.
 
 ---
 
