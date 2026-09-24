@@ -40,6 +40,7 @@ class _SheetState extends ConsumerState<_Sheet> {
     return DateTime(n.year, n.month, n.day);
   }();
   bool _mostrarE = false;
+  bool _imprimirDatas = true;
   final _copias = TextEditingController(text: '1');
   final _lote = TextEditingController();
   final _largura = TextEditingController(text: '50');
@@ -131,6 +132,7 @@ class _SheetState extends ConsumerState<_Sheet> {
       mostrarE: _mostrarE,
       conservacao: f.conservacao,
       fabrico: _fabrico,
+      imprimirDatas: _imprimirDatas,
       validadeDias: f.validadeDias,
       tipoData: _tipoData,
       lote: _lote.text,
@@ -243,8 +245,18 @@ class _SheetState extends ConsumerState<_Sheet> {
             onSelectionChanged: (s) => setState(() => _modoNutri = s.first),
           ),
           const SizedBox(height: 16),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: _imprimirDatas,
+            onChanged: (v) => setState(() => _imprimirDatas = v),
+            title: const Text('Imprimir as datas'),
+            subtitle: const Text(
+              'Desligado: ficam em branco para escrever à caneta, e a etiqueta '
+              'diz "Validade: X dias após a data de fabrico".',
+            ),
+          ),
           OutlinedButton.icon(
-            onPressed: _escolherData,
+            onPressed: _imprimirDatas ? _escolherData : null,
             icon: const Icon(Icons.event_outlined),
             label: Text('Data de fabrico: ${_fmt(_fabrico)}'),
           ),

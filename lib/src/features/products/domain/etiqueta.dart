@@ -40,6 +40,7 @@ class EtiquetaDados {
     this.lote = '',
     this.produtor = '',
     this.copias = 1,
+    this.imprimirDatas = true,
     this.larguraMm = 50,
     this.alturaFrenteMm = 25,
     this.alturaCorpoMm = 55,
@@ -68,6 +69,9 @@ class EtiquetaDados {
   final String lote;
   final String produtor;
   final int copias;
+
+  /// `false`: as datas ficam em branco, para escrever à caneta.
+  final bool imprimirDatas;
 
   /// Largura da etiqueta.
   final int larguraMm;
@@ -175,10 +179,19 @@ String _etiquetaHtml(EtiquetaDados d, {required bool repetida}) {
       '<p><b>Conservação:</b> ${_esc(_semPontoFinal(d.conservacao))}.</p>',
     );
   }
-  corpo.writeln('<p><b>Fabrico:</b> ${_data(d.fabrico)}</p>');
-  if (d.validadeDias > 0) {
+  if (d.imprimirDatas) {
+    corpo.writeln('<p><b>Fabrico:</b> ${_data(d.fabrico)}</p>');
+    if (d.validadeDias > 0) {
+      corpo.writeln(
+        '<p><b>${_esc(d.tipoData.texto)}:</b> ${_data(d.validade)}</p>',
+      );
+    }
+  } else {
+    corpo.writeln('<p><b>Fabrico:</b> <span class="cx"></span></p>');
     corpo.writeln(
-      '<p><b>${_esc(d.tipoData.texto)}:</b> ${_data(d.validade)}</p>',
+      '<p><b>${_esc(d.tipoData.texto)}:</b> <span class="cx"></span>'
+      '${d.validadeDias > 0 ? '<br>Validade: ${d.validadeDias} '
+                '${d.validadeDias == 1 ? 'dia' : 'dias'} após a data de fabrico' : ''}</p>',
     );
   }
   if (d.lote.trim().isNotEmpty) {
@@ -234,6 +247,7 @@ String etiquetaPagina(EtiquetaDados d, {String tokenMedicao = ''}) {
   table.nutri td.v { text-align: right; white-space: nowrap; }
   table.nutri tr.sub td:first-child { padding-left: 3mm; font-style: italic; }
   .prod { margin-top: 0.6mm; }
+  .cx { display: inline-block; width: 18mm; border-bottom: 0.25mm solid #000; height: 2.6mm; vertical-align: bottom; }
   .barra { display: none; }
   @media screen {
     body { background: #ddd; padding: 12px; }
