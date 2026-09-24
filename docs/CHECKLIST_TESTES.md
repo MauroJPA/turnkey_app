@@ -590,6 +590,10 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] **Pré-visualizar e imprimir** abre um separador (permitir pop-ups): etiqueta ampliada,
       aviso a vermelho se não couber, botão Imprimir. No diálogo: papel **50 × 80 mm**,
       margens nenhumas, escala 100 %. Uma etiqueta por página.
+- [ ] Alterar **Largura / Frente / Parte de baixo**: o cartão mostra o **mínimo recomendado** para o
+      produto; a vermelho se o tamanho escolhido for pequeno; **Usar o mínimo** preenche os campos.
+- [ ] Ingrediente cujo nome já tem o alergénio (ex.: "Leite condensado", "Ovo líquido"): aparece
+      **LEITE** condensado / **OVO** líquido a negrito, sem "(LEITE)" a seguir.
 - [ ] Peso líquido aparece **na frente**; datas, lote e produtor na parte de baixo; sem ℮ se
       o interruptor estiver desligado.
 

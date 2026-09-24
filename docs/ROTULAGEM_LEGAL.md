@@ -20,7 +20,7 @@ Para alimentos **pré-embalados** as menções obrigatórias incluem, em **portu
 |---|---|
 | Denominação do alimento (nome) | ✔ nome do produto |
 | **Lista de ingredientes** (todos, por ordem decrescente de peso) | ✔ (completa e resumida) — **é obrigatória em pré-embalados; "artesanal" não dispensa** *(a confirmar a regra exata)* |
-| **Alergénios destacados** na lista (negrito/maiúsculas/sublinhado) | ✔ negrito e MAIÚSCULAS |
+| **Alergénios destacados** na lista (negrito/maiúsculas/sublinhado) | ✔ negrito e MAIÚSCULAS (se o nome já traz o alergénio, destaca-se essa palavra em vez de repetir entre parênteses — *a confirmar com a ASAE*) |
 | **Quantidade líquida** (ex. `150 g`) | ✔ "Peso líquido" na frente da etiqueta (mesmo campo visual que o nome) |
 | **Data de durabilidade** ("consumir de preferência antes de…" ou "consumir até…") | ✔ na etiqueta (fabrico + "consumir de preferência antes de/até") |
 | **Condições de conservação** (quando necessárias) | ✔ seleção na ficha |

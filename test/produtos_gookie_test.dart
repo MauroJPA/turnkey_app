@@ -75,8 +75,8 @@ void main() {
       expect(
         l.textoSimples,
         'Farinha de trigo T55 (GLÚTEN), Chocolate Branco 30% Chocovic, '
-        'Manteiga (LEITE), Leite Condensado (LEITE), Açucar Amarelo, '
-        'Açucar Branco, Ovo liquido (OVOS), Nata (LEITE), '
+        'Manteiga (LEITE), LEITE Condensado, Açucar Amarelo, '
+        'Açucar Branco, OVO liquido, Nata (LEITE), '
         'Framboesa Congelada, Ginja Congelada, Mirtilo Congelado, '
         'Morango Congelado, Sumo de Limão, Fermento em Pó, Raspas de Limão, '
         'Bicarbonato de Sódio, Sal Grosso Iodado',
@@ -87,10 +87,26 @@ void main() {
       expect(
         l.resumida().textoSimples,
         'Farinha de trigo (GLÚTEN), Chocolate Branco, Manteiga (LEITE), '
-        'Açucar amarelo e branco, Leite Condensado (LEITE), Ovos (OVOS), '
+        'Açucar amarelo e branco, LEITE Condensado, OVOS, '
         'Nata (LEITE), Framboesa, Ginja, Mirtilo, Morango, Limão, Fermento, '
         'Bicarbonato de Sódio, Sal Grosso',
       );
+    });
+
+    test('alergénio já no nome: destaca a palavra, sem repetir', () {
+      final r = ListaIngredientes.de(const [
+        IngredienteRotulo(nome: 'Leite condensado', gramas: 300, alergenios: ['Leite']),
+        IngredienteRotulo(nome: 'Chocolate de leite', gramas: 200, alergenios: ['Leite', 'Soja']),
+        IngredienteRotulo(nome: 'Ovo liquido', gramas: 100, alergenios: ['Ovos']),
+        IngredienteRotulo(nome: 'Manteiga', gramas: 50, alergenios: ['Leite']),
+      ]);
+      expect(
+        r.textoSimples,
+        'LEITE condensado, Chocolate de LEITE (SOJA), OVO liquido, Manteiga (LEITE)',
+      );
+      final negritos = r.segmentos.where((s) => s.negrito).map((s) => s.texto).toList();
+      expect(negritos, ['LEITE', 'LEITE', 'SOJA', 'OVO', 'LEITE']);
+      expect(r.alergenios, {'Leite', 'Soja', 'Ovos'});
     });
 
     test('nomeRotulo manda sobre o nome deduzido', () {

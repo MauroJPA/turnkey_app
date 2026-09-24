@@ -20,7 +20,7 @@ enum EtiquetaData {
   final String texto;
 }
 
-/// Tudo o que entra numa etiqueta de 50 × 80 mm: 25 mm de frente (nome e
+/// Tudo o que entra numa etiqueta (por omissão 50 × 80 mm: 25 mm de frente, nome e
 /// descrição) e 55 mm depois da dobra (informação legal).
 class EtiquetaDados {
   const EtiquetaDados({
@@ -40,6 +40,8 @@ class EtiquetaDados {
     this.lote = '',
     this.produtor = '',
     this.copias = 1,
+    this.larguraMm = 50,
+    this.alturaFrenteMm = 25,
     this.alturaCorpoMm = 55,
   });
 
@@ -67,10 +69,16 @@ class EtiquetaDados {
   final String produtor;
   final int copias;
 
-  /// Altura da parte de baixo (depois da dobra); a frente tem sempre 25 mm.
+  /// Largura da etiqueta.
+  final int larguraMm;
+
+  /// Altura da frente (nome, descrição e peso), até à dobra.
+  final int alturaFrenteMm;
+
+  /// Altura da parte de baixo (depois da dobra).
   final int alturaCorpoMm;
 
-  int get alturaTotalMm => 25 + alturaCorpoMm;
+  int get alturaTotalMm => alturaFrenteMm + alturaCorpoMm;
 
   DateTime get validade => fabrico.add(Duration(days: validadeDias));
 }
@@ -183,10 +191,13 @@ $corpo</section>
 </div>''';
 }
 
-/// Página HTML completa com [EtiquetaDados.copias] etiquetas de 50 × 80 mm:
+/// Página HTML completa com [EtiquetaDados.copias] etiquetas:
 /// no ecrã mostra a primeira ampliada, com um botão para imprimir e avisos se
 /// o texto não couber; ao imprimir, sai uma etiqueta por página.
-String etiquetaPagina(EtiquetaDados d) {
+///
+/// Com [tokenMedicao], a página envia à janela que a contém as alturas
+/// mínimas medidas (`etq:<token>:<frente>:<corpo>`), para a app as mostrar.
+String etiquetaPagina(EtiquetaDados d, {String tokenMedicao = ''}) {
   final copias = d.copias < 1 ? 1 : d.copias;
   final etiquetas = StringBuffer();
   for (var i = 0; i < copias; i++) {
@@ -199,12 +210,12 @@ String etiquetaPagina(EtiquetaDados d) {
 <meta charset="utf-8">
 <title>Etiqueta — ${_esc(d.nome)}</title>
 <style>
-  @page { size: 50mm ${d.alturaTotalMm}mm; margin: 0; }
+  @page { size: ${d.larguraMm}mm ${d.alturaTotalMm}mm; margin: 0; }
   * { box-sizing: border-box; }
   body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #000; }
-  .etq { width: 50mm; height: ${d.alturaTotalMm}mm; overflow: hidden; background: #fff; break-after: page; page-break-after: always; position: relative; }
+  .etq { width: ${d.larguraMm}mm; height: ${d.alturaTotalMm}mm; overflow: hidden; background: #fff; break-after: page; page-break-after: always; position: relative; }
   .etq:last-child { break-after: auto; page-break-after: auto; }
-  .topo { height: 25mm; padding: 2mm 2.5mm; overflow: hidden; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+  .topo { height: ${d.alturaFrenteMm}mm; padding: 2mm 2.5mm; overflow: hidden; text-align: center; display: flex; flex-direction: column; justify-content: center; }
   .topo h1 { font-size: 13pt; margin: 0 0 1mm; text-transform: uppercase; line-height: 1.1; }
   .topo .desc { font-size: 7.5pt; margin: 0; line-height: 1.2; }
   .topo .peso { font-size: 8pt; font-weight: bold; margin: 1.2mm 0 0; }
@@ -234,7 +245,8 @@ String etiquetaPagina(EtiquetaDados d) {
 <body>
 <div class="barra">
   <button onclick="window.print()">Imprimir $copias etiqueta${copias == 1 ? '' : 's'}</button>
-  <span> 50 × ${d.alturaTotalMm} mm · frente 25 mm + ${d.alturaCorpoMm} mm depois da dobra. No diálogo: papel 50 × ${d.alturaTotalMm} mm, margens nenhumas, escala 100 %.</span>
+  <span> ${d.larguraMm} × ${d.alturaTotalMm} mm · frente ${d.alturaFrenteMm} mm + ${d.alturaCorpoMm} mm depois da dobra. No diálogo: papel ${d.larguraMm} × ${d.alturaTotalMm} mm, margens nenhumas, escala 100 %.</span>
+  <div id="medido"></div>
   <div class="aviso" id="aviso"></div>
 </div>
 $etiquetas
@@ -242,9 +254,13 @@ $etiquetas
   (function () {
     var e = document.querySelector('.etq');
     if (!e) return;
+    function mm(el) { var h = el.style.height; el.style.height = 'auto'; var v = el.offsetHeight / 3.7795; el.style.height = h; return v; }
+    var t0 = e.querySelector('.topo'), c0 = e.querySelector('.corpo');
+    if ('$tokenMedicao' && window.parent !== window) window.parent.postMessage('etq:$tokenMedicao:' + mm(t0).toFixed(1) + ':' + mm(c0).toFixed(1), '*');
+    document.getElementById('medido').textContent = 'Mínimo medido: frente ' + Math.ceil(mm(t0)) + ' mm · parte de baixo ' + Math.ceil(mm(c0)) + ' mm.';
     var msgs = [];
     var topo = e.querySelector('.topo'), corpo = e.querySelector('.corpo');
-    if (topo.scrollHeight > topo.clientHeight + 1) msgs.push('O nome/descrição não cabe nos 25 mm da frente — encurta a descrição.');
+    if (topo.scrollHeight > topo.clientHeight + 1) msgs.push('O nome/descrição não cabe nos ${d.alturaFrenteMm} mm da frente — encurta a descrição ou aumenta a altura.');
     if (corpo.scrollHeight > corpo.clientHeight + 1) msgs.push('A informação não cabe nos ${d.alturaCorpoMm} mm — usa a lista resumida, a nutrição linear ou aumenta a altura.');
     if (msgs.length) { e.classList.add('estoira'); document.getElementById('aviso').innerHTML = '⚠ ' + msgs.join('<br>⚠ '); }
   })();
