@@ -97,7 +97,8 @@ Enviar para **perguntas.dsna@dgav.pt** (DGAV) e/ou pelo portal da ASAE:
 6. O símbolo **℮** é exigível ou opcional? Que controlo de peso é necessário para o usar?
 7. Precisamos de algum **registo/licença** específico para fornecer outros
    estabelecimentos? E de **plano HACCP**?
-8. Se o comércio que vende os produtos os vender **ao balcão sem embalagem**, quem é
+8. **Alergénios repetidos:** quando vários ingredientes contêm o mesmo alergénio (manteiga, nata, leite condensado), tem de se destacar em **todos** ("Manteiga (LEITE), LEITE condensado, Nata (LEITE)")? Ou, quando o nome já remete claramente para o alergénio (ex. "manteiga"), pode destacar-se só o nome ou dispensar-se o "(LEITE)"? *(Resumo da orientação da Comissão de 2017 que encontrei: cada ocorrência tem de ser destacada, não só a primeira — a confirmar.)*
+9. Se o comércio que vende os produtos os vender **ao balcão sem embalagem**, quem é
    responsável pela informação dos **alergénios**? (DL 26/2016.)
 
 ## Fontes consultadas

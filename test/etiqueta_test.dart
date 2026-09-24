@@ -102,6 +102,17 @@ void main() {
       expect(etiquetaPagina(d, tokenMedicao: '123'), contains("'etq:123:'"));
     });
 
+    test('conservação com ponto final não duplica o ponto', () {
+      final d = EtiquetaDados(
+        nome: 'X',
+        fabrico: DateTime(2026, 1, 1),
+        conservacao: 'Local fresco e seco ou refrigerado. ',
+      );
+      final h = etiquetaPagina(d);
+      expect(h, contains('Local fresco e seco ou refrigerado.</p>'));
+      expect(h, isNot(contains('refrigerado..')));
+    });
+
     test('℮ só aparece se ligado', () {
       expect(etiquetaPagina(dados(e: true)), contains('150 g ℮'));
     });

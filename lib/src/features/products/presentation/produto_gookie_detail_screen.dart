@@ -65,7 +65,9 @@ class ProdutoGookieDetailScreen extends ConsumerWidget {
     final resumo = alergeniosResumo(n.alergenios, n.alergeniosTracos);
     if (resumo.isNotEmpty) b.writeln(resumo);
     if (f.conservacao.trim().isNotEmpty) {
-      b.writeln('Conservação: ${f.conservacao.trim()}.');
+      b.writeln(
+        'Conservação: ${f.conservacao.trim().replaceFirst(RegExp(r'[.\s]+$'), '')}.',
+      );
     }
     if (f.validadeDias > 0) {
       b.writeln('Validade: ${f.validadeDias} dias após o fabrico.');
