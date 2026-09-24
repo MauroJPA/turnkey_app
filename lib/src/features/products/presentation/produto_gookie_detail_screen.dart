@@ -19,6 +19,7 @@ import '../../tech_sheets/presentation/ficha_form_sheet.dart';
 import '../application/produtos_providers.dart';
 import '../domain/lista_ingredientes.dart';
 import '../domain/produto_gookie.dart';
+import 'etiqueta_sheet.dart';
 
 /// Um produto Gookie: descrição, declaração nutricional, lista de ingredientes
 /// e alergénios, de forma simples e pronta a copiar/imprimir.
@@ -38,13 +39,18 @@ class ProdutoGookieDetailScreen extends ConsumerWidget {
       await ref.read(fichaActionsProvider).update(ficha.id, input);
     } on Object catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
 
-  String _textoCompleto(FichaTecnica f, ListaIngredientes? lista, String formato) {
+  String _textoCompleto(
+    FichaTecnica f,
+    ListaIngredientes? lista,
+    String formato,
+  ) {
     final n = f.nutri;
     final b = StringBuffer()..writeln(f.nome.toUpperCase());
     if (f.descricao.trim().isNotEmpty) b.writeln(f.descricao.trim());
@@ -61,18 +67,22 @@ class ProdutoGookieDetailScreen extends ConsumerWidget {
     if (f.conservacao.trim().isNotEmpty) {
       b.writeln('Conservação: ${f.conservacao.trim()}.');
     }
-    if (f.validadeDias > 0) b.writeln('Validade: ${f.validadeDias} dias após o fabrico.');
+    if (f.validadeDias > 0) {
+      b.writeln('Validade: ${f.validadeDias} dias após o fabrico.');
+    }
     b.writeln();
     if (!n.vazio) {
-      b.write(declaracaoTexto(
-        titulo: f.nome,
-        por100g: n.por100g,
-        porUnidade: n.porUnidade,
-        pesoUnidadeG: n.pesoUnidadeG,
-        alergenios: n.alergenios,
-        alergeniosTracos: n.alergeniosTracos,
-        completo: n.completo,
-      ));
+      b.write(
+        declaracaoTexto(
+          titulo: f.nome,
+          por100g: n.por100g,
+          porUnidade: n.porUnidade,
+          pesoUnidadeG: n.pesoUnidadeG,
+          alergenios: n.alergenios,
+          alergeniosTracos: n.alergeniosTracos,
+          completo: n.completo,
+        ),
+      );
     }
     return b.toString();
   }
@@ -108,13 +118,25 @@ class ProdutoGookieDetailScreen extends ConsumerWidget {
               tooltip: 'Copiar tudo',
               icon: const Icon(Icons.copy_outlined),
               onPressed: () {
-                Clipboard.setData(ClipboardData(
-                  text: _textoCompleto(ficha, ingAsync.valueOrNull, formatoNome),
-                ));
+                Clipboard.setData(
+                  ClipboardData(
+                    text: _textoCompleto(
+                      ficha,
+                      ingAsync.valueOrNull,
+                      formatoNome,
+                    ),
+                  ),
+                );
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Informação copiada.')),
                 );
               },
+            ),
+          if (ficha != null)
+            IconButton(
+              tooltip: 'Imprimir etiqueta',
+              icon: const Icon(Icons.print_outlined),
+              onPressed: () => showEtiquetaSheet(context, ficha: ficha),
             ),
           if (ficha != null && podeEditar)
             IconButton(
@@ -180,9 +202,9 @@ class _CorpoState extends State<_Corpo> {
     final resumo = alergeniosResumo(n.alergenios, n.alergeniosTracos);
 
     Widget titulo(String t) => Padding(
-          padding: const EdgeInsets.only(top: 20, bottom: 8),
-          child: Text(t, style: tt.titleMedium),
-        );
+      padding: const EdgeInsets.only(top: 20, bottom: 8),
+      child: Text(t, style: tt.titleMedium),
+    );
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -197,20 +219,22 @@ class _CorpoState extends State<_Corpo> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.warning_amber_rounded,
-                          color: cs.onErrorContainer),
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: cs.onErrorContainer,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Falta completar',
-                        style: tt.titleSmall
-                            ?.copyWith(color: cs.onErrorContainer),
+                        style: tt.titleSmall?.copyWith(
+                          color: cs.onErrorContainer,
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 6),
                   for (final p in pend)
-                    Text('• $p',
-                        style: TextStyle(color: cs.onErrorContainer)),
+                    Text('• $p', style: TextStyle(color: cs.onErrorContainer)),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -249,12 +273,20 @@ class _CorpoState extends State<_Corpo> {
           runSpacing: 4,
           children: [
             if (ficha.categoria.isNotEmpty)
-              Chip(label: Text(ficha.categoria), visualDensity: VisualDensity.compact),
+              Chip(
+                label: Text(ficha.categoria),
+                visualDensity: VisualDensity.compact,
+              ),
             if (formatoNome.isNotEmpty)
-              Chip(label: Text(formatoNome), visualDensity: VisualDensity.compact),
+              Chip(
+                label: Text(formatoNome),
+                visualDensity: VisualDensity.compact,
+              ),
             if (n.pesoUnidadeG > 0)
               Chip(
-                label: Text('Peso líquido: ${n.pesoUnidadeG.toStringAsFixed(0)} g'),
+                label: Text(
+                  'Peso líquido: ${n.pesoUnidadeG.toStringAsFixed(0)} g',
+                ),
                 visualDensity: VisualDensity.compact,
               ),
             if (ficha.validadeDias > 0)
@@ -267,7 +299,10 @@ class _CorpoState extends State<_Corpo> {
         if (ficha.conservacao.trim().isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: Text('Conservação: ${ficha.conservacao.trim()}', style: tt.bodyMedium),
+            child: Text(
+              'Conservação: ${ficha.conservacao.trim()}',
+              style: tt.bodyMedium,
+            ),
           ),
 
         titulo('Declaração nutricional'),
@@ -279,8 +314,8 @@ class _CorpoState extends State<_Corpo> {
             col1: n.por100g,
             col2Titulo: n.porUnidade != null
                 ? (n.pesoUnidadeG > 0
-                    ? 'unidade (${n.pesoUnidadeG.toStringAsFixed(0)} g)'
-                    : 'unidade')
+                      ? 'unidade (${n.pesoUnidadeG.toStringAsFixed(0)} g)'
+                      : 'unidade')
                 : null,
             col2: n.porUnidade,
           ),
@@ -336,8 +371,10 @@ class _CorpoState extends State<_Corpo> {
         ),
 
         titulo('Alergénios'),
-        Text(resumo.isEmpty ? 'Nenhum alergénio registado.' : resumo,
-            style: tt.bodyLarge),
+        Text(
+          resumo.isEmpty ? 'Nenhum alergénio registado.' : resumo,
+          style: tt.bodyLarge,
+        ),
         const SizedBox(height: 16),
         Text(
           'Cálculo a partir dos valores dos ingredientes (Reg. (UE) '
