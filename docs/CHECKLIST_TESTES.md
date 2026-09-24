@@ -596,6 +596,11 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       **LEITE** condensado / **OVO** líquido a negrito, sem "(LEITE)" a seguir.
 - [ ] Desligar **Imprimir as datas**: "Fabrico" sai com uma **linha em branco** para escrever à
       caneta e por baixo "Validade: X dias após a data de fabrico" (sem "consumir de preferência").
+- [ ] **Definições guardadas por produto:** escolher Resumida/Linear/datas em branco/tamanhos e
+      carregar em **Pré-visualizar e imprimir**; fechar e abrir outra vez a Etiqueta **do mesmo
+      produto**: vem com as mesmas definições. Outro produto continua com as suas (ou os
+      predefinidos). Data, lote e nº de etiquetas **não** ficam guardados. (Papel Leitura
+      imprime, mas não guarda.)
 - [ ] **Lote** vem vazio (não imprime); se escreveres um, aparece na etiqueta.
 - [ ] Peso líquido aparece **na frente**; datas, lote e produtor na parte de baixo; sem ℮ se
       o interruptor estiver desligado.

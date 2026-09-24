@@ -20,6 +20,67 @@ enum EtiquetaData {
   final String texto;
 }
 
+/// Definições de impressão guardadas por produto: são o predefinido da
+/// próxima vez. Não inclui o que muda a cada impressão (data, lote, cópias).
+class EtiquetaPrefs {
+  const EtiquetaPrefs({
+    this.resumida = false,
+    this.modoNutri = EtiquetaNutri.tabela,
+    this.tipoData = EtiquetaData.preferencia,
+    this.imprimirDatas = true,
+    this.mostrarE = false,
+    this.larguraMm = 50,
+    this.alturaFrenteMm = 25,
+    this.alturaCorpoMm = 55,
+  });
+
+  final bool resumida;
+  final EtiquetaNutri modoNutri;
+  final EtiquetaData tipoData;
+  final bool imprimirDatas;
+  final bool mostrarE;
+  final int larguraMm;
+  final int alturaFrenteMm;
+  final int alturaCorpoMm;
+
+  factory EtiquetaPrefs.fromJson(Object? raw) {
+    if (raw is! Map) return const EtiquetaPrefs();
+    T porNome<T extends Enum>(List<T> valores, Object? v, T def) =>
+        valores.firstWhere((e) => e.name == v, orElse: () => def);
+    int mm(Object? v, int def, int min, int max) =>
+        v is num ? v.round().clamp(min, max) : def;
+    return EtiquetaPrefs(
+      resumida: raw['resumida'] == true,
+      modoNutri: porNome(
+        EtiquetaNutri.values,
+        raw['modoNutri'],
+        EtiquetaNutri.tabela,
+      ),
+      tipoData: porNome(
+        EtiquetaData.values,
+        raw['tipoData'],
+        EtiquetaData.preferencia,
+      ),
+      imprimirDatas: raw['imprimirDatas'] != false,
+      mostrarE: raw['mostrarE'] == true,
+      larguraMm: mm(raw['larguraMm'], 50, 30, 120),
+      alturaFrenteMm: mm(raw['alturaFrenteMm'], 25, 15, 80),
+      alturaCorpoMm: mm(raw['alturaCorpoMm'], 55, 30, 150),
+    );
+  }
+
+  Map<String, Object> toJson() => {
+    'resumida': resumida,
+    'modoNutri': modoNutri.name,
+    'tipoData': tipoData.name,
+    'imprimirDatas': imprimirDatas,
+    'mostrarE': mostrarE,
+    'larguraMm': larguraMm,
+    'alturaFrenteMm': alturaFrenteMm,
+    'alturaCorpoMm': alturaCorpoMm,
+  };
+}
+
 /// Tudo o que entra numa etiqueta (por omissão 50 × 80 mm: 25 mm de frente, nome e
 /// descrição) e 55 mm depois da dobra (informação legal).
 class EtiquetaDados {

@@ -162,6 +162,47 @@ void main() {
     });
   });
 
+  group('EtiquetaPrefs', () {
+    test('vai e volta em JSON', () {
+      const p = EtiquetaPrefs(
+        resumida: true,
+        modoNutri: EtiquetaNutri.linear,
+        tipoData: EtiquetaData.ate,
+        imprimirDatas: false,
+        mostrarE: true,
+        larguraMm: 60,
+        alturaFrenteMm: 30,
+        alturaCorpoMm: 75,
+      );
+      final r = EtiquetaPrefs.fromJson(p.toJson());
+      expect(r.resumida, isTrue);
+      expect(r.modoNutri, EtiquetaNutri.linear);
+      expect(r.tipoData, EtiquetaData.ate);
+      expect(r.imprimirDatas, isFalse);
+      expect(r.mostrarE, isTrue);
+      expect((r.larguraMm, r.alturaFrenteMm, r.alturaCorpoMm), (60, 30, 75));
+    });
+
+    test('vazio, inválido ou fora de limites → predefinidos seguros', () {
+      for (final raw in [null, '', 5, <String, Object>{}]) {
+        final r = EtiquetaPrefs.fromJson(raw);
+        expect(r.resumida, isFalse);
+        expect(r.modoNutri, EtiquetaNutri.tabela);
+        expect(r.imprimirDatas, isTrue);
+        expect(r.mostrarE, isFalse);
+        expect((r.larguraMm, r.alturaFrenteMm, r.alturaCorpoMm), (50, 25, 55));
+      }
+      final r = EtiquetaPrefs.fromJson({
+        'modoNutri': 'xpto',
+        'larguraMm': 5,
+        'alturaCorpoMm': 9999,
+      });
+      expect(r.modoNutri, EtiquetaNutri.tabela);
+      expect(r.larguraMm, 30);
+      expect(r.alturaCorpoMm, 150);
+    });
+  });
+
   group('avisosEtiqueta', () {
     test(
       'completa: sem avisos',

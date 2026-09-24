@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/printing/print_etiquetas.dart';
 import '../../tech_sheets/domain/tech_sheet.dart';
+import '../application/etiqueta_prefs_providers.dart';
 import '../application/produtor_providers.dart';
 import '../application/produtos_providers.dart';
 import '../domain/etiqueta.dart';
@@ -51,6 +52,7 @@ class _SheetState extends ConsumerState<_Sheet> {
   Timer? _debounce;
   final _produtor = TextEditingController();
   bool _produtorCarregado = false;
+  bool _prefsCarregadas = false;
   bool _aGuardar = false;
 
   @override
@@ -159,6 +161,19 @@ class _SheetState extends ConsumerState<_Sheet> {
   Widget build(BuildContext context) {
     final produtorGuardado = ref.watch(produtorRotuloProvider);
     ref.watch(produtoIngredientesProvider(widget.ficha.id));
+    final prefsGuardadas = ref.watch(etiquetaPrefsProvider(widget.ficha.id));
+    if (!_prefsCarregadas && prefsGuardadas.hasValue) {
+      _prefsCarregadas = true;
+      final p = prefsGuardadas.requireValue;
+      _resumida = p.resumida;
+      _modoNutri = p.modoNutri;
+      _tipoData = p.tipoData;
+      _imprimirDatas = p.imprimirDatas;
+      _mostrarE = p.mostrarE;
+      _largura.text = '${p.larguraMm}';
+      _frente.text = '${p.alturaFrenteMm}';
+      _altura.text = '${p.alturaCorpoMm}';
+    }
     if (!_produtorCarregado && produtorGuardado.hasValue) {
       _produtorCarregado = true;
       _produtor.text = produtorGuardado.value ?? '';
@@ -390,7 +405,24 @@ class _SheetState extends ConsumerState<_Sheet> {
           ),
           const SizedBox(height: 12),
           FilledButton.icon(
-            onPressed: () => abrirPaginaEtiquetas(etiquetaPagina(_dados())),
+            onPressed: () {
+              final d = _dados();
+              guardarEtiquetaPrefs(
+                ref,
+                widget.ficha.id,
+                EtiquetaPrefs(
+                  resumida: d.resumida,
+                  modoNutri: d.modoNutri,
+                  tipoData: d.tipoData,
+                  imprimirDatas: d.imprimirDatas,
+                  mostrarE: d.mostrarE,
+                  larguraMm: d.larguraMm,
+                  alturaFrenteMm: d.alturaFrenteMm,
+                  alturaCorpoMm: d.alturaCorpoMm,
+                ),
+              );
+              abrirPaginaEtiquetas(etiquetaPagina(d));
+            },
             icon: const Icon(Icons.print_outlined),
             label: const Text('Pré-visualizar e imprimir'),
           ),
