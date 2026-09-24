@@ -22,10 +22,10 @@ Para alimentos **pré-embalados** as menções obrigatórias incluem, em **portu
 | **Lista de ingredientes** (todos, por ordem decrescente de peso) | ✔ (completa e resumida) — **é obrigatória em pré-embalados; "artesanal" não dispensa** *(a confirmar a regra exata)* |
 | **Alergénios destacados** na lista (negrito/maiúsculas/sublinhado) | ✔ negrito e MAIÚSCULAS (se o nome já traz o alergénio, destaca-se essa palavra em vez de repetir entre parênteses — *a confirmar com a ASAE*) |
 | **Quantidade líquida** (ex. `150 g`) | ✔ "Peso líquido" na frente da etiqueta (mesmo campo visual que o nome) |
-| **Data de durabilidade** ("consumir de preferência antes de…" ou "consumir até…") | ✔ na etiqueta (fabrico + "consumir de preferência antes de/até") |
+| **Data de durabilidade** ("consumir de preferência antes de…" ou "consumir até…") | ✔ na etiqueta (fabrico + "consumir de preferência antes de/até"); com datas em branco só sai "Validade: X dias após a data de fabrico" — *a confirmar se é aceite como indicação de durabilidade* |
 | **Condições de conservação** (quando necessárias) | ✔ seleção na ficha |
 | **Nome/morada do operador** (produtor ou embalador) | ✔ guardado na empresa e impresso na etiqueta |
-| **Lote** | ✔ impresso (por omissão a data de fabrico); *a confirmar se é dispensável quando a data traz dia e mês* |
+| **Lote** | ✔ opcional, **vazio por omissão** (ainda não há controlo de lotes). *A confirmar:* pelo que sei, dispensa-se quando a data de durabilidade traz, sem código, pelo menos dia e mês — o que **pode não acontecer** com as datas em branco. |
 | **Declaração nutricional** | ⚠ ver abaixo — pode estar **isenta** |
 | Tamanho mínimo de letra (altura do "x" ≈ 1,2 mm; ≈ 0,9 mm se a maior face da embalagem for < 80 cm²) | ⏳ *a confirmar*; a etiqueta de 50 × 80 mm (≈ 40 cm²) cairia nos 0,9 mm |
 | **QUID** (% de um ingrediente que aparece no nome/destacado — ex. produto chamado "de chocolate") | ⏳ não implementado *(a confirmar quando se aplica)* |

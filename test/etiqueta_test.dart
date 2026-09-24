@@ -121,8 +121,8 @@ void main() {
         imprimirDatas: false,
       ));
       expect(h, contains('<b>Fabrico:</b> <span class="cx"></span>'));
-      expect(h, contains('Consumir de preferência antes de:</b> <span class="cx"></span>'));
-      expect(h, contains('Validade: 7 dias após a data de fabrico'));
+      expect(h, isNot(contains('Consumir de preferência')));
+      expect(h, contains('<b>Validade:</b> 7 dias após a data de fabrico'));
       expect(h, isNot(contains('24/09/2026')));
       expect(h, isNot(contains('01/10/2026')));
     });

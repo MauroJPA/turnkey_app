@@ -50,14 +50,12 @@ class _SheetState extends ConsumerState<_Sheet> {
   String _htmlMedido = '';
   Timer? _debounce;
   final _produtor = TextEditingController();
-  bool _loteTocado = false;
   bool _produtorCarregado = false;
   bool _aGuardar = false;
 
   @override
   void initState() {
     super.initState();
-    _lote.text = _loteAuto(_fabrico);
   }
 
   @override
@@ -71,11 +69,6 @@ class _SheetState extends ConsumerState<_Sheet> {
     _produtor.dispose();
     super.dispose();
   }
-
-  static String _loteAuto(DateTime d) =>
-      '${(d.year % 100).toString().padLeft(2, '0')}'
-      '${d.month.toString().padLeft(2, '0')}'
-      '${d.day.toString().padLeft(2, '0')}';
 
   static String _fmt(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
@@ -91,7 +84,6 @@ class _SheetState extends ConsumerState<_Sheet> {
     if (d == null) return;
     setState(() {
       _fabrico = d;
-      if (!_loteTocado) _lote.text = _loteAuto(d);
     });
   }
 
@@ -274,15 +266,18 @@ class _SheetState extends ConsumerState<_Sheet> {
               for (final t in EtiquetaData.values)
                 DropdownMenuItem(value: t, child: Text(t.texto)),
             ],
-            onChanged: (v) => setState(() => _tipoData = v ?? _tipoData),
+            onChanged: _imprimirDatas
+                ? (v) => setState(() => _tipoData = v ?? _tipoData)
+                : null,
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _lote,
-            onChanged: (_) => setState(() => _loteTocado = true),
+            onChanged: (_) => setState(() {}),
             decoration: const InputDecoration(
               labelText: 'Lote (vazio = não imprime)',
-              helperText: 'Por omissão, a data de fabrico (aammdd).',
+              helperText:
+                  'Opcional. Sem controlo de lotes, deixa em branco (a confirmar com a ASAE).',
             ),
           ),
           const SizedBox(height: 12),
