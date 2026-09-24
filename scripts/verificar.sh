@@ -48,6 +48,16 @@ else
   echo "  (PocketBase não encontrado em pb/bin — passo ignorado)"
 fi
 
+echo "== segurança (estático)"
+if command -v python >/dev/null 2>&1 || command -v python3 >/dev/null 2>&1; then
+  PY=$(command -v python || command -v python3)
+  PYTHONIOENCODING=utf-8 "$PY" test/security/estatico.py >/tmp/verif_seg_est.log 2>&1     && ok "segredos e ficheiros sensíveis" || { tail -15 /tmp/verif_seg_est.log; mau "segurança estática"; }
+  echo "== segurança (isolamento, papéis, endpoints — servidor descartável)"
+  PYTHONIOENCODING=utf-8 "$PY" test/security/seguranca.py >/tmp/verif_seg.log 2>&1     && ok "testes de segurança do PocketBase" || { grep "FALHA" /tmp/verif_seg.log | head -15; mau "segurança do PocketBase"; }
+else
+  echo "  (python não instalado — testes de segurança ignorados)"
+fi
+
 echo
 [ "$falhou" -eq 0 ] && echo "TUDO OK — pode juntar." || echo "HÁ FALHAS — não juntar."
 exit "$falhou"

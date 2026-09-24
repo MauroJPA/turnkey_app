@@ -4,6 +4,8 @@
 // a funcionar e evita adicionar os pacotes `printing`/`pdf` só para isto.
 import 'dart:html' as html;
 
+import 'html_escape.dart';
+
 /// Abre uma nova janela/separador com [corpoHtml] e chama logo o diálogo de
 /// impressão do navegador — usado para imprimir a tabela nutricional de um
 /// produto Gookie sem depender de pacotes extra (`printing`/`pdf`).
@@ -16,7 +18,7 @@ void abrirImpressao(String tituloPagina, String corpoHtml) {
 <html>
 <head>
 <meta charset="utf-8">
-<title>$tituloPagina</title>
+<title>${escaparHtml(tituloPagina)}</title>
 <style>
   body { font-family: Arial, Helvetica, sans-serif; padding: 24px; color: #111; }
   h1 { font-size: 18px; margin: 0 0 4px; }
