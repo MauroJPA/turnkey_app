@@ -188,11 +188,12 @@ String _etiquetaHtml(EtiquetaDados d, {required bool repetida}) {
     }
   } else {
     corpo.writeln('<p><b>Fabrico:</b> <span class="cx"></span></p>');
-    corpo.writeln(
-      '<p><b>${_esc(d.tipoData.texto)}:</b> <span class="cx"></span>'
-      '${d.validadeDias > 0 ? '<br>Validade: ${d.validadeDias} '
-                '${d.validadeDias == 1 ? 'dia' : 'dias'} após a data de fabrico' : ''}</p>',
-    );
+    if (d.validadeDias > 0) {
+      corpo.writeln(
+        '<p><b>Validade:</b> ${d.validadeDias} '
+        '${d.validadeDias == 1 ? 'dia' : 'dias'} após a data de fabrico</p>',
+      );
+    }
   }
   if (d.lote.trim().isNotEmpty) {
     corpo.writeln('<p><b>Lote:</b> ${_esc(d.lote.trim())}</p>');
