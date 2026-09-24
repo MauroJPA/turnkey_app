@@ -96,6 +96,10 @@ List<String> avisosEtiqueta(EtiquetaDados d) => [
     'Sem valores nutricionais (escolhe "Nenhuma" ou completa a ficha)',
 ];
 
+/// Tira pontos e espaços do fim (o ponto final é posto pela etiqueta).
+String _semPontoFinal(String s) =>
+    s.trim().replaceFirst(RegExp(r'[.\s]+$'), '');
+
 String _esc(String s) => s
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
@@ -167,7 +171,9 @@ String _etiquetaHtml(EtiquetaDados d, {required bool repetida}) {
     corpo.writeln('<p><b>Pode conter:</b> ${_esc(d.tracos.join(', '))}.</p>');
   }
   if (d.conservacao.trim().isNotEmpty) {
-    corpo.writeln('<p><b>Conservação:</b> ${_esc(d.conservacao.trim())}.</p>');
+    corpo.writeln(
+      '<p><b>Conservação:</b> ${_esc(_semPontoFinal(d.conservacao))}.</p>',
+    );
   }
   corpo.writeln('<p><b>Fabrico:</b> ${_data(d.fabrico)}</p>');
   if (d.validadeDias > 0) {
