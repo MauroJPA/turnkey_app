@@ -12,6 +12,9 @@ import '../../finance/application/custos_fixos_providers.dart';
 import '../../inventory/application/inventory_providers.dart';
 import '../../invoices/application/invoice_providers.dart';
 import '../../invoices/domain/fatura.dart';
+import '../../navigation/application/navigation_providers.dart';
+import '../../navigation/domain/pagina_app.dart';
+import '../../navigation/presentation/todas_paginas_sheet.dart';
 import '../../orders/application/encomendas_providers.dart';
 import '../../orders/data/configuracoes_encomendas_repository.dart';
 import '../../schedule/application/schedule_providers.dart';
@@ -25,43 +28,25 @@ import '../../shopping/application/shopping_providers.dart';
 class HomeShell extends ConsumerWidget {
   const HomeShell({super.key});
 
-  static const _tudo = <_Section>[
-    _Section('Ingredientes', Icons.egg_alt_outlined, 'Preços e fornecedores',
-        Routes.ingredients),
-    _Section('Receitas', Icons.menu_book_outlined, 'Massas, recheios, coberturas',
-        Routes.recipes),
-    _Section('Fichas Técnicas', Icons.receipt_long_outlined,
-        'Produtos e preço de venda', Routes.techSheets),
-    _Section('Faturas', Icons.document_scanner_outlined,
-        'Foto da fatura → preços e stock', Routes.invoices),
-    _Section('Vendas', Icons.point_of_sale_outlined,
-        'Registo de vendas e sabores mais vendidos', Routes.sales),
-    _Section('Encomendas', Icons.event_note_outlined,
-        'Pedidos dos clientes por data/hora', Routes.encomendas),
-    _Section('Painel financeiro', Icons.insights_outlined,
-        'Entradas, saídas e lucro por semana/mês', Routes.painelFinanceiro),
-    _Section('Custos fixos', Icons.request_quote_outlined,
-        'Aluguel, salários e outras despesas mensais', Routes.custosFixos),
-    _Section('Equipamentos', Icons.kitchen_outlined,
-        'Custo e depreciação mensal', Routes.equipamentos),
-    _Section('Números mágicos', Icons.calculate_outlined,
-        'Venda mínima para cobrir tudo', Routes.numerosMagicos),
-    _Section('Embalagens', Icons.inventory_2_outlined,
-        'Caixas, sacos, adesivos e o seu custo', Routes.embalagens),
-    _Section('Formatos de cookie', Icons.cookie_outlined,
-        'Tamanhos e recheio por unidade', Routes.cookieFormats),
-    _Section('Configurações', Icons.settings_outlined,
-        'Empresa, aparência, custos', Routes.settings),
-    _Section('Equipa', Icons.group_outlined, 'Utilizadores e permissões',
-        Routes.team),
-  ];
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final empresa = ref.watch(currentEmpresaProvider).valueOrNull;
     final userName = ref.watch(currentUserNameProvider);
     final papel = ref.watch(currentPapelProvider);
     final fmt = ref.watch(moneyFormatProvider);
+
+    final navConfig = ref.watch(navConfigAtualProvider);
+    final navPrefs = ref.watch(navPrefsAtualProvider);
+    bool acessivel(String chave) => navConfig.acessivel(papel, chave);
+    final noRodape = navConfig.rodapePara(papel).map((p) => p.chave).toSet();
+    // Grelha: o que a pessoa pode abrir, não está no rodapé e não escondeu.
+    final grelha = [
+      for (final p in paginasApp)
+        if (acessivel(p.chave) &&
+            !noRodape.contains(p.chave) &&
+            !navPrefs.escondida(p.chave))
+          p,
+    ];
 
     final logoUrl = empresa == null
         ? ''
@@ -139,18 +124,20 @@ class HomeShell extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: FilledButton.icon(
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(56),
+          if (acessivel('mise'))
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(56),
+                ),
+                onPressed: () => context.go(Routes.miseEnPlace),
+                icon: const Icon(Icons.checklist_rtl),
+                label: const Text('Mise en place — produzir agora'),
               ),
-              onPressed: () => context.go(Routes.miseEnPlace),
-              icon: const Icon(Icons.checklist_rtl),
-              label: const Text('Mise en place — produzir agora'),
             ),
-          ),
           const SizedBox(height: 4),
+          if (acessivel('inventario'))
           _StatCard(
             icon: Icons.warning_amber_rounded,
             titulo: 'Stock baixo',
@@ -163,6 +150,7 @@ class HomeShell extends ConsumerWidget {
             destaque: (stockBaixo ?? 0) > 0,
             onTap: () => context.go(Routes.inventory),
           ),
+          if (acessivel('agenda'))
           _StatCard(
             icon: Icons.event_note_outlined,
             titulo: 'Produções por fazer',
@@ -172,6 +160,7 @@ class HomeShell extends ConsumerWidget {
                 : (proximas == 0 ? 'nada agendado' : 'de hoje em diante'),
             onTap: () => context.go(Routes.schedule),
           ),
+          if (acessivel('compras'))
           _StatCard(
             icon: Icons.shopping_cart_outlined,
             titulo: 'A comprar',
@@ -184,7 +173,7 @@ class HomeShell extends ConsumerWidget {
             destaque: (porComprar?.isNotEmpty ?? false),
             onTap: () => context.go(Routes.shopping),
           ),
-          if ((faturasPorRever ?? 0) > 0)
+          if (acessivel('faturas') && (faturasPorRever ?? 0) > 0)
             _StatCard(
               icon: Icons.rule_folder_outlined,
               titulo: 'Faturas por rever',
@@ -193,7 +182,7 @@ class HomeShell extends ConsumerWidget {
               destaque: true,
               onTap: () => context.go(Routes.invoices),
             ),
-          if ((pagamentosProximos?.length ?? 0) > 0)
+          if (acessivel('custosFixos') && (pagamentosProximos?.length ?? 0) > 0)
             _StatCard(
               icon: Icons.event_available_outlined,
               titulo: 'Pagamentos por vir',
@@ -205,7 +194,7 @@ class HomeShell extends ConsumerWidget {
               destaque: pagamentosProximos.any((p) => p.dias <= 2),
               onTap: () => context.go(Routes.custosFixos),
             ),
-          if ((encomendasPorVir?.length ?? 0) > 0)
+          if (acessivel('encomendas') && (encomendasPorVir?.length ?? 0) > 0)
             _StatCard(
               icon: Icons.event_note_outlined,
               titulo: 'Encomendas por vir',
@@ -219,8 +208,20 @@ class HomeShell extends ConsumerWidget {
             ),
           const SizedBox(height: 8),
           Padding(
-            padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
-            child: Text('Tudo', style: Theme.of(context).textTheme.titleMedium),
+            padding: const EdgeInsets.fromLTRB(4, 0, 0, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text('Tudo',
+                      style: Theme.of(context).textTheme.titleMedium),
+                ),
+                TextButton.icon(
+                  onPressed: () => showTodasPaginasSheet(context),
+                  icon: const Icon(Icons.tune, size: 18),
+                  label: const Text('Todas as páginas'),
+                ),
+              ],
+            ),
           ),
           LayoutBuilder(
             builder: (context, c) {
@@ -233,17 +234,19 @@ class HomeShell extends ConsumerWidget {
                 crossAxisSpacing: 10,
                 childAspectRatio: 1.35,
                 children: [
-                  for (final s in _tudo)
+                  for (final s in grelha)
                     Card(
+                      key: ValueKey('grelha-${s.chave}'),
+                      color: navPrefs.cor(s.chave)?.withValues(alpha: 0.16),
                       child: InkWell(
-                        onTap: () => context.go(s.route),
+                        onTap: () => context.go(s.rota),
                         borderRadius: BorderRadius.circular(12),
                         child: Padding(
                           padding: const EdgeInsets.all(12),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(s.icon, size: 28),
+                              Icon(s.icon, size: 28, color: navPrefs.cor(s.chave)),
                               const SizedBox(height: 8),
                               Text(
                                 s.label,
@@ -422,11 +425,3 @@ Alignment _alignFor(Alinhamento a) => switch (a) {
       Alinhamento.centro => Alignment.center,
       Alinhamento.direita => Alignment.centerRight,
     };
-
-class _Section {
-  const _Section(this.label, this.icon, this.descricao, this.route);
-  final String label;
-  final IconData icon;
-  final String descricao;
-  final String route;
-}

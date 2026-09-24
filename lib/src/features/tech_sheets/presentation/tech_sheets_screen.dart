@@ -9,6 +9,7 @@ import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../cookie_formats/application/cookie_format_providers.dart';
 import '../../pricing/data/cost_config_repository.dart';
 import '../../pricing/domain/cost_config.dart';
 import '../application/tech_sheets_providers.dart';
@@ -213,8 +214,18 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
     }
 
     final preco = config?.precoSugerido(f.custoProduto);
+    final formatosTodos = f.formatoId.isEmpty
+        ? null
+        : ref.watch(formatosProvider).valueOrNull;
+    final formatoNome = formatosTodos == null
+        ? null
+        : [
+            for (final x in formatosTodos)
+              if (x.id == f.formatoId) x.nome,
+          ].join();
     final subtitle = [
       if (f.categoria.isNotEmpty) f.categoria,
+      if (formatoNome != null && formatoNome.isNotEmpty) formatoNome,
       if (f.pesoProduto > 0) '${f.pesoProduto.toStringAsFixed(0)} g',
       'custo ${fmt(f.custoProduto)}',
     ].join(' · ');

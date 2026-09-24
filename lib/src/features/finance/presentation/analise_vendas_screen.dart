@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/router.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
@@ -29,6 +31,10 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go(Routes.sales),
+        ),
         title: const Text('Análise de vendas'),
         actions: const [HelpActions(topic: HelpTopic.analiseVendas)],
       ),

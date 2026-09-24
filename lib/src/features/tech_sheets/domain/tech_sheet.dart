@@ -56,6 +56,7 @@ class FichaTecnica with _$FichaTecnica {
     @Default(0) double pesoProduto,
     @Default(0) double precoVenda,
     @Default(false) bool deletado,
+    @Default('') String formatoId,
     @Default(<String, dynamic>{}) Map<String, dynamic> nutriRaw,
   }) = _FichaTecnica;
 
@@ -81,6 +82,7 @@ class FichaTecnica with _$FichaTecnica {
       pesoProduto: r.getDoubleValue('peso_produto'),
       precoVenda: r.getDoubleValue('preco_venda'),
       deletado: r.getBoolValue('deletado'),
+      formatoId: r.getStringValue('formato'),
       nutriRaw: rawNutri is Map
           ? Map<String, dynamic>.from(rawNutri)
           : const <String, dynamic>{},
@@ -89,13 +91,21 @@ class FichaTecnica with _$FichaTecnica {
 }
 
 class FichaInput {
-  FichaInput({required this.nome, this.categoria = ''});
+  FichaInput({
+    required this.nome,
+    this.categoria = '',
+    this.formatoId = '',
+  });
 
   final String nome;
   final String categoria;
 
+  /// Formato de cookie do produto (Mini, Recheado…); vazio = sem formato.
+  final String formatoId;
+
   Map<String, dynamic> toBody() => {
         'nome': nome.trim(),
         'categoria': categoria.trim(),
+        'formato': formatoId,
       };
 }

@@ -3,7 +3,20 @@
 Percorre esta lista na app (login `ana@teste.local`). Para cada ponto marca
 `[x]` se está OK, ou escreve a seguir o que queres ajustar. Reinicia o
 PocketBase (`pb\serve.ps1`) e faz hot-restart do `flutter run` (tecla **R**)
-antes de começar, para carregar as últimas migrations.
+antes de começar, para carregar as últimas migrations (há **40**; a última é
+`1707436800_navegacao.js`).
+
+**Índice de páginas** (uma secção por página): 0 Arranque · 1 Início ·
+2 Aparência · 3 Formatos · 4 Ingredientes · 5 Receitas · 6 Fichas · 7 Produzir ·
+8 Agenda · 9 Compras · 10 Inventário · 11 Ciclo completo · 12 Mise en place ·
+13 Faturas · 14 Nutrição · 15 Embalagens · **16 Vendas · 17 Análise de vendas ·
+18 Encomendas · 19 Custos fixos · 20 Equipamentos · 21 Números mágicos ·
+22 Painel financeiro · 23 DRE · 24 Configurações (empresa/percentuais) ·
+25 Equipa · 26 Navegação e permissões**.
+
+**Limites conhecidos do teste automático** (verifica sempre à mão): tudo o que
+abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
+**impressão do talão** (janela de impressão do browser).
 
 ---
 
@@ -11,10 +24,12 @@ antes de começar, para carregar as últimas migrations.
 
 - [ ] Login com email/palavra-passe entra no **Início**.
 - [ ] O ecrã de login **não** mostra "Continuar com Apple" (só Google).
-- [ ] O **rodapé** (Início · Produzir · Agenda · Compras · Inventário) aparece
-      em **todas** as páginas, incluindo detalhes (receita, ficha, produção,
-      configurações).
+- [ ] O **rodapé** (Início · Mise · Produzir · Agenda · Compras · Inventário)
+      aparece em **todas** as páginas, incluindo detalhes (receita, ficha,
+      produção, encomenda, venda, configurações).
 - [ ] Tocar em cada aba do rodapé abre a secção certa.
+- [ ] **Todas as páginas** têm a **seta ←** no canto superior esquerdo (as abas do
+      rodapé voltam ao Início; os detalhes voltam à lista respetiva).
 - [ ] O botão **?** (canto superior direito) existe em todas as páginas e abre
       uma explicação clara.
 - [ ] Ao lado do **?** há o ícone de **sugestão/erro**: abre um campo de nota,
@@ -25,10 +40,16 @@ antes de começar, para carregar as últimas migrations.
 - [ ] Cartão **Stock baixo** mostra um número e abre o Inventário.
 - [ ] Cartão **Produções por fazer** mostra um número e abre a Agenda.
 - [ ] Cartão **A comprar** mostra nº + € estimado e abre a Lista de compras.
-- [ ] Grelha "Tudo" abre Ingredientes / Receitas / Fichas / Formatos /
-      Configurações / Equipa.
+- [ ] Aparecem, só quando há algo a mostrar: **Faturas por rever**, **Pagamentos
+      por vir** (custo fixo com dia de pagamento a ≤ 7 dias) e **Encomendas por
+      vir** (vermelho a menos de 1 h). Cada um abre a página certa.
+- [ ] Grelha "Tudo" abre, uma a uma: Ingredientes · Receitas · Fichas Técnicas ·
+      Faturas · Vendas · Encomendas · Painel financeiro · Custos fixos ·
+      Equipamentos · Números mágicos · Embalagens · Formatos de cookie ·
+      Configurações · Equipa.
 - [ ] Logótipo da empresa e nome aparecem no topo (depois de o carregares no
       ponto 2).
+- [ ] Menu do utilizador → **Terminar sessão** volta ao login.
 
 ## 2. Configurações → Aparência
 
@@ -42,6 +63,10 @@ antes de começar, para carregar as últimas migrations.
 - [ ] Estas definições aplicam-se a toda a equipa (não são por dispositivo).
 
 ## 3. Configurações → Formatos de cookie
+
+> Onde se usam: escolhem-se em cada **Ficha técnica** (campo Formato), em
+> **Produzir** (define unidades e recheio por unidade) e ao **concluir a
+> produção** (o stock do produto sobe em unidades).
 
 - [ ] Aparecem **Mini** (20 g), **Recheado** (120 g + 30 g), **Simples** (150 g).
 - [ ] "+" cria um formato novo (nome, massa g, recheio g).
@@ -58,16 +83,45 @@ antes de começar, para carregar as últimas migrations.
 
 - [ ] Lista com pesquisa e filtro por categoria; lixeira acessível.
 - [ ] Abrir uma receita mostra as linhas e o custo.
-- [ ] Botão 📖 **Procedimento e imagens**: escrever passos (um por linha) e
-      juntar 1 foto → aparecem na folha.
+- [ ] Botão 📖 **Procedimento e imagens**: aparece a folha com os passos e as
+      fotos.
+  - [ ] "**Editar**" ao lado do título "Procedimento" abre o campo de texto (um
+        passo por linha) → **Guardar** grava e a folha mostra os passos; sem
+        passos aparece "Sem passos.". Não é preciso editar a receita.
+  - [ ] Tocar numa **foto** abre o menu **Ver em grande / Substituir / Remover**
+        (Remover pede confirmação; Substituir escolhe outra imagem).
+  - [ ] "Adicionar imagem" junta fotos novas.
+  - [ ] Com o papel **Leitura**: sem "Editar", e a foto só amplia.
 - [ ] Botão 📅 **Agendar produção** abre a folha de adicionar à agenda para
       essa receita.
+- [ ] **Importar receitas** (ícone de upload no topo da lista):
+  - [ ] Colar (Ctrl+V) uma tabela do Excel/Sheets com colunas
+        `nome ⇥ categoria ⇥ ingrediente ⇥ quantidade(g)` — **uma linha por
+        ingrediente**; ex.: `Massa_Normandia ⇥ Massas ⇥ Manteiga ⇥ 191` →
+        "Importar" cria a receita com todas as linhas.
+  - [ ] Também aceita `;` e `,` como separador, cabeçalho opcional
+        (`nome;categoria;ingredientes;quantidade`), "4 g" e "200,5".
+  - [ ] Ingrediente com nome parecido é ligado sozinho (ignora acentos e
+        maiúsculas); sem correspondência **fica pendente** (a receita mostra a
+        linha para ligares) e o resumo avisa.
+  - [ ] Receita com nome que já existe é **ignorada** e o resumo diz porquê.
+  - [ ] Linhas inválidas (poucas colunas, quantidade ≤ 0) aparecem nos erros sem
+        travar as outras.
+  - [ ] **Escolher ficheiro CSV** preenche a caixa de texto (só à mão).
+  - [ ] O ícone **não aparece** na lixeira nem com papel Leitura.
 
 ## 6. Fichas técnicas
 
 - [ ] Lista de fichas; abrir mostra as partes (massa/recheio/cobertura) e o
       preço sugerido.
-- [ ] Campo **Formato** liga a ficha a um formato de cookie.
+- [ ] **Preço de venda editável**: na lista, cada ficha mostra "sugerido €X" e
+      "**venda €Y** ✎"; tocar no "venda" abre "Preço de venda — nome" → Guardar.
+      No detalhe, o cartão "Preço de venda" mostra a **margem %** sobre o custo.
+      O preço fica como sugestão nas Vendas e Encomendas. Com papel Leitura o
+      "venda" não é editável (sem ✎).
+- [ ] Campo **Formato do cookie** (ao criar/editar a ficha, lista Mini/Recheado/
+      Simples… ou "Sem formato") → aparece na lista e no detalhe ("Formato: …").
+      Serve para a produção encontrar a ficha certa: massa + recheio + formato.
 - [ ] Para o ponto 8 funcionar, confirma que a ficha do produto (ex. "Gookie -
       Rio") tem: slot massa = a massa, slot recheio = o recheio, e o formato.
 
@@ -270,6 +324,173 @@ antes de começar, para carregar as últimas migrations.
       sobe** por esse valor; o **peso do produto NÃO muda**.
 - [ ] Mudar o preço da embalagem → o custo de todas as fichas que a usam
       recalcula sozinho.
+- [ ] Toque e segure numa embalagem apaga (com confirmação).
+- [ ] Separador **Kits**: criar um kit (ex.: "Take-away" = saqueta + caixa + saco
+      + 2 adesivos) mostra o custo somado; mudar o preço de uma embalagem
+      atualiza o custo do kit; na ficha técnica dá para escolher o **kit**.
+
+## 16. Vendas
+
+- [ ] Início → **Vendas** abre a lista (rodapé, **?** e sugestão presentes).
+- [ ] Sem vendas: estado vazio; com vendas: lista por dia com total.
+- [ ] **Registar venda**: escolher a **data**; adicionar linhas —
+  - [ ] **Produto (ficha técnica)**: o preço vem **sugerido** do preço de venda
+        da ficha;
+  - [ ] **Item livre**: texto + quantidade + preço;
+  - [ ] o botão remover tira uma linha; sem linhas dá "Ainda sem produtos.
+        Adiciona pelo menos um."
+- [ ] Guardar → a venda aparece na lista; tocar abre o **detalhe** com as linhas
+      (ficha/descrição, quantidade, preço) e o total.
+- [ ] **Apagar** (ícone no detalhe) pede confirmação e a venda desaparece.
+- [ ] **Importar CSV** (colunas `data, produto, quantidade, preço`): cada linha
+      liga à ficha de nome mais parecido; sem correspondência fica só com a
+      descrição e mostra aviso (só à mão — seletor de ficheiros).
+- [ ] **Sincronizar com o Vendus** (nuvem): traz as vendas novas, emparelhadas
+      com as fichas pelo nome; o resumo avisa das linhas sem correspondência.
+      Sem chave no servidor mostra uma mensagem clara (nunca um erro de rede
+      em bruto nem a chave/URL).
+- [ ] Nuvem → **Reimportar histórico (escolher data)**: pede desde/até e traz as
+      vendas desse intervalo sem duplicar as que já existem.
+- [ ] Ícone **Análise de vendas** abre a secção 17.
+- [ ] Com papel **Leitura**: sem "Registar venda", sem apagar, sem importar.
+
+## 17. Análise de vendas
+
+- [ ] Escolher período (semana / mês / …) atualiza a tabela.
+- [ ] Cada linha: sabor/produto, **quantidade**, **receita** e **margem real**
+      (custo guardado na venda, não o custo atual).
+- [ ] Destaques **Mais vendido** e **Maior margem** (podem ser produtos
+      diferentes).
+- [ ] A **seta** compara a quantidade com o período anterior de igual duração.
+- [ ] "**Sem produto identificado**" junta linhas sem ficha (sem margem).
+- [ ] Sem vendas no período: estado vazio, sem erro.
+
+## 18. Encomendas
+
+- [ ] Início → **Encomendas** abre a lista (rodapé, **?**, sugestão).
+- [ ] **Nova encomenda**: cliente, data **e hora**, produtos (fichas) com
+      quantidade, valor total **sugerido** (soma dos preços de venda; editável
+      ou vazio) e notas → aparece na lista ordenada por data/hora.
+- [ ] Cartão da lista mostra estado (Nova/Em produção/Pronta/Entregue/Cancelada)
+      e estado de **pagamento** (Por pagar / Pago parcialmente / Pago) só se o
+      valor foi informado.
+- [ ] **Detalhe**: cliente, data/hora, produtos, cartão **Pagamento** (sem o
+      ecrã ficar em branco).
+  - [ ] "**Registar pagamento**" guarda quanto foi pago; o estado passa a
+        Pago parcialmente → Pago; com pagamento total o botão desaparece.
+  - [ ] Avançar estado: Nova → Em produção → Pronta → Entregue.
+  - [ ] Menu **⋮**: Editar · Registar pagamento · Cancelar · Apagar (Apagar e
+        Cancelar pedem confirmação).
+        *(Nota: "Cancelar encomenda" continua a aparecer mesmo em encomendas já
+        canceladas/entregues — inofensivo; diz-me se queres que esconda.)*
+- [ ] **Talão** (impressora): abre o talão com **data/hora grandes**, produtos,
+      valor e estado de pagamento (só à mão — janela de impressão).
+- [ ] Engrenagem **Configurar talão e avisos**: tamanho do talão (80 mm / A4),
+      imprimir ao criar, e horas de antecedência para "Encomendas por vir".
+- [ ] Início: "Encomendas por vir" conta as que faltam menos horas do que o
+      configurado e fica **vermelho** a menos de 1 h.
+- [ ] Papel **Leitura**: só consulta.
+
+## 19. Custos fixos
+
+- [ ] Início → **Custos fixos** (rodapé, **?**, sugestão).
+- [ ] "+" cria: nome, **valor mensal**, **Fixo/Variável**, **dia de pagamento**
+      (opcional); o total mensal no topo soma só os ativos.
+- [ ] Tocar edita; **Arquivar** tira do total mas mantém o histórico; Apagar
+      remove por completo (com confirmação).
+- [ ] Custo com dia de pagamento a ≤ 7 dias aparece em **"Pagamentos por vir"**
+      no Início.
+- [ ] Ícone de **importar CSV** (`nome, valor mensal, dia de pagamento`
+      opcional) cria vários de uma vez e mostra o resumo (só à mão).
+- [ ] Ícone da **panela** abre Equipamentos (secção 20).
+
+## 20. Equipamentos
+
+- [ ] Início → **Equipamentos** (rodapé, **?**, sugestão).
+- [ ] "+" cria: nome, **custo de compra**, **vida útil (anos)**; a
+      **depreciação mensal** = custo ÷ (anos × 12) aparece na linha
+      (ex.: 2400 € a 5 anos → 40 €/mês).
+- [ ] Editar recalcula; **Arquivar** deixa de contar.
+- [ ] A depreciação **soma-se sozinha** nos Números mágicos, Painel financeiro e
+      DRE (não é preciso criar um custo fixo à parte).
+- [ ] **Importar CSV** (`nome, custo, vida útil (anos)`) (só à mão).
+
+## 21. Números mágicos
+
+- [ ] Mostra **venda mínima mensal** e **por dia** que cobre custos fixos,
+      variáveis, depreciação, imposto e CMV.
+- [ ] Conferir à mão: mudar um custo fixo ou um equipamento altera o número.
+- [ ] Imposto e CMV vêm de Configurações → Percentuais de custo; mudar lá
+      altera aqui.
+- [ ] Cartão de baixo compara com o vendido no período (semana/mês).
+- [ ] Se Imposto + CMV ≥ 100 % aparece o **aviso de percentuais** em vez de um
+      número absurdo.
+
+## 22. Painel financeiro
+
+- [ ] Início → **Painel financeiro** (rodapé, **?**, sugestão).
+- [ ] Alternar **semana / mês** muda entradas, saídas e lucro.
+- [ ] **Entradas** = vendas do período; **saídas** = custos fixos +
+      depreciação; **Custo dos produtos vendidos** = custo guardado nas vendas.
+- [ ] As **setas** comparam com o período anterior de igual duração.
+- [ ] "**Distribuição teórica**" segue os percentuais de Configurações.
+- [ ] Aviso quando há vendas **sem produto identificado** (lucro sobrestimado).
+- [ ] Ícone **Ver DRE** abre a secção 23.
+
+## 23. DRE
+
+- [ ] Períodos: esta semana / este mês / mês passado.
+- [ ] Estrutura: receita → custo → lucro bruto → despesas → resultado; os
+      valores batem certo com o Painel financeiro para o mesmo período.
+- [ ] Ícone de **impressão** abre a versão simples (só à mão — janela de
+      impressão/PDF).
+- [ ] Aviso de vendas sem produto identificado.
+
+## 24. Configurações (empresa e percentuais)
+
+- [ ] **Empresa**: nome, **moeda** e regra de arredondamento ("Para cima" /
+      "Normal") → "Guardar empresa"; os preços em toda a app passam a seguir.
+- [ ] **Percentuais de custo** (salário, aluguer, impostos, CMV…) →
+      "Guardar percentuais"; o preço **sugerido** das fichas muda.
+- [ ] Aparência e Formatos: ver secções 2 e 3.
+- [ ] Com papel que não é admin aparece "Só administradores podem alterar estas
+      definições." e os campos ficam bloqueados.
+
+## 25. Equipa
+
+- [ ] Início → **Equipa** (ou Configurações → Equipa): lista de membros com
+      papel.
+- [ ] **Adicionar**: email/nome/papel → o membro aparece na lista.
+- [ ] Tocar num membro abre "Papel de …" e permite mudar o papel
+      (Proprietário/Administrador/Editor/Leitura).
+- [ ] Entrar com um utilizador **Leitura**: só vê — sem botões de criar/editar/
+      apagar nas restantes páginas (Receitas, Fichas, Vendas, Encomendas…).
+
+## 26. Navegação e permissões (Configurações → Navegação e permissões)
+
+- [ ] Configurações mostra a linha **Navegação e permissões** (só Proprietário e
+      Administrador).
+- [ ] Aba **Rodapé**: tirar (−) e juntar (+) páginas, **arrastar** para mudar a
+      ordem (máx. 5 além do Início; cheio desativa o +), **Guardar rodapé** →
+      a barra de baixo muda logo. "Repor o rodapé original" repõe as 5 de origem.
+- [ ] Aba **Permissões** (só Proprietário; o Administrador vê o aviso): escolher
+      **Administrador / Editor / Leitura** e, por página, **Oculto / Só ver /
+      Editar** (Leitura não tem "Editar"). Grava logo.
+- [ ] Entrar com o **Editor**: página **Oculta** some do rodapé, da grelha e da
+      lista "Todas as páginas"; abrir o link direto mostra "Não tens acesso a
+      esta página." com botão para o Início. Cartões do Início dessas páginas
+      (ex. "A comprar") também desaparecem.
+- [ ] Página em **Só ver**: abre, mas sem botões de criar/editar/apagar/importar
+      (mesmo para o Editor).
+- [ ] O **Proprietário** nunca perde acesso, seja qual for a matriz.
+- [ ] No **Início**, "**Todas as páginas**": lista tudo o que a pessoa pode abrir
+      (inclusive o escondido); o **olho** esconde/mostra o botão na grelha (só
+      para a própria pessoa) e a **paleta** muda a cor do botão (10 cores +
+      "Cor padrão"). Depois de esconder, a página continua na lista.
+- [ ] As preferências (escondidos e cores) ficam guardadas ao sair e voltar a
+      entrar, e não afetam outras pessoas.
+- [ ] Um utilizador não consegue alterar as permissões por API (só o Proprietário;
+      o Administrador só o rodapé).
 
 ---
 

@@ -20,6 +20,7 @@ import '../features/inventory/presentation/inventory_screen.dart';
 import '../features/invoices/presentation/invoice_review_screen.dart';
 import '../features/invoices/presentation/invoices_screen.dart';
 import '../features/mise_en_place/presentation/mep_screen.dart';
+import '../features/navigation/presentation/navegacao_screen.dart';
 import '../features/orders/presentation/encomenda_detail_screen.dart';
 import '../features/orders/presentation/encomendas_screen.dart';
 import '../features/packaging/presentation/embalagens_screen.dart';
@@ -36,35 +37,9 @@ import '../features/settings/presentation/team_screen.dart';
 import '../features/shopping/presentation/shopping_screen.dart';
 import '../features/tech_sheets/presentation/tech_sheet_detail_screen.dart';
 import '../features/tech_sheets/presentation/tech_sheets_screen.dart';
+import 'routes.dart';
 
-/// Nomes de rota centralizados.
-abstract class Routes {
-  static const splash = '/splash';
-  static const login = '/login';
-  static const onboarding = '/onboarding';
-  static const home = '/';
-  static const ingredients = '/ingredientes';
-  static const recipes = '/receitas';
-  static const techSheets = '/fichas-tecnicas';
-  static const production = '/produzir';
-  static const miseEnPlace = '/mise-en-place';
-  static const schedule = '/agenda';
-  static const shopping = '/compras';
-  static const inventory = '/inventario';
-  static const invoices = '/faturas';
-  static const sales = '/vendas';
-  static const encomendas = '/encomendas';
-  static const analiseVendas = '/vendas/analise';
-  static const painelFinanceiro = '/financeiro';
-  static const dre = '/financeiro/dre';
-  static const custosFixos = '/financeiro/custos-fixos';
-  static const equipamentos = '/financeiro/equipamentos';
-  static const numerosMagicos = '/financeiro/numeros-magicos';
-  static const embalagens = '/embalagens';
-  static const settings = '/opcoes';
-  static const team = '/opcoes/equipa';
-  static const cookieFormats = '/opcoes/formatos';
-}
+export 'routes.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = ValueNotifier<int>(0);
@@ -250,6 +225,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'formatos',
                 builder: (_, __) => const CookieFormatsScreen(),
+              ),
+              GoRoute(
+                path: 'navegacao',
+                builder: (_, __) => const NavegacaoScreen(),
               ),
             ],
           ),

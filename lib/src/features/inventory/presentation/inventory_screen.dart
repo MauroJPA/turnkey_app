@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/formatting/dates.dart';
 import '../../../core/formatting/money_provider.dart';
@@ -111,6 +113,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go(Routes.home),
+        ),
         title: const Text('Inventário'),
         actions: const [HelpActions(topic: HelpTopic.inventario)],
         bottom: TabBar(

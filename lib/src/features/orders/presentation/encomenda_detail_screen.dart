@@ -164,6 +164,10 @@ class EncomendaDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go(Routes.encomendas),
+        ),
         title: const Text('Encomenda'),
         actions: [
           IconButton(

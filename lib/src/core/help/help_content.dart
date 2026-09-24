@@ -29,6 +29,7 @@ enum HelpTopic {
   embalagens,
   formatos,
   configuracoes,
+  navegacao,
   equipa,
 }
 
@@ -45,7 +46,8 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Faturas por rever: aparece quando há faturas (do scanner ou carregadas) à espera de confirmação. Toque para abrir.',
       'Pagamentos por vir: custos fixos com "dia de pagamento" marcado, quando faltar uma semana ou menos. Toque para abrir Custos fixos.',
       'Encomendas por vir: encomendas que faltam menos horas do que o configurado em Encomendas. Toque para abrir a lista.',
-      'Em baixo tem os atalhos para todas as secções.',
+      'Em baixo tem os atalhos para as secções. "Todas as páginas" abre a lista completa: aí pode esconder um atalho da grelha (só para si), mudar a cor de cada botão e abrir qualquer página — mesmo as que escondeu.',
+      'As páginas do rodapé e as que cada pessoa pode ver ou editar são definidas em Configurações → Navegação e permissões.',
     ],
   ),
   HelpTopic.ingredientes: (
@@ -295,6 +297,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Os tamanhos de cookie que faz — por exemplo Mini (20 g), Recheado (120 g de massa + 30 g de recheio) e Simples (150 g).',
       'São usados para calcular quantas unidades saem de X kg de massa e quanto recheio é preciso.',
       'Use "+" para criar. Toque para editar. O caixote do lixo remove (as produções antigas mantêm o valor guardado).',
+      'Onde se usam: em cada Ficha Técnica escolhe-se o formato do produto (Mini, Recheado…); em Produzir escolhe-se o formato para calcular quantas unidades saem e quanto recheio é preciso; ao concluir a produção o stock do produto sobe em unidades.',
     ],
   ),
   HelpTopic.configuracoes: (
@@ -304,6 +307,15 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Aparência: modo claro/escuro, cor da app e logótipo. Aplica-se a toda a equipa.',
       'Percentuais de custo: salário, aluguer, impostos, etc. — usados para sugerir o preço de venda nas fichas técnicas.',
       'Formatos de cookie e Equipa têm páginas próprias, acessíveis aqui.',
+    ],
+  ),
+  HelpTopic.navegacao: (
+    titulo: 'Navegação e permissões',
+    paragrafos: [
+      'Rodapé: escolha que páginas aparecem na barra de baixo (até 5, além do Início) e a ordem. Proprietário e Administrador podem mudar.',
+      'Permissões: só o Proprietário. Para cada nível (Administrador, Editor, Leitura) e cada página, escolha Oculto (a página desaparece e não abre), Só ver (vê mas não altera) ou Editar.',
+      'O Proprietário tem sempre acesso a tudo. As permissões escondem e bloqueiam na app; os dados continuam protegidos pelo papel de cada pessoa.',
+      'Cada pessoa pode ainda esconder atalhos e mudar as cores da grelha do Início, em "Todas as páginas" — isso é só para si.',
     ],
   ),
   HelpTopic.equipa: (

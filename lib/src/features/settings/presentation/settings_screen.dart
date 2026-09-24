@@ -409,6 +409,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onTap: () => context.go(Routes.cookieFormats),
               ),
 
+            // ---- Navegação e permissões ----
+            if (ref.read(currentPapelProvider).canEditConfig)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.view_carousel_outlined),
+                title: const Text('Navegação e permissões'),
+                subtitle: const Text('Rodapé e o que cada nível pode fazer'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.go(Routes.navegacao),
+              ),
+
             // ---- Equipa ----
             if (ref.read(currentPapelProvider).canManageTeam)
               ListTile(

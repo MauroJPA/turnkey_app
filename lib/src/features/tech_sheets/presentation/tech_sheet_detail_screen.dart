@@ -9,6 +9,7 @@ import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../../core/widgets/history_sheet.dart';
+import '../../cookie_formats/application/cookie_format_providers.dart';
 import '../../pricing/data/cost_config_repository.dart';
 import '../../pricing/domain/cost_config.dart';
 import '../../recipes/presentation/item_picker_sheet.dart';
@@ -218,9 +219,32 @@ class _TechSheetDetailScreenState
         onRetry: () => ref.invalidate(fichaDetailProvider(widget.fichaId)),
         data: (d) {
           final fmt = ref.watch(moneyFormatProvider);
+          final formatos = ref.watch(formatosProvider).valueOrNull;
+          final formatoNome = (formatos == null || d.ficha.formatoId.isEmpty)
+              ? ''
+              : [
+                  for (final f in formatos)
+                    if (f.id == d.ficha.formatoId) f.rotulo,
+                ].join();
           return ListView(
           children: [
             if (_busy) const LinearProgressIndicator(),
+            if (formatoNome.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                child: Row(
+                  children: [
+                    const Icon(Icons.cookie_outlined, size: 16),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Formato: $formatoNome',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             _Header(
               detail: d,
               config: config,

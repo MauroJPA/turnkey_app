@@ -71,6 +71,10 @@ class ScheduleScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go(Routes.home),
+        ),
         title: const Text('Agenda de produção'),
         actions: const [HelpActions(topic: HelpTopic.agenda)],
       ),

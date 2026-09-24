@@ -58,6 +58,10 @@ class _ProductionScreenState extends ConsumerState<ProductionScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go(Routes.home),
+        ),
         title: const Text('Produzir'),
         actions: const [HelpActions(topic: HelpTopic.produzir)],
       ),

@@ -154,6 +154,10 @@ class InvoicesScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go(Routes.home),
+        ),
         title: const Text('Faturas'),
         actions: [
           IconButton(
