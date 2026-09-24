@@ -227,9 +227,23 @@ function importarDocumento(app, empresaId, doc, itens, fichas) {
 // --- sincronização --------------------------------------------------------
 
 function sincronizarEmpresa(app, empresaId, opts) {
-  var apiKey = $os.getenv('VENDUS_API_KEY');
+  // Token da própria empresa (cifrado na base de dados). A variável de
+  // ambiente VENDUS_API_KEY é só um recurso para a empresa indicada em
+  // VENDUS_SYNC_EMPRESA (a Gookie, antes de guardar o token na app): nunca
+  // serve a outras empresas.
+  var apiKey = null;
+  try {
+    apiKey = require(`${__hooks}/segredos.js`).ler(app, empresaId, 'vendus');
+  } catch (_) {}
+  if (!apiKey && $os.getenv('VENDUS_SYNC_EMPRESA') === empresaId) {
+    apiKey = $os.getenv('VENDUS_API_KEY');
+  }
   if (!apiKey) {
-    return { ok: false, code: 503, message: 'Vendus não configurado (falta VENDUS_API_KEY).' };
+    return {
+      ok: false,
+      code: 503,
+      message: 'Vendus não configurado: indica o token em Configurações → Integrações.',
+    };
   }
 
   var empresa;

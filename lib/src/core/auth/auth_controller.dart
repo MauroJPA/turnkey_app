@@ -40,7 +40,9 @@ class AuthController extends Notifier<AuthState> {
     try {
       final user = await _repo.reloadCurrentUser();
       final empresaId = user.getStringValue('empresa');
-      if (empresaId.isEmpty) {
+      if (empresaId.isEmpty && !user.getBoolValue('aprovado')) {
+        state = AuthPendingApproval(user);
+      } else if (empresaId.isEmpty) {
         state = AuthNeedsOnboarding(user);
       } else {
         state = AuthSignedIn(

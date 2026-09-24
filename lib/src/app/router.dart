@@ -6,6 +6,7 @@ import '../core/auth/auth_controller.dart';
 import '../core/auth/auth_state.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/onboarding_screen.dart';
+import '../features/auth/presentation/pending_approval_screen.dart';
 import '../features/cookie_formats/presentation/cookie_formats_screen.dart';
 import '../features/dashboard/presentation/home_shell.dart';
 import '../features/dashboard/presentation/main_shell.dart';
@@ -60,10 +61,17 @@ final routerProvider = Provider<GoRouter>((ref) {
           return loc == Routes.splash ? null : Routes.splash;
         case AuthSignedOut():
           return loc == Routes.login ? null : Routes.login;
+        case AuthPendingApproval():
+          return loc == Routes.pendente ? null : Routes.pendente;
         case AuthNeedsOnboarding():
           return loc == Routes.onboarding ? null : Routes.onboarding;
         case AuthSignedIn():
-          const gates = {Routes.splash, Routes.login, Routes.onboarding};
+          const gates = {
+            Routes.splash,
+            Routes.login,
+            Routes.onboarding,
+            Routes.pendente,
+          };
           return gates.contains(loc) ? Routes.home : null;
       }
     },
@@ -79,6 +87,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.onboarding,
         builder: (_, __) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        path: Routes.pendente,
+        builder: (_, __) => const PendingApprovalScreen(),
       ),
       // Todas as secções autenticadas — sempre com a barra de navegação
       // inferior (rodapé) para acesso rápido a qualquer página.

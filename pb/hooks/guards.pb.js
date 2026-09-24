@@ -19,6 +19,12 @@ onRecordUpdateRequest((e) => {
   const mudouPapel =
     e.record.getString('papel') !== original.getString('papel');
 
+  if (e.record.getBool('aprovado') !== original.getBool('aprovado')) {
+    throw new ForbiddenError(
+      "O campo 'aprovado' só pode ser alterado pelo operador da plataforma.",
+    );
+  }
+
   if (mudouEmpresa || mudouPapel) {
     throw new ForbiddenError(
       "Os campos 'empresa' e 'papel' não podem ser alterados por esta via.",

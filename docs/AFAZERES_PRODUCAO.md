@@ -64,10 +64,12 @@ Relatório completo e lista para a produção: **`docs/SEGURANCA.md`**. Testes r
 - [x] **Uploads**: tipos e tamanhos restringidos; faturas protegidas (token de ficheiro).
 - [x] **HTML de impressão**: XSS no título do talão corrigido; testes com texto malicioso.
 - [x] **Segredos**: nada no repositório nem no histórico; `.env` fora do git.
-- [ ] **Rodar a chave do Vendus** (foi exposta antes) e confirmar as chaves de IA só em `pb\.env`.
-- [ ] **Atualizar o PocketBase** (0.35.0 → ≥ 0.39.7: OAuth2 pré-sequestro e queda do servidor) e repetir os testes.
+- [x] Tokens de integrações **cifrados por empresa** (Vendus) — Configurações → Integrações; chave-mestra `TURNKEY_ENC_KEY` (gerar com `pb\gerar-chave-cifra.ps1 -Gravar`).
+- [ ] **Rodar a chave do Vendus** (foi exposta antes): guardar a nova na app e apagar `VENDUS_API_KEY` do `pb\.env`.
+- [x] **PocketBase atualizado** para a 0.40.4 (binário trocado; reiniciar o servidor para o usar) e testes repetidos.
 - [ ] **Painel `/_/`**, **HTTPS**, cabeçalhos de segurança, CORS e *trusted proxy* no servidor definitivo (lista em `docs/SEGURANCA.md`).
-- [ ] Decidir se o **registo público** fica aberto.
+- [x] **Registo público** aberto, mas com **aprovação** manual (painel `/_/` → users → `aprovado`); ver `docs/SEGURANCA.md`.
+- [ ] Opcional: página "Aprovações" na app e/ou email quando alguém se regista.
 - [ ] Dependências Flutter/npm: rever versões (várias versões maiores atrás).
 - [x] Testes guardados em `test/security/` e ligados ao `scripts/verificar.sh`.
 - [x] Relatório curto: `docs/SEGURANCA.md`.
