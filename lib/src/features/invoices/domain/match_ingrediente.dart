@@ -14,6 +14,9 @@ String _normalizar(String s) {
   return out;
 }
 
+/// Minúsculas, sem acentos e sem espaços nas pontas — para comparar nomes.
+String normalizarNome(String s) => _normalizar(s).trim();
+
 Set<String> _tokens(String s) => _normalizar(s)
     .replaceAll(RegExp(r'[^a-z0-9 ]'), ' ')
     .split(RegExp(r'\s+'))

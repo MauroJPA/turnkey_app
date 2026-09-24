@@ -81,6 +81,11 @@ class RecipeActions {
     _refreshDetail(id);
   }
 
+  Future<void> setProcedimento(String id, String procedimento) async {
+    await _repo.setProcedimento(id, procedimento);
+    _refreshDetail(id);
+  }
+
   Future<void> adicionarImagens(
     String id,
     List<({String nome, List<int> bytes})> novas,

@@ -61,6 +61,45 @@ class _ProcedimentoSheetState extends ConsumerState<_ProcedimentoSheet> {
     );
   }
 
+  Future<void> _editarProcedimento(Receita receita) async {
+    final ctrl = TextEditingController(text: receita.procedimento);
+    final novo = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Procedimento'),
+        content: SizedBox(
+          width: 480,
+          child: TextField(
+            controller: ctrl,
+            autofocus: true,
+            maxLines: 12,
+            minLines: 6,
+            decoration: const InputDecoration(
+              hintText: 'Um passo por linha…',
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+    if (novo == null || novo == receita.procedimento) return;
+    await _run(
+      () => ref
+          .read(recipeActionsProvider)
+          .setProcedimento(widget.receitaId, novo),
+    );
+  }
+
   Future<void> _remover(String nome) async {
     final ok = await confirmDialog(
       context,
@@ -76,6 +115,23 @@ class _ProcedimentoSheetState extends ConsumerState<_ProcedimentoSheet> {
     );
   }
 
+  Future<void> _substituir(String nomeAntigo) async {
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
+    final novo =
+        (picked != null && picked.files.isNotEmpty) ? picked.files.first : null;
+    if (novo?.bytes == null) return;
+    await _run(() async {
+      final actions = ref.read(recipeActionsProvider);
+      await actions.removerImagem(widget.receitaId, nomeAntigo);
+      await actions.adicionarImagens(widget.receitaId, [
+        (nome: novo!.name, bytes: novo.bytes!.toList()),
+      ]);
+    });
+  }
+
   void _verGrande(String url) {
     showDialog<void>(
       context: context,
@@ -86,6 +142,43 @@ class _ProcedimentoSheetState extends ConsumerState<_ProcedimentoSheet> {
         ),
       ),
     );
+  }
+
+  Future<void> _abrirOpcoesImagem(String nome, String url) async {
+    final opcao = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.zoom_in_outlined),
+              title: const Text('Ver em grande'),
+              onTap: () => Navigator.pop(context, 'ver'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.image_outlined),
+              title: const Text('Substituir'),
+              onTap: () => Navigator.pop(context, 'substituir'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline),
+              title: const Text('Remover'),
+              onTap: () => Navigator.pop(context, 'remover'),
+            ),
+          ],
+        ),
+      ),
+    );
+    switch (opcao) {
+      case 'ver':
+        _verGrande(url);
+      case 'substituir':
+        await _substituir(nome);
+      case 'remover':
+        await _remover(nome);
+    }
   }
 
   @override
@@ -117,16 +210,27 @@ class _ProcedimentoSheetState extends ConsumerState<_ProcedimentoSheet> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                   children: [
-                    Text(
-                      'Procedimento',
-                      style: Theme.of(context).textTheme.titleMedium,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Procedimento',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                        if (podeEditar)
+                          TextButton.icon(
+                            onPressed:
+                                _busy ? null : () => _editarProcedimento(receita),
+                            icon: const Icon(Icons.edit_outlined),
+                            label: const Text('Editar'),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     if (passos.isEmpty)
                       Text(
-                        podeEditar
-                            ? 'Sem passos. Edita a receita para os adicionar.'
-                            : 'Sem passos.',
+                        'Sem passos.',
                         style: Theme.of(context).textTheme.bodyMedium,
                       )
                     else
@@ -184,11 +288,14 @@ class _ProcedimentoSheetState extends ConsumerState<_ProcedimentoSheet> {
                                 nome,
                                 thumb: true,
                               ),
-                              onVer: () => _verGrande(
-                                repo.imagemUrl(receita.id, nome),
-                              ),
-                              onRemover:
-                                  podeEditar ? () => _remover(nome) : null,
+                              onTap: podeEditar
+                                  ? () => _abrirOpcoesImagem(
+                                        nome,
+                                        repo.imagemUrl(receita.id, nome),
+                                      )
+                                  : () => _verGrande(
+                                        repo.imagemUrl(receita.id, nome),
+                                      ),
                             ),
                         ],
                       ),
@@ -204,56 +311,30 @@ class _ProcedimentoSheetState extends ConsumerState<_ProcedimentoSheet> {
 }
 
 class _Miniatura extends StatelessWidget {
-  const _Miniatura({
-    required this.thumbUrl,
-    required this.onVer,
-    this.onRemover,
-  });
+  const _Miniatura({required this.thumbUrl, required this.onTap});
 
   final String thumbUrl;
-  final VoidCallback onVer;
-  final VoidCallback? onRemover;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        InkWell(
-          onTap: onVer,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              thumbUrl,
-              width: 104,
-              height: 104,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                width: 104,
-                height: 104,
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                child: const Icon(Icons.broken_image_outlined),
-              ),
-            ),
+    return InkWell(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(
+          thumbUrl,
+          width: 104,
+          height: 104,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Container(
+            width: 104,
+            height: 104,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            child: const Icon(Icons.broken_image_outlined),
           ),
         ),
-        if (onRemover != null)
-          Positioned(
-            top: 0,
-            right: 0,
-            child: Material(
-              color: Colors.black54,
-              shape: const CircleBorder(),
-              child: InkWell(
-                onTap: onRemover,
-                customBorder: const CircleBorder(),
-                child: const Padding(
-                  padding: EdgeInsets.all(4),
-                  child: Icon(Icons.close, size: 16, color: Colors.white),
-                ),
-              ),
-            ),
-          ),
-      ],
+      ),
     );
   }
 }

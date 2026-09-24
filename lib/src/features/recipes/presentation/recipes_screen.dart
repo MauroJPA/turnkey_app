@@ -11,6 +11,7 @@ import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../application/recipes_providers.dart';
 import '../domain/recipe.dart';
+import 'receitas_import_sheet.dart';
 import 'recipe_form_sheet.dart';
 
 class RecipesScreen extends ConsumerStatefulWidget {
@@ -71,6 +72,12 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
             ),
             onPressed: () => setState(() => _trash = !_trash),
           ),
+          if (_podeEditar && !_trash)
+            IconButton(
+              tooltip: 'Importar receitas (CSV / colar)',
+              icon: const Icon(Icons.upload_file_outlined),
+              onPressed: _busy ? null : () => showImportarReceitasSheet(context),
+            ),
           if (_podeEditar && !_trash)
             IconButton(
               tooltip: 'Nova receita',

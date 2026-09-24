@@ -72,6 +72,9 @@ class RecipeRepository {
   Future<void> setPublicar(String id, {required bool valor}) =>
       _c.update(id, body: {'publicar_como_ingrediente': valor});
 
+  Future<void> setProcedimento(String id, String procedimento) =>
+      _c.update(id, body: {'procedimento': procedimento.trim()});
+
   /// % de peso perdido na cozedura (concentra os valores por 100 g de produto).
   Future<void> setPerdaCozedura(String id, double pct) =>
       _c.update(id, body: {'perda_cozedura_pct': pct.clamp(0, 95)});

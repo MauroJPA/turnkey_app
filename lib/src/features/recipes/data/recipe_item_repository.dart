@@ -56,6 +56,22 @@ class RecipeItemRepository {
     );
   }
 
+  /// Linha sem correspondência (importação): fica pendente até ser ligada.
+  Future<void> addPendente(
+    String recipeId,
+    String nomeProvisorio,
+    double quantidadeG,
+  ) {
+    return _c.create(
+      body: {
+        'empresa': _empresaId,
+        'receita': recipeId,
+        'nome_provisorio': nomeProvisorio,
+        'quantidade_g': quantidadeG,
+      },
+    );
+  }
+
   Future<void> setQuantidade(String itemId, double quantidadeG) =>
       _c.update(itemId, body: {'quantidade_g': quantidadeG});
 
