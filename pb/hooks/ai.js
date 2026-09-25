@@ -91,6 +91,11 @@ function analisarImagemIA(opts) {
       '(detergentes, desengordurantes, lixívia), desinfecao (desinfetantes, ' +
       'álcool), higiene (sabonete, luvas, toucas, papel de mãos), insumo ' +
       '(outros materiais), outro; para ingredientes é null. ' +
+      'quantidade é o número que aparece na coluna da quantidade, na unidade ' +
+      'que a fatura indica (un, kg, g, L, cx…), sem multiplicar: "2 un" de ' +
+      '"Noz moscada 15g" -> quantidade 2, unidade "un", embalagem_g 15; ' +
+      '"1 un" de "Cravinho 14g" -> quantidade 1, unidade "un", embalagem_g 14. ' +
+      'Se a coluna estiver em kg/g/L, usa essa unidade. ' +
       'Regras: preco_unitario é o preço por unidade/embalagem, NÃO o total da ' +
       'linha. Não incluas descontos, portes ou totais como linhas de produto. ' +
       'embalagem_g só quando o peso/volume da embalagem aparecer (converte kg->g, ' +

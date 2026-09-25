@@ -262,6 +262,15 @@ class _SemLinhas extends ConsumerWidget {
   }
 }
 
+/// 250 -> "250"; 2,5 -> "2.5" (sem zeros a mais).
+String _fmtNum(double v) {
+  if (v == v.roundToDouble()) return v.toStringAsFixed(0);
+  return v.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '');
+}
+
+double _n0(TextEditingController c) =>
+    double.tryParse(c.text.replaceAll(',', '.').trim()) ?? 0;
+
 String _normNome(String s) =>
     s.toLowerCase().trim().replaceAll(RegExp(r'\s+'), ' ');
 
@@ -278,8 +287,12 @@ class _LinhaState {
       marca = TextEditingController(
         text: ia.marca.isNotEmpty ? ia.marca : (match?.produto?.marca ?? ''),
       ),
+      // "2 un" de 15 g: mostra 2 unidades (=30 g); "200 g": mostra 200 g
+      unidadeQtd = ia.contaEmbalagens ? 'un' : 'g',
       qtd = TextEditingController(
-        text: ia.quantidadeG > 0 ? ia.quantidadeG.toStringAsFixed(0) : '',
+        text: ia.contaEmbalagens
+            ? ((ia.quantidade ?? 0) > 0 ? _fmtNum(ia.quantidade!) : '')
+            : (ia.quantidadeG > 0 ? ia.quantidadeG.toStringAsFixed(0) : ''),
       ),
       preco = TextEditingController(
         text: (ia.precoUnitario ?? 0) > 0
@@ -327,6 +340,10 @@ class _LinhaState {
   /// e fichas (que referenciam o ingrediente por id).
   bool renomear = false;
 
+  /// Unidade da quantidade comprada: `g` (gramas) ou `un` (embalagens, cada
+  /// uma com o peso do campo [emb]).
+  String unidadeQtd;
+
   final TextEditingController qtd;
   final TextEditingController preco;
   final TextEditingController emb;
@@ -338,6 +355,12 @@ class _LinhaState {
 
   double _n(TextEditingController c) =>
       double.tryParse(c.text.replaceAll(',', '.').trim()) ?? 0;
+
+  /// Gramas realmente compradas (o que dá entrada no stock).
+  double get gramasComprados {
+    if (unidadeQtd != 'un') return _n(qtd);
+    return embV > 0 ? _n(qtd) * embV : 0;
+  }
 
   double get precoV => _n(preco);
   double get embV => _n(emb);
@@ -354,7 +377,7 @@ class _LinhaState {
     ingredienteId: ingredienteId,
     consumivelId: consumivelId,
     descricaoFatura: ia.descricao,
-    quantidadeG: _n(qtd),
+    quantidadeG: gramasComprados,
     precoUnitario: _n(preco),
     totalLinha: ia.total ?? 0,
     embalagemG: _n(emb),
@@ -1167,10 +1190,41 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
-                            decoration: const InputDecoration(
+                            onChanged: (_) => setState(() {}),
+                            decoration: InputDecoration(
                               labelText: 'Comprado',
-                              suffixText: 'g',
                               isDense: true,
+                              helperText: l.unidadeQtd == 'un'
+                                  ? (l.embV > 0
+                                        ? '= ${_fmtNum(l.gramasComprados)} g'
+                                        : 'Indica a embalagem (g)')
+                                  : null,
+                              suffix: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: l.unidadeQtd,
+                                  isDense: true,
+                                  items: const [
+                                    DropdownMenuItem(
+                                      value: 'g',
+                                      child: Text('g'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'un',
+                                      child: Text('un'),
+                                    ),
+                                  ],
+                                  onChanged: (u) => setState(() {
+                                    if (u == null || u == l.unidadeQtd) return;
+                                    // converte o número já escrito (se a embalagem se conhece)
+                                    if (l.embV > 0 && _n0(l.qtd) > 0) {
+                                      l.qtd.text = u == 'un'
+                                          ? _fmtNum(_n0(l.qtd) / l.embV)
+                                          : _fmtNum(_n0(l.qtd) * l.embV);
+                                    }
+                                    l.unidadeQtd = u;
+                                  }),
+                                ),
+                              ),
                             ),
                           ),
                         ),
