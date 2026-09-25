@@ -11,12 +11,11 @@ import '../domain/auto_insa.dart';
 import '../domain/ingredient.dart';
 import '../domain/ingrediente_referencia.dart';
 import '../domain/nutri_ingresso.dart';
+import '../domain/produto_ingrediente.dart';
+import 'ingredient_product_repository.dart';
 
 final ingredientRepositoryProvider = Provider<IngredientRepository>((ref) {
-  return IngredientRepository(
-    ref.watch(pbProvider),
-    requireEmpresaId(ref),
-  );
+  return IngredientRepository(ref.watch(pbProvider), requireEmpresaId(ref));
 });
 
 /// Subconjunto de escrita usado pelo import de CSV (facilita testar).
@@ -50,13 +49,58 @@ class IngredientRepository implements IngredientWriter {
     final rec = await _c.create(
       body: {...input.toBody(), 'empresa': _empresaId, 'deletado': false},
     );
-    return Ingrediente.fromRecord(rec);
+    final ing = Ingrediente.fromRecord(rec);
+    await _sincronizarProduto(ing, input);
+    return ing;
   }
 
   @override
   Future<Ingrediente> update(String id, IngredienteInput input) async {
     final rec = await _c.update(id, body: input.toBody());
-    return Ingrediente.fromRecord(rec);
+    final ing = Ingrediente.fromRecord(rec);
+    await _sincronizarProduto(ing, input);
+    return ing;
+  }
+
+  /// Mantém a regra "todo o ingrediente comprado com preço tem um produto de
+  /// compra": ao criar (ou importar por CSV) nasce o primeiro produto; ao mudar o
+  /// preço/embalagem de um ingrediente, muda o produto da compra mais recente.
+  /// O custo do genérico é depois recalculado pelo servidor.
+  Future<void> _sincronizarProduto(
+    Ingrediente ing,
+    IngredienteInput input,
+  ) async {
+    if (input.origem != OrigemIngrediente.comprado) return;
+    if (input.preco <= 0 || input.gramasEmbalagem <= 0) return;
+    final repo = IngredientProductRepository(_pb, _empresaId);
+    final produtos = await repo.doIngrediente(ing.id);
+    if (produtos.isEmpty) {
+      await repo.criar(
+        ingredienteId: ing.id,
+        nome: input.nome,
+        marca: input.marca,
+        fornecedor: input.fornecedor,
+        embalagemG: input.gramasEmbalagem,
+        preco: input.preco,
+      );
+      return;
+    }
+    final atual = produtoMaisRecente(produtos) ?? produtos.first;
+    if ((atual.preco - input.preco).abs() < 1e-9 &&
+        (atual.embalagemG - input.gramasEmbalagem).abs() < 1e-9) {
+      return;
+    }
+    await repo.atualizar(
+      atual.id,
+      nome: atual.nome,
+      marca: atual.marca.isNotEmpty ? atual.marca : input.marca,
+      fornecedor: atual.fornecedor.isNotEmpty
+          ? atual.fornecedor
+          : input.fornecedor,
+      embalagemG: input.gramasEmbalagem,
+      preco: input.preco,
+      data: DateTime.now(),
+    );
   }
 
   Future<Ingrediente> duplicate(Ingrediente src) =>
@@ -145,15 +189,18 @@ class IngredientRepository implements IngredientWriter {
     required List<String> alergeniosTracos,
     String origem = 'manual',
   }) async {
-    final rec = await _c.update(id, body: {
-      ...nutri.toCampos(),
-      'nutri_base': base,
-      'nutri_densidade': densidade,
-      'nutri_origem': origem,
-      'nutri_atualizado_em': DateTime.now().toUtc().toIso8601String(),
-      'alergenios': alergenios,
-      'alergenios_tracos': alergeniosTracos,
-    });
+    final rec = await _c.update(
+      id,
+      body: {
+        ...nutri.toCampos(),
+        'nutri_base': base,
+        'nutri_densidade': densidade,
+        'nutri_origem': origem,
+        'nutri_atualizado_em': DateTime.now().toUtc().toIso8601String(),
+        'alergenios': alergenios,
+        'alergenios_tracos': alergeniosTracos,
+      },
+    );
     return Ingrediente.fromRecord(rec);
   }
 
@@ -167,21 +214,36 @@ class IngredientRepository implements IngredientWriter {
     final res = await _pb.send(
       '/api/gc_turnkey/ingredientes/auto-insa',
       method: 'POST',
-      body: {
-        if (ids != null) 'ids': ids,
-        'dryRun': dryRun,
-      },
+      body: {if (ids != null) 'ids': ids, 'dryRun': dryRun},
     );
     return ResumoAutoInsa.fromJson(Map<String, dynamic>.from(res as Map));
   }
 
   static String _semAcentos(String s) {
     const m = {
-      'á': 'a', 'à': 'a', 'ã': 'a', 'â': 'a', 'ä': 'a',
-      'é': 'e', 'è': 'e', 'ê': 'e', 'ë': 'e',
-      'í': 'i', 'ì': 'i', 'î': 'i', 'ï': 'i',
-      'ó': 'o', 'ò': 'o', 'õ': 'o', 'ô': 'o', 'ö': 'o',
-      'ú': 'u', 'ù': 'u', 'û': 'u', 'ü': 'u', 'ç': 'c',
+      'á': 'a',
+      'à': 'a',
+      'ã': 'a',
+      'â': 'a',
+      'ä': 'a',
+      'é': 'e',
+      'è': 'e',
+      'ê': 'e',
+      'ë': 'e',
+      'í': 'i',
+      'ì': 'i',
+      'î': 'i',
+      'ï': 'i',
+      'ó': 'o',
+      'ò': 'o',
+      'õ': 'o',
+      'ô': 'o',
+      'ö': 'o',
+      'ú': 'u',
+      'ù': 'u',
+      'û': 'u',
+      'ü': 'u',
+      'ç': 'c',
     };
     var out = s.toLowerCase();
     m.forEach((k, v) => out = out.replaceAll(k, v));
@@ -196,12 +258,12 @@ class IngredientRepository implements IngredientWriter {
   }) async {
     final termo = q.trim().replaceAll("'", ' ');
     final norm = _semAcentos(termo);
-    final res = await _pb.collection('ingredientes_referencia').getList(
+    final res = await _pb
+        .collection('ingredientes_referencia')
+        .getList(
           page: 1,
           perPage: limite,
-          filter: termo.isEmpty
-              ? ''
-              : "nome ~ '$termo' || sinonimos ~ '$norm'",
+          filter: termo.isEmpty ? '' : "nome ~ '$termo' || sinonimos ~ '$norm'",
           sort: 'nome',
         );
     return res.items.map(IngredienteReferencia.fromRecord).toList();
@@ -221,8 +283,6 @@ class IngredientRepository implements IngredientWriter {
       perPage: 1,
       filter: 'empresa = "$_empresaId" && nome = "$safe"',
     );
-    return res.items.isEmpty
-        ? null
-        : Ingrediente.fromRecord(res.items.first);
+    return res.items.isEmpty ? null : Ingrediente.fromRecord(res.items.first);
   }
 }

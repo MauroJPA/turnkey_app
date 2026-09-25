@@ -1,16 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/nutrition/nutrition.dart';
+import '../data/ingredient_product_repository.dart';
 import '../data/ingredient_repository.dart';
 import '../domain/auto_insa.dart';
 import '../domain/ingredient.dart';
 import '../domain/nutri_ingresso.dart';
 
 /// Lista de ingredientes ativos (ou da lixeira, se [trash] for `true`).
-final ingredientsListProvider =
-    FutureProvider.autoDispose.family<List<Ingrediente>, bool>((ref, trash) {
-  return ref.watch(ingredientRepositoryProvider).list(trash: trash);
-});
+final ingredientsListProvider = FutureProvider.autoDispose
+    .family<List<Ingrediente>, bool>((ref, trash) {
+      return ref.watch(ingredientRepositoryProvider).list(trash: trash);
+    });
 
 /// Ações de mutação. Chamam o repositório e invalidam as listas.
 final ingredientActionsProvider = Provider<IngredientActions>((ref) {
@@ -21,11 +22,11 @@ class IngredientActions {
   IngredientActions(this._ref);
   final Ref _ref;
 
-  IngredientRepository get _repo =>
-      _ref.read(ingredientRepositoryProvider);
+  IngredientRepository get _repo => _ref.read(ingredientRepositoryProvider);
 
   void _refresh() {
     _ref.invalidate(ingredientsListProvider);
+    _ref.invalidate(produtosIngredienteProvider);
   }
 
   Future<Ingrediente> create(
@@ -64,8 +65,7 @@ class IngredientActions {
   Future<RotuloLido> lerRotulo({
     required List<int> bytes,
     required String nome,
-  }) =>
-      _repo.lerRotulo(bytes: bytes, nome: nome);
+  }) => _repo.lerRotulo(bytes: bytes, nome: nome);
 
   Future<void> update(String id, IngredienteInput input) async {
     await _repo.update(id, input);

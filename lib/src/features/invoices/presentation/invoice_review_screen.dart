@@ -13,8 +13,10 @@ import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../ingredients/application/ingredients_providers.dart';
+import '../../ingredients/data/ingredient_product_repository.dart';
 import '../../ingredients/data/ingredient_repository.dart';
 import '../../ingredients/domain/ingredient.dart';
+import '../../ingredients/domain/produto_ingrediente.dart';
 import '../application/invoice_providers.dart';
 import '../data/invoice_repository.dart';
 import '../domain/fatura.dart';
@@ -52,7 +54,19 @@ class InvoiceReviewScreen extends ConsumerWidget {
           return ingsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('$e')),
-            data: (ings) => _Revisao(fatura: fatura, ingredientes: ings),
+            data: (ings) => ref.watch(produtosIngredienteProvider).when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => _Revisao(
+                fatura: fatura,
+                ingredientes: ings,
+                produtos: const [],
+              ),
+              data: (prods) => _Revisao(
+                fatura: fatura,
+                ingredientes: ings,
+                produtos: prods,
+              ),
+            ),
           );
         },
       ),
@@ -230,8 +244,12 @@ String _normNome(String s) =>
     s.toLowerCase().trim().replaceAll(RegExp(r'\s+'), ' ');
 
 class _LinhaState {
-  _LinhaState(this.ia, Ingrediente? match, bool isLista)
-    : ingrediente = match,
+  _LinhaState(this.ia, MatchLinha? match, bool isLista)
+    : ingrediente = match?.ingrediente,
+      produto = match?.produto,
+      marca = TextEditingController(
+        text: ia.marca.isNotEmpty ? ia.marca : (match?.produto?.marca ?? ''),
+      ),
       qtd = TextEditingController(
         text: ia.quantidadeG > 0 ? ia.quantidadeG.toStringAsFixed(0) : '',
       ),
@@ -243,9 +261,11 @@ class _LinhaState {
       emb = TextEditingController(
         text: (ia.embalagemG ?? 0) > 0
             ? ia.embalagemG!.toStringAsFixed(0)
-            : (match != null && match.gramasEmbalagem > 0
-                  ? match.gramasEmbalagem.toStringAsFixed(0)
-                  : ''),
+            : (match?.produto != null && match!.produto!.embalagemG > 0
+                  ? match.produto!.embalagemG.toStringAsFixed(0)
+                  : (match != null && match.ingrediente.gramasEmbalagem > 0
+                        ? match.ingrediente.gramasEmbalagem.toStringAsFixed(0)
+                        : '')),
       ),
       nome = TextEditingController(text: ia.descricao),
       acao = match == null
@@ -254,8 +274,14 @@ class _LinhaState {
 
   final FaturaLinhaIa ia;
 
-  /// Ingrediente existente ligado a esta linha (null se vai criar um novo).
+  /// Ingrediente genérico ligado a esta linha (null se vai criar um novo).
   Ingrediente? ingrediente;
+
+  /// Produto de compra já conhecido (null = vai criar um produto novo com esta marca).
+  ProdutoIngrediente? produto;
+
+  /// Marca do produto (lida pela IA; editável).
+  final TextEditingController marca;
 
   /// Criar um ingrediente novo (com o nome do campo [nome]).
   bool criarNovo = false;
@@ -294,13 +320,21 @@ class _LinhaState {
     totalLinha: ia.total ?? 0,
     embalagemG: _n(emb),
     acao: acao,
+    produtoId: produto?.id,
+    marca: marca.text.trim(),
+    produtoNome: ia.descricao,
   );
 }
 
 class _Revisao extends ConsumerStatefulWidget {
-  const _Revisao({required this.fatura, required this.ingredientes});
+  const _Revisao({
+    required this.fatura,
+    required this.ingredientes,
+    required this.produtos,
+  });
   final Fatura fatura;
   final List<Ingrediente> ingredientes;
+  final List<ProdutoIngrediente> produtos;
 
   @override
   ConsumerState<_Revisao> createState() => _RevisaoState();
@@ -320,7 +354,14 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       for (final ia in widget.fatura.linhasIa)
         _LinhaState(
           ia,
-          melhorMatch(ia.descricao, widget.ingredientes),
+          emparelharLinha(
+            descricao: ia.descricao,
+            nomeGenerico: ia.nomeGenerico,
+            marca: ia.marca,
+            embalagemG: ia.embalagemG ?? 0,
+            ingredientes: widget.ingredientes,
+            produtos: widget.produtos,
+          ),
           _isLista,
         ),
     ];
@@ -334,6 +375,8 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       builder: (_) => _IngredientePicker(
         ingredientes: widget.ingredientes,
         descricaoFatura: l.ia.descricao,
+        sugestaoNome:
+            l.ia.nomeGenerico.isNotEmpty ? l.ia.nomeGenerico : l.ia.descricao,
       ),
     );
     if (r == null) return;
@@ -346,14 +389,22 @@ class _RevisaoState extends ConsumerState<_Revisao> {
           l.ingrediente = ing;
           l.criarNovo = false;
           l.renomear = false;
+          l.produto = produtoDaMarca(
+            ing,
+            widget.produtos,
+            marca: l.marca.text,
+            embalagemG: l.embV,
+          );
           if (l.emb.text.trim().isEmpty && ing.gramasEmbalagem > 0) {
             l.emb.text = ing.gramasEmbalagem.toStringAsFixed(0);
           }
         case _EscolhaNovo():
           l.ingrediente = null;
+          l.produto = null;
           l.criarNovo = true;
           l.renomear = false;
-          l.nome.text = l.ia.descricao;
+          l.nome.text =
+              l.ia.nomeGenerico.isNotEmpty ? l.ia.nomeGenerico : l.ia.descricao;
       }
     });
   }
@@ -398,7 +449,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       final diaFatura = DateTime(dFatura.year, dFatura.month, dFatura.day);
       for (final l in aAplicar) {
         if (l.acao != AcaoFatura.preco && l.acao != AcaoFatura.ambos) continue;
-        final at = l.ingrediente?.precoAtualizadoEm;
+        final at = l.produto?.precoAtualizadoEm;
         if (at != null &&
             diaFatura.isBefore(DateTime(at.year, at.month, at.day))) {
           maisAntigos++;
@@ -438,9 +489,10 @@ class _RevisaoState extends ConsumerState<_Revisao> {
           final novo = await repo.create(
             IngredienteInput(
               nome: l.nome.text.trim(),
-              fornecedor: forn,
-              preco: l.precoV,
-              gramasEmbalagem: l.embV,
+              // o preço e a marca ficam no produto de compra, criado ao aplicar
+              // (só numa linha "só stock" é que o preço vai já no ingrediente)
+              preco: l.acao == AcaoFatura.stock ? l.precoV : 0,
+              gramasEmbalagem: l.acao == AcaoFatura.stock ? l.embV : 0,
               origem: OrigemIngrediente.comprado,
             ),
           );
@@ -473,6 +525,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
             _linhas.map((l) => l.toAplicar(ids[l])).toList(),
           );
       ref.invalidate(ingredientsListProvider);
+      ref.invalidate(produtosIngredienteProvider);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -739,6 +792,31 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                       ),
                     ),
                   ),
+                  if (l.ingrediente != null || l.criarNovo) ...[
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: l.marca,
+                      decoration: InputDecoration(
+                        labelText: 'Marca',
+                        isDense: true,
+                        helperText: l.produto != null
+                            ? 'Produto já conhecido: ${l.produto!.resumo}'
+                            : 'Vai criar um produto novo (marca e embalagem) '
+                                'neste ingrediente',
+                        helperMaxLines: 2,
+                      ),
+                      onChanged: (v) => setState(() {
+                        if (l.ingrediente != null) {
+                          l.produto = produtoDaMarca(
+                            l.ingrediente!,
+                            widget.produtos,
+                            marca: v,
+                            embalagemG: l.embV,
+                          );
+                        }
+                      }),
+                    ),
+                  ],
                   if (l.criarNovo || l.renomear) ...[
                     const SizedBox(height: 8),
                     TextField(
@@ -903,9 +981,11 @@ class _IngredientePicker extends StatefulWidget {
   const _IngredientePicker({
     required this.ingredientes,
     required this.descricaoFatura,
+    required this.sugestaoNome,
   });
   final List<Ingrediente> ingredientes;
   final String descricaoFatura;
+  final String sugestaoNome;
 
   @override
   State<_IngredientePicker> createState() => _IngredientePickerState();
@@ -939,8 +1019,8 @@ class _IngredientePickerState extends State<_IngredientePicker> {
           ),
           ListTile(
             leading: const Icon(Icons.add_circle_outline),
-            title: const Text('Criar ingrediente novo'),
-            subtitle: Text('«${widget.descricaoFatura}»'),
+            title: const Text('Criar ingrediente novo (genérico)'),
+            subtitle: Text('«${widget.sugestaoNome}»'),
             onTap: () => Navigator.pop(context, const _EscolhaNovo()),
           ),
           const Divider(height: 1),

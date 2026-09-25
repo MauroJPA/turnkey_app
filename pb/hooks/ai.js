@@ -67,13 +67,19 @@ function analisarImagemIA(opts) {
       'Formato: {"faturas": [{"fornecedor": string, "data": ' +
       '"YYYY-MM-DD"|null, "numero": string|null, "total": number|null, "iva": ' +
       'number|null, "moeda": string|null, "paginas": [number], "linhas": ' +
-      '[{"descricao": string, ' +
+      '[{"descricao": string, "nome_generico": string, "marca": string|null, ' +
       '"quantidade": number|null, "unidade": string|null, "preco_unitario": ' +
       'number|null, "total": number|null, "embalagem_g": number|null}]}]}. ' +
       '"paginas" são os números (a começar em 1) das páginas do ficheiro onde ' +
       'aparece esse documento; numa imagem, [1]. Uma página pertence a um só ' +
       'documento. Uma continuação ("página 2 de 2", "continua") pertence ao ' +
       'mesmo documento. ' +
+      'nome_generico é o ingrediente em termos genéricos, SEM marca, embalagem, ' +
+      'peso nem termos comerciais: "Açúcar Sidul BCO granulado KG" -> "Açúcar ' +
+      'branco"; "Cravinho moído Margão pac 14gr" -> "Cravinho em pó"; "Manteiga ' +
+      'Président 250g" -> "Manteiga". Mantém as variedades que mudam o produto ' +
+      '(açúcar branco, amarelo, demerara e mascavado são diferentes). "marca" é ' +
+      'a marca comercial (ex.: Sidul, Margão) ou null. ' +
       'Regras: preco_unitario é o preço por unidade/embalagem, NÃO o total da ' +
       'linha. Não incluas descontos, portes ou totais como linhas de produto. ' +
       'embalagem_g só quando o peso/volume da embalagem aparecer (converte kg->g, ' +

@@ -1,4 +1,5 @@
 import '../../ingredients/domain/ingredient.dart';
+import '../../ingredients/domain/produto_ingrediente.dart';
 
 String _normalizar(String s) {
   const acentos = {
@@ -66,4 +67,71 @@ Ingrediente? melhorMatch(
     }
   }
   return melhorScore >= minScore ? melhor : null;
+}
+
+/// Como o servidor compara nomes de fatura aprendidos: minúsculas, sem acentos,
+/// espaços simples.
+String normalizarDescricao(String s) =>
+    normalizarNome(s).replaceAll(RegExp(r'\s+'), ' ');
+
+/// Ingrediente genérico (e, se já se conhece, o produto de compra) de uma linha.
+typedef MatchLinha = ({Ingrediente ingrediente, ProdutoIngrediente? produto});
+
+/// Produto de [ingrediente] com a mesma [marca] (e a mesma embalagem, se souber).
+ProdutoIngrediente? produtoDaMarca(
+  Ingrediente ingrediente,
+  List<ProdutoIngrediente> produtos, {
+  String marca = '',
+  double embalagemG = 0,
+}) {
+  final m = normalizarNome(marca);
+  if (m.isEmpty) return null;
+  for (final p in produtos) {
+    if (p.ingredienteId != ingrediente.id) continue;
+    if (normalizarNome(p.marca) != m) continue;
+    if (embalagemG > 0 && p.embalagemG > 0 && (p.embalagemG - embalagemG).abs() > 0.5) {
+      continue;
+    }
+    return p;
+  }
+  return null;
+}
+
+/// Liga uma linha de fatura a um ingrediente genérico (e produto), por ordem:
+/// 1) o nome desta fatura já associado a um produto (aprendido antes);
+/// 2) o nome genérico proposto pela IA coincide com um ingrediente;
+/// 3) semelhança de palavras com o nome genérico ou com a descrição.
+MatchLinha? emparelharLinha({
+  required String descricao,
+  String nomeGenerico = '',
+  String marca = '',
+  double embalagemG = 0,
+  required List<Ingrediente> ingredientes,
+  required List<ProdutoIngrediente> produtos,
+}) {
+  final desc = normalizarDescricao(descricao);
+  final porId = {for (final i in ingredientes) i.id: i};
+  for (final p in produtos) {
+    if (p.nomesFatura.contains(desc)) {
+      final ing = porId[p.ingredienteId];
+      if (ing != null) return (ingrediente: ing, produto: p);
+    }
+  }
+  Ingrediente? ing;
+  final ng = normalizarNome(nomeGenerico);
+  if (ng.isNotEmpty) {
+    for (final i in ingredientes) {
+      if (normalizarNome(i.nome) == ng) {
+        ing = i;
+        break;
+      }
+    }
+    ing ??= melhorMatch(nomeGenerico, ingredientes, minScore: 0.6);
+  }
+  ing ??= melhorMatch(descricao, ingredientes);
+  if (ing == null) return null;
+  return (
+    ingrediente: ing,
+    produto: produtoDaMarca(ing, produtos, marca: marca, embalagemG: embalagemG),
+  );
 }
