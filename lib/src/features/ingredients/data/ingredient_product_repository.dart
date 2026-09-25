@@ -63,6 +63,7 @@ class IngredientProductRepository {
     DateTime? data,
     List<String>? alergenios,
     List<String>? alergeniosTracos,
+    NutriProduto? nutri,
   }) => {
     'nome': nome.trim(),
     'marca': marca.trim(),
@@ -72,6 +73,7 @@ class IngredientProductRepository {
     if (data != null) 'preco_atualizado_em': _dia(data),
     if (alergenios != null) 'alergenios': alergenios,
     if (alergeniosTracos != null) 'alergenios_tracos': alergeniosTracos,
+    if (nutri != null) ...nutri.toCampos(),
   };
 
   static String _dia(DateTime d) =>
@@ -87,6 +89,7 @@ class IngredientProductRepository {
     DateTime? data,
     List<String> alergenios = const [],
     List<String> alergeniosTracos = const [],
+    NutriProduto? nutri,
   }) async {
     final rec = await _c.create(
       body: {
@@ -99,6 +102,7 @@ class IngredientProductRepository {
           data: data ?? DateTime.now(),
           alergenios: alergenios,
           alergeniosTracos: alergeniosTracos,
+          nutri: nutri,
         ),
         'empresa': _empresaId,
         'ingrediente': ingredienteId,
@@ -117,6 +121,7 @@ class IngredientProductRepository {
     DateTime? data,
     List<String>? alergenios,
     List<String>? alergeniosTracos,
+    NutriProduto? nutri,
   }) async {
     final rec = await _c.update(
       id,
@@ -129,6 +134,7 @@ class IngredientProductRepository {
         data: data,
         alergenios: alergenios,
         alergeniosTracos: alergeniosTracos,
+        nutri: nutri,
       ),
     );
     return ProdutoIngrediente.fromRecord(rec);

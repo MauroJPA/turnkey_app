@@ -92,7 +92,7 @@ class _ProdutoPicker extends StatelessWidget {
               subtitulo: recente == null
                   ? 'Usa o custo do ingrediente'
                   : 'Usa sempre a compra mais recente (agora: ${recente.resumo}). '
-                        'Os alergénios são só os do ingrediente.',
+                        'Os alergénios e a nutrição são os do ingrediente.',
               id: null,
             ),
             const Divider(height: 1),
@@ -112,6 +112,7 @@ class _ProdutoPicker extends StatelessWidget {
                     'contém também: ${p.alergenios.join(', ')}',
                   if (p.alergeniosTracos.isNotEmpty)
                     'pode conter: ${p.alergeniosTracos.join(', ')}',
+                  if (p.nutriPropria) 'nutrição própria',
                 ].join(' · '),
                 id: p.id,
                 extra: p.id == recente?.id
