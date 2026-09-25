@@ -664,6 +664,18 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Aplicar: o preço fica no produto; se falta a FDS, aparece o aviso com **Anexar**.
 - [ ] Carregar outra fatura com a mesma descrição: liga sozinha ao mesmo produto.
 
+## 32. Produto de compra nas receitas
+
+- [ ] Ingrediente com 2 produtos (ex.: farinha 1 kg a 2 € e 5 kg a 5 €): numa receita, **+ Item** com essa farinha
+      pergunta **qual produto** (Automático ou um dos dois). Cancelar deixa em automático.
+- [ ] Na linha da receita aparece o alfinete; tocar abre a escolha com o marcador "mais recente".
+- [ ] Fixar o produto de 1 kg: o custo da linha e o custo da receita passam a usar 2 €/kg (não o do mais recente).
+- [ ] Mudar o preço desse produto (Ingredientes → produto): a receita acompanha.
+- [ ] Voltar a "Automático": o custo volta à compra mais recente.
+- [ ] Apagar o produto fixado: a linha volta ao custo automático, sem erro.
+- [ ] Duplicar a receita: a cópia mantém o produto fixado.
+- [ ] Ingrediente com um só produto: não mostra o alfinete nem pergunta nada.
+
 ---
 
 ## Notas / ajustes pedidos

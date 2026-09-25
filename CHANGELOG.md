@@ -2,6 +2,20 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.11.0 — 2026-09-25 — Escolher o produto de compra nas receitas
+
+- **Cada linha de receita pode fixar um produto** do ingrediente genérico (ex.: "Açúcar branco" → "Sidul 1 kg").
+  Sem produto fixado ("automático") a linha usa o custo do genérico, isto é, a compra mais recente.
+- Na receita, o ícone do alfinete nas linhas com mais de um produto abre a escolha: mostra marca, embalagem,
+  €/kg, data da compra e fornecedor, e marca o mais recente. Ao **adicionar** um ingrediente com vários
+  produtos, pergunta logo qual usar (cancelar deixa em automático).
+- **Custo:** a linha com produto fixado usa o preço/embalagem desse produto. Quando o preço do produto muda,
+  as receitas que o fixam refazem o custo (mesmo que o do genérico não mude); apagar o produto devolve a
+  linha ao custo do genérico. Um produto de outro ingrediente é ignorado. Duplicar uma receita mantém o produto.
+- Migration `1707955207_receita_linha_produto` (campo `itens_receita.produto`, com a regra da mesma empresa).
+- Testes: secção 9b do `test/security/seguranca.py` e `test/recipe_item_produto_test.dart`.
+- Ainda não usa o produto fixado: a lista de compras (embalagens a comprar) e a nutrição/alergénios por produto.
+
 ## 1.10.1 — 2026-09-25 — Limpeza e insumos: anexar já na criação e apagar na lista
 
 - **Anexar documentos logo ao criar** o produto: escolhes a FDS (PDF ou imagem) antes de guardar e ela segue

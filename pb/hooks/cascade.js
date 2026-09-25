@@ -25,6 +25,22 @@ function runCascade(app, kind, rootId) {
     return g > 0 ? fnum(ing, 'preco') / g : 0;
   };
 
+  // custo por grama de uma linha de receita: se a linha fixa um produto de
+  // compra DESSE ingrediente, é o do produto; senão, o do genérico.
+  const cpgLinha = (item, ing) => {
+    const pid = item.getString('produto');
+    if (pid) {
+      try {
+        const p = app.findRecordById('ingrediente_produtos', pid);
+        const g = fnum(p, 'embalagem_g');
+        if (p.getString('ingrediente') === ing.id && g > 0 && fnum(p, 'preco') > 0) {
+          return fnum(p, 'preco') / g;
+        }
+      } catch (_) {}
+    }
+    return ingCpg(ing);
+  };
+
   // --- nutrição (mesma cascata dos custos) --------------------------------
   const NUT = [
     'kcal', 'lipidos', 'saturados', 'hidratos',
@@ -531,7 +547,7 @@ function runCascade(app, kind, rootId) {
         }
         // sempre a partir do preço/gramas — o custo_por_grama do ingrediente
         // é só cache de UI e pode estar desatualizado.
-        custo += ingCpg(ing) * qtd;
+        custo += cpgLinha(item, ing) * qtd;
       } else if (subRel) {
         recomputeReceita(subRel);
         let sub;

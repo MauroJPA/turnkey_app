@@ -11,12 +11,16 @@ import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../../core/widgets/history_sheet.dart';
 import '../../../core/widgets/swipe_to_delete.dart';
+import '../../ingredients/application/ingredients_providers.dart';
+import '../../ingredients/data/ingredient_product_repository.dart';
+import '../../ingredients/domain/produto_ingrediente.dart';
 import '../../production/presentation/agenda_line_sheet.dart';
 import '../application/recipes_providers.dart';
 import '../domain/recipe_item.dart';
 import 'item_picker_sheet.dart';
 import 'nutricao_receita_sheet.dart';
 import 'procedimento_sheet.dart';
+import 'produto_picker_sheet.dart';
 import 'recipe_form_sheet.dart';
 
 class RecipeDetailScreen extends ConsumerStatefulWidget {
@@ -58,13 +62,61 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
     await _run(() async {
       final actions = ref.read(recipeActionsProvider);
       if (picked.kind == PickedKind.ingrediente) {
+        String? produtoId;
+        final produtos = await _produtosDe(picked.id);
+        if (produtos.length > 1 && mounted) {
+          final ings = await ref.read(ingredientsListProvider(false).future);
+          final ing = ings.where((i) => i.id == picked.id).firstOrNull;
+          if (ing != null && mounted) {
+            // cancelar aqui não cancela a linha: fica em "automático"
+            final r = await showProdutoPicker(
+              context,
+              ingrediente: ing,
+              produtos: produtos,
+            );
+            produtoId = r?.id;
+          }
+        }
         await actions.addIngrediente(
-            widget.recipeId, picked.id, picked.quantidadeG);
+          widget.recipeId,
+          picked.id,
+          picked.quantidadeG,
+          produtoId: produtoId,
+        );
       } else {
         await actions.addSubReceita(
             widget.recipeId, picked.id, picked.quantidadeG);
       }
     });
+  }
+
+  Future<List<ProdutoIngrediente>> _produtosDe(String ingredienteId) async {
+    final todos = await ref.read(produtosIngredienteProvider.future);
+    return [
+      for (final p in todos)
+        if (p.ingredienteId == ingredienteId) p,
+    ];
+  }
+
+  Future<void> _escolherProduto(
+    ItemReceita item,
+    List<ProdutoIngrediente> produtos,
+  ) async {
+    final ings = await ref.read(ingredientsListProvider(false).future);
+    final ing = ings.where((i) => i.id == item.ingredienteId).firstOrNull;
+    if (ing == null || !mounted) return;
+    final r = await showProdutoPicker(
+      context,
+      ingrediente: ing,
+      produtos: produtos,
+      atualId: item.produtoId,
+    );
+    if (r == null || r.id == item.produtoId) return;
+    await _run(
+      () => ref
+          .read(recipeActionsProvider)
+          .setProduto(widget.recipeId, item.id, r.id),
+    );
   }
 
   Future<void> _editQty(ItemReceita item) async {
@@ -247,9 +299,18 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
 
   Widget _itemTile(RecipeDetail d, ItemReceita item, MoneyFmt fmt) {
     final pct = d.percentagem(item).toStringAsFixed(1);
+    final produtos = item.ingredienteId == null
+        ? const <ProdutoIngrediente>[]
+        : ref.watch(produtosDoIngredienteProvider(item.ingredienteId!));
+    final fixado = produtos
+        .where((p) => p.id == item.produtoId)
+        .firstOrNull;
+    // só faz sentido escolher quando há mais de um produto (ou já há um fixado)
+    final podeEscolher = produtos.length > 1 || item.produtoId != null;
     final subtitle = item.pendente
         ? '${item.quantidadeG.toStringAsFixed(0)} g · vínculo pendente'
-        : '${item.quantidadeG.toStringAsFixed(0)} g · $pct% · ${fmt(item.custoLinha)}';
+        : '${item.quantidadeG.toStringAsFixed(0)} g · $pct% · ${fmt(item.custoLinha)}'
+              '${fixado != null ? ' · ${fixado.resumo}' : (produtos.length > 1 ? ' · produto automático' : '')}';
 
     final tile = ListTile(
       title: Text(
@@ -266,7 +327,20 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
             )
           : (item.subReceitaId != null
               ? const Icon(Icons.link, size: 16)
-              : null),
+              : (podeEscolher
+                    ? IconButton(
+                        tooltip: 'Escolher o produto de compra',
+                        icon: Icon(
+                          fixado != null
+                              ? Icons.push_pin
+                              : Icons.push_pin_outlined,
+                          size: 20,
+                        ),
+                        onPressed: _podeEditar
+                            ? () => _escolherProduto(item, produtos)
+                            : null,
+                      )
+                    : null)),
       onTap: _podeEditar ? () => _editQty(item) : null,
     );
 

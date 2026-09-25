@@ -54,6 +54,18 @@ function recalcularGenerico(app, ingredienteId) {
   app.save(ing);
 }
 
+// Receitas que fixam um produto usam o custo DELE (mesmo que o do genérico não
+// mude): quando o produto muda, refaz as receitas desse ingrediente.
+// `sempre` = true força (ex.: ao apagar, quando já não dá para saber quem o fixava).
+function refazerReceitasFixadas(app, ingredienteId, produtoId, sempre) {
+  if (!ingredienteId) return;
+  if (!sempre) {
+    var fixadas = app.findRecordsByFilter('itens_receita', 'produto = {:p}', '', 1, 0, { p: produtoId });
+    if (!fixadas.length) return;
+  }
+  require(__hooks + '/cascade.js').runCascade(app, 'ingrediente', ingredienteId);
+}
+
 function normalizarDescricao(texto) {
   var de = 'áàãâäéèêëíìîïóòõôöúùûüçñ';
   var para = 'aaaaaeeeeiiiiooooouuuucn';
@@ -66,4 +78,4 @@ function normalizarDescricao(texto) {
   return out.replace(/\s+/g, ' ');
 }
 
-module.exports = { recalcularGenerico, normalizarDescricao };
+module.exports = { recalcularGenerico, refazerReceitasFixadas, normalizarDescricao };
