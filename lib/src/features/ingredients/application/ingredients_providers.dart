@@ -77,6 +77,12 @@ class IngredientActions {
     _refresh();
   }
 
+  Future<ResultadoJuntar> juntar(String origemId, String destinoId) async {
+    final r = await _repo.juntar(origemId, destinoId);
+    _refresh();
+    return r;
+  }
+
   Future<void> moveToTrash(String id) async {
     await _repo.setDeleted(id, deletado: true);
     _refresh();

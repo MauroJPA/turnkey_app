@@ -504,6 +504,7 @@ ROTAS = [
     ('POST', '/api/gc_turnkey/team/members'),
     ('PATCH', '/api/gc_turnkey/team/members/{users}'),
     ('POST', '/api/gc_turnkey/vendus/sincronizar'),
+    ('POST', '/api/gc_turnkey/ingredientes/juntar'),
 ]
 
 
@@ -541,7 +542,8 @@ def teste_endpoints():
     check(s in (200, 400), 'admin/recompute: admin de A só afeta a própria empresa (ignora o corpo)')
     for quem in ('viewerA',):
         for rota in ('/api/gc_turnkey/inventario/ajustar', '/api/gc_turnkey/vendus/sincronizar',
-                     '/api/gc_turnkey/ingredientes/auto-insa'):
+                     '/api/gc_turnkey/ingredientes/auto-insa',
+                     '/api/gc_turnkey/ingredientes/juntar'):
             s, _, _ = call('POST', rota, {}, tok[quem])
             check(s in (400, 403), f'{rota}: Leitura não escreve', f'status {s}')
     ing = dados.get(('ingredientes', 'A'))
@@ -1211,6 +1213,74 @@ def teste_produto_na_receita():
     check(st != 200, 'a empresa B não fixa um produto da empresa A', f'status {st}')
 
 
+def teste_juntar():
+    """9c. Juntar ingredientes: tudo passa para o destino, o origem vai para a lixeira."""
+    sec('9c. Juntar ingredientes')
+    t = tok['editorA']
+    aler = [v for f in cols['ingredientes']['fields'] if f['name'] == 'alergenios' for v in f.get('values', [])]
+    base = dict(dados[('ingredientes', 'A')][1])
+    base.update(origem='comprado', preco=0, gramas_embalagem=0)
+
+    def ingrediente(nome, **extra):
+        st, r, _ = call('POST', '/api/collections/ingredientes/records', dict(base, nome=nome, **extra), t)
+        assert st == 200, (st, r)
+        return r['id']
+
+    dest = ingrediente('Açúcar branco JJ')
+    orig = ingrediente('Açúcar Makro JJ', alergenios=aler[:1] if aler else [])
+
+    def produto(ing, nome, emb, preco, data):
+        return call('POST', '/api/collections/ingrediente_produtos/records',
+                    {'empresa': empresas['A'], 'ingrediente': ing, 'nome': nome, 'embalagem_g': emb,
+                     'preco': preco, 'preco_atualizado_em': data + ' 00:00:00.000Z',
+                     'nomes_fatura': ['acucar makro 5kg'] if ing == orig else []}, t)[1]
+
+    produto(dest, 'Sidul 1 kg', 1000, 1.20, '2026-09-20')
+    po = produto(orig, 'Makro 5 kg', 5000, 5.00, '2026-09-10')
+    call('POST', '/api/gc_turnkey/inventario/ajustar', {'ingrediente': dest, 'delta': 100}, t)
+    call('POST', '/api/gc_turnkey/inventario/ajustar', {'ingrediente': orig, 'delta': 300}, t)
+
+    rb = dict(dados[('receitas', 'A')][1])
+    rb.update(nome='Massa juntar', rendimento_manual=False)
+    for k in ('custo_receita', 'custo_por_grama', 'rendimento_esperado'):
+        rb.pop(k, None)
+    rid = call('POST', '/api/collections/receitas/records', rb, t)[1]['id']
+    it = call('POST', '/api/collections/itens_receita/records',
+              {'empresa': empresas['A'], 'receita': rid, 'ingrediente': orig, 'quantidade_g': 1000}, t)[1]
+
+    # recusas
+    st, _, _ = call('POST', '/api/gc_turnkey/ingredientes/juntar', {'origemId': orig, 'destinoId': dest}, tok['viewerA'])
+    check(st == 403, 'o papel Leitura não junta ingredientes', f'status {st}')
+    st, _, _ = call('POST', '/api/gc_turnkey/ingredientes/juntar', {'origemId': orig, 'destinoId': dest}, tok['editorB'])
+    check(st in (400, 403), 'a empresa B não junta ingredientes da empresa A', f'status {st}')
+    st, _, _ = call('POST', '/api/gc_turnkey/ingredientes/juntar', {'origemId': orig, 'destinoId': orig}, t)
+    check(st == 400, 'não se junta um ingrediente consigo próprio', f'status {st}')
+    proprio = ingrediente('Massa própria JJ', origem='fabrico_proprio')
+    st, _, _ = call('POST', '/api/gc_turnkey/ingredientes/juntar', {'origemId': proprio, 'destinoId': dest}, t)
+    check(st == 400, 'ingredientes de fabrico próprio não se juntam', f'status {st}')
+
+    st, r, _ = call('POST', '/api/gc_turnkey/ingredientes/juntar', {'origemId': orig, 'destinoId': dest}, t)
+    check(st == 200, 'juntar os dois ingredientes', f'status {st} {str(r)[:200]}')
+    mv = r.get('movidos', {}) if isinstance(r, dict) else {}
+    check(mv.get('itens_receita') == 1 and mv.get('ingrediente_produtos') == 1, 'a linha de receita e o produto mudaram para o destino', str(mv))
+    check(abs(r.get('stockSomado', 0) - 300) < 1e-6, 'o stock do origem foi somado ao do destino', str(r)[:200])
+
+    li = call('GET', f"/api/collections/itens_receita/records/{it['id']}", tok=t)[1]
+    check(li.get('ingrediente') == dest, 'a linha de receita aponta para o destino', str(li)[:200])
+    prods = call('GET', f"/api/collections/ingrediente_produtos/records?filter=ingrediente='{dest}'&perPage=50", tok=t)[1]
+    check(len(prods.get('items', [])) == 2, 'o destino tem agora os dois produtos', str(len(prods.get('items', []))))
+    d = call('GET', f'/api/collections/ingredientes/records/{dest}', tok=t)[1]
+    check(abs(d.get('preco', 0) - 1.2) < 1e-6 and d.get('gramas_embalagem') == 1000, 'o custo do destino é o da compra mais recente (Sidul, 20/09)', str(d)[:160])
+    if aler:
+        check(aler[0] in (d.get('alergenios') or []), 'o alergénio do origem passou para o destino', str(d.get('alergenios')))
+    o = call('GET', f'/api/collections/ingredientes/records/{orig}', tok=t)[1]
+    check(o.get('deletado') is True, 'o origem foi para a lixeira')
+    inv = call('GET', f"/api/collections/inventario/records?filter=ingrediente='{dest}'", tok=t)[1].get('items', [])
+    check(len(inv) == 1 and abs(inv[0].get('quantidade', 0) - 400) < 1e-6, 'o stock do destino é a soma (400)', str(inv)[:160])
+    rec = call('GET', f'/api/collections/receitas/records/{rid}', tok=t)[1]
+    check(abs(rec.get('custo_receita', -1) - 1.2) < 1e-6, 'a receita refez o custo com o custo do destino (1,20 €/kg)', str(rec.get('custo_receita')))
+
+
 def main():
     arrancar()
     try:
@@ -1225,6 +1295,7 @@ def main():
         teste_faturas_ia()
         teste_produtos()
         teste_produto_na_receita()
+        teste_juntar()
         teste_consumiveis()
         teste_implantacao()
         teste_autenticacao()  # por último: gasta o limite de tentativas
