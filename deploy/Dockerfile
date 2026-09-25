@@ -6,7 +6,7 @@ FROM alpine:3.20
 ARG TARGETARCH
 ARG PB_VERSION=0.40.4
 
-RUN apk add --no-cache ca-certificates tzdata wget unzip \
+RUN apk add --no-cache ca-certificates tzdata wget unzip qpdf \
  && case "${TARGETARCH:-amd64}" in \
       amd64) A=amd64 ;; \
       arm64) A=arm64 ;; \

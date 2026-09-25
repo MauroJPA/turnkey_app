@@ -8,6 +8,15 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/pocketbase/pb_client.dart';
 import '../domain/fatura.dart';
 
+/// Resultado de analisar um ficheiro: a fatura original, os ids de todas as
+/// faturas criadas a partir dele e se o PDF foi cortado em ficheiros separados.
+typedef AnaliseFaturas = ({
+  Fatura fatura,
+  List<String> ids,
+  bool dividido,
+  int duplicadas,
+});
+
 final invoiceRepositoryProvider = Provider<InvoiceRepository>((ref) {
   return InvoiceRepository(ref.watch(pbProvider), requireEmpresaId(ref));
 });
@@ -109,11 +118,28 @@ class InvoiceRepository {
 
   static String _slugFornecedor(String s) {
     const acc = {
-      'Á': 'A', 'À': 'A', 'Ã': 'A', 'Â': 'A', 'Ä': 'A',
-      'É': 'E', 'È': 'E', 'Ê': 'E', 'Ë': 'E',
-      'Í': 'I', 'Ì': 'I', 'Î': 'I', 'Ï': 'I',
-      'Ó': 'O', 'Ò': 'O', 'Õ': 'O', 'Ô': 'O', 'Ö': 'O',
-      'Ú': 'U', 'Ù': 'U', 'Û': 'U', 'Ü': 'U',
+      'Á': 'A',
+      'À': 'A',
+      'Ã': 'A',
+      'Â': 'A',
+      'Ä': 'A',
+      'É': 'E',
+      'È': 'E',
+      'Ê': 'E',
+      'Ë': 'E',
+      'Í': 'I',
+      'Ì': 'I',
+      'Î': 'I',
+      'Ï': 'I',
+      'Ó': 'O',
+      'Ò': 'O',
+      'Õ': 'O',
+      'Ô': 'O',
+      'Ö': 'O',
+      'Ú': 'U',
+      'Ù': 'U',
+      'Û': 'U',
+      'Ü': 'U',
       'Ç': 'C',
     };
     var out = s.toUpperCase();
@@ -132,20 +158,39 @@ class InvoiceRepository {
     return 'FT-${_slugFornecedor(fornecedor)}-$dd$mm$aaaa${_ext(origem)}';
   }
 
-  Future<Fatura> analisar(
+  /// Analisa o ficheiro. Se tiver várias faturas (ex.: um PDF com 3 fornecedores),
+  /// o servidor cria uma fatura por documento e [ids] tem todas; [fatura] é a
+  /// original (a primeira).
+  Future<AnaliseFaturas> analisar(
     String id, {
     required List<int> bytes,
     required String nome,
   }) async {
-    await _pb.send(
+    final res = await _pb.send(
       '/api/gc_turnkey/faturas/$id/analisar',
       method: 'POST',
-      body: {
-        'imagem': base64Encode(bytes),
-        'mime': _mime(nome),
-      },
+      body: {'imagem': base64Encode(bytes), 'mime': _mime(nome)},
     );
-    return getById(id);
+    final m = res is Map ? res : const <String, dynamic>{};
+    final ids = [
+      for (final v in (m['faturas'] as List? ?? const [])) v.toString(),
+    ];
+    return (
+      fatura: await getById(id),
+      ids: ids.isEmpty ? [id] : ids,
+      dividido: m['dividido'] == true,
+      duplicadas: (m['duplicadas'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  /// Volta a descarregar o ficheiro guardado (para tentar a análise de novo).
+  Future<List<int>> descarregarFicheiro(Fatura f) async {
+    final url = await ficheiroUrlSeguro(f);
+    final r = await http.get(Uri.parse(url));
+    if (r.statusCode != 200) {
+      throw Exception('Não foi possível obter o ficheiro da fatura.');
+    }
+    return r.bodyBytes;
   }
 
   Future<({int precos, int precosIgnorados, int movimentos})> aplicar(
@@ -185,7 +230,8 @@ class InvoiceRepository {
   /// Nunca toca nas `confirmada`. Devolve quantas apagou.
   Future<int> limparInvalidas() async {
     final recs = await _c.getFullList(
-      filter: 'empresa = "$_empresaId" && '
+      filter:
+          'empresa = "$_empresaId" && '
           '(estado = "nova" || estado = "erro" || estado = "analisada")',
     );
     var n = 0;
@@ -225,10 +271,7 @@ class InvoiceRepository {
     final base = _pb.baseURL.endsWith('/')
         ? _pb.baseURL.substring(0, _pb.baseURL.length - 1)
         : _pb.baseURL;
-    final q = [
-      if (thumb) 'thumb=0x240',
-      if (token != null) 'token=$token',
-    ];
+    final q = [if (thumb) 'thumb=0x240', if (token != null) 'token=$token'];
     return '$base/api/files/faturas/${f.id}/${f.ficheiro}'
         '${q.isEmpty ? '' : '?${q.join('&')}'}';
   }

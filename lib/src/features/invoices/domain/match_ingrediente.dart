@@ -2,11 +2,23 @@ import '../../ingredients/domain/ingredient.dart';
 
 String _normalizar(String s) {
   const acentos = {
-    'á': 'a', 'à': 'a', 'ã': 'a', 'â': 'a', 'ä': 'a',
-    'é': 'e', 'è': 'e', 'ê': 'e',
-    'í': 'i', 'ì': 'i',
-    'ó': 'o', 'ò': 'o', 'õ': 'o', 'ô': 'o',
-    'ú': 'u', 'ù': 'u', 'ü': 'u',
+    'á': 'a',
+    'à': 'a',
+    'ã': 'a',
+    'â': 'a',
+    'ä': 'a',
+    'é': 'e',
+    'è': 'e',
+    'ê': 'e',
+    'í': 'i',
+    'ì': 'i',
+    'ó': 'o',
+    'ò': 'o',
+    'õ': 'o',
+    'ô': 'o',
+    'ú': 'u',
+    'ù': 'u',
+    'ü': 'u',
     'ç': 'c',
   };
   var out = s.toLowerCase();
@@ -32,8 +44,7 @@ double scoreMatch(String descricaoFatura, Ingrediente ing) {
   final uni = a.union(b).length;
   var score = inter / uni; // Jaccard
   final descNorm = _normalizar(descricaoFatura);
-  if (ing.marca.isNotEmpty &&
-      descNorm.contains(_normalizar(ing.marca))) {
+  if (ing.marca.isNotEmpty && descNorm.contains(_normalizar(ing.marca))) {
     score += 0.15;
   }
   return score;

@@ -43,9 +43,11 @@ class _SheetState extends ConsumerState<_Sheet> {
 
   void _carregar() {
     final i = _intervalo;
-    setState(() => _fut = ref
-        .read(invoiceRepositoryProvider)
-        .exportContabilidade(de: i.de, ate: i.ate));
+    setState(
+      () => _fut = ref
+          .read(invoiceRepositoryProvider)
+          .exportContabilidade(de: i.de, ate: i.ate),
+    );
   }
 
   void _mudarMes(int delta) {
@@ -71,8 +73,7 @@ class _SheetState extends ConsumerState<_Sheet> {
 
   @override
   Widget build(BuildContext context) {
-    final rotulo =
-        '${_mes.month.toString().padLeft(2, '0')}/${_mes.year}';
+    final rotulo = '${_mes.month.toString().padLeft(2, '0')}/${_mes.year}';
     return Padding(
       padding: EdgeInsets.only(
         left: 16,
@@ -85,8 +86,10 @@ class _SheetState extends ConsumerState<_Sheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Faturas para a contabilidade',
-                style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'Faturas para a contabilidade',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -94,9 +97,7 @@ class _SheetState extends ConsumerState<_Sheet> {
                   onPressed: () => _mudarMes(-1),
                   icon: const Icon(Icons.chevron_left),
                 ),
-                Expanded(
-                  child: Text(rotulo, textAlign: TextAlign.center),
-                ),
+                Expanded(child: Text(rotulo, textAlign: TextAlign.center)),
                 IconButton(
                   onPressed: () => _mudarMes(1),
                   icon: const Icon(Icons.chevron_right),
@@ -121,7 +122,9 @@ class _SheetState extends ConsumerState<_Sheet> {
                     );
                   }
                   final total = fs.fold<double>(
-                      0, (s, f) => s + ((f['total'] as num?)?.toDouble() ?? 0));
+                    0,
+                    (s, f) => s + ((f['total'] as num?)?.toDouble() ?? 0),
+                  );
                   return Column(
                     children: [
                       Padding(
@@ -130,35 +133,41 @@ class _SheetState extends ConsumerState<_Sheet> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text('${fs.length} fatura(s)'),
-                            Text('Total ${total.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
+                            Text(
+                              'Total ${total.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ],
                         ),
                       ),
                       Expanded(
                         child: ListView.separated(
                           itemCount: fs.length,
-                          separatorBuilder: (_, __) =>
-                              const Divider(height: 1),
+                          separatorBuilder: (_, __) => const Divider(height: 1),
                           itemBuilder: (_, i) {
                             final f = fs[i];
                             final url = (f['ficheiroUrl'] ?? '').toString();
                             return ListTile(
                               dense: true,
                               title: Text('${f['nomeFicheiro'] ?? '—'}'),
-                              subtitle: Text([
-                                f['fornecedor'] ?? '',
-                                if ((f['numero'] ?? '').toString().isNotEmpty)
-                                  'nº ${f['numero']}',
-                                ((f['total'] as num?)?.toStringAsFixed(2) ??
-                                    ''),
-                              ].join(' · ')),
+                              subtitle: Text(
+                                [
+                                  f['fornecedor'] ?? '',
+                                  if ((f['numero'] ?? '').toString().isNotEmpty)
+                                    'nº ${f['numero']}',
+                                  ((f['total'] as num?)?.toStringAsFixed(2) ??
+                                      ''),
+                                ].join(' · '),
+                              ),
                               trailing: url.isEmpty
                                   ? null
                                   : IconButton(
-                                      icon: const Icon(Icons.open_in_new,
-                                          size: 18),
+                                      icon: const Icon(
+                                        Icons.open_in_new,
+                                        size: 18,
+                                      ),
                                       onPressed: () async {
                                         final u = await ref
                                             .read(invoiceRepositoryProvider)
@@ -179,11 +188,9 @@ class _SheetState extends ConsumerState<_Sheet> {
                           icon: const Icon(Icons.copy),
                           label: const Text('Copiar resumo (CSV)'),
                           onPressed: () {
-                            Clipboard.setData(
-                                ClipboardData(text: _csv(fs)));
+                            Clipboard.setData(ClipboardData(text: _csv(fs)));
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('Resumo copiado.')),
+                              const SnackBar(content: Text('Resumo copiado.')),
                             );
                           },
                         ),

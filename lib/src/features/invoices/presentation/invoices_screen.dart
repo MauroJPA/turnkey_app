@@ -36,13 +36,17 @@ class InvoicesScreen extends ConsumerWidget {
             SimpleDialogOption(
               onPressed: () => Navigator.pop(ctx, t),
               child: ListTile(
-                leading: Icon(t == FaturaTipo.fatura
-                    ? Icons.receipt_long_outlined
-                    : Icons.sell_outlined),
+                leading: Icon(
+                  t == FaturaTipo.fatura
+                      ? Icons.receipt_long_outlined
+                      : Icons.sell_outlined,
+                ),
                 title: Text(t.label),
-                subtitle: Text(t == FaturaTipo.fatura
-                    ? 'Foto ou PDF da fatura de uma compra'
-                    : 'Lista de preços do fornecedor (foto ou PDF)'),
+                subtitle: Text(
+                  t == FaturaTipo.fatura
+                      ? 'Foto ou PDF da fatura de uma compra'
+                      : 'Lista de preços do fornecedor (foto ou PDF)',
+                ),
               ),
             ),
         ],
@@ -54,11 +58,24 @@ class InvoicesScreen extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Fornecedor'),
-        content: TextField(
-          controller: forn,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'Ex.: Makro'),
+        title: const Text('Fornecedor (opcional)'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: forn,
+              autofocus: true,
+              decoration: const InputDecoration(hintText: 'Ex.: Makro'),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Podes deixar em branco: a IA lê o fornecedor da fatura. Se o '
+              'PDF tiver várias faturas (de fornecedores diferentes), cada uma '
+              'fica com o seu ficheiro.',
+              style: TextStyle(fontSize: 12),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -83,20 +100,35 @@ class InvoicesScreen extends ConsumerWidget {
     if (f?.bytes == null || !context.mounted) return;
 
     final messenger = ScaffoldMessenger.of(context)
-      ..showSnackBar(const SnackBar(
-        content: Text('A analisar a fatura…'),
-        duration: Duration(seconds: 8),
-      ));
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('A analisar a fatura…'),
+          duration: Duration(seconds: 8),
+        ),
+      );
     try {
-      final fatura = await ref.read(invoiceActionsProvider).criarEAnalisar(
+      final r = await ref
+          .read(invoiceActionsProvider)
+          .criarEAnalisar(
             tipo: tipo,
-            fornecedor: forn.text,
+            fornecedor: forn.text.trim(),
             bytes: f!.bytes!.toList(),
             nome: f.name,
           );
       messenger.hideCurrentSnackBar();
-      if (context.mounted) {
-        unawaited(context.push('${Routes.invoices}/${fatura.id}'));
+      if (r.total > 1) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              '${r.total} faturas detetadas neste ficheiro: cada uma ficou com '
+              'as suas páginas. Revê-as na lista.'
+              '${r.duplicadas > 0 ? ' (${r.duplicadas} já existia/m.)' : ''}',
+            ),
+            duration: const Duration(seconds: 8),
+          ),
+        );
+      } else if (context.mounted) {
+        unawaited(context.push('${Routes.invoices}/${r.fatura.id}'));
       }
     } on Object catch (e) {
       messenger.hideCurrentSnackBar();
@@ -109,7 +141,8 @@ class InvoicesScreen extends ConsumerWidget {
     final ok = await confirmDialog(
       context,
       titulo: 'Apagar fatura?',
-      mensagem: '${f.fornecedor.isEmpty ? 'Fatura' : f.fornecedor}'
+      mensagem:
+          '${f.fornecedor.isEmpty ? 'Fatura' : f.fornecedor}'
           '${f.numero.isEmpty ? '' : ' nº ${f.numero}'} — '
           'remove o registo e o ficheiro.',
       confirmar: 'Apagar',
@@ -129,7 +162,8 @@ class InvoicesScreen extends ConsumerWidget {
     final ok = await confirmDialog(
       context,
       titulo: 'Limpar faturas?',
-      mensagem: 'Apaga as faturas por analisar ("Nova"), as que ficaram com '
+      mensagem:
+          'Apaga as faturas por analisar ("Nova"), as que ficaram com '
           '"Erro" e as analisadas em que a IA não encontrou nenhuma linha. '
           'Fica registo em "Faturas apagadas".',
       confirmar: 'Limpar',
@@ -218,7 +252,8 @@ class InvoicesScreen extends ConsumerWidget {
             return const EmptyState(
               icon: Icons.receipt_long_outlined,
               titulo: 'Sem faturas',
-              mensagem: 'Usa "Nova fatura" e tira/escolhe a foto. '
+              mensagem:
+                  'Usa "Nova fatura" e tira/escolhe a foto. '
                   'A IA lê as linhas e tu confirmas.',
             );
           }
@@ -238,28 +273,31 @@ class InvoicesScreen extends ConsumerWidget {
                   child: Text(
                     entry.key,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
                 ),
                 for (final f in entry.value)
                   Card(
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 3,
+                    ),
                     child: ListTile(
                       title: Text(
                         f.fornecedor.isEmpty ? 'Fornecedor?' : f.fornecedor,
                       ),
-                      subtitle: Text([
-                        f.tipo.label,
-                        if (f.numero.isNotEmpty) 'nº ${f.numero}',
-                        if (f.dataFatura.isNotEmpty)
-                          formatDateShort(f.dataFatura),
-                        if (f.total > 0) fmt(f.total),
-                      ].join(' · ')),
+                      subtitle: Text(
+                        [
+                          f.tipo.label,
+                          if (f.numero.isNotEmpty) 'nº ${f.numero}',
+                          if (f.dataFatura.isNotEmpty)
+                            formatDateShort(f.dataFatura),
+                          if (f.total > 0) fmt(f.total),
+                        ].join(' · '),
+                      ),
                       trailing: _EstadoChip(estado: f.estado),
-                      onTap: () =>
-                          context.push('${Routes.invoices}/${f.id}'),
+                      onTap: () => context.push('${Routes.invoices}/${f.id}'),
                       onLongPress: podeEditar
                           ? () => _apagar(context, ref, f)
                           : null,
@@ -283,8 +321,10 @@ class _EstadoChip extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final (Color bg, Color fg) = switch (estado) {
       FaturaEstado.nova => (cs.surfaceContainerHighest, cs.onSurfaceVariant),
-      FaturaEstado.analisada =>
-        (cs.secondaryContainer, cs.onSecondaryContainer),
+      FaturaEstado.analisada => (
+        cs.secondaryContainer,
+        cs.onSecondaryContainer,
+      ),
       FaturaEstado.confirmada => (cs.primaryContainer, cs.onPrimaryContainer),
       FaturaEstado.erro => (cs.errorContainer, cs.onErrorContainer),
     };
