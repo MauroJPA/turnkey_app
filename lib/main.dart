@@ -21,7 +21,7 @@ Future<void> main() async {
   runApp(
     ProviderScope(
       overrides: [pbProvider.overrideWithValue(pb)],
-      child: const TurnkeyApp(),
+      child: const GcTurnkeyApp(),
     ),
   );
 }

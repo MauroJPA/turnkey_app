@@ -5,13 +5,13 @@
 // privilégios de servidor (as regras de API não permitem estes passos ao
 // utilizador diretamente, de propósito).
 //
-// POST /api/turnkey/onboarding
+// POST /api/gc_turnkey/onboarding
 //   body: { nome: string, moeda: "EUR"|..., regra: "cima"|"normal" }
 //   -> 200 { empresaId }
 
 routerAdd(
   'POST',
-  '/api/turnkey/onboarding',
+  '/api/gc_turnkey/onboarding',
   (e) => {
     const user = e.auth;
     if (!user || user.collection().name !== 'users') {

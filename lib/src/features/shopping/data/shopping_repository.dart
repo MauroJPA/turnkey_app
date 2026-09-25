@@ -156,7 +156,7 @@ class ShoppingRepository {
     var recalculadas = 0;
     for (final pid in producoes) {
       final res = await _pb.send(
-        '/api/turnkey/producoes/$pid/lista-compras',
+        '/api/gc_turnkey/producoes/$pid/lista-compras',
         method: 'POST',
       );
       recalculadas += ((res as Map)['linhas'] as num?)?.toInt() ?? 0;

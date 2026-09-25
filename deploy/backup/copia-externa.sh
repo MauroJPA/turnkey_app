@@ -4,7 +4,7 @@
 # instalar-agendamento.sh). Retenção: 30 dias em "diario/" + 12 meses em "mensal/"
 # (dia 1 de cada mês).
 #
-#   bash backup/copia-externa.sh                     # usa o remoto "gookie-crypt:"
+#   bash backup/copia-externa.sh                     # usa o remoto "gc_turnkey-crypt:"
 #   REMOTE=outro: bash backup/copia-externa.sh       # outro remoto rclone
 #
 # Alerta por email (opcional) se falhar: BACKUP_ALERT_TO, BACKUP_SMTP_HOST,
@@ -13,7 +13,7 @@ set -uo pipefail
 
 AQUI="$(cd "$(dirname "$0")" && pwd)"
 RAIZ="$(dirname "$AQUI")"
-REMOTE="${REMOTE:-gookie-crypt:}"
+REMOTE="${REMOTE:-gc_turnkey-crypt:}"
 DIAS_DIARIOS="${DIAS_DIARIOS:-30}"
 MESES_MENSAIS="${MESES_MENSAIS:-12}"
 IDADE_MAX_HORAS="${IDADE_MAX_HORAS:-30}"
@@ -35,9 +35,9 @@ alertar() {  # alertar "assunto" "corpo"
     log "Sem BACKUP_ALERT_TO/BACKUP_SMTP_HOST em .env - alerta por email não enviado." AVISO; return 0
   fi
   local msg; msg=$(printf 'From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s\r\n' \
-    "${BACKUP_SMTP_USER:-gookie}" "$BACKUP_ALERT_TO" "$1" "$2")
+    "${BACKUP_SMTP_USER:-gc_turnkey}" "$BACKUP_ALERT_TO" "$1" "$2")
   if printf '%s' "$msg" | curl -sS --ssl-reqd --url "smtp://${BACKUP_SMTP_HOST}:${BACKUP_SMTP_PORT:-587}" \
-      --user "${BACKUP_SMTP_USER:-}:${BACKUP_SMTP_PASS:-}" --mail-from "${BACKUP_SMTP_USER:-gookie@localhost}" \
+      --user "${BACKUP_SMTP_USER:-}:${BACKUP_SMTP_PASS:-}" --mail-from "${BACKUP_SMTP_USER:-gc_turnkey@localhost}" \
       --mail-rcpt "$BACKUP_ALERT_TO" -T - >/dev/null 2>&1; then
     log "Alerta enviado para $BACKUP_ALERT_TO."
   else
@@ -45,7 +45,7 @@ alertar() {  # alertar "assunto" "corpo"
   fi
 }
 
-falhar() { log "$1" ERRO; alertar "[Gookie] FALHA no backup externo" "$1 -- ver $LOG"; exit 1; }
+falhar() { log "$1" ERRO; alertar "[gc_turnkey] FALHA no backup externo" "$1 -- ver $LOG"; exit 1; }
 
 command -v rclone >/dev/null 2>&1 || falhar "rclone não está instalado (apt install rclone, ou https://rclone.org/install/)."
 [ -d "$PASTA" ] || falhar "Pasta de backups não existe: $PASTA"

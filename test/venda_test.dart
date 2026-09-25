@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/features/sales/domain/venda.dart';
-import 'package:turnkey_app/src/features/tech_sheets/domain/tech_sheet.dart';
+import 'package:gc_turnkey/src/features/sales/domain/venda.dart';
+import 'package:gc_turnkey/src/features/tech_sheets/domain/tech_sheet.dart';
 
 void main() {
   group('FichaTecnica.precoVenda / margemPercent', () {

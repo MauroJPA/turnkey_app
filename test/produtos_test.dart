@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/features/products/domain/lista_ingredientes.dart';
-import 'package:turnkey_app/src/features/products/domain/produto_gookie.dart';
-import 'package:turnkey_app/src/features/tech_sheets/domain/tech_sheet.dart';
+import 'package:gc_turnkey/src/features/products/domain/lista_ingredientes.dart';
+import 'package:gc_turnkey/src/features/products/domain/produto_rotulo.dart';
+import 'package:gc_turnkey/src/features/tech_sheets/domain/tech_sheet.dart';
 
 void main() {
   group('ListaIngredientes', () {

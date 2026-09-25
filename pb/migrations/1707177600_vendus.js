@@ -1,7 +1,6 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-// Financeiro (F-FIN-6) — sincronização com o Vendus (POS/faturação que a
-// Gookie usa). `vendas.vendus_id` identifica o documento de origem no
+// Financeiro (F-FIN-6) — sincronização com o Vendus (POS/faturação). `vendas.vendus_id` identifica o documento de origem no
 // Vendus, para não importar o mesmo documento duas vezes; índice único
 // (por empresa) só quando não está vazio, para não afetar as vendas
 // manuais/CSV (que não têm `vendus_id`).

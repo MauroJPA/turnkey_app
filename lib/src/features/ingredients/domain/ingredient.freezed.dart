@@ -41,7 +41,7 @@ mixin _$Ingrediente {
   String get nutriFoto => throw _privateConstructorUsedError;
   String get nomeRotulo => throw _privateConstructorUsedError;
 
-  /// Se preenchido, este "ingrediente" é na verdade um produto Gookie — um
+  /// Se preenchido, este "ingrediente" é na verdade um produto de fabrico próprio — um
   /// espelho da receita com este id. A nutrição vem da receita, não se
   /// preenche aqui.
   String? get receitaEspelhoId => throw _privateConstructorUsedError;
@@ -476,7 +476,7 @@ class _$IngredienteImpl extends _Ingrediente {
   @JsonKey()
   final String nomeRotulo;
 
-  /// Se preenchido, este "ingrediente" é na verdade um produto Gookie — um
+  /// Se preenchido, este "ingrediente" é na verdade um produto de fabrico próprio — um
   /// espelho da receita com este id. A nutrição vem da receita, não se
   /// preenche aqui.
   @override
@@ -638,7 +638,7 @@ abstract class _Ingrediente extends Ingrediente {
   @override
   String get nomeRotulo;
 
-  /// Se preenchido, este "ingrediente" é na verdade um produto Gookie — um
+  /// Se preenchido, este "ingrediente" é na verdade um produto de fabrico próprio — um
   /// espelho da receita com este id. A nutrição vem da receita, não se
   /// preenche aqui.
   @override

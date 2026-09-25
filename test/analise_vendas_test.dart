@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/features/finance/domain/analise_vendas.dart';
-import 'package:turnkey_app/src/features/finance/domain/periodo.dart';
-import 'package:turnkey_app/src/features/sales/domain/venda.dart';
+import 'package:gc_turnkey/src/features/finance/domain/analise_vendas.dart';
+import 'package:gc_turnkey/src/features/finance/domain/periodo.dart';
+import 'package:gc_turnkey/src/features/sales/domain/venda.dart';
 
 VendaItem _item({
   String? ficha,

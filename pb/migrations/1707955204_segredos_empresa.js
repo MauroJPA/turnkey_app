@@ -2,7 +2,7 @@
 
 // `segredos_empresa`: chaves/tokens de serviços externos de cada empresa (ex.:
 // o token do Vendus), guardados CIFRADOS (AES-256-GCM) com a chave-mestra
-// `TURNKEY_ENC_KEY` que só existe no ambiente do servidor (pb\.env), nunca na
+// `GC_TURNKEY_ENC_KEY` que só existe no ambiente do servidor (pb\.env), nunca na
 // base de dados nem nos backups. Sem regras de API (null): ninguém lê nem
 // escreve por REST; só os hooks do servidor (pb/hooks/segredos.js).
 

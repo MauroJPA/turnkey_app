@@ -1,4 +1,4 @@
-/// Mise en place de uma receita (resposta de `GET /api/turnkey/receitas/{id}/plano`).
+/// Mise en place de uma receita (resposta de `GET /api/gc_turnkey/receitas/{id}/plano`).
 class MepIngrediente {
   const MepIngrediente({
     required this.ingredienteId,

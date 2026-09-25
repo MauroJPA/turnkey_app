@@ -119,7 +119,7 @@ class SalesRepository {
         int totalDocumentosRecebidos,
       })> sincronizarVendus({DateTime? desde, DateTime? ate}) async {
     final res = await _pb.send(
-      '/api/turnkey/vendus/sincronizar',
+      '/api/gc_turnkey/vendus/sincronizar',
       method: 'POST',
       body: {
         if (desde != null) 'desde': ymd(desde),

@@ -1,7 +1,7 @@
 # Backups — instalação no servidor (Debian/Linux)
 
 Plano e razões em `docs/BACKUPS.md`. Aqui ficam os passos, **por ordem**, a correr no
-servidor, na pasta do Gookie (ex.: `/opt/gookie`). Decisões tomadas: destino **Google
+servidor, na pasta do gc_turnkey (ex.: `/opt/gc_turnkey`). Decisões tomadas: destino **Google
 Drive**, cifra **rclone crypt** (a chave fica com o Mauro), retenção **30 diários + 12
 mensais**, cópia semanal para **USB cifrado (LUKS)**.
 
@@ -38,8 +38,8 @@ rclone config
 
 Na mesma `rclone config`:
 
-1. `n` → nome: **`gookie-crypt`** → storage: **`crypt`**
-2. `remote`: **`gdrive:GookieBackups`**
+1. `n` → nome: **`gc_turnkey-crypt`** → storage: **`crypt`**
+2. `remote`: **`gdrive:gc_turnkey_backups`**
 3. `filename_encryption`: **standard** · `directory_name_encryption`: **true**
 4. Password: **g** (gerar) com **1024 bits** → o rclone **mostra a password** → **copiar já**
 5. Password2 (o "sal"): **g** de novo → **copiar também**
@@ -56,14 +56,14 @@ Sem projeto Google, sem ecrã de consentimento e sem expiração de autorizaçã
 
 1. Criar conta em backblaze.com (B2 Cloud Storage), escolhendo a região **EU Central (Amsterdão)**
    (a região não se muda depois).
-2. *Buckets → Create a Bucket*: nome único (ex.: `gookie-backups-xxxx`), **Private**.
+2. *Buckets → Create a Bucket*: nome único (ex.: `gc_turnkey-backups-xxxx`), **Private**.
 3. Nas definições do bucket, **Lifecycle Settings → Keep only the last version of the file**
    (senão os ficheiros "apagados" ficam escondidos e continuam a ocupar espaço).
-4. *Application Keys → Add a New Application Key*: nome `gookie-rclone`, acesso **só a esse bucket**,
+4. *Application Keys → Add a New Application Key*: nome `gc_turnkey-rclone`, acesso **só a esse bucket**,
    Read and Write. Copiar o **keyID** e a **applicationKey** (só aparece uma vez).
-5. No servidor: `rclone config` → `n` → nome **`b2gookie`** → storage **`b2`** → `account` = keyID,
+5. No servidor: `rclone config` → `n` → nome **`b2-gc_turnkey`** → storage **`b2`** → `account` = keyID,
    `key` = applicationKey, **`hard_delete` = true**, avançadas = n.
-6. Passo 3 abaixo, mas com `remote` = **`b2gookie:NOME-DO-BUCKET/GookieBackups`** (em vez de `gdrive:…`).
+6. Passo 3 abaixo, mas com `remote` = **`b2-gc_turnkey:NOME-DO-BUCKET/gc_turnkey_backups`** (em vez de `gdrive:…`).
 
 Limites do plano gratuito: 10 GB guardados, 1 GB/dia de descarga (o teste de restauro mensal cabe),
 2 500 operações "B" e 2 500 "C" por dia. Com 42 cópias, cada uma tem de ter **< ~240 MB** para
@@ -73,12 +73,12 @@ ficar grátis; para ficar dentro do gratuito por mais tempo, baixar `DIAS_DIARIO
 
 ```bash
 echo teste > /tmp/t.txt
-rclone copy /tmp/t.txt gookie-crypt:teste
-rclone lsf gookie-crypt:teste           # mostra t.txt
+rclone copy /tmp/t.txt gc_turnkey-crypt:teste
+rclone lsf gc_turnkey-crypt:teste           # mostra t.txt
 ```
 
-No Google Drive a pasta `GookieBackups` deve mostrar **nomes ilegíveis** (prova de que está
-cifrado). Apagar depois: `rclone purge gookie-crypt:teste`.
+No Google Drive a pasta `gc_turnkey_backups` deve mostrar **nomes ilegíveis** (prova de que está
+cifrado). Apagar depois: `rclone purge gc_turnkey-crypt:teste`.
 
 ## 5. Primeira cópia à mão
 
@@ -95,9 +95,9 @@ Tem de terminar com `Concluído.` (registos em `backup/logs/copia-externa.log`).
 
 ```bash
 sudo bash backup/instalar-agendamento.sh          # todos os dias às 03:30
-sudo systemctl start gookie-backup.service         # testar já
-journalctl -u gookie-backup -n 20
-systemctl list-timers gookie-backup*
+sudo systemctl start gc_turnkey-backup.service         # testar já
+journalctl -u gc_turnkey-backup -n 20
+systemctl list-timers gc_turnkey-backup*
 ```
 
 Corre com o teu utilizador (é onde está o `rclone.conf`).
@@ -106,7 +106,7 @@ Corre com o teu utilizador (é onde está o `rclone.conf`).
 
 No `.env` acrescentar (ver `.env.example`): `BACKUP_ALERT_TO`, `BACKUP_SMTP_HOST`,
 `BACKUP_SMTP_PORT`, `BACKUP_SMTP_USER`, `BACKUP_SMTP_PASS` (no Gmail, uma "palavra-passe de
-aplicação"). Sem isto a falha só fica no registo e em `systemctl status gookie-backup`.
+aplicação"). Sem isto a falha só fica no registo e em `systemctl status gc_turnkey-backup`.
 
 ## 8. USB semanal (cifrado com LUKS)
 
@@ -114,18 +114,18 @@ Uma vez (**apaga o USB!** confirmar o dispositivo com `lsblk`, aqui `/dev/sdX1`)
 
 ```bash
 sudo cryptsetup luksFormat /dev/sdX1              # escolher uma palavra-passe forte (guardá-la no cofre)
-sudo cryptsetup open /dev/sdX1 gookieusb
-sudo mkfs.ext4 -L GOOKIEUSB /dev/mapper/gookieusb
-sudo cryptsetup close gookieusb
+sudo cryptsetup open /dev/sdX1 gcturnkeyusb
+sudo mkfs.ext4 -L GCTURNKEYUSB /dev/mapper/gcturnkeyusb
+sudo cryptsetup close gcturnkeyusb
 ```
 
 Todos os domingos:
 
 ```bash
-sudo cryptsetup open /dev/sdX1 gookieusb
-sudo mkdir -p /mnt/gookie-usb && sudo mount /dev/mapper/gookieusb /mnt/gookie-usb
-sudo bash backup/copia-usb.sh /mnt/gookie-usb
-sudo umount /mnt/gookie-usb && sudo cryptsetup close gookieusb
+sudo cryptsetup open /dev/sdX1 gcturnkeyusb
+sudo mkdir -p /mnt/gc_turnkey-usb && sudo mount /dev/mapper/gcturnkeyusb /mnt/gc_turnkey-usb
+sudo bash backup/copia-usb.sh /mnt/gc_turnkey-usb
+sudo umount /mnt/gc_turnkey-usb && sudo cryptsetup close gcturnkeyusb
 ```
 
 Retirar o USB e guardá-lo **fora do servidor**. Mantém as últimas 12 cópias e o `.env`.
@@ -134,7 +134,7 @@ Retirar o USB e guardá-lo **fora do servidor**. Mantém as últimas 12 cópias 
 
 ```bash
 bash backup/teste-restauro.sh                               # a partir da nuvem (decifra)
-bash backup/teste-restauro.sh /mnt/gookie-usb/GookieBackups  # a partir do USB
+bash backup/teste-restauro.sh /mnt/gc_turnkey-usb/gc_turnkey_backups  # a partir do USB
 ```
 
 Tem de acabar com `RESTAURO OK`. Não toca na produção (contentor descartável na porta 18090).
@@ -142,8 +142,8 @@ Anotar a data e o tempo.
 
 ## Restauro a sério (desastre) ou mudança de máquina
 
-1. `rclone copy gookie-crypt:diario/<ficheiro>.zip .` (decifra) — ou copiar do USB.
-2. Na pasta do Gookie: `bash gookie.sh restaurar <ficheiro>.zip` (guarda os dados atuais em
+1. `rclone copy gc_turnkey-crypt:diario/<ficheiro>.zip .` (decifra) — ou copiar do USB.
+2. Na pasta do gc_turnkey: `bash gc_turnkey.sh restaurar <ficheiro>.zip` (guarda os dados atuais em
    `data.antes-…` e põe os do backup).
 3. Repor o `.env` (do cofre/USB) **antes** de arrancar, se for uma máquina nova.
 4. Entrar e conferir vendas/produções recentes e as imagens.

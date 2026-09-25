@@ -5,7 +5,7 @@
 library;
 
 enum RoundingRule {
-  /// Arredonda sempre para cima (comportamento histórico da Gookie).
+  /// Arredonda sempre para cima (comportamento histórico).
   up,
 
   /// Arredondamento normal (metade para cima).

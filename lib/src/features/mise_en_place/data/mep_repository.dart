@@ -27,7 +27,7 @@ class MepRepository {
     String? recheioId,
   }) async {
     final res = await _pb.send(
-      '/api/turnkey/receitas/$receitaId/plano',
+      '/api/gc_turnkey/receitas/$receitaId/plano',
       method: 'GET',
       query: {
         'kg': '$kg',
@@ -41,7 +41,7 @@ class MepRepository {
   /// Mise en place de um produto final (ficha técnica) para [unidades].
   Future<MepPlano> planoFicha(String fichaId, int unidades) async {
     final res = await _pb.send(
-      '/api/turnkey/fichas/$fichaId/plano',
+      '/api/gc_turnkey/fichas/$fichaId/plano',
       method: 'GET',
       query: {'unidades': '$unidades'},
     );
@@ -80,14 +80,14 @@ class MepRepository {
     var linhas = 0;
     if (gerarCompras) {
       final lc = await _pb.send(
-        '/api/turnkey/producoes/${plano.id}/lista-compras',
+        '/api/gc_turnkey/producoes/${plano.id}/lista-compras',
         method: 'POST',
       );
       linhas = ((lc as Map)['linhas'] as num?)?.toInt() ?? 0;
     }
 
     final res = await _pb.send(
-      '/api/turnkey/producoes/${plano.id}/concluir',
+      '/api/gc_turnkey/producoes/${plano.id}/concluir',
       method: 'POST',
     );
     return (

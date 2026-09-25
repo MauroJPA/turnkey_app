@@ -73,7 +73,7 @@ class Ingrediente with _$Ingrediente {
     @Default('') String nutriFoto,
     /// Nome curto/genérico para a lista resumida da etiqueta (opcional).
     @Default('') String nomeRotulo,
-    /// Se preenchido, este "ingrediente" é na verdade um produto Gookie — um
+    /// Se preenchido, este "ingrediente" é na verdade um produto de fabrico próprio — um
     /// espelho da receita com este id. A nutrição vem da receita, não se
     /// preenche aqui.
     String? receitaEspelhoId,
@@ -85,8 +85,8 @@ class Ingrediente with _$Ingrediente {
   double get custoPorGrama =>
       gramasEmbalagem > 0 ? preco / gramasEmbalagem : 0;
 
-  /// É um produto feito pela Gookie (espelho de uma receita).
-  bool get eProdutoGookie =>
+  /// É um produto de fabrico próprio (espelho de uma receita).
+  bool get eProdutoProprio =>
       origem == OrigemIngrediente.fabricoProprio &&
       (receitaEspelhoId?.isNotEmpty ?? false);
 

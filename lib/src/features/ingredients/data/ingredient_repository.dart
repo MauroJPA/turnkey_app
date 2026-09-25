@@ -81,7 +81,7 @@ class IngredientRepository implements IngredientWriter {
     required String nome,
   }) async {
     await _pb.send(
-      '/api/turnkey/ingredientes/$id/rotulo',
+      '/api/gc_turnkey/ingredientes/$id/rotulo',
       method: 'POST',
       body: {'imagem': base64Encode(bytes), 'mime': _mimeRotulo(nome)},
     );
@@ -99,7 +99,7 @@ class IngredientRepository implements IngredientWriter {
     required String nome,
   }) async {
     final res = await _pb.send(
-      '/api/turnkey/nutricao/ler-rotulo',
+      '/api/gc_turnkey/nutricao/ler-rotulo',
       method: 'POST',
       body: {'imagem': base64Encode(bytes), 'mime': _mimeRotulo(nome)},
     );
@@ -165,7 +165,7 @@ class IngredientRepository implements IngredientWriter {
     bool dryRun = false,
   }) async {
     final res = await _pb.send(
-      '/api/turnkey/ingredientes/auto-insa',
+      '/api/gc_turnkey/ingredientes/auto-insa',
       method: 'POST',
       body: {
         if (ids != null) 'ids': ids,

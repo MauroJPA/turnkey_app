@@ -3,15 +3,15 @@
 // M6 — gestão de equipa (endpoints privilegiados; as regras de API não deixam
 // o cliente mexer em `empresa`/`papel` diretamente — ver guards.pb.js).
 //
-//   POST  /api/turnkey/team/members         { nome, email, password, papel }
-//   PATCH /api/turnkey/team/members/{id}     { papel }
+//   POST  /api/gc_turnkey/team/members         { nome, email, password, papel }
+//   PATCH /api/gc_turnkey/team/members/{id}     { papel }
 //
 // NOTA: cada handler é autocontido (os handlers correm isolados e não veem
 // funções de topo do ficheiro).
 
 routerAdd(
   'POST',
-  '/api/turnkey/team/members',
+  '/api/gc_turnkey/team/members',
   (e) => {
     const caller = e.auth;
     if (!caller || caller.collection().name !== 'users') {
@@ -60,7 +60,7 @@ routerAdd(
 
 routerAdd(
   'PATCH',
-  '/api/turnkey/team/members/{id}',
+  '/api/gc_turnkey/team/members/{id}',
   (e) => {
     const caller = e.auth;
     if (!caller || caller.collection().name !== 'users') {

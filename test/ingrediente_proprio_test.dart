@@ -1,33 +1,33 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/features/ingredients/domain/ingredient.dart';
+import 'package:gc_turnkey/src/features/ingredients/domain/ingredient.dart';
 
 void main() {
-  test('eProdutoGookie: fabrico próprio + receita_espelho', () {
+  test('eProdutoProprio: fabrico próprio + receita_espelho', () {
     const espelho = Ingrediente(
       id: 'e1',
       nome: 'Boston',
       origem: OrigemIngrediente.fabricoProprio,
       receitaEspelhoId: 'rec_boston',
     );
-    expect(espelho.eProdutoGookie, isTrue);
+    expect(espelho.eProdutoProprio, isTrue);
   });
 
-  test('eProdutoGookie: falso sem receita_espelho', () {
+  test('eProdutoProprio: falso sem receita_espelho', () {
     const feitoEmCasa = Ingrediente(
       id: 'e2',
       nome: 'Compota caseira',
       origem: OrigemIngrediente.fabricoProprio,
     );
-    expect(feitoEmCasa.eProdutoGookie, isFalse);
+    expect(feitoEmCasa.eProdutoProprio, isFalse);
   });
 
-  test('eProdutoGookie: falso para ingrediente comprado', () {
+  test('eProdutoProprio: falso para ingrediente comprado', () {
     const comprado = Ingrediente(
       id: 'i1',
       nome: 'Farinha',
       origem: OrigemIngrediente.comprado,
     );
-    expect(comprado.eProdutoGookie, isFalse);
+    expect(comprado.eProdutoProprio, isFalse);
   });
 
   test('precisaRevisaoInsa lê nutri_origem', () {

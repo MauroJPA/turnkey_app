@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/features/ingredients/domain/ingredient.dart';
-import 'package:turnkey_app/src/features/invoices/domain/match_ingrediente.dart';
+import 'package:gc_turnkey/src/features/ingredients/domain/ingredient.dart';
+import 'package:gc_turnkey/src/features/invoices/domain/match_ingrediente.dart';
 
 Ingrediente ing(String nome, {String marca = '', String carac = ''}) =>
     Ingrediente(id: nome, nome: nome, marca: marca, caracteristica: carac);

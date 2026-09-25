@@ -1,4 +1,4 @@
-# Checklist de testes — turnkey_app
+# Checklist de testes — gc_turnkey
 
 Percorre esta lista na app (login `ana@teste.local`). Para cada ponto marca
 `[x]` se está OK, ou escreve a seguir o que queres ajustar. Reinicia o
@@ -12,7 +12,7 @@ antes de começar, para carregar as últimas migrations (há **43**; a última �
 13 Faturas · 14 Nutrição · 15 Embalagens · **16 Vendas · 17 Análise de vendas ·
 18 Encomendas · 19 Custos fixos · 20 Equipamentos · 21 Números mágicos ·
 22 Painel financeiro · 23 DRE · 24 Configurações (empresa/percentuais) ·
-25 Equipa · 26 Navegação e permissões · 27 Produtos Gookie · 28 Segurança**.
+25 Equipa · 26 Navegação e permissões · 27 Produtos · 28 Segurança**.
 
 **Limites conhecidos do teste automático** (verifica sempre à mão): tudo o que
 abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
@@ -155,7 +155,7 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       preço de venda a coluna Real mostra "—".
 - [ ] **Dados do produto** na ficha (editar/criar): **Descrição** (curta, para a
       etiqueta), **Validade (dias)** e **Conservação** — ficam gravados e
-      aparecem na página Produtos Gookie.
+      aparecem na página Produtos.
 - [ ] Campo **Formato do cookie** (ao criar/editar a ficha, lista Mini/Recheado/
       Simples… ou "Sem formato") → aparece na lista e no detalhe ("Formato: …").
       Serve para a produção encontrar a ficha certa: massa + recheio + formato.
@@ -283,7 +283,7 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 
 ## 13. Faturas (foto → preços e stock)
 
-> Pré-requisito no servidor: `TURNKEY_AI_PROVIDER` (por omissão `gemini`) e a
+> Pré-requisito no servidor: `GC_TURNKEY_AI_PROVIDER` (por omissão `gemini`) e a
 > chave desse provider — `GEMINI_API_KEY` (grátis, <https://aistudio.google.com/app/apikey>)
 > ou `ANTHROPIC_API_KEY` — em `pb/.env` (ver `pb/DEPLOY.md`). Sem a chave, o
 > passo "analisar" mostra **"IA não configurada"** — o resto da página funciona.
@@ -338,12 +338,12 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       "X preço(s) NÃO vão mudar"; depois de aplicar, o **preço mantém-se** mas a
       **entrada de stock é feita** (a mensagem final diz "X preço(s) mantidos").
 - [ ] Re-analisar uma fatura já analisada volta a chamar a IA (repete o custo).
-- [ ] **Scanner (se configurado)**: pôr um PDF na pasta `TURNKEY_SCAN_DIR` →
+- [ ] **Scanner (se configurado)**: pôr um PDF na pasta `GC_TURNKEY_SCAN_DIR` →
       em ≤ 5 min aparece uma fatura "Nova" com nota "Scanner: …" e o original
       passa para `processadas/`. O painel inicial mostra "Faturas por rever".
 - [ ] **Contabilidade**: em Faturas, o ícone da pasta abre o resumo do mês
       anterior (lista + total + "Copiar resumo (CSV)"); cada linha abre o
-      ficheiro. Com `TURNKEY_CONTAB_EMAIL` + SMTP, o dia 1 envia o pacote por
+      ficheiro. Com `GC_TURNKEY_CONTAB_EMAIL` + SMTP, o dia 1 envia o pacote por
       email.
 
 ## 14. Nutrição e alergénios
@@ -548,9 +548,9 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Um utilizador não consegue alterar as permissões por API (só o Proprietário;
       o Administrador só o rodapé).
 
-## 27. Produtos Gookie
+## 27. Produtos
 
-- [ ] Início → **Produtos Gookie** (cartão na grelha; também na lista "Todas as
+- [ ] Início → **Produtos** (cartão na grelha; também na lista "Todas as
       páginas") abre a lista (seta ←, **?**, rodapé).
 - [ ] Cada produto (ficha técnica) mostra: ícone **visto** se a nutrição está
       completa ou **aviso** se falta; categoria, formato, peso por unidade,

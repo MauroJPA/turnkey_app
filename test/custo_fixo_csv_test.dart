@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/features/finance/domain/custo_fixo.dart';
-import 'package:turnkey_app/src/features/finance/domain/custo_fixo_csv.dart';
+import 'package:gc_turnkey/src/features/finance/domain/custo_fixo.dart';
+import 'package:gc_turnkey/src/features/finance/domain/custo_fixo_csv.dart';
 
 void main() {
   test('lê cabeçalho e cria um CustoFixoInput fixo por linha', () {

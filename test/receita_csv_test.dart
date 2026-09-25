@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/features/recipes/domain/receita_csv.dart';
-import 'package:turnkey_app/src/features/recipes/domain/recipe.dart';
+import 'package:gc_turnkey/src/features/recipes/domain/receita_csv.dart';
+import 'package:gc_turnkey/src/features/recipes/domain/recipe.dart';
 
 void main() {
   test('tabela colada (tab): agrupa por receita, categoria e quantidades', () {

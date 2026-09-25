@@ -4,7 +4,7 @@
 #
 #   powershell -ExecutionPolicy Bypass -File scripts\empacotar-producao.ps1
 #
-# Resultado: dist\gookie-servidor-<versao>.tar.gz  (e a pasta dist\gookie-servidor).
+# Resultado: dist\gc_turnkey-servidor-<versao>.tar.gz  (e a pasta dist\gc_turnkey-servidor).
 # Correr na raiz do projeto, no ramo main (versao lancada). Nao inclui dados
 # (data), chaves (.env) nem copias de seguranca. Instalar: docs\SERVIDOR_LINUX.md
 
@@ -21,7 +21,7 @@ Write-Host "1/4  A compilar a app web (v$versao) ..."
 flutter build web --release --no-wasm-dry-run --dart-define=PB_URL=origin
 if ($LASTEXITCODE -ne 0) { throw "flutter build web falhou" }
 
-$saida = Join-Path (Get-Location) "dist\gookie-servidor"
+$saida = Join-Path (Get-Location) "dist\gc_turnkey-servidor"
 if (Test-Path $saida) { Remove-Item $saida -Recurse -Force }
 New-Item -ItemType Directory -Force "$saida\docs", "$saida\backup" | Out-Null
 
@@ -29,7 +29,7 @@ Write-Host "2/4  A juntar ficheiros ..."
 Copy-Item "build\web" "$saida\web" -Recurse
 Copy-Item "pb\hooks" "$saida\hooks" -Recurse
 Copy-Item "pb\migrations" "$saida\migrations" -Recurse
-foreach ($f in "Dockerfile", "compose.yaml", ".env.example", "gookie.sh") {
+foreach ($f in "Dockerfile", "compose.yaml", ".env.example", "gc_turnkey.sh") {
   Copy-Item "deploy\$f" "$saida\$f"
 }
 Copy-Item "deploy\backup\*" "$saida\backup" -Recurse
@@ -39,7 +39,7 @@ foreach ($d in "SERVIDOR_LINUX.md", "BACKUPS.md", "SEGURANCA.md") {
 }
 $pbv = (Select-String -Path deploy\compose.yaml -Pattern 'PB_VERSION:-([0-9.]+)').Matches[0].Groups[1].Value
 @"
-Gookie - pacote de producao (Linux/Docker)
+gc_turnkey - pacote de producao (Linux/Docker)
 App:        v$versao (commit $commit, ramo $ramo)
 PocketBase: $pbv (descarregado ao construir a imagem, com SHA-256 conferido)
 Criado em:  $(Get-Date -Format s)
@@ -57,7 +57,7 @@ Get-ChildItem $saida -Recurse -File | Where-Object {
 }
 
 Write-Host "3/4  A criar o .tar.gz ..."
-$tgz = Join-Path (Get-Location) "dist\gookie-servidor-$versao.tar.gz"
+$tgz = Join-Path (Get-Location) "dist\gc_turnkey-servidor-$versao.tar.gz"
 if (Test-Path $tgz) { Remove-Item $tgz -Force }
 tar -czf $tgz -C $saida .
 if ($LASTEXITCODE -ne 0) { throw "tar falhou" }

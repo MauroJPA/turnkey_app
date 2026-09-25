@@ -3,15 +3,15 @@
 // Fase 2 — endpoints de stock e produção.
 // (handlers autocontidos; lógica pesada em cascade.js via require())
 //
-//   POST /api/turnkey/inventario/ajustar          { ingrediente?|ficha?, delta, motivo, notas?, producao? }
-//   GET  /api/turnkey/producoes/{id}/plano
-//   POST /api/turnkey/producoes/{id}/lista-compras
-//   POST /api/turnkey/producoes/{id}/concluir
+//   POST /api/gc_turnkey/inventario/ajustar          { ingrediente?|ficha?, delta, motivo, notas?, producao? }
+//   GET  /api/gc_turnkey/producoes/{id}/plano
+//   POST /api/gc_turnkey/producoes/{id}/lista-compras
+//   POST /api/gc_turnkey/producoes/{id}/concluir
 
-// --- POST /api/turnkey/inventario/ajustar ---------------------------------
+// --- POST /api/gc_turnkey/inventario/ajustar ---------------------------------
 routerAdd(
   'POST',
-  '/api/turnkey/inventario/ajustar',
+  '/api/gc_turnkey/inventario/ajustar',
   (e) => {
     const auth = e.auth;
     const isSuper =
@@ -113,10 +113,10 @@ routerAdd(
   $apis.requireAuth('users', '_superusers'),
 );
 
-// --- GET /api/turnkey/producoes/{id}/plano -------------------------------
+// --- GET /api/gc_turnkey/producoes/{id}/plano -------------------------------
 routerAdd(
   'GET',
-  '/api/turnkey/producoes/{id}/plano',
+  '/api/gc_turnkey/producoes/{id}/plano',
   (e) => {
     const cascade = require(`${__hooks}/cascade.js`);
     const ctx = require(`${__hooks}/cascade.js`).carregarProducao(e, false);
@@ -352,10 +352,10 @@ routerAdd(
   $apis.requireAuth('users', '_superusers'),
 );
 
-// --- POST /api/turnkey/producoes/{id}/lista-compras --------------------
+// --- POST /api/gc_turnkey/producoes/{id}/lista-compras --------------------
 routerAdd(
   'POST',
-  '/api/turnkey/producoes/{id}/lista-compras',
+  '/api/gc_turnkey/producoes/{id}/lista-compras',
   (e) => {
     const cascade = require(`${__hooks}/cascade.js`);
     const ctx = require(`${__hooks}/cascade.js`).carregarProducao(e, true);
@@ -489,10 +489,10 @@ routerAdd(
   $apis.requireAuth('users', '_superusers'),
 );
 
-// --- POST /api/turnkey/producoes/{id}/concluir ------------------------
+// --- POST /api/gc_turnkey/producoes/{id}/concluir ------------------------
 routerAdd(
   'POST',
-  '/api/turnkey/producoes/{id}/concluir',
+  '/api/gc_turnkey/producoes/{id}/concluir',
   (e) => {
     const cascade = require(`${__hooks}/cascade.js`);
     const ctx = require(`${__hooks}/cascade.js`).carregarProducao(e, true);
@@ -724,13 +724,13 @@ routerAdd(
   $apis.requireAuth('users', '_superusers'),
 );
 
-// --- GET /api/turnkey/fichas/resolver ---------------------------------
+// --- GET /api/gc_turnkey/fichas/resolver ---------------------------------
 // Devolve a ficha técnica que corresponde a uma massa + formato (+ recheio),
 // com os componentes (recheios/coberturas/extra) e a quantidade por unidade.
 //   query: massa, formato, recheio?
 routerAdd(
   'GET',
-  '/api/turnkey/fichas/resolver',
+  '/api/gc_turnkey/fichas/resolver',
   (e) => {
     const cascade = require(`${__hooks}/cascade.js`);
     const auth = e.auth;
@@ -806,12 +806,12 @@ routerAdd(
   $apis.requireAuth('users', '_superusers'),
 );
 
-// --- GET /api/turnkey/receitas/{id}/plano -----------------------------
+// --- GET /api/gc_turnkey/receitas/{id}/plano -----------------------------
 // Mise en place de UMA receita, sem precisar de uma produção agendada.
 //   ?kg=  (obrigatório)  &formato=  &recheio=  &empresa=(só superuser)
 routerAdd(
   'GET',
-  '/api/turnkey/receitas/{id}/plano',
+  '/api/gc_turnkey/receitas/{id}/plano',
   (e) => {
     const cascade = require(`${__hooks}/cascade.js`);
     const auth = e.auth;
@@ -993,14 +993,14 @@ routerAdd(
   $apis.requireAuth('users', '_superusers'),
 );
 
-// --- GET /api/turnkey/fichas/{id}/plano -------------------------------
+// --- GET /api/gc_turnkey/fichas/{id}/plano -------------------------------
 // Mise en place de um PRODUTO FINAL (ficha técnica): para N unidades, o que
 // produzir primeiro (massa, recheios, coberturas e sub-receitas) e os
 // ingredientes a pesar/comprar.
 //   ?unidades=  (obrigatório)  &empresa=(só superuser)
 routerAdd(
   'GET',
-  '/api/turnkey/fichas/{id}/plano',
+  '/api/gc_turnkey/fichas/{id}/plano',
   (e) => {
     const cascade = require(`${__hooks}/cascade.js`);
     const auth = e.auth;

@@ -1,7 +1,7 @@
 /// <reference path="../pb_data/types.d.ts" />
 
 // Fase 3 — `formatos_cookie` (tamanhos de cookie por empresa).
-// Semeia os 3 formatos atuais da Gookie em todas as empresas existentes;
+// Semeia os 3 formatos de cookie por omissão em todas as empresas existentes;
 // o onboarding faz o mesmo para novas empresas.
 
 migrate(

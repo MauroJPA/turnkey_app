@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/core/nutrition/nutrition.dart';
-import 'package:turnkey_app/src/features/products/domain/etiqueta.dart';
-import 'package:turnkey_app/src/features/products/domain/lista_ingredientes.dart';
+import 'package:gc_turnkey/src/core/nutrition/nutrition.dart';
+import 'package:gc_turnkey/src/features/products/domain/etiqueta.dart';
+import 'package:gc_turnkey/src/features/products/domain/lista_ingredientes.dart';
 
 void main() {
   final lista = ListaIngredientes.de(const [
@@ -28,7 +28,7 @@ void main() {
     EtiquetaNutri modo = EtiquetaNutri.tabela,
     bool e = false,
     int copias = 1,
-    String produtor = 'Gookie Cookies, Lda\nRua X, Porto',
+    String produtor = 'Empresa Exemplo, Lda\nRua X, Porto',
     String nome = 'Boston',
   }) => EtiquetaDados(
     nome: nome,
@@ -67,7 +67,7 @@ void main() {
       expect(h, contains('<b>Fabrico:</b> 24/09/2026'));
       expect(h, contains('Consumir de preferência antes de:</b> 01/10/2026'));
       expect(h, contains('<b>Lote:</b> 260924'));
-      expect(h, contains('Gookie Cookies, Lda<br>Rua X, Porto'));
+      expect(h, contains('Empresa Exemplo, Lda<br>Rua X, Porto'));
       expect(h, contains('<b>Pode conter:</b> Frutos de casca rija.'));
       expect(h, contains('referência, aproximados'));
     });

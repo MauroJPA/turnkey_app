@@ -1,6 +1,6 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-// M0 — coleções base do turnkey_app.
+// M0 — coleções base do gc_turnkey.
 // Escrito para a API JS de migrations do PocketBase v0.35.
 // A validar contra o servidor real no M1 (ajustar se a API divergir).
 

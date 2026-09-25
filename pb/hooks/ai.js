@@ -8,10 +8,10 @@
 //     -> { ok: false, code, message, raw? }          (503 sem chave; 502 rede/IA/JSON)
 //
 // Escolha do fornecedor por variável de ambiente (sem alterar código):
-//   TURNKEY_AI_PROVIDER   gemini | anthropic          (por omissão: gemini)
+//   GC_TURNKEY_AI_PROVIDER   gemini | anthropic          (por omissão: gemini)
 //   GEMINI_API_KEY        chave do Google AI Studio   (provider = gemini)
 //   ANTHROPIC_API_KEY     chave da Anthropic          (provider = anthropic)
-//   TURNKEY_AI_MODEL      modelo a usar               (por omissão, por fornecedor)
+//   GC_TURNKEY_AI_MODEL      modelo a usar               (por omissão, por fornecedor)
 //
 // Tudo numa função exportada, com auxiliares como closures — o require() do
 // PocketBase não mantém de forma fiável a visibilidade entre funções de topo.
@@ -24,7 +24,7 @@ function analisarImagemIA(opts) {
 
   if (!imagem) return { ok: false, code: 400, message: 'Falta a imagem (base64).' };
 
-  var provider = ($os.getenv('TURNKEY_AI_PROVIDER') || 'gemini').toLowerCase().trim();
+  var provider = ($os.getenv('GC_TURNKEY_AI_PROVIDER') || 'gemini').toLowerCase().trim();
 
   // ---- prompt por tarefa -----------------------------------------------
   var sistema, instrucao;
@@ -86,8 +86,8 @@ function analisarImagemIA(opts) {
     if (!key) return { code: 503, message: 'IA não configurada (falta GEMINI_API_KEY).' };
     // A Google descontinua os modelos ~a cada 6-12 meses (ex.: gemini-2.0-flash
     // foi desligado). Se der 502 "model ... is no longer available", mete o
-    // novo em TURNKEY_AI_MODEL (ex.: gemini-3.8-flash) sem tocar no código.
-    var model = $os.getenv('TURNKEY_AI_MODEL') || 'gemini-3.6-flash';
+    // novo em GC_TURNKEY_AI_MODEL (ex.: gemini-3.8-flash) sem tocar no código.
+    var model = $os.getenv('GC_TURNKEY_AI_MODEL') || 'gemini-3.6-flash';
     var out = http({
       url:
         'https://generativelanguage.googleapis.com/v1beta/models/' +
@@ -126,7 +126,7 @@ function analisarImagemIA(opts) {
   var pedirAnthropic = function () {
     var key = $os.getenv('ANTHROPIC_API_KEY');
     if (!key) return { code: 503, message: 'IA não configurada (falta ANTHROPIC_API_KEY).' };
-    var model = $os.getenv('TURNKEY_AI_MODEL') || 'claude-sonnet-5';
+    var model = $os.getenv('GC_TURNKEY_AI_MODEL') || 'claude-sonnet-5';
     var bloco =
       mime === 'application/pdf'
         ? { type: 'document', source: { type: 'base64', media_type: mime, data: imagem } }
@@ -176,7 +176,7 @@ function analisarImagemIA(opts) {
       return {
         ok: false,
         code: 503,
-        message: 'TURNKEY_AI_PROVIDER desconhecido: "' + provider + '".',
+        message: 'GC_TURNKEY_AI_PROVIDER desconhecido: "' + provider + '".',
       };
   }
   if (r.code) return { ok: false, code: r.code, message: r.message };

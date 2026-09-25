@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/features/import_csv/application/ingredient_import_service.dart';
-import 'package:turnkey_app/src/features/ingredients/data/ingredient_repository.dart';
-import 'package:turnkey_app/src/features/ingredients/domain/ingredient.dart';
+import 'package:gc_turnkey/src/features/import_csv/application/ingredient_import_service.dart';
+import 'package:gc_turnkey/src/features/ingredients/data/ingredient_repository.dart';
+import 'package:gc_turnkey/src/features/ingredients/domain/ingredient.dart';
 
 class _FakeRepo implements IngredientWriter {
   final Map<String, Ingrediente> byName = {};

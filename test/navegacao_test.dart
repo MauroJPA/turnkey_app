@@ -1,11 +1,11 @@
 import 'dart:ui' show Color;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gc_turnkey/src/core/auth/permissions.dart';
+import 'package:gc_turnkey/src/features/navigation/domain/nav_config.dart';
+import 'package:gc_turnkey/src/features/navigation/domain/nav_prefs.dart';
+import 'package:gc_turnkey/src/features/navigation/domain/pagina_app.dart';
 import 'package:pocketbase/pocketbase.dart';
-import 'package:turnkey_app/src/core/auth/permissions.dart';
-import 'package:turnkey_app/src/features/navigation/domain/nav_config.dart';
-import 'package:turnkey_app/src/features/navigation/domain/nav_prefs.dart';
-import 'package:turnkey_app/src/features/navigation/domain/pagina_app.dart';
 
 void main() {
   group('paginaDaRota', () {

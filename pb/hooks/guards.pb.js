@@ -2,7 +2,7 @@
 
 // Impede que um utilizador altere a sua própria `empresa` ou `papel` por uma
 // chamada normal à API. Estes campos só mudam via:
-//   - hook de onboarding (POST /api/turnkey/onboarding), ou
+//   - hook de onboarding (POST /api/gc_turnkey/onboarding), ou
 //   - gestão de equipa por admin/owner (endpoint próprio, M6),
 // ambos com privilégios de servidor (não passam por onRecordUpdateRequest).
 onRecordUpdateRequest((e) => {

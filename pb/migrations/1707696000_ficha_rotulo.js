@@ -1,6 +1,6 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-// Dados do produto final para a etiqueta e a página "Produtos Gookie":
+// Dados do produto final para a etiqueta e a página "Produtos":
 // descrição curta, prazo de validade (dias a contar da data de fabrico) e modo
 // de conservação.
 

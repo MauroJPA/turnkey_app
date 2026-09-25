@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../cookie_formats/application/cookie_format_providers.dart';
-import '../../products/domain/produto_gookie.dart';
+import '../../products/domain/produto_rotulo.dart';
 import '../domain/tech_sheet.dart';
 
 Future<FichaInput?> showFichaFormSheet(
