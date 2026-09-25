@@ -255,6 +255,7 @@ routerAdd(
         comprarLista.push({
           ingredienteId: k,
           nome: ing.getString('nome'),
+          unidade: ing.getString('unidade') || 'g',
           gramas: comprarItem[k],
         });
       }
@@ -318,6 +319,7 @@ routerAdd(
       necessarios.push({
         ingredienteId: ingId,
         nome: ing.getString('nome'),
+        unidade: ing.getString('unidade') || 'g',
         fornecedor: ing.getString('fornecedor'),
         gramas: g,
         custo: custo,
@@ -521,6 +523,7 @@ routerAdd(
           row.set('quantidade_necessaria_g', necessarioP);
           row.set('quantidade_comprar_g', comprar);
           row.set('embalagem_g', embG);
+          row.set('unidade', ing.getString('unidade') === 'g' ? '' : ing.getString('unidade'));
           row.set('custo_estimado', comprar * cpg);
           tx.save(row);
           manter[row.id] = true;
@@ -607,7 +610,7 @@ routerAdd(
           { id: receitaRec.id },
         );
         let pesoBase = 0;
-        for (const l of linhas) pesoBase += num(l, 'quantidade_g');
+        for (const l of linhas) pesoBase += num(l, 'quantidade_g') * cascade.fatorPesoLinha(tx, l);
         const fator = pesoBase > 0 ? alvoG / pesoBase : 0;
         for (const l of linhas) {
           const g = num(l, 'quantidade_g') * fator;
@@ -1018,6 +1021,7 @@ routerAdd(
       comprar.push({
         ingredienteId: k,
         nome: ing.getString('nome'),
+        unidade: ing.getString('unidade') || 'g',
         gramas: comprarMap[k],
         emStock: emStockDe(k),
       });
@@ -1123,7 +1127,10 @@ routerAdd(
       comprar.push({
         ingredienteId: k,
         nome: ing.getString('nome'),
+        unidade: ing.getString('unidade') || 'g',
         gramas: plano.comprar[k],
+        // peso em gramas (ml x densidade, un x peso da unidade): ordena a lista de ingredientes do rótulo
+        pesoG: plano.comprar[k] * cascade.fatorPesoIng(ing),
         emStock: emStockDe(k),
         // produtos de compra fixados nas receitas deste produto (para os alergénios)
         produtoIds: Object.keys(plano.produtosFixados[k] || {}).filter((x) => x !== ''),

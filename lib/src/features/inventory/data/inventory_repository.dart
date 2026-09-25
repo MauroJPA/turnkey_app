@@ -56,6 +56,7 @@ class InventoryRepository {
           favorito: row?.getBoolValue('favorito') ?? false,
           usos: row?.getDoubleValue('usos') ?? 0,
           ultimoUso: row?.getStringValue('ultimo_uso') ?? '',
+          unidadeIng: i.getStringValue('unidade'),
         ),
       );
     }

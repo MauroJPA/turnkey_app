@@ -87,7 +87,20 @@ class IngredientImportService {
           await _repo.create(input);
           result.criados++;
         } else {
-          await _repo.update(existente.id, input);
+          // o CSV não traz a unidade: mantém a do ingrediente existente
+          await _repo.update(
+            existente.id,
+            IngredienteInput(
+              nome: input.nome,
+              caracteristica: input.caracteristica,
+              marca: input.marca,
+              fornecedor: input.fornecedor,
+              preco: input.preco,
+              gramasEmbalagem: input.gramasEmbalagem,
+              unidade: existente.un,
+              gramasUnidade: existente.gramasUnidade,
+            ),
+          );
           result.atualizados++;
         }
       } on Object catch (e) {

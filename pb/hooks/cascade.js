@@ -8,6 +8,34 @@
 //
 //   runCascade(app, 'ingrediente'|'receita', id)
 
+// Fator para converter a quantidade NATIVA de um ingrediente em gramas (peso):
+// g -> 1; ml -> densidade (`nutri_densidade`, 1 por omissão); un -> peso de cada
+// unidade (`gramas_unidade`, 1 por omissão). Custos, stock e compras ficam na
+// unidade nativa; o peso da receita e a nutrição usam gramas.
+function fatorPesoIng(ing) {
+  const u = ing.getString('unidade');
+  if (u === 'ml') {
+    const d = ing.getFloat('nutri_densidade');
+    return d > 0 ? d : 1;
+  }
+  if (u === 'un') {
+    const g = ing.getFloat('gramas_unidade');
+    return g > 0 ? g : 1;
+  }
+  return 1;
+}
+
+// Fator de uma linha (de receita/ficha): 1 se não é um ingrediente.
+function fatorPesoLinha(app, item) {
+  const r = item.getString('ingrediente');
+  if (!r) return 1;
+  try {
+    return fatorPesoIng(app.findRecordById('ingredientes', r));
+  } catch (_) {
+    return 1;
+  }
+}
+
 function runCascade(app, kind, rootId) {
   const EPS = 0.001;
   const seen = new Set();
@@ -288,7 +316,7 @@ function runCascade(app, kind, rootId) {
       const recRel = item.getString('receita');
       const embRel = item.getString('embalagem');
       if (ingRel) {
-        peso += qtd;
+        peso += qtd * fatorPesoLinha(app, item);
         let ing;
         try {
           ing = app.findRecordById('ingredientes', ingRel);
@@ -387,7 +415,7 @@ function runCascade(app, kind, rootId) {
     let completoF = true;
     const semDadosF = [];
     for (const item of itens) {
-      const qtd = fnum(item, 'quantidade_g');
+      const qtd = fnum(item, 'quantidade_g') * fatorPesoLinha(app, item);
       if (qtd <= 0) continue;
       const ingRel = item.getString('ingrediente');
       const recRel = item.getString('receita');
@@ -565,7 +593,7 @@ function runCascade(app, kind, rootId) {
     let peso = 0;
     for (const item of itens) {
       const qtd = fnum(item, 'quantidade_g');
-      peso += qtd;
+      peso += qtd * fatorPesoLinha(app, item);
       const ingRel = item.getString('ingrediente');
       const subRel = item.getString('sub_receita');
       if (ingRel) {
@@ -633,7 +661,7 @@ function runCascade(app, kind, rootId) {
     let completoN = true;
     const semDadosN = [];
     for (const item of itens) {
-      const qtd = fnum(item, 'quantidade_g');
+      const qtd = fnum(item, 'quantidade_g') * fatorPesoLinha(app, item);
       if (qtd <= 0) continue;
       pesoN += qtd;
       const ingRel = item.getString('ingrediente');
@@ -866,7 +894,7 @@ function explodeCompras(app, receitaId, alvoG, porProduto) {
     );
     // Escalar pela percentagem de cada linha: soma das linhas = alvo.
     let pesoBase = 0;
-    for (const it of itens) pesoBase += num(it, 'quantidade_g');
+    for (const it of itens) pesoBase += num(it, 'quantidade_g') * fatorPesoLinha(app, it);
     const fator = pesoBase > 0 ? alvo / pesoBase : 0;
 
     for (const it of itens) {
@@ -939,7 +967,7 @@ function explodeProducao(app, receitaId, alvoG) {
       { id: recId },
     );
     let pesoBase = 0;
-    for (const it of itens) pesoBase += num(it, 'quantidade_g');
+    for (const it of itens) pesoBase += num(it, 'quantidade_g') * fatorPesoLinha(app, it);
     const fator = pesoBase > 0 ? alvo / pesoBase : 0;
     for (const it of itens) {
       const g = num(it, 'quantidade_g') * fator;
@@ -1322,6 +1350,8 @@ function planoFicha(app, fichaId, unidades) {
 
 module.exports = {
   runCascade,
+  fatorPesoIng,
+  fatorPesoLinha,
   explodeCompras,
   explodeProducao,
   explodeComprasDe,

@@ -1,5 +1,7 @@
 import 'package:pocketbase/pocketbase.dart';
 
+import '../../../core/formatting/quantities.dart';
+
 enum StockTipo { ingrediente, ficha, livre }
 
 /// Categorias para itens que não são de receita — o "inventário geral da loja"
@@ -30,9 +32,13 @@ class StockItem {
     this.favorito = false,
     this.usos = 0,
     this.ultimoUso = '',
+    this.unidadeIng = 'g',
   });
 
   final StockTipo tipo;
+
+  /// Unidade do ingrediente (`g`, `ml` ou `un`); só conta para ingredientes.
+  final String unidadeIng;
 
   /// Id do ingrediente/ficha; para itens livres é a própria `descricao`.
   final String id;
@@ -62,7 +68,7 @@ class StockItem {
   final String ultimoUso;
 
   String get unidade => switch (tipo) {
-        StockTipo.ingrediente => 'g',
+        StockTipo.ingrediente => unidadeNormalizada(unidadeIng),
         StockTipo.ficha => 'un',
         StockTipo.livre => unidadeLivre.isEmpty ? 'un' : unidadeLivre,
       };
@@ -72,6 +78,9 @@ class StockItem {
   bool get stockBaixo => minimo > 0 && quantidade < minimo;
 
   String quantidadeLabel() {
+    if (tipo == StockTipo.ingrediente && unidadeNormalizada(unidadeIng) != 'g') {
+      return quantidadeParaTexto(quantidade, unidadeIng);
+    }
     if (tipo == StockTipo.ingrediente) {
       return quantidade >= 1000
           ? '${(quantidade / 1000).toStringAsFixed(3)} kg'
@@ -101,6 +110,7 @@ class StockItem {
       favorito: favorito ?? this.favorito,
       usos: usos,
       ultimoUso: ultimoUso,
+      unidadeIng: unidadeIng,
     );
   }
 }

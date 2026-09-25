@@ -727,6 +727,23 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Desligar "Usar estes valores": a receita A volta a usar a nutrição do ingrediente.
 - [ ] Produto por 100 ml com densidade: o valor converte-se para 100 g (confere um caso simples à mão).
 
+## 37. Unidades (g, ml, un) e características
+
+- [ ] Ingrediente novo "Leite": **Unidade de medida = Mililitros**; embalagem 1000 (ml), preço 1,20 €. A lista
+      mostra "em ml" e o preço por **L**. Ingrediente "Ovos": **Unidades**, embalagem 12, peso de cada unidade 55 g.
+- [ ] Receita com 250 ml de leite, 2 un de ovos e 200 g de farinha: as linhas mostram "250 ml", "2 un", "200 g"; o
+      peso da receita soma gramas (ml × densidade, un × 55 g) e o custo usa o preço por ml/un.
+- [ ] Nutrição da receita e do produto: coerente com os pesos em gramas (confere um caso simples à mão).
+- [ ] Fatura com "Leite UHT 1L" (6 un): a IA lê embalagem **1000 ml**; **Comprado** aparece em **un** (6) = 6000 ml.
+      Criar o ingrediente novo: nasce em **ml**.
+- [ ] Fatura com "Cravinho 14 g" (1 un) e "Noz-moscada 15 g" (2 un): Comprado 14 g e 30 g (secção 30).
+- [ ] Trocar o seletor do Comprado entre g, ml e un converte o número (quando dá).
+- [ ] Um ingrediente em g com embalagem lida em ml: converte com a densidade; se for "un", avisa que não dá para converter.
+- [ ] Fatura com "Farinha de trigo T55" e "Farinha de trigo T65": ligam-se a ingredientes diferentes; ao criar novo, o
+      campo **Característica** vem preenchido (T55). A lista mostra "Farinha de trigo T55".
+- [ ] Stock, lista de compras, mise en place e plano de produção mostram ml e un nos ingredientes que os usam.
+- [ ] A lista de ingredientes do rótulo continua por ordem decrescente de peso (ovos em un contam pelo peso em g).
+
 ---
 
 ## Notas / ajustes pedidos

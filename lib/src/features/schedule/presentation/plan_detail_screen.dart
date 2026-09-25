@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/formatting/money_provider.dart';
+import '../../../core/formatting/quantities.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
@@ -15,6 +16,9 @@ import '../../recipes/presentation/recipe_picker_sheet.dart';
 import '../application/schedule_providers.dart';
 import '../data/schedule_repository.dart';
 import '../domain/production_plan.dart';
+
+String _qLabel(double v, String unidade) =>
+    unidade == 'g' ? _gLabel(v) : quantidadeParaTexto(v, unidade);
 
 String _gLabel(double g) => g >= 1000
     ? '${(g / 1000).toStringAsFixed(3)} kg'
@@ -352,7 +356,7 @@ class _Body extends ConsumerWidget {
                             const Text('  • —')
                           else
                             for (final c in pr.comprar)
-                              Text('  • ${c.nome}: ${_gLabel(c.gramas)}'),
+                              Text('  • ${c.nome}: ${_qLabel(c.gramas, c.unidade)}'),
                         ],
                       ),
                     ),
@@ -387,8 +391,8 @@ class _Body extends ConsumerWidget {
                     dense: true,
                     title: Text(n.nome),
                     subtitle: Text(
-                      'Preciso ${_gLabel(n.gramas)} · '
-                      'stock ${_gLabel(n.emStock)}'
+                      'Preciso ${_qLabel(n.gramas, n.unidade)} · '
+                      'stock ${_qLabel(n.emStock, n.unidade)}'
                       '${n.fornecedor.isNotEmpty ? ' · ${n.fornecedor}' : ''}',
                     ),
                     trailing: Column(
@@ -401,7 +405,7 @@ class _Body extends ConsumerWidget {
                               : n.aComprarSacos > 0
                                   ? '${n.aComprarSacos} '
                                       '${n.aComprarSacos == 1 ? 'saco' : 'sacos'}'
-                                  : 'comprar ${_gLabel(n.aComprar)}',
+                                  : 'comprar ${_qLabel(n.aComprar, n.unidade)}',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: n.aComprar > 0
@@ -503,15 +507,15 @@ class _Body extends ConsumerWidget {
       }
       b.writeln('  Ingredientes:');
       for (final c in pr.comprar) {
-        b.writeln('    - ${c.nome}: ${_gLabel(c.gramas)}');
+        b.writeln('    - ${c.nome}: ${_qLabel(c.gramas, c.unidade)}');
       }
     }
     b.writeln();
     b.writeln('=== INGREDIENTES NO TOTAL (para comprar) ===');
     for (final n in resp.necessarios) {
       final compra =
-          n.aComprar > 0 ? ' (comprar ${_gLabel(n.aComprar)})' : ' (em stock)';
-      b.writeln('- ${n.nome}: ${_gLabel(n.gramas)}$compra');
+          n.aComprar > 0 ? ' (comprar ${_qLabel(n.aComprar, n.unidade)})' : ' (em stock)';
+      b.writeln('- ${n.nome}: ${_qLabel(n.gramas, n.unidade)}$compra');
     }
     b.writeln();
     b.writeln(
@@ -576,7 +580,7 @@ class _Body extends ConsumerWidget {
         .join('\n');
     final consome = resp.necessarios
         .take(12)
-        .map((n) => '• ${n.nome}: ${_gLabel(n.gramas)}')
+        .map((n) => '• ${n.nome}: ${_qLabel(n.gramas, n.unidade)}')
         .join('\n');
     final maisLinhas = resp.necessarios.length > 12
         ? '\n… e mais ${resp.necessarios.length - 12}'

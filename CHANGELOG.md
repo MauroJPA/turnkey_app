@@ -2,6 +2,29 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.16.0 — 2026-09-25 — Unidades (g, ml, un) e características dos ingredientes
+
+- **Unidade de medida por ingrediente: gramas (por omissão), mililitros ou unidades.** Serve para bebidas e
+  líquidos (ml) e para ovos, garrafas, sacos… (un). A **embalagem, as linhas de receita, o stock, as compras e o
+  custo** ficam nessa unidade (preço por ml, por un…). Escolhe-se no formulário do ingrediente; em "un" pede o
+  peso de cada unidade (para o peso e a nutrição).
+- **Peso e nutrição sempre em gramas:** ml × densidade (a da nutrição, 1 g/ml se vazia) e un × peso da unidade.
+  O peso da receita, a nutrição, o rendimento e a **ordem da lista de ingredientes do rótulo** usam estes pesos.
+- **Faturas:** a IA lê a **unidade da embalagem** (g por omissão; ml para líquidos — "Leite 1L" = 1000 ml,
+  "33 cl" = 330 ml; un para "cx 12 ovos") e as quantidades em L/cl/dl. Na revisão, o **Comprado** e a
+  **Embalagem** têm seletor **g | ml | un**: em "un" contas embalagens (2 × 15 g = 30 g); g ↔ ml convertem-se
+  com a densidade. Um ingrediente novo nasce na unidade certa (editável).
+- **Características** ("Farinha de trigo" + **T55**, T65, integral, 70% cacau…): a IA separa-as do nome; ao criar
+  um ingrediente novo pela fatura há o campo **Característica**. O emparelhamento distingue variedades: T55 nunca
+  é ligado a T65. Os nomes mostram-se com a característica ("Farinha de trigo T55").
+- Ecrãs com a unidade certa: receita (linhas), lista de ingredientes (preço por kg/L/un), stock, compras,
+  mise en place, plano de produção e produtos de compra.
+- Migration `1707955211_ingrediente_unidade` (campos `unidade` e `gramas_unidade` em `ingredientes`).
+- Testes: secção 9g do `test/security/seguranca.py` (317 verificações, 0 falhas) e `test/unidades_test.dart`.
+- Limites: mudar a unidade de um ingrediente já usado **não converte** o que já está guardado (o ecrã avisa);
+  "un" só converte com "un" (não há conversão un ↔ g nas faturas; usa o mesmo tipo de unidade). Os valores
+  nutricionais continuam por 100 g / 100 ml.
+
 ## 1.15.1 — 2026-09-25 — Faturas: quantidade em unidades ou gramas
 
 - **Corrigido:** uma linha "2 un" de "Noz moscada 15 g" entrava como 2 g (e "1 un" de "Cravinho 14 g" como 1 g).

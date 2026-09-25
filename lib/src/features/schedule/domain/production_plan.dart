@@ -172,7 +172,11 @@ class PlanoNecessario {
     required this.aComprar,
     this.embalagemG = 0,
     this.aComprarSacos = 0,
+    this.unidade = 'g',
   });
+
+  /// Unidade do ingrediente (`g`, `ml`, `un`): as quantidades estão nela.
+  final String unidade;
 
   final String ingredienteId;
   final String nome;
@@ -194,6 +198,7 @@ class PlanoNecessario {
         aComprar: (j['aComprar'] as num?)?.toDouble() ?? 0,
         embalagemG: (j['embalagemG'] as num?)?.toDouble() ?? 0,
         aComprarSacos: (j['aComprarSacos'] as num?)?.toInt() ?? 0,
+        unidade: j['unidade'] == 'ml' || j['unidade'] == 'un' ? j['unidade'] as String : 'g',
       );
 }
 
@@ -233,13 +238,17 @@ class PlanoProduzir {
 
 /// Uma quantidade de um item (ingrediente ou intermédio) numa receita.
 class PlanoQtd {
-  const PlanoQtd({required this.nome, required this.gramas});
+  const PlanoQtd({required this.nome, required this.gramas, this.unidade = 'g'});
   final String nome;
   final double gramas;
+
+  /// Unidade do ingrediente (`g`, `ml`, `un`); `gramas` está nela. Os intermédios são sempre g.
+  final String unidade;
 
   factory PlanoQtd.fromJson(Map<String, dynamic> j) => PlanoQtd(
         nome: j['nome'] as String? ?? '',
         gramas: (j['gramas'] as num?)?.toDouble() ?? 0,
+        unidade: j['unidade'] == 'ml' || j['unidade'] == 'un' ? j['unidade'] as String : 'g',
       );
 }
 

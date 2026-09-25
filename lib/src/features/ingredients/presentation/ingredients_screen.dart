@@ -457,6 +457,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
 
   Widget _tile(Ingrediente i, MoneyFmt fmt) {
     final subtitle = [
+      if (i.un != 'g') 'em ${i.un}',
       if (i.marca.isNotEmpty) i.marca,
       if (i.fornecedor.isNotEmpty) i.fornecedor,
       if (!i.disponivel) 'indisponível',
@@ -473,7 +474,11 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
         ),
         if (i.gramasEmbalagem > 0)
           Text(
-            '${fmt(i.custoPorGrama * 1000)}/kg',
+            switch (i.un) {
+              'ml' => '${fmt(i.custoPorGrama * 1000)}/L',
+              'un' => '${fmt(i.custoPorGrama)}/un',
+              _ => '${fmt(i.custoPorGrama * 1000)}/kg',
+            },
             style: Theme.of(context).textTheme.bodySmall,
           ),
       ],
@@ -481,7 +486,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
 
     if (_trash) {
       return ListTile(
-        title: Text(i.nome),
+        title: Text(i.nomeComCaracteristica),
         subtitle: subtitle.isEmpty ? null : Text(subtitle),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
@@ -525,7 +530,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
     }
 
     final tile = ListTile(
-      title: Text(i.nome),
+      title: Text(i.nomeComCaracteristica),
       subtitle: subtitle.isEmpty ? null : Text(subtitle),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,

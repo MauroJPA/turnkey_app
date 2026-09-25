@@ -55,11 +55,14 @@ class ShoppingItem {
   String get grupo => fornecedor.trim().isEmpty ? 'Sem fornecedor' : fornecedor;
 
   /// Nº de embalagens que cobrem `comprarG` (null se não se conhece a embalagem).
-  int? get sacos =>
-      (emGramas && embalagemG > 0) ? (comprarG / embalagemG).ceil() : null;
+  int? get sacos => ((emGramas || !manual) && embalagemG > 0)
+      ? (comprarG / embalagemG).ceil()
+      : null;
 
   /// Texto da quantidade a comprar, na unidade certa.
   String quantidadeTexto() {
+    // ingredientes: na unidade do ingrediente (g, ml ou un); itens manuais: a que escolheram
+    if (!manual) return quantidadeParaTexto(comprarG, unidade);
     if (emGramas) return gramasParaTexto(comprarG);
     final n = comprarG == comprarG.roundToDouble()
         ? comprarG.toStringAsFixed(0)

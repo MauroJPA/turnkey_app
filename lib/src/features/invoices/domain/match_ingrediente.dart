@@ -106,6 +106,7 @@ MatchLinha? emparelharLinha({
   required String descricao,
   String nomeGenerico = '',
   String marca = '',
+  String caracteristica = '',
   double embalagemG = 0,
   required List<Ingrediente> ingredientes,
   required List<ProdutoIngrediente> produtos,
@@ -120,16 +121,42 @@ MatchLinha? emparelharLinha({
   }
   Ingrediente? ing;
   final ng = normalizarNome(nomeGenerico);
+  final car = normalizarNome(caracteristica);
   if (ng.isNotEmpty) {
-    for (final i in ingredientes) {
-      if (normalizarNome(i.nome) == ng) {
-        ing = i;
-        break;
+    final iguais = [
+      for (final i in ingredientes)
+        if (normalizarNome(i.nome) == ng) i,
+    ];
+    Ingrediente? primeiro(bool Function(Ingrediente) f) {
+      for (final i in iguais) {
+        if (f(i)) return i;
       }
+      return null;
     }
-    ing ??= melhorMatch(nomeGenerico, ingredientes, minScore: 0.6);
+
+    if (iguais.isNotEmpty) {
+      // "Farinha de trigo" + T55: o T55 se existir; senão o sem característica
+      // (nunca o T65). Sem característica lida: o sem característica, ou o único.
+      ing = car.isNotEmpty
+          ? (primeiro((i) => normalizarNome(i.caracteristica) == car) ??
+                primeiro((i) => i.caracteristica.trim().isEmpty))
+          : (primeiro((i) => i.caracteristica.trim().isEmpty) ??
+                (iguais.length == 1 ? iguais.first : null));
+    }
+    ing ??= melhorMatch(
+      '$nomeGenerico $caracteristica',
+      ingredientes,
+      minScore: 0.6,
+    );
   }
   ing ??= melhorMatch(descricao, ingredientes);
+  // uma característica diferente é outro ingrediente (T55 != T65)
+  if (ing != null &&
+      car.isNotEmpty &&
+      ing.caracteristica.trim().isNotEmpty &&
+      normalizarNome(ing.caracteristica) != car) {
+    ing = null;
+  }
   if (ing == null) return null;
   return (
     ingrediente: ing,

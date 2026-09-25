@@ -3,6 +3,7 @@ import 'package:pocketbase/pocketbase.dart';
 
 import '../../../core/auth/current_user.dart';
 import '../../../core/pocketbase/pb_client.dart';
+import '../application/ingredients_providers.dart' show ingredientsListProvider;
 import '../domain/produto_ingrediente.dart';
 
 final ingredientProductRepositoryProvider =
@@ -15,8 +16,12 @@ final ingredientProductRepositoryProvider =
 
 /// Todos os produtos de compra da empresa (agrupam-se por ingrediente).
 final produtosIngredienteProvider =
-    FutureProvider.autoDispose<List<ProdutoIngrediente>>((ref) {
-      return ref.watch(ingredientProductRepositoryProvider).list();
+    FutureProvider.autoDispose<List<ProdutoIngrediente>>((ref) async {
+      final lista = await ref.watch(ingredientProductRepositoryProvider).list();
+      // cada produto herda a unidade (g, ml, un) do seu ingrediente
+      final ings = await ref.watch(ingredientsListProvider(false).future);
+      final un = {for (final i in ings) i.id: i.un};
+      return [for (final p in lista) p.comUnidade(un[p.ingredienteId] ?? 'g')];
     });
 
 /// Os produtos de um ingrediente genérico.

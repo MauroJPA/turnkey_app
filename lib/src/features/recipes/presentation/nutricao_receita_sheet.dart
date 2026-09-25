@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/formatting/quantities.dart';
 import '../../../core/nutrition/nutri_widgets.dart';
 import '../../ingredients/application/ingredients_providers.dart';
 import '../../ingredients/domain/ingredient.dart';
@@ -293,7 +294,7 @@ class _ItemTile extends StatelessWidget {
                   Text(it.nome),
                   Text(
                     '${ehSub ? 'Subproduto próprio' : 'Ingrediente'} · '
-                    '${it.quantidadeG.toStringAsFixed(0)} g · $txt',
+                    '${quantidadeParaTexto(it.quantidadeG, it.unidade)} · $txt',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
