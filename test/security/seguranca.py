@@ -1071,6 +1071,86 @@ def teste_produtos():
     check(abs(generico()['preco'] - 1.8) < 1e-6, 'o custo do genérico não mudou com a fatura antiga')
 
 
+def teste_consumiveis():
+    """10. Limpeza e insumos: documentos protegidos, isolamento e faturas."""
+    sec('10. Limpeza e insumos (documentos)')
+    t = tok['editorA']
+    st, c, _ = call('POST', '/api/collections/consumiveis/records',
+                    {'empresa': empresas['A'], 'nome': 'Desengordurante', 'categoria': 'limpeza', 'exige_fds': True}, t)
+    check(st == 200, 'criar um consumível', f'status {st} {str(c)[:120]}')
+    cid = c['id']
+    st, _, _ = call('POST', '/api/collections/consumiveis/records',
+                    {'empresa': empresas['A'], 'nome': 'x', 'categoria': 'limpeza'}, tok['viewerA'])
+    check(st != 200, 'o papel Leitura não cria consumíveis', f'status {st}')
+    st, r, _ = call('GET', '/api/collections/consumiveis/records', tok=tok['ownerB'])
+    check(st == 200 and not [i for i in r.get('items', []) if i['empresa'] == empresas['A']],
+          'a empresa B não vê consumíveis da empresa A')
+
+    pdf = b'%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF'
+
+    def anexar(quem, emp, cons, nome='fds.pdf', conteudo=pdf, mime='application/pdf'):
+        corpo, ct = multipart({'empresa': emp, 'consumivel': cons, 'tipo': 'fds', 'versao': '1'},
+                              {'ficheiro': (nome, conteudo, mime)})
+        return call('POST', '/api/collections/consumivel_documentos/records', raw=corpo, ctype=ct, tok=tok[quem])
+
+    st, d, _ = anexar('editorA', empresas['A'], cid)
+    check(st == 200, 'anexar uma FDS em PDF', f'status {st} {str(d)[:120]}')
+    st, _, _ = anexar('viewerA', empresas['A'], cid)
+    check(st != 200, 'o papel Leitura não anexa documentos', f'status {st}')
+    st, _, _ = anexar('ownerB', empresas['B'], cid)
+    check(st != 200, 'a empresa B não anexa documentos a um consumível da empresa A', f'status {st}')
+    st, _, _ = anexar('editorA', empresas['A'], cid, nome='x.html', conteudo=b'<script>alert(1)</script>', mime='text/html')
+    check(st != 200, 'documento HTML é recusado', f'status {st}')
+    st, r, _ = call('GET', '/api/collections/consumivel_documentos/records', tok=tok['ownerB'])
+    check(st == 200 and not [i for i in r.get('items', []) if i['empresa'] == empresas['A']],
+          'a empresa B não vê documentos da empresa A')
+
+    nome = d.get('ficheiro', '') if isinstance(d, dict) else ''
+    if nome:
+        url = f"/api/files/consumivel_documentos/{d['id']}/{nome}"
+        s1, _, _ = call('GET', url)
+        check(s1 in (401, 403, 404), 'documento protegido sem sessão', f'status {s1}')
+        s2, r, _ = call('POST', '/api/files/token', {}, tok['ownerB'])
+        tb = r.get('token') if isinstance(r, dict) else None
+        s3, _, _ = call('GET', f'{url}?token={tb}')
+        check(s3 in (401, 403, 404), 'documento protegido de outra empresa (mesmo com token)', f'status {s3}')
+        s4, r, _ = call('POST', '/api/files/token', {}, t)
+        ta = r.get('token') if isinstance(r, dict) else None
+        s5, _, _ = call('GET', f'{url}?token={ta}')
+        check(s5 == 200, 'a própria empresa abre o documento com token de ficheiro', f'status {s5}')
+    st, _, _ = call('DELETE', f"/api/collections/consumivel_documentos/records/{d['id']}", tok=tok['viewerA'])
+    check(st != 204 and st != 200, 'o papel Leitura não apaga documentos', f'status {st}')
+
+    # --- faturas: preço e nome da fatura no consumível
+    def fatura(data):
+        st, f, _ = call('POST', '/api/collections/faturas/records',
+                        {'empresa': empresas['A'], 'autor': users['editorA'], 'tipo': 'fatura', 'estado': 'analisada',
+                         'fornecedor': 'Makro', 'data_fatura': data + ' 00:00:00.000Z'}, su)
+        return f['id']
+
+    linha = {'consumivelId': cid, 'descricaoFatura': 'Desengord. Cif Power 750ml', 'marca': 'Cif', 'quantidadeG': 0,
+             'precoUnitario': 3.5, 'totalLinha': 3.5, 'embalagemG': 0, 'acao': 'preco'}
+    st, r, _ = call('POST', f'/api/gc_turnkey/faturas/{fatura("2026-09-25")}/aplicar', {'linhas': [linha]}, t)
+    check(st == 200 and r.get('precos') == 1, 'aplicar fatura: preço do consumível', f'{st} {str(r)[:120]}')
+    c2 = call('GET', f'/api/collections/consumiveis/records/{cid}', tok=t)[1]
+    check(abs(c2.get('preco', 0) - 3.5) < 1e-6 and c2.get('marca') == 'Cif' and c2.get('fornecedor') == 'Makro',
+          'o consumível assume preço, marca e fornecedor da fatura', str(c2)[:160])
+    check('desengord' in json.dumps(c2.get('nomes_fatura', [])).lower(), 'o nome da fatura ficou aprendido')
+    st, r, _ = call('POST', f'/api/gc_turnkey/faturas/{fatura("2026-09-01")}/aplicar',
+                    {'linhas': [dict(linha, precoUnitario=1.0)]}, t)
+    check(st == 200 and r.get('precosIgnorados') == 1, 'fatura mais antiga: preço ignorado', str(r)[:120])
+    c3 = call('GET', f'/api/collections/consumiveis/records/{cid}', tok=t)[1]
+    check(abs(c3.get('preco', 0) - 3.5) < 1e-6, 'o preço do consumível não mudou com a fatura antiga')
+    # consumível de outra empresa é ignorado (não muda nada)
+    st, cb, _ = call('POST', '/api/collections/consumiveis/records',
+                     {'empresa': empresas['B'], 'nome': 'Lixívia B', 'categoria': 'limpeza'}, tok['ownerB'])
+    if st == 200:
+        st, r, _ = call('POST', f'/api/gc_turnkey/faturas/{fatura("2026-09-26")}/aplicar',
+                        {'linhas': [dict(linha, consumivelId=cb['id'], precoUnitario=9.9)]}, t)
+        cb2 = call('GET', f"/api/collections/consumiveis/records/{cb['id']}", tok=tok['ownerB'])[1]
+        check(cb2.get('preco', 0) == 0, 'uma fatura da empresa A não altera consumíveis da empresa B', str(cb2)[:120])
+
+
 def main():
     arrancar()
     try:
@@ -1084,6 +1164,7 @@ def main():
         teste_sem_chave()
         teste_faturas_ia()
         teste_produtos()
+        teste_consumiveis()
         teste_implantacao()
         teste_autenticacao()  # por último: gasta o limite de tentativas
     finally:

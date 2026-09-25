@@ -27,6 +27,7 @@ enum HelpTopic {
   painelFinanceiro,
   dre,
   embalagens,
+  consumiveis,
   produtos,
   formatos,
   configuracoes,
@@ -305,6 +306,16 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Na ficha técnica, adiciona a embalagem como uma linha (tipo "Embalagem") e o custo entra no total do produto — sem afetar o peso nem a informação nutricional.',
       '"+" cria; toque edita; toque e segure apaga.',
       'Separador "Kits": junta várias embalagens numa combinação com nome (ex.: "Take-away" = 1 saqueta + 1 caixa + 1 saco + 2 adesivos). Na ficha técnica escolhes o kit para precificar tudo de uma vez. O custo do kit atualiza-se sozinho quando muda o preço de qualquer embalagem que o compõe.',
+    ],
+  ),
+  HelpTopic.consumiveis: (
+    titulo: 'Limpeza e insumos',
+    paragrafos: [
+      'Produtos de limpeza, desinfeção e outros insumos que não entram nas receitas mas exigem documentação.',
+      'Em cada produto anexas a ficha de dados de segurança (FDS) que o fornecedor te dá, a ficha técnica e certificados. Ficam organizados e abrem com um toque, prontos para uma fiscalização.',
+      'O estado mostra "Falta FDS" se o produto exige a ficha e não tem nenhuma, e "FDS antiga" quando a última tem mais de 3 anos (pede ao fornecedor a versão mais recente, se existir).',
+      'O filtro "A precisar de FDS" lista só o que falta tratar. O ícone de copiar junta o registo de todos os produtos (CSV) para colar numa folha de cálculo.',
+      'Nas faturas, as linhas de limpeza/insumos podem ser ligadas a estes produtos: o preço fica registado e, se já tiverem documentos, não é preciso pedi-los outra vez.',
     ],
   ),
   HelpTopic.formatos: (
