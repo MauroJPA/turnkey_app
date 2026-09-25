@@ -25,6 +25,15 @@ abstract interface class IngredientWriter {
   Future<Ingrediente> update(String id, IngredienteInput input);
 }
 
+/// Resultado de juntar dois ingredientes.
+typedef ResultadoJuntar = ({
+  String origem,
+  String destino,
+  double stockSomado,
+  List<String> alergeniosAdicionados,
+  Map<String, int> movidos,
+});
+
 class IngredientRepository implements IngredientWriter {
   IngredientRepository(this._pb, this._empresaId);
 
@@ -267,6 +276,32 @@ class IngredientRepository implements IngredientWriter {
           sort: 'nome',
         );
     return res.items.map(IngredienteReferencia.fromRecord).toList();
+  }
+
+  /// O servidor passa tudo o que aponta para [origemId] (receitas, fichas, stock,
+  /// compras, faturas e produtos de compra) para [destinoId] e manda o origem
+  /// para a lixeira.
+  Future<ResultadoJuntar> juntar(String origemId, String destinoId) async {
+    final res = await _pb.send(
+      '/api/gc_turnkey/ingredientes/juntar',
+      method: 'POST',
+      body: {'origemId': origemId, 'destinoId': destinoId},
+    );
+    final m = res is Map ? res : const <String, dynamic>{};
+    final mv = m['movidos'];
+    return (
+      origem: '${m['origem'] ?? ''}',
+      destino: '${m['destino'] ?? ''}',
+      stockSomado: (m['stockSomado'] as num?)?.toDouble() ?? 0,
+      alergeniosAdicionados: [
+        for (final a in (m['alergeniosAdicionados'] as List? ?? const []))
+          '$a',
+      ],
+      movidos: {
+        if (mv is Map)
+          for (final e in mv.entries) '${e.key}': (e.value as num).toInt(),
+      },
+    );
   }
 
   Future<void> setDeleted(String id, {required bool deletado}) =>
