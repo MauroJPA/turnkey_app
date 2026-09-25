@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/formatting/money_provider.dart';
+import '../../../core/formatting/quantities.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
@@ -121,7 +122,9 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
 
   Future<void> _editQty(ItemReceita item) async {
     final ctrl = TextEditingController(
-      text: item.quantidadeG.toStringAsFixed(0),
+      text: item.quantidadeG == item.quantidadeG.roundToDouble()
+          ? item.quantidadeG.toStringAsFixed(0)
+          : item.quantidadeG.toString(),
     );
     final novo = await showDialog<double>(
       context: context,
@@ -131,7 +134,13 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
           controller: ctrl,
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(labelText: 'Gramas'),
+          decoration: InputDecoration(
+            labelText: switch (item.unidade) {
+              'ml' => 'Mililitros (ml)',
+              'un' => 'Unidades',
+              _ => 'Gramas',
+            },
+          ),
         ),
         actions: [
           TextButton(
@@ -308,8 +317,8 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
     // só faz sentido escolher quando há mais de um produto (ou já há um fixado)
     final podeEscolher = produtos.length > 1 || item.produtoId != null;
     final subtitle = item.pendente
-        ? '${item.quantidadeG.toStringAsFixed(0)} g · vínculo pendente'
-        : '${item.quantidadeG.toStringAsFixed(0)} g · $pct% · ${fmt(item.custoLinha)}'
+        ? '${quantidadeParaTexto(item.quantidadeG, item.unidade)} · vínculo pendente'
+        : '${quantidadeParaTexto(item.quantidadeG, item.unidade)} · $pct% · ${fmt(item.custoLinha)}'
               '${fixado != null ? ' · ${fixado.resumo}' : (produtos.length > 1 ? ' · produto automático' : '')}';
 
     final tile = ListTile(

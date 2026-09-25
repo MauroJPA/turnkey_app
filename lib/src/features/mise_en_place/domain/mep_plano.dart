@@ -6,7 +6,15 @@ class MepIngrediente {
     required this.gramas,
     this.emStock = 0,
     this.produtoIds = const [],
-  });
+    this.unidade = 'g',
+    double? pesoG,
+  }) : pesoG = pesoG ?? gramas;
+
+  /// Peso em gramas (para ordenar a lista de ingredientes do rótulo).
+  final double pesoG;
+
+  /// Unidade do ingrediente (`g`, `ml` ou `un`): `gramas` está nela.
+  final String unidade;
 
   /// Produtos de compra fixados nas receitas (para juntar os seus alergénios).
   final List<String> produtoIds;
@@ -23,6 +31,10 @@ class MepIngrediente {
         nome: j['nome'] as String? ?? '',
         gramas: (j['gramas'] as num?)?.toDouble() ?? 0,
         emStock: (j['emStock'] as num?)?.toDouble() ?? 0,
+        pesoG: (j['pesoG'] as num?)?.toDouble(),
+        unidade: j['unidade'] == 'ml' || j['unidade'] == 'un'
+            ? j['unidade'] as String
+            : 'g',
         produtoIds: [
           for (final p in (j['produtoIds'] as List? ?? const [])) '$p',
         ],

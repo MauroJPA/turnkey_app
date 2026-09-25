@@ -233,7 +233,8 @@ class _ProdutoDialogState extends ConsumerState<_ProdutoDialog> {
   Future<void> _guardar() async {
     if (_nome.text.trim().isEmpty || _num(_emb) <= 0 || _num(_preco) <= 0) {
       setState(
-        () => _erro = 'Indica o nome, o peso da embalagem (g) e o preço.',
+        () => _erro =
+            'Indica o nome, o tamanho da embalagem (${widget.ingrediente.un}) e o preço.',
       );
       return;
     }
@@ -372,8 +373,8 @@ class _ProdutoDialogState extends ConsumerState<_ProdutoDialog> {
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    decoration: const InputDecoration(
-                      labelText: 'Embalagem (g)',
+                    decoration: InputDecoration(
+                      labelText: 'Embalagem (${widget.ingrediente.un})',
                     ),
                   ),
                 ),

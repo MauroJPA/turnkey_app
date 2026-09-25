@@ -1475,6 +1475,56 @@ def teste_nutricao_produto():
     check(abs(kcal(rx)[0] - 100) < 1e-6, 'sem produto fixado volta à nutrição do ingrediente', str(kcal(rx)[0]))
 
 
+def teste_unidades():
+    """9g. Unidade do ingrediente (g, ml, un): peso e nutrição em gramas, custo na unidade nativa."""
+    sec('9g. Unidades de medida (g, ml, un)')
+    t = tok['editorA']
+    base = dict(dados[('ingredientes', 'A')][1])
+    base.update(origem='comprado', alergenios=[], alergenios_tracos=[], nutri_base='100g', nutri_densidade=1,
+                nutri_energia_kcal=100, nutri_lipidos_g=0, nutri_saturados_g=0, nutri_hidratos_g=0, nutri_acucares_g=0,
+                nutri_fibra_g=0, nutri_proteina_g=0, nutri_sal_g=0)
+
+    def ing(nome, **extra):
+        st, r, _ = call('POST', '/api/collections/ingredientes/records', dict(base, nome=nome, **extra), t)
+        assert st == 200, (st, r)
+        return r['id']
+
+    g = ing('Farinha unidades', preco=1.0, gramas_embalagem=1000, nutri_energia_kcal=0)                      # 0,001 €/g
+    ml = ing('Leite unidades', unidade='ml', nutri_densidade=1.2, preco=1.2, gramas_embalagem=1000, nutri_energia_kcal=0)   # 0,0012 €/ml
+    un = ing('Ovo unidades', unidade='un', gramas_unidade=50, preco=3.0, gramas_embalagem=12, nutri_energia_kcal=200)       # 0,25 €/un
+
+    rb = dict(dados[('receitas', 'A')][1])
+    rb.update(nome='Massa unidades', rendimento_manual=False)
+    for k in ('custo_receita', 'custo_por_grama', 'rendimento_esperado'):
+        rb.pop(k, None)
+    rid = call('POST', '/api/collections/receitas/records', rb, t)[1]['id']
+    for ingrediente, q in ((g, 100), (ml, 100), (un, 2)):
+        st, r, _ = call('POST', '/api/collections/itens_receita/records',
+                        {'empresa': empresas['A'], 'receita': rid, 'ingrediente': ingrediente, 'quantidade_g': q}, t)
+        assert st == 200, (st, r)
+    rec = call('GET', f'/api/collections/receitas/records/{rid}', tok=t)[1]
+    # peso em gramas: 100 g + 100 ml x 1,2 + 2 un x 50 g = 320 g
+    check(abs(rec.get('rendimento_esperado', -1) - 320) < 1e-6, 'peso da receita: g + ml x densidade + un x peso da unidade (320 g)', str(rec.get('rendimento_esperado')))
+    # custo na unidade nativa: 100 x 0,001 + 100 x 0,0012 + 2 x 0,25 = 0,72
+    check(abs(rec.get('custo_receita', -1) - 0.72) < 1e-6, 'custo na unidade nativa (0,72 €)', str(rec.get('custo_receita')))
+    n = rec.get('nutri') or {}
+    kcal100 = (n.get('por100') or n.get('por100g') or {}).get('kcal', n.get('kcal', -1))
+    # só os ovos têm energia: 2 un = 100 g a 200 kcal/100 g = 200 kcal em 320 g -> 62,5 kcal/100 g
+    check(abs(kcal100 - 62.5) < 1e-6, 'nutrição com pesos convertidos (200 kcal em 320 g = 62,5 por 100 g)', str(kcal100))
+    # explosão para compras: 640 g de massa -> o dobro, nas unidades nativas
+    st, prod, _ = call('POST', '/api/collections/producoes/records', dict(dados[('producoes', 'A')][1], titulo='Unidades'), t)
+    pi = dict(dados[('producao_itens', 'A')][1])
+    pi.update(producao=prod['id'], receita=rid, quantidade_kg=0.64)
+    for k in ('formato', 'recheio', 'ficha'):
+        pi.pop(k, None)
+    call('POST', '/api/collections/producao_itens/records', pi, t)
+    call('POST', f"/api/gc_turnkey/producoes/{prod['id']}/lista-compras", {}, t)
+    ls = call('GET', f"/api/collections/lista_compras/records?filter=producao='{prod['id']}'&perPage=50", tok=t)[1].get('items', [])
+    nec = {l['ingrediente']: l['quantidade_necessaria_g'] for l in ls}
+    check(abs(nec.get(g, -1) - 200) < 1e-6 and abs(nec.get(ml, -1) - 200) < 1e-6 and abs(nec.get(un, -1) - 4) < 1e-6,
+          'compras em unidades nativas: 200 g, 200 ml e 4 un', str(nec))
+
+
 def main():
     arrancar()
     try:
@@ -1493,6 +1543,7 @@ def main():
         teste_compras_produto()
         teste_alergenios_produto()
         teste_nutricao_produto()
+        teste_unidades()
         teste_consumiveis()
         teste_implantacao()
         teste_autenticacao()  # por último: gasta o limite de tentativas

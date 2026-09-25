@@ -65,7 +65,8 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
   String _q = '';
 
   Future<PickedItem?> _askQty(
-      PickedKind kind, String id, String nome) async {
+      PickedKind kind, String id, String nome,
+      {String unidade = 'g'}) async {
     if (widget.apenasVincular) {
       return PickedItem(kind: kind, id: id, nome: nome, quantidadeG: 0);
     }
@@ -84,7 +85,11 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
                 ? 'Kits por unidade de produto'
                 : ehEmb
                     ? 'Peças por unidade de produto'
-                    : 'Gramas',
+                    : switch (unidade) {
+                        'ml' => 'Mililitros (ml)',
+                        'un' => 'Unidades',
+                        _ => 'Gramas',
+                      },
           ),
           onSubmitted: (_) => Navigator.pop(
             ctx,
@@ -259,13 +264,19 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
                           children: [
                             for (final i in items)
                               ListTile(
-                                title: Text(i.nome),
-                                subtitle: Text(i.fornecedor),
+                                title: Text(i.nomeComCaracteristica),
+                                subtitle: Text(
+                                  [
+                                    if (i.un != 'g') 'em ${i.un}',
+                                    if (i.fornecedor.isNotEmpty) i.fornecedor,
+                                  ].join(' · '),
+                                ),
                                 onTap: () async {
                                   final r = await _askQty(
                                     PickedKind.ingrediente,
                                     i.id,
-                                    i.nome,
+                                    i.nomeComCaracteristica,
+                                    unidade: i.un,
                                   );
                                   if (r != null && context.mounted) {
                                     Navigator.pop(context, r);

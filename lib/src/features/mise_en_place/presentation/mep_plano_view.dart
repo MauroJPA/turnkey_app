@@ -85,9 +85,9 @@ class MepPlanoView extends StatelessWidget {
               title: Text(c.nome, style: const TextStyle(fontSize: 16)),
               subtitle: Text(
                 c.faltaStock
-                    ? '${gramasParaTexto(c.gramas)} · em stock só '
-                        '${gramasParaTexto(c.emStock)}'
-                    : '${gramasParaTexto(c.gramas)} · em stock',
+                    ? '${quantidadeParaTexto(c.gramas, c.unidade)} · em stock só '
+                        '${quantidadeParaTexto(c.emStock, c.unidade)}'
+                    : '${quantidadeParaTexto(c.gramas, c.unidade)} · em stock',
                 style: TextStyle(
                   color: c.faltaStock ? cs.error : cs.onSurfaceVariant,
                 ),

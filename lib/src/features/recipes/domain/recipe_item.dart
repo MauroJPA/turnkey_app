@@ -24,6 +24,12 @@ class ItemReceita with _$ItemReceita {
 
     /// Produto de compra fixado nesta linha (null = custo do genérico).
     String? produtoId,
+
+    /// Unidade do ingrediente da linha (`g`, `ml` ou `un`): a quantidade está nela.
+    @Default('g') String unidade,
+
+    /// Gramas por unidade da linha (ml x densidade, un x peso da unidade; 1 para g).
+    @Default(1) double fatorPeso,
   }) = _ItemReceita;
 
   const ItemReceita._();
@@ -37,6 +43,9 @@ class ItemReceita with _$ItemReceita {
 
   double get custoLinha => custoPorGramaResolvido * quantidadeG;
 
+  /// Peso da linha em gramas (para pesos e percentagens da receita).
+  double get pesoG => quantidadeG * fatorPeso;
+
   String get nome => nomeResolvido.isNotEmpty
       ? nomeResolvido
       : (nomeProvisorio.isNotEmpty ? nomeProvisorio : 'Item');
@@ -45,6 +54,8 @@ class ItemReceita with _$ItemReceita {
     var nome = r.getStringValue('nome_provisorio');
     var cpg = 0.0;
     var origem = '';
+    var unidade = 'g';
+    var fator = 1.0;
     String? espelhoId;
 
     final ing = r.get<List<RecordModel>>('expand.ingrediente', []);
@@ -56,6 +67,16 @@ class ItemReceita with _$ItemReceita {
       final g = e.getDoubleValue('gramas_embalagem');
       cpg = g > 0 ? preco / g : 0;
       origem = e.getStringValue('origem');
+      final u = e.getStringValue('unidade');
+      if (u == 'ml') {
+        unidade = 'ml';
+        final d = e.getDoubleValue('nutri_densidade');
+        fator = d > 0 ? d : 1;
+      } else if (u == 'un') {
+        unidade = 'un';
+        final g = e.getDoubleValue('gramas_unidade');
+        fator = g > 0 ? g : 1;
+      }
       final esp = e.getStringValue('receita_espelho');
       if (esp.isNotEmpty) espelhoId = esp;
       // produto fixado (do mesmo ingrediente): o custo é o dele
@@ -90,6 +111,8 @@ class ItemReceita with _$ItemReceita {
       ingredienteOrigem: origem,
       ingredienteEspelhoId: espelhoId,
       produtoId: nn('produto'),
+      unidade: unidade,
+      fatorPeso: fator,
     );
   }
 }

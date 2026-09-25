@@ -45,6 +45,8 @@ mixin _$Ingrediente {
   /// espelho da receita com este id. A nutrição vem da receita, não se
   /// preenche aqui.
   String? get receitaEspelhoId => throw _privateConstructorUsedError;
+  String get unidade => throw _privateConstructorUsedError;
+  double get gramasUnidade => throw _privateConstructorUsedError;
 
   /// Create a copy of Ingrediente
   /// with the given fields replaced by the non-null parameter values.
@@ -82,6 +84,8 @@ abstract class $IngredienteCopyWith<$Res> {
     String nutriFoto,
     String nomeRotulo,
     String? receitaEspelhoId,
+    String unidade,
+    double gramasUnidade,
   });
 }
 
@@ -121,6 +125,8 @@ class _$IngredienteCopyWithImpl<$Res, $Val extends Ingrediente>
     Object? nutriFoto = null,
     Object? nomeRotulo = null,
     Object? receitaEspelhoId = freezed,
+    Object? unidade = null,
+    Object? gramasUnidade = null,
   }) {
     return _then(
       _value.copyWith(
@@ -208,6 +214,14 @@ class _$IngredienteCopyWithImpl<$Res, $Val extends Ingrediente>
                 ? _value.receitaEspelhoId
                 : receitaEspelhoId // ignore: cast_nullable_to_non_nullable
                       as String?,
+            unidade: null == unidade
+                ? _value.unidade
+                : unidade // ignore: cast_nullable_to_non_nullable
+                      as String,
+            gramasUnidade: null == gramasUnidade
+                ? _value.gramasUnidade
+                : gramasUnidade // ignore: cast_nullable_to_non_nullable
+                      as double,
           )
           as $Val,
     );
@@ -245,6 +259,8 @@ abstract class _$$IngredienteImplCopyWith<$Res>
     String nutriFoto,
     String nomeRotulo,
     String? receitaEspelhoId,
+    String unidade,
+    double gramasUnidade,
   });
 }
 
@@ -283,6 +299,8 @@ class __$$IngredienteImplCopyWithImpl<$Res>
     Object? nutriFoto = null,
     Object? nomeRotulo = null,
     Object? receitaEspelhoId = freezed,
+    Object? unidade = null,
+    Object? gramasUnidade = null,
   }) {
     return _then(
       _$IngredienteImpl(
@@ -370,6 +388,14 @@ class __$$IngredienteImplCopyWithImpl<$Res>
             ? _value.receitaEspelhoId
             : receitaEspelhoId // ignore: cast_nullable_to_non_nullable
                   as String?,
+        unidade: null == unidade
+            ? _value.unidade
+            : unidade // ignore: cast_nullable_to_non_nullable
+                  as String,
+        gramasUnidade: null == gramasUnidade
+            ? _value.gramasUnidade
+            : gramasUnidade // ignore: cast_nullable_to_non_nullable
+                  as double,
       ),
     );
   }
@@ -400,6 +426,8 @@ class _$IngredienteImpl extends _Ingrediente {
     this.nutriFoto = '',
     this.nomeRotulo = '',
     this.receitaEspelhoId,
+    this.unidade = 'g',
+    this.gramasUnidade = 0,
   }) : _alergenios = alergenios,
        _alergeniosTracos = alergeniosTracos,
        super._();
@@ -481,10 +509,16 @@ class _$IngredienteImpl extends _Ingrediente {
   /// preenche aqui.
   @override
   final String? receitaEspelhoId;
+  @override
+  @JsonKey()
+  final String unidade;
+  @override
+  @JsonKey()
+  final double gramasUnidade;
 
   @override
   String toString() {
-    return 'Ingrediente(id: $id, nome: $nome, caracteristica: $caracteristica, marca: $marca, fornecedor: $fornecedor, preco: $preco, gramasEmbalagem: $gramasEmbalagem, precoAtualizadoEm: $precoAtualizadoEm, disponivel: $disponivel, origem: $origem, deletado: $deletado, nutri: $nutri, nutriBase: $nutriBase, nutriDensidade: $nutriDensidade, nutriOrigem: $nutriOrigem, nutriAtualizadoEm: $nutriAtualizadoEm, alergenios: $alergenios, alergeniosTracos: $alergeniosTracos, nutriFoto: $nutriFoto, nomeRotulo: $nomeRotulo, receitaEspelhoId: $receitaEspelhoId)';
+    return 'Ingrediente(id: $id, nome: $nome, caracteristica: $caracteristica, marca: $marca, fornecedor: $fornecedor, preco: $preco, gramasEmbalagem: $gramasEmbalagem, precoAtualizadoEm: $precoAtualizadoEm, disponivel: $disponivel, origem: $origem, deletado: $deletado, nutri: $nutri, nutriBase: $nutriBase, nutriDensidade: $nutriDensidade, nutriOrigem: $nutriOrigem, nutriAtualizadoEm: $nutriAtualizadoEm, alergenios: $alergenios, alergeniosTracos: $alergeniosTracos, nutriFoto: $nutriFoto, nomeRotulo: $nomeRotulo, receitaEspelhoId: $receitaEspelhoId, unidade: $unidade, gramasUnidade: $gramasUnidade)';
   }
 
   @override
@@ -531,7 +565,10 @@ class _$IngredienteImpl extends _Ingrediente {
             (identical(other.nomeRotulo, nomeRotulo) ||
                 other.nomeRotulo == nomeRotulo) &&
             (identical(other.receitaEspelhoId, receitaEspelhoId) ||
-                other.receitaEspelhoId == receitaEspelhoId));
+                other.receitaEspelhoId == receitaEspelhoId) &&
+            (identical(other.unidade, unidade) || other.unidade == unidade) &&
+            (identical(other.gramasUnidade, gramasUnidade) ||
+                other.gramasUnidade == gramasUnidade));
   }
 
   @override
@@ -558,6 +595,8 @@ class _$IngredienteImpl extends _Ingrediente {
     nutriFoto,
     nomeRotulo,
     receitaEspelhoId,
+    unidade,
+    gramasUnidade,
   ]);
 
   /// Create a copy of Ingrediente
@@ -592,6 +631,8 @@ abstract class _Ingrediente extends Ingrediente {
     final String nutriFoto,
     final String nomeRotulo,
     final String? receitaEspelhoId,
+    final String unidade,
+    final double gramasUnidade,
   }) = _$IngredienteImpl;
   const _Ingrediente._() : super._();
 
@@ -643,6 +684,10 @@ abstract class _Ingrediente extends Ingrediente {
   /// preenche aqui.
   @override
   String? get receitaEspelhoId;
+  @override
+  String get unidade;
+  @override
+  double get gramasUnidade;
 
   /// Create a copy of Ingrediente
   /// with the given fields replaced by the non-null parameter values.
