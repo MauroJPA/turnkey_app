@@ -1347,6 +1347,77 @@ def teste_compras_produto():
           and abs(ls[0]['quantidade_comprar_g'] - 5000) < 1e-6, 'sem produto fixado: uma só linha (2 kg → 1 embalagem de 5 kg)', str(ls)[:260])
 
 
+def teste_alergenios_produto():
+    """9e. Alergénios por produto: só contam quando a receita fixa esse produto."""
+    sec('9e. Alergénios por produto')
+    t = tok['editorA']
+    base = dict(dados[('ingredientes', 'A')][1])
+    base.update(nome='Chocolate alergénios', origem='comprado', preco=0, gramas_embalagem=0, alergenios=[], alergenios_tracos=[])
+    gid = call('POST', '/api/collections/ingredientes/records', base, t)[1]['id']
+
+    def produto(nome, emb, preco, data, **extra):
+        st, r, _ = call('POST', '/api/collections/ingrediente_produtos/records',
+                        {'empresa': empresas['A'], 'ingrediente': gid, 'nome': nome, 'embalagem_g': emb,
+                         'preco': preco, 'preco_atualizado_em': data + ' 00:00:00.000Z', **extra}, t)
+        assert st == 200, (st, r)
+        return r
+
+    px = produto('Chocolate X', 1000, 5.0, '2026-09-01', alergenios_tracos=['Frutos de casca rija'], alergenios=['Leite'])
+    py = produto('Chocolate Y', 1000, 4.0, '2026-09-02')
+
+    def receita(nome, produto_id=None):
+        rb = dict(dados[('receitas', 'A')][1])
+        rb.update(nome=nome, rendimento_manual=False)
+        for k in ('custo_receita', 'custo_por_grama', 'rendimento_esperado'):
+            rb.pop(k, None)
+        rid = call('POST', '/api/collections/receitas/records', rb, t)[1]['id']
+        item = {'empresa': empresas['A'], 'receita': rid, 'ingrediente': gid, 'quantidade_g': 500}
+        if produto_id:
+            item['produto'] = produto_id
+        it = call('POST', '/api/collections/itens_receita/records', item, t)[1]
+        return rid, it['id']
+
+    def alerg(rid):
+        n = call('GET', f'/api/collections/receitas/records/{rid}', tok=t)[1].get('nutri') or {}
+        return sorted(n.get('alergenios', [])), sorted(n.get('alergenios_tracos', []))
+
+    rx, itx = receita('Bolo com X', px['id'])
+    ry, _ = receita('Bolo com Y', py['id'])
+    rauto, _ = receita('Bolo automático')
+    check(alerg(rx) == (['Leite'], ['Frutos de casca rija']), 'a receita que fixa o produto X leva os alergénios dele', str(alerg(rx)))
+    check(alerg(ry) == ([], []), 'a receita que fixa o produto Y não leva os alergénios do X', str(alerg(ry)))
+    check(alerg(rauto) == ([], []), 'a receita em automático não leva os alergénios do X', str(alerg(rauto)))
+
+    # o produto ganha um alergénio depois: a receita que o fixa acompanha
+    call('PATCH', f"/api/collections/ingrediente_produtos/records/{py['id']}", {'alergenios': ['Soja']}, t)
+    check(alerg(ry)[0] == ['Soja'], 'alergénio acrescentado ao produto Y: a receita que o fixa acompanha', str(alerg(ry)))
+    check(alerg(rauto) == ([], []), 'a receita em automático continua sem alergénios')
+    # deixa de fixar o produto X
+    call('PATCH', f'/api/collections/itens_receita/records/{itx}', {'produto': ''}, t)
+    check(alerg(rx) == ([], []), 'sem produto fixado, os alergénios do produto deixam de contar', str(alerg(rx)))
+    # os do genérico contam sempre
+    call('PATCH', f'/api/collections/ingredientes/records/{gid}', {'alergenios': ['Glúten']}, t)
+    check(alerg(rauto)[0] == ['Glúten'] and alerg(ry)[0] == ['Glúten', 'Soja'], 'os alergénios do genérico contam sempre; os do produto juntam-se',
+          f'{alerg(rauto)} {alerg(ry)}')
+
+    # o plano do produto final (ficha) diz que produtos de compra as receitas fixam
+    fb = dict(dados[('fichas_tecnicas', 'A')][1])
+    fb.update(nome='Produto alergénios')
+    st, ficha, _ = call('POST', '/api/collections/fichas_tecnicas/records', fb, t)
+    if st == 200:
+        ib = dict(dados[('itens_ficha', 'A')][1])
+        ib.update(ficha=ficha['id'], receita=ry, quantidade_g=100, slot='massa')
+        for k in ('ingrediente', 'embalagem', 'kit'):
+            ib.pop(k, None)
+        st, _, _ = call('POST', '/api/collections/itens_ficha/records', ib, t)
+        st, pl, _ = call('GET', f"/api/gc_turnkey/fichas/{ficha['id']}/plano?unidades=1", tok=t)
+        linha = [c for c in (pl.get('comprar', []) if isinstance(pl, dict) else []) if c.get('ingredienteId') == gid]
+        check(st == 200 and linha and linha[0].get('produtoIds') == [py['id']],
+              'o plano da ficha indica o produto fixado pela receita da massa', f'{st} {str(pl)[:200]}')
+        fn = (call('GET', f"/api/collections/fichas_tecnicas/records/{ficha['id']}", tok=t)[1].get('nutri') or {}).get('alergenios', [])
+        check('Soja' in fn and 'Glúten' in fn, 'a declaração da ficha leva os alergénios do produto fixado e os do genérico', str(fn))
+
+
 def main():
     arrancar()
     try:
@@ -1363,6 +1434,7 @@ def main():
         teste_produto_na_receita()
         teste_juntar()
         teste_compras_produto()
+        teste_alergenios_produto()
         teste_consumiveis()
         teste_implantacao()
         teste_autenticacao()  # por último: gasta o limite de tentativas
