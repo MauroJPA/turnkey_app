@@ -106,6 +106,8 @@ class RecipeRepository {
           'receita': nova.id,
           'ingrediente': it.getStringValue('ingrediente'),
           'sub_receita': it.getStringValue('sub_receita'),
+          if (it.getStringValue('produto').isNotEmpty)
+            'produto': it.getStringValue('produto'),
           'quantidade_g': it.getDoubleValue('quantidade_g'),
           'nome_provisorio': it.getStringValue('nome_provisorio'),
         },

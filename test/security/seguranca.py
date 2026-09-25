@@ -1151,6 +1151,66 @@ def teste_consumiveis():
         check(cb2.get('preco', 0) == 0, 'uma fatura da empresa A não altera consumíveis da empresa B', str(cb2)[:120])
 
 
+def teste_produto_na_receita():
+    """9b. Linha de receita com produto de compra fixado: o custo é o do produto."""
+    sec('9b. Produto fixado na linha de receita')
+    t = tok['editorA']
+    base = dict(dados[('ingredientes', 'A')][1])
+    base.update(nome='Farinha T55 (fixar)', origem='comprado', preco=0, gramas_embalagem=0)
+    st, ing, _ = call('POST', '/api/collections/ingredientes/records', base, t)
+    check(st == 200, 'criar o ingrediente genérico', f'status {st} {str(ing)[:120]}')
+    gid = ing['id']
+
+    def produto(nome, emb, preco, data, ingrediente=None):
+        return call('POST', '/api/collections/ingrediente_produtos/records',
+                    {'empresa': empresas['A'], 'ingrediente': ingrediente or gid, 'nome': nome, 'embalagem_g': emb,
+                     'preco': preco, 'preco_atualizado_em': data + ' 00:00:00.000Z'}, t)[1]
+
+    p1 = produto('Farinha pequena 1 kg', 1000, 2.00, '2026-09-01')
+    p2 = produto('Farinha grande 5 kg', 5000, 5.00, '2026-09-10')
+
+    rb = dict(dados[('receitas', 'A')][1])
+    rb.update(nome='Massa fixar', rendimento_manual=False)
+    for k in ('custo_receita', 'custo_por_grama', 'rendimento_esperado'):
+        rb.pop(k, None)
+    st, rec, _ = call('POST', '/api/collections/receitas/records', rb, t)
+    check(st == 200, 'criar a receita', f'status {st} {str(rec)[:120]}')
+    rid = rec['id']
+    st, it, _ = call('POST', '/api/collections/itens_receita/records',
+                     {'empresa': empresas['A'], 'receita': rid, 'ingrediente': gid, 'quantidade_g': 1000}, t)
+    check(st == 200, 'linha de receita com o genérico', f'status {st} {str(it)[:120]}')
+
+    def custo():
+        return call('GET', f'/api/collections/receitas/records/{rid}', tok=t)[1].get('custo_receita', -1)
+
+    check(abs(custo() - 1.0) < 1e-6, 'sem produto fixado: custo do genérico (compra mais recente, 5 kg a 5 €)', str(custo()))
+    st, r, _ = call('PATCH', f"/api/collections/itens_receita/records/{it['id']}", {'produto': p1['id']}, t)
+    check(st == 200, 'fixar o produto na linha', f'status {st} {str(r)[:120]}')
+    check(abs(custo() - 2.0) < 1e-6, 'com o produto fixado: custo do produto (1 kg a 2 €)', str(custo()))
+    # o preço do produto fixado muda (data antiga: o genérico não muda) e a receita acompanha
+    call('PATCH', f"/api/collections/ingrediente_produtos/records/{p1['id']}", {'preco': 3.0}, t)
+    check(abs(custo() - 3.0) < 1e-6, 'preço do produto fixado mudou: a receita acompanha', str(custo()))
+    # produto de outro ingrediente é ignorado
+    base2 = dict(base)
+    base2.update(nome='Outro ingrediente')
+    outro = call('POST', '/api/collections/ingredientes/records', base2, t)[1]
+    po = produto('Outro 1 kg', 1000, 9.0, '2026-09-20', ingrediente=outro['id'])
+    call('PATCH', f"/api/collections/itens_receita/records/{it['id']}", {'produto': po['id']}, t)
+    check(abs(custo() - 1.0) < 1e-6, 'produto de outro ingrediente é ignorado (volta ao custo do genérico)', str(custo()))
+    call('PATCH', f"/api/collections/itens_receita/records/{it['id']}", {'produto': p1['id']}, t)
+    check(abs(custo() - 3.0) < 1e-6, 'fixar de novo o produto')
+    # apagar o produto fixado: a linha volta ao genérico
+    call('DELETE', f"/api/collections/ingrediente_produtos/records/{p1['id']}", tok=t)
+    check(abs(custo() - 1.0) < 1e-6, 'apagar o produto fixado: a linha volta ao custo do genérico', str(custo()))
+
+    # isolamento
+    pb_ = produto('Farinha pequena B', 1000, 4.0, '2026-09-02')
+    st, r, _ = call('POST', '/api/collections/itens_receita/records',
+                    {'empresa': empresas['B'], 'receita': dados[('receitas', 'B')][0], 'ingrediente': dados[('ingredientes', 'B')][0],
+                     'quantidade_g': 10, 'produto': pb_['id']}, tok['editorB'])
+    check(st != 200, 'a empresa B não fixa um produto da empresa A', f'status {st}')
+
+
 def main():
     arrancar()
     try:
@@ -1164,6 +1224,7 @@ def main():
         teste_sem_chave()
         teste_faturas_ia()
         teste_produtos()
+        teste_produto_na_receita()
         teste_consumiveis()
         teste_implantacao()
         teste_autenticacao()  # por último: gasta o limite de tentativas

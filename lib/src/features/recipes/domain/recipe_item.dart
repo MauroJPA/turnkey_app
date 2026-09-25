@@ -21,6 +21,9 @@ class ItemReceita with _$ItemReceita {
     @Default(0) double custoPorGramaResolvido,
     @Default('') String ingredienteOrigem,
     String? ingredienteEspelhoId,
+
+    /// Produto de compra fixado nesta linha (null = custo do genérico).
+    String? produtoId,
   }) = _ItemReceita;
 
   const ItemReceita._();
@@ -55,6 +58,13 @@ class ItemReceita with _$ItemReceita {
       origem = e.getStringValue('origem');
       final esp = e.getStringValue('receita_espelho');
       if (esp.isNotEmpty) espelhoId = esp;
+      // produto fixado (do mesmo ingrediente): o custo é o dele
+      final prod = r.get<List<RecordModel>>('expand.produto', []);
+      if (prod.isNotEmpty && prod.first.getStringValue('ingrediente') == e.id) {
+        final pg = prod.first.getDoubleValue('embalagem_g');
+        final pp = prod.first.getDoubleValue('preco');
+        if (pg > 0 && pp > 0) cpg = pp / pg;
+      }
     } else if (sub.isNotEmpty) {
       final e = sub.first;
       nome = e.getStringValue('nome');
@@ -79,6 +89,7 @@ class ItemReceita with _$ItemReceita {
       custoPorGramaResolvido: cpg,
       ingredienteOrigem: origem,
       ingredienteEspelhoId: espelhoId,
+      produtoId: nn('produto'),
     );
   }
 }

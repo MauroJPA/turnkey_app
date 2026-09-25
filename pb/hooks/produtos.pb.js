@@ -21,6 +21,7 @@ onRecordAfterUpdateSuccess((e) => {
     const agora = e.record.getString('ingrediente');
     p.recalcularGenerico(e.app, agora);
     if (antes && antes !== agora) p.recalcularGenerico(e.app, antes);
+    p.refazerReceitasFixadas(e.app, agora, e.record.id, false);
   } catch (err) {
     console.log('[produtos] ' + err);
   }
@@ -29,7 +30,10 @@ onRecordAfterUpdateSuccess((e) => {
 
 onRecordAfterDeleteSuccess((e) => {
   try {
-    require(`${__hooks}/produtos.js`).recalcularGenerico(e.app, e.record.getString('ingrediente'));
+    const p = require(`${__hooks}/produtos.js`);
+    const ing = e.record.getString('ingrediente');
+    p.recalcularGenerico(e.app, ing);
+    p.refazerReceitasFixadas(e.app, ing, e.record.id, true);
   } catch (err) {
     console.log('[produtos] ' + err);
   }

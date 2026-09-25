@@ -119,8 +119,23 @@ class RecipeActions {
     _refreshLists();
   }
 
-  Future<void> addIngrediente(String recipeId, String ingId, double qtd) async {
-    await _items.addIngrediente(recipeId, ingId, qtd);
+  Future<void> addIngrediente(
+    String recipeId,
+    String ingId,
+    double qtd, {
+    String? produtoId,
+  }) async {
+    await _items.addIngrediente(recipeId, ingId, qtd, produtoId: produtoId);
+    _refreshDetail(recipeId);
+  }
+
+  /// Fixa (ou, com `null`, deixa de fixar) o produto de compra de uma linha.
+  Future<void> setProduto(
+    String recipeId,
+    String itemId,
+    String? produtoId,
+  ) async {
+    await _items.setProduto(itemId, produtoId);
     _refreshDetail(recipeId);
   }
 

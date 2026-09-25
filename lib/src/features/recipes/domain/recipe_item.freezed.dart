@@ -27,6 +27,7 @@ mixin _$ItemReceita {
   double get custoPorGramaResolvido => throw _privateConstructorUsedError;
   String get ingredienteOrigem => throw _privateConstructorUsedError;
   String? get ingredienteEspelhoId => throw _privateConstructorUsedError;
+  String? get produtoId => throw _privateConstructorUsedError;
 
   /// Create a copy of ItemReceita
   /// with the given fields replaced by the non-null parameter values.
@@ -53,6 +54,7 @@ abstract class $ItemReceitaCopyWith<$Res> {
     double custoPorGramaResolvido,
     String ingredienteOrigem,
     String? ingredienteEspelhoId,
+    String? produtoId,
   });
 }
 
@@ -81,6 +83,7 @@ class _$ItemReceitaCopyWithImpl<$Res, $Val extends ItemReceita>
     Object? custoPorGramaResolvido = null,
     Object? ingredienteOrigem = null,
     Object? ingredienteEspelhoId = freezed,
+    Object? produtoId = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -124,6 +127,10 @@ class _$ItemReceitaCopyWithImpl<$Res, $Val extends ItemReceita>
                 ? _value.ingredienteEspelhoId
                 : ingredienteEspelhoId // ignore: cast_nullable_to_non_nullable
                       as String?,
+            produtoId: freezed == produtoId
+                ? _value.produtoId
+                : produtoId // ignore: cast_nullable_to_non_nullable
+                      as String?,
           )
           as $Val,
     );
@@ -150,6 +157,7 @@ abstract class _$$ItemReceitaImplCopyWith<$Res>
     double custoPorGramaResolvido,
     String ingredienteOrigem,
     String? ingredienteEspelhoId,
+    String? produtoId,
   });
 }
 
@@ -177,6 +185,7 @@ class __$$ItemReceitaImplCopyWithImpl<$Res>
     Object? custoPorGramaResolvido = null,
     Object? ingredienteOrigem = null,
     Object? ingredienteEspelhoId = freezed,
+    Object? produtoId = freezed,
   }) {
     return _then(
       _$ItemReceitaImpl(
@@ -220,6 +229,10 @@ class __$$ItemReceitaImplCopyWithImpl<$Res>
             ? _value.ingredienteEspelhoId
             : ingredienteEspelhoId // ignore: cast_nullable_to_non_nullable
                   as String?,
+        produtoId: freezed == produtoId
+            ? _value.produtoId
+            : produtoId // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -239,6 +252,7 @@ class _$ItemReceitaImpl extends _ItemReceita {
     this.custoPorGramaResolvido = 0,
     this.ingredienteOrigem = '',
     this.ingredienteEspelhoId,
+    this.produtoId,
   }) : super._();
 
   @override
@@ -266,10 +280,12 @@ class _$ItemReceitaImpl extends _ItemReceita {
   final String ingredienteOrigem;
   @override
   final String? ingredienteEspelhoId;
+  @override
+  final String? produtoId;
 
   @override
   String toString() {
-    return 'ItemReceita(id: $id, receitaId: $receitaId, ingredienteId: $ingredienteId, subReceitaId: $subReceitaId, nomeProvisorio: $nomeProvisorio, quantidadeG: $quantidadeG, nomeResolvido: $nomeResolvido, custoPorGramaResolvido: $custoPorGramaResolvido, ingredienteOrigem: $ingredienteOrigem, ingredienteEspelhoId: $ingredienteEspelhoId)';
+    return 'ItemReceita(id: $id, receitaId: $receitaId, ingredienteId: $ingredienteId, subReceitaId: $subReceitaId, nomeProvisorio: $nomeProvisorio, quantidadeG: $quantidadeG, nomeResolvido: $nomeResolvido, custoPorGramaResolvido: $custoPorGramaResolvido, ingredienteOrigem: $ingredienteOrigem, ingredienteEspelhoId: $ingredienteEspelhoId, produtoId: $produtoId)';
   }
 
   @override
@@ -295,7 +311,9 @@ class _$ItemReceitaImpl extends _ItemReceita {
             (identical(other.ingredienteOrigem, ingredienteOrigem) ||
                 other.ingredienteOrigem == ingredienteOrigem) &&
             (identical(other.ingredienteEspelhoId, ingredienteEspelhoId) ||
-                other.ingredienteEspelhoId == ingredienteEspelhoId));
+                other.ingredienteEspelhoId == ingredienteEspelhoId) &&
+            (identical(other.produtoId, produtoId) ||
+                other.produtoId == produtoId));
   }
 
   @override
@@ -311,6 +329,7 @@ class _$ItemReceitaImpl extends _ItemReceita {
     custoPorGramaResolvido,
     ingredienteOrigem,
     ingredienteEspelhoId,
+    produtoId,
   );
 
   /// Create a copy of ItemReceita
@@ -334,6 +353,7 @@ abstract class _ItemReceita extends ItemReceita {
     final double custoPorGramaResolvido,
     final String ingredienteOrigem,
     final String? ingredienteEspelhoId,
+    final String? produtoId,
   }) = _$ItemReceitaImpl;
   const _ItemReceita._() : super._();
 
@@ -357,6 +377,8 @@ abstract class _ItemReceita extends ItemReceita {
   String get ingredienteOrigem;
   @override
   String? get ingredienteEspelhoId;
+  @override
+  String? get produtoId;
 
   /// Create a copy of ItemReceita
   /// with the given fields replaced by the non-null parameter values.
