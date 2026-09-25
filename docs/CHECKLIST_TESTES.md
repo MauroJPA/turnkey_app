@@ -712,6 +712,19 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       o Leite; numa ficha que usa a receita C, não.
 - [ ] Os alergénios do ingrediente (ex.: Glúten) contam sempre, com ou sem produto fixado.
 
+## 36. Nutrição própria por produto
+
+- [ ] Ingrediente com dois produtos. No produto X: **Nutrição própria do produto** → ligar "Usar estes valores" e
+      preencher (ex.: 400 kcal); guardar. A lista mostra "Nutrição própria (400 kcal)".
+- [ ] Ligar "Usar estes valores" sem preencher nada: pede para preencher ou desligar.
+- [ ] **Foto do rótulo (IA)** no produto: preenche os valores (com o Gemini configurado) e acrescenta os alergénios
+      lidos; conferir os valores antes de guardar.
+- [ ] Receita A fixa o produto X; receita B em automático (mesma quantidade): a informação nutricional da A usa
+      os valores do X; a da B usa os do ingrediente.
+- [ ] Alterar os valores do produto X: a nutrição da receita A acompanha (e a ficha técnica e o rótulo que a usam).
+- [ ] Desligar "Usar estes valores": a receita A volta a usar a nutrição do ingrediente.
+- [ ] Produto por 100 ml com densidade: o valor converte-se para 100 g (confere um caso simples à mão).
+
 ---
 
 ## Notas / ajustes pedidos

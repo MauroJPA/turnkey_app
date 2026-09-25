@@ -1418,6 +1418,63 @@ def teste_alergenios_produto():
         check('Soja' in fn and 'Glúten' in fn, 'a declaração da ficha leva os alergénios do produto fixado e os do genérico', str(fn))
 
 
+def teste_nutricao_produto():
+    """9f. Nutrição própria do produto: só conta quando a receita fixa esse produto."""
+    sec('9f. Nutrição própria por produto')
+    t = tok['editorA']
+    base = dict(dados[('ingredientes', 'A')][1])
+    base.update(nome='Manteiga nutrição', origem='comprado', preco=0, gramas_embalagem=0, alergenios=[], alergenios_tracos=[],
+                nutri_energia_kcal=100, nutri_lipidos_g=10, nutri_saturados_g=5, nutri_hidratos_g=1, nutri_acucares_g=1,
+                nutri_fibra_g=0, nutri_proteina_g=1, nutri_sal_g=0.1, nutri_base='100g', nutri_densidade=1)
+    st, ing, _ = call('POST', '/api/collections/ingredientes/records', base, t)
+    gid = ing['id']
+
+    def produto(nome, **extra):
+        st, r, _ = call('POST', '/api/collections/ingrediente_produtos/records',
+                        {'empresa': empresas['A'], 'ingrediente': gid, 'nome': nome, 'embalagem_g': 250, 'preco': 2.0,
+                         'preco_atualizado_em': '2026-09-01 00:00:00.000Z', **extra}, t)
+        assert st == 200, (st, r)
+        return r
+
+    px = produto('Manteiga X', nutri_propria=True, nutri_energia_kcal=400, nutri_lipidos_g=40, nutri_saturados_g=20,
+                 nutri_hidratos_g=2, nutri_acucares_g=2, nutri_fibra_g=0, nutri_proteina_g=2, nutri_sal_g=0.5, nutri_base='100g')
+    py = produto('Manteiga Y', nutri_propria=False, nutri_energia_kcal=999)
+
+    def receita(nome, produto_id=None):
+        rb = dict(dados[('receitas', 'A')][1])
+        rb.update(nome=nome, rendimento_manual=False)
+        for k in ('custo_receita', 'custo_por_grama', 'rendimento_esperado'):
+            rb.pop(k, None)
+        rid = call('POST', '/api/collections/receitas/records', rb, t)[1]['id']
+        item = {'empresa': empresas['A'], 'receita': rid, 'ingrediente': gid, 'quantidade_g': 500}
+        if produto_id:
+            item['produto'] = produto_id
+        it = call('POST', '/api/collections/itens_receita/records', item, t)[1]
+        return rid, it['id']
+
+    def kcal(rid):
+        n = call('GET', f'/api/collections/receitas/records/{rid}', tok=t)[1].get('nutri') or {}
+        p100 = n.get('por100') or n.get('por100g') or {}
+        return p100.get('kcal', n.get('kcal', -1)), n
+
+    rx, itx = receita('Massa manteiga X', px['id'])
+    ry, _ = receita('Massa manteiga Y', py['id'])
+    ra, _ = receita('Massa manteiga auto')
+    vx, nx = kcal(rx)
+    check(abs(vx - 400) < 1e-6, 'a receita que fixa o produto com nutrição própria usa os valores dele (400 kcal)', str(nx)[:200])
+    check(abs(kcal(ry)[0] - 100) < 1e-6, 'produto sem "nutrição própria": usa a do ingrediente (100 kcal)', str(kcal(ry)))
+    check(abs(kcal(ra)[0] - 100) < 1e-6, 'receita em automático: usa a do ingrediente (100 kcal)', str(kcal(ra)))
+    # o produto muda: a receita que o fixa acompanha
+    call('PATCH', f"/api/collections/ingrediente_produtos/records/{px['id']}", {'nutri_energia_kcal': 500}, t)
+    check(abs(kcal(rx)[0] - 500) < 1e-6, 'alterar a nutrição do produto: a receita que o fixa acompanha', str(kcal(rx)[0]))
+    # base 100 ml com densidade
+    call('PATCH', f"/api/collections/ingrediente_produtos/records/{px['id']}", {'nutri_base': '100ml', 'nutri_densidade': 0.5}, t)
+    check(abs(kcal(rx)[0] - 1000) < 1e-6, 'nutrição do produto por 100 ml converte-se com a densidade (500 / 0,5)', str(kcal(rx)[0]))
+    # deixa de fixar
+    call('PATCH', f'/api/collections/itens_receita/records/{itx}', {'produto': ''}, t)
+    check(abs(kcal(rx)[0] - 100) < 1e-6, 'sem produto fixado volta à nutrição do ingrediente', str(kcal(rx)[0]))
+
+
 def main():
     arrancar()
     try:
@@ -1435,6 +1492,7 @@ def main():
         teste_juntar()
         teste_compras_produto()
         teste_alergenios_produto()
+        teste_nutricao_produto()
         teste_consumiveis()
         teste_implantacao()
         teste_autenticacao()  # por último: gasta o limite de tentativas
