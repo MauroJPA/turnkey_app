@@ -2,6 +2,36 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.6.0 — 2026-09-25 — Primeira versão para produção
+
+Tudo o que entrou desde a 1.5.0, pronto para o Mini PC.
+
+- **Navegação e permissões:** rodapé e grelha configuráveis, permissões por página e por
+  nível (só o proprietário grava), cores e páginas escondidas por utilizador; seta de voltar
+  em todas as páginas.
+- **Produzir / Mise en place** com os **produtos finais** (fichas técnicas) e "produzir primeiro"
+  (massa, recheios, coberturas).
+- **Ingredientes:** informação nutricional na criação (manual, tabela INSA, foto lida por IA).
+  **Receitas:** procedimento e imagens. **Fichas:** formato de cookie, CMV esperado e real,
+  quebra do preço esperado vs real. Corrigido o ecrã vermelho ao deslizar para apagar.
+- **Produtos Gookie:** declaração nutricional, lista de ingredientes completa e resumida
+  (alergénios destacados, sem repetir quando já estão no nome), conservação por seleção.
+- **Etiquetas 50 × 80 mm** (térmica): tamanho configurável com o mínimo medido, datas
+  impressas ou em branco, lote opcional, ℮ opcional, produtor; definições guardadas por
+  produto. **Falta confirmar a rotulagem com a ASAE** (`docs/ROTULAGEM_LEGAL.md`).
+- **Segurança** (`docs/SEGURANCA.md`, `test/security/`): registo público já não escolhe
+  empresa/papel (crítico), relações só dentro da mesma empresa, admin não rebaixa
+  proprietários, faturas com ficheiro protegido, XSS no talão corrigido, limite de tentativas
+  de login, **aprovação manual de novos registos**, **tokens de integrações cifrados por
+  empresa** (Vendus) com chave-mestra `TURNKEY_ENC_KEY`.
+- **PocketBase 0.40.4** (antes 0.35.0).
+- **Backups:** backup noturno do PocketBase + cópia cifrada para o Google Drive + USB
+  (`pb/backup/`).
+- **Instalação no Mini PC:** `docs/MINI_PC.md`, `scripts/empacotar-producao.ps1` (zip com a app
+  web + servidor), `pb/serve-producao.ps1`, `pb/instalar-arranque.ps1`. A app web passa a
+  ser servida pelo próprio PocketBase (`--dart-define=PB_URL=origin`).
+- Migrations novas: `1707523200` … `1707955204` (50 no total).
+
 ## 1.5.0 — 2026-09-08 — Fase 5: faturas com IA
 
 Recolha de faturas de compra e listas de preços; a IA lê as linhas e a pessoa
