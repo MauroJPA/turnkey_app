@@ -1,0 +1,69 @@
+/// <reference path="../pb_data/types.d.ts" />
+
+// Ingrediente genérico ↔ produtos de compra (ver a migration
+// 1707955205_ingrediente_produtos.js).
+//
+//   recalcularGenerico(app, ingredienteId)
+//     O custo do genérico (preco, gramas_embalagem, preco_atualizado_em) passa a ser
+//     o do produto com a COMPRA MAIS RECENTE (data do preço; em caso de empate, o
+//     último a ser gravado). Só grava se algo mudou (a gravação dispara a
+//     cascata de custos das receitas). Sem produtos válidos, não mexe.
+//
+//   normalizarDescricao(texto)
+//     minúsculas, sem acentos, espaços simples: para comparar descrições de fatura.
+
+function recalcularGenerico(app, ingredienteId) {
+  if (!ingredienteId) return;
+  var ing;
+  try {
+    ing = app.findRecordById('ingredientes', ingredienteId);
+  } catch (_) {
+    return;
+  }
+  var prods = app.findRecordsByFilter(
+    'ingrediente_produtos',
+    'ingrediente = {:i}',
+    '',
+    0,
+    0,
+    { i: ingredienteId },
+  );
+  var melhor = null;
+  var chave = '';
+  for (var i = 0; i < prods.length; i++) {
+    var p = prods[i];
+    if (!(p.getFloat('preco') > 0 && p.getFloat('embalagem_g') > 0)) continue;
+    var k = String(p.getString('preco_atualizado_em') || '').substring(0, 10) + '|' + p.getString('updated');
+    if (!melhor || k > chave) {
+      melhor = p;
+      chave = k;
+    }
+  }
+  if (!melhor) return;
+  var preco = melhor.getFloat('preco');
+  var emb = melhor.getFloat('embalagem_g');
+  var data = melhor.getString('preco_atualizado_em');
+  var mudou =
+    Math.abs(ing.getFloat('preco') - preco) > 1e-9 ||
+    Math.abs(ing.getFloat('gramas_embalagem') - emb) > 1e-9 ||
+    String(ing.getString('preco_atualizado_em')).substring(0, 10) !== String(data).substring(0, 10);
+  if (!mudou) return;
+  ing.set('preco', preco);
+  ing.set('gramas_embalagem', emb);
+  if (data) ing.set('preco_atualizado_em', data);
+  app.save(ing);
+}
+
+function normalizarDescricao(texto) {
+  var de = 'áàãâäéèêëíìîïóòõôöúùûüçñ';
+  var para = 'aaaaaeeeeiiiiooooouuuucn';
+  var s = String(texto || '').toLowerCase().trim();
+  var out = '';
+  for (var i = 0; i < s.length; i++) {
+    var j = de.indexOf(s[i]);
+    out += j >= 0 ? para[j] : s[i];
+  }
+  return out.replace(/\s+/g, ' ');
+}
+
+module.exports = { recalcularGenerico, normalizarDescricao };

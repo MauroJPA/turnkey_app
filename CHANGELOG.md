@@ -2,6 +2,26 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.9.0 — 2026-09-25 — Ingredientes genéricos e produtos de compra
+
+- **Ingrediente genérico + produtos de compra.** Uma receita usa "Açúcar branco"; as compras (Sidul 1 kg,
+  Makro 5 kg, …) são **produtos** desse ingrediente, cada um com marca, embalagem, preço e data. Açúcar
+  branco, amarelo, demerara e mascavado continuam a ser ingredientes diferentes.
+- **Custo do genérico = compra mais recente** (recalculado pelo servidor sempre que um produto muda, com a
+  cascata de custos habitual). **Um stock por ingrediente genérico.**
+- Ficha do ingrediente: secção **Produtos de compra** (adicionar/editar/apagar); o preço e a embalagem do
+  ingrediente passam a ser só de leitura quando há produtos.
+- **Faturas:** a IA propõe o **nome genérico** e a **marca** de cada linha ("Cravinho moído Margão pac 14gr" →
+  "Cravinho em pó" / Margão). O emparelhamento usa, por ordem: nome de fatura já aprendido, nome genérico da
+  IA, semelhança de palavras. O preço vai para o **produto** (cria-se um se a marca/embalagem for nova) e o
+  nome da fatura é **aprendido** para a vez seguinte. Se o genérico não existe, cria-se na revisão (nome
+  sugerido pela IA, editável). Fatura mais antiga que a compra registada não mexe no custo.
+- Migration `1707955205_ingrediente_produtos` (cria os produtos a partir dos ingredientes comprados
+  existentes, sem alterar custos).
+- Testes: secção 9 do `test/security/seguranca.py` e testes do emparelhamento.
+- Ainda por fazer (próxima versão): escolher o produto de cada linha de receita, ferramenta "juntar
+  ingredientes" e nutrição/alergénios por produto.
+
 ## 1.8.0 — 2026-09-25 — Faturas: vários documentos por PDF e IA mais robusta
 
 - **Um PDF com várias faturas** (fornecedores diferentes, ou o mesmo com datas/números diferentes) é dividido:

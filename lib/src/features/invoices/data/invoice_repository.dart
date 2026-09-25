@@ -30,6 +30,9 @@ typedef LinhaAAplicar = ({
   double totalLinha,
   double embalagemG,
   AcaoFatura acao,
+  String? produtoId,
+  String marca,
+  String produtoNome,
 });
 
 class InvoiceRepository {
@@ -211,6 +214,9 @@ class InvoiceRepository {
               'totalLinha': l.totalLinha,
               'embalagemG': l.embalagemG,
               'acao': l.acao.api,
+              if (l.produtoId != null) 'produtoId': l.produtoId,
+              if (l.marca.isNotEmpty) 'marca': l.marca,
+              'produtoNome': l.produtoNome,
             },
         ],
       },

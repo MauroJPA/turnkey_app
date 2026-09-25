@@ -122,25 +122,82 @@ routerAdd(
             } catch (_) {
               ing = null;
             }
-            if (ing && pu > 0) {
-              const ultima = soData(ing.getString('preco_atualizado_em'));
-              const maisRecente =
-                !ultima || (dataFatura && dataFatura >= ultima);
+            if (ing && ing.getString('empresa') === empresaId && pu > 0) {
+              // O preço fica no PRODUTO de compra (marca/embalagem); o custo do
+              // ingrediente genérico passa a ser o da compra mais recente (hook).
+              const prods = require(`${__hooks}/produtos.js`);
+              const desc = prods.normalizarDescricao(l.descricaoFatura);
+              const lerNomes = (rec) => {
+                try {
+                  const v = JSON.parse(rec.getString('nomes_fatura') || '[]');
+                  return Array.isArray(v) ? v : [];
+                } catch (_) {
+                  return [];
+                }
+              };
+              let prod = null;
+              if (l.produtoId) {
+                try {
+                  prod = tx.findRecordById('ingrediente_produtos', String(l.produtoId));
+                  if (prod.getString('ingrediente') !== ingId) prod = null;
+                } catch (_) {
+                  prod = null;
+                }
+              }
+              if (!prod && desc) {
+                const todos = tx.findRecordsByFilter(
+                  'ingrediente_produtos',
+                  'ingrediente = {:i}',
+                  '',
+                  0,
+                  0,
+                  { i: ingId },
+                );
+                for (const p of todos) {
+                  if (lerNomes(p).indexOf(desc) !== -1) {
+                    prod = p;
+                    break;
+                  }
+                }
+              }
+              if (!prod) {
+                prod = new Record(tx.findCollectionByNameOrId('ingrediente_produtos'));
+                prod.set('empresa', empresaId);
+                prod.set('ingrediente', ingId);
+                prod.set(
+                  'nome',
+                  String(l.produtoNome || l.descricaoFatura || ing.getString('nome')).substring(0, 250),
+                );
+                prod.set('fornecedor', fatura.getString('fornecedor'));
+              }
+              if (l.marca && !prod.getString('marca')) {
+                prod.set('marca', String(l.marca).substring(0, 200));
+              }
+              // aprende o nome desta fatura para emparelhar sozinho da próxima vez
+              const nomes = lerNomes(prod);
+              if (desc && nomes.indexOf(desc) === -1) {
+                nomes.push(desc);
+                while (nomes.length > 50) nomes.shift();
+                prod.set('nomes_fatura', nomes);
+              }
+              const ultima = soData(prod.getString('preco_atualizado_em'));
+              const maisRecente = !ultima || (dataFatura && dataFatura >= ultima);
               if (maisRecente) {
-                ing.set('preco', pu);
-                if (emb > 0) ing.set('gramas_embalagem', emb);
+                const embEf =
+                  emb > 0 ? emb : prod.getFloat('embalagem_g') || ing.getFloat('gramas_embalagem');
+                prod.set('preco', pu);
+                if (embEf > 0) prod.set('embalagem_g', embEf);
                 // carimba com a data da fatura (não "agora"), para futuras
                 // comparações usarem sempre a data do documento.
-                ing.set(
+                prod.set(
                   'preco_atualizado_em',
-                  (dataFatura || soData(new Date().toISOString())) +
-                    'T00:00:00.000Z',
+                  (dataFatura || soData(new Date().toISOString())) + 'T00:00:00.000Z',
                 );
-                tx.save(ing);
                 precos++;
               } else {
                 precosIgnorados++;
               }
+              tx.save(prod);
             }
           }
           if ((acao === 'stock' || acao === 'ambos') && q > 0) {
