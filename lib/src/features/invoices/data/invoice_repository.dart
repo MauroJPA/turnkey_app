@@ -218,12 +218,31 @@ class InvoiceRepository {
         : <Map<String, dynamic>>[];
   }
 
-  String ficheiroUrl(Fatura f, {bool thumb = false}) {
+  /// URL do ficheiro (protegido no servidor: só abre com um [token] de
+  /// curta duração — ver [ficheiroUrlSeguro]).
+  String ficheiroUrl(Fatura f, {bool thumb = false, String? token}) {
     if (!f.temFicheiro) return '';
     final base = _pb.baseURL.endsWith('/')
         ? _pb.baseURL.substring(0, _pb.baseURL.length - 1)
         : _pb.baseURL;
-    final u = '$base/api/files/faturas/${f.id}/${f.ficheiro}';
-    return thumb ? '$u?thumb=0x240' : u;
+    final q = [
+      if (thumb) 'thumb=0x240',
+      if (token != null) 'token=$token',
+    ];
+    return '$base/api/files/faturas/${f.id}/${f.ficheiro}'
+        '${q.isEmpty ? '' : '?${q.join('&')}'}';
+  }
+
+  /// URL do ficheiro com um token novo (válido cerca de 2 minutos).
+  Future<String> ficheiroUrlSeguro(Fatura f, {bool thumb = false}) async {
+    if (!f.temFicheiro) return '';
+    return ficheiroUrl(f, thumb: thumb, token: await _pb.files.getToken());
+  }
+
+  /// Acrescenta um token novo a um URL de ficheiro protegido.
+  Future<String> comToken(String url) async {
+    if (url.isEmpty) return url;
+    final t = await _pb.files.getToken();
+    return '$url${url.contains('?') ? '&' : '?'}token=$t';
   }
 }

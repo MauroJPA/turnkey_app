@@ -14,6 +14,7 @@ import '../application/empresa_providers.dart';
 import '../application/settings_providers.dart';
 import '../data/empresa_repository.dart';
 import '../domain/empresa.dart';
+import 'integracoes_sheet.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -418,6 +419,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 subtitle: const Text('Rodapé e o que cada nível pode fazer'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.go(Routes.navegacao),
+              ),
+
+            // ---- Integrações ----
+            if (ref.read(currentPapelProvider).canEditConfig)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.link_outlined),
+                title: const Text('Integrações'),
+                subtitle: const Text('Token do Vendus (guardado cifrado)'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => showIntegracoesSheet(context),
               ),
 
             // ---- Equipa ----

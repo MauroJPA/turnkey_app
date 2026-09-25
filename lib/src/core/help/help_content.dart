@@ -27,6 +27,7 @@ enum HelpTopic {
   painelFinanceiro,
   dre,
   embalagens,
+  produtosGookie,
   formatos,
   configuracoes,
   navegacao,
@@ -283,6 +284,16 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'DRE = Demonstração de Resultados do Exercício: o mesmo cálculo do painel financeiro, mas no formato de relatório clássico de contabilidade (receita → custo → lucro bruto → despesas → resultado).',
       'Escolhe o período (esta semana, este mês, mês passado) e toca no ícone de impressão para abrir uma versão simples para imprimir ou guardar como PDF.',
       'Se houver vendas sem produto identificado, o custo delas não entra no cálculo e aparece um aviso — o resultado fica sobrestimado nessa medida.',
+    ],
+  ),
+  HelpTopic.produtosGookie: (
+    titulo: 'Produtos Gookie',
+    paragrafos: [
+      'Aqui está tudo o que a Gookie produz (os produtos finais das fichas técnicas), com a informação pronta para o cliente: declaração nutricional, lista de ingredientes e alergénios.',
+      'O ícone à esquerda diz se a nutrição está completa (visto) ou se falta alguma coisa (aviso). Toque num produto para ver os pormenores.',
+      'A lista de ingredientes segue as regras da UE: por ordem decrescente de peso e com os alergénios a negrito. É calculada sozinha a partir da ficha técnica, das receitas e dos ingredientes.',
+      '"Falta completar" mostra o que ainda não está preenchido: nutrição de algum ingrediente, descrição, prazo de validade e modo de conservação. "Corrigir a nutrição" leva-o ao ingrediente em falta; "Preencher os dados" abre a ficha.',
+      'O ícone de copiar junta tudo num texto. A impressão de etiquetas (completa e resumida) vem a seguir.',
     ],
   ),
   HelpTopic.embalagens: (

@@ -3,8 +3,8 @@
 Percorre esta lista na app (login `ana@teste.local`). Para cada ponto marca
 `[x]` se está OK, ou escreve a seguir o que queres ajustar. Reinicia o
 PocketBase (`pb\serve.ps1`) e faz hot-restart do `flutter run` (tecla **R**)
-antes de começar, para carregar as últimas migrations (há **41**; a última é
-`1707523200_producao_item_ficha.js`).
+antes de começar, para carregar as últimas migrations (há **43**; a última é
+`1707696000_ficha_rotulo.js`).
 
 **Índice de páginas** (uma secção por página): 0 Arranque · 1 Início ·
 2 Aparência · 3 Formatos · 4 Ingredientes · 5 Receitas · 6 Fichas · 7 Produzir ·
@@ -12,7 +12,7 @@ antes de começar, para carregar as últimas migrations (há **41**; a última �
 13 Faturas · 14 Nutrição · 15 Embalagens · **16 Vendas · 17 Análise de vendas ·
 18 Encomendas · 19 Custos fixos · 20 Equipamentos · 21 Números mágicos ·
 22 Painel financeiro · 23 DRE · 24 Configurações (empresa/percentuais) ·
-25 Equipa · 26 Navegação e permissões**.
+25 Equipa · 26 Navegação e permissões · 27 Produtos Gookie · 28 Segurança**.
 
 **Limites conhecidos do teste automático** (verifica sempre à mão): tudo o que
 abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
@@ -153,6 +153,9 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       = custo verdadeiro, rubricas com o mesmo %, **margem = o que sobra**; fica a
       vermelho se negativa). Última linha PREÇO FINAL (sugerido / venda). Sem
       preço de venda a coluna Real mostra "—".
+- [ ] **Dados do produto** na ficha (editar/criar): **Descrição** (curta, para a
+      etiqueta), **Validade (dias)** e **Conservação** — ficam gravados e
+      aparecem na página Produtos Gookie.
 - [ ] Campo **Formato do cookie** (ao criar/editar a ficha, lista Mini/Recheado/
       Simples… ou "Sem formato") → aparece na lista e no detalhe ("Formato: …").
       Serve para a produção encontrar a ficha certa: massa + recheio + formato.
@@ -544,6 +547,76 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       entrar, e não afetam outras pessoas.
 - [ ] Um utilizador não consegue alterar as permissões por API (só o Proprietário;
       o Administrador só o rodapé).
+
+## 27. Produtos Gookie
+
+- [ ] Início → **Produtos Gookie** (cartão na grelha; também na lista "Todas as
+      páginas") abre a lista (seta ←, **?**, rodapé).
+- [ ] Cada produto (ficha técnica) mostra: ícone **visto** se a nutrição está
+      completa ou **aviso** se falta; categoria, formato, peso por unidade,
+      validade, alergénios ("Contém: …") e o que **falta** ("Sem descrição · Sem
+      prazo de validade · …").
+- [ ] Pesquisa por nome e o filtro **"Só os que faltam completar"**.
+- [ ] Abrir um produto: **descrição**, chips (formato, g por unidade, validade),
+      **conservação**, **Declaração nutricional** (por 100 g e por unidade,
+      energia em kJ/kcal), **Ingredientes** e **Alergénios**.
+- [ ] **Ingredientes: Completa / Resumida**. Completa = nome de cada ingrediente tal
+      como está (marca, %, "congelado"). Resumida = nomes curtos e genéricos, com
+      variantes juntas (ex. `Açucar amarelo e branco`, `Limão`, `Ovos`); o campo
+      **"Nome na etiqueta resumida"** do ingrediente manda sobre o nome deduzido.
+- [ ] **Descrição é opcional**: sem descrição não aparece como falta. **Conservação**
+      é uma **seleção** (Local fresco e seco · Refrigerado · Fresco e seco ou
+      refrigerado · Congelado · Outro…).
+- [ ] Aviso "Valores médios de referência, aproximados" por baixo da tabela.
+- [ ] **Lista de ingredientes** por **ordem decrescente de peso**, ingredientes
+      compostos "desmontados" até aos ingredientes base, e os **alergénios a
+      negrito em MAIÚSCULAS** entre parênteses (ex. `Manteiga (LEITE)`).
+      Conferir à mão com a receita: o de maior peso vem primeiro.
+- [ ] Cartão **"Falta completar"** só aparece se houver pendências; **Corrigir a
+      nutrição** abre a declaração e leva ao ingrediente em falta;
+      **Preencher os dados** abre a ficha (descrição, validade, conservação).
+      Depois de guardar, o cartão some.
+- [ ] Ícone **copiar**: copia nome, descrição, ingredientes, alergénios,
+      conservação, validade e a declaração nutricional em texto.
+- [ ] Ícone do lápis (só quem pode editar) abre a ficha.
+- [ ] Com o papel **Leitura**: vê tudo mas não edita. Uma página oculta em
+      Navegação e permissões desaparece.
+- [ ] Ícone da **impressora** no produto abre **Etiqueta**. Aviso vermelho enquanto faltar
+      o **produtor** (e o que faltar na ficha).
+- [ ] Alternar **Completa/Resumida** e **Tabela/Linear/Nenhuma**; alterar data de fabrico
+      (o lote acompanha), expressão da data, nº de etiquetas, altura, ℮.
+- [ ] Escrever o produtor e **Guardar como predefinição** (só o proprietário): abrir outra
+      vez e vem preenchido.
+- [ ] **Pré-visualizar e imprimir** abre um separador (permitir pop-ups): etiqueta ampliada,
+      aviso a vermelho se não couber, botão Imprimir. No diálogo: papel **50 × 80 mm**,
+      margens nenhumas, escala 100 %. Uma etiqueta por página.
+- [ ] Alterar **Largura / Frente / Parte de baixo**: o cartão mostra o **mínimo recomendado** para o
+      produto; a vermelho se o tamanho escolhido for pequeno; **Usar o mínimo** preenche os campos.
+- [ ] Ingrediente cujo nome já tem o alergénio (ex.: "Leite condensado", "Ovo líquido"): aparece
+      **LEITE** condensado / **OVO** líquido a negrito, sem "(LEITE)" a seguir.
+- [ ] Desligar **Imprimir as datas**: "Fabrico" sai com uma **linha em branco** para escrever à
+      caneta e por baixo "Validade: X dias após a data de fabrico" (sem "consumir de preferência").
+- [ ] **Definições guardadas por produto:** escolher Resumida/Linear/datas em branco/tamanhos e
+      carregar em **Pré-visualizar e imprimir**; fechar e abrir outra vez a Etiqueta **do mesmo
+      produto**: vem com as mesmas definições. Outro produto continua com as suas (ou os
+      predefinidos). Data, lote e nº de etiquetas **não** ficam guardados. (Papel Leitura
+      imprime, mas não guarda.)
+- [ ] **Lote** vem vazio (não imprime); se escreveres um, aparece na etiqueta.
+- [ ] Peso líquido aparece **na frente**; datas, lote e produtor na parte de baixo; sem ℮ se
+      o interruptor estiver desligado.
+
+## 28. Segurança: aprovação de registos e integrações
+
+- [ ] Criar uma conta nova (Registar): ao entrar aparece **"A tua conta aguarda aprovação"**
+      (não o ecrã de criar empresa). "Verificar novamente" mantém-se nesse ecrã; "Sair" volta ao login.
+- [ ] No painel `/_/` (superutilizador) → **users** → marcar **aprovado** nessa conta →
+      "Verificar novamente" leva ao ecrã **A tua empresa**.
+- [ ] Configurações → **Integrações**: guardar um token; aparece "Token guardado (termina em …)"
+      e o token **não** volta a aparecer. Substituir e Remover funcionam. O papel Editor não vê
+      esta opção.
+- [ ] Vendas → **Sincronizar com o Vendus** usa o token guardado (com token real). Sem token dá a
+      mensagem "indica o token em Configurações → Integrações".
+- [ ] Abrir uma **fatura** (imagem e PDF): abre normalmente (o ficheiro agora pede um token).
 
 ---
 

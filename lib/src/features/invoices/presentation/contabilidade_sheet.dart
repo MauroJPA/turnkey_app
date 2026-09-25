@@ -159,10 +159,15 @@ class _SheetState extends ConsumerState<_Sheet> {
                                   : IconButton(
                                       icon: const Icon(Icons.open_in_new,
                                           size: 18),
-                                      onPressed: () => launchUrl(
-                                        Uri.parse(url),
-                                        mode: LaunchMode.externalApplication,
-                                      ),
+                                      onPressed: () async {
+                                        final u = await ref
+                                            .read(invoiceRepositoryProvider)
+                                            .comToken(url);
+                                        await launchUrl(
+                                          Uri.parse(u),
+                                          mode: LaunchMode.externalApplication,
+                                        );
+                                      },
                                     ),
                             );
                           },

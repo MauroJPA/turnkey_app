@@ -25,6 +25,9 @@ mixin _$FichaTecnica {
   double get precoVenda => throw _privateConstructorUsedError;
   bool get deletado => throw _privateConstructorUsedError;
   String get formatoId => throw _privateConstructorUsedError;
+  String get descricao => throw _privateConstructorUsedError;
+  int get validadeDias => throw _privateConstructorUsedError;
+  String get conservacao => throw _privateConstructorUsedError;
   Map<String, dynamic> get nutriRaw => throw _privateConstructorUsedError;
 
   /// Create a copy of FichaTecnica
@@ -50,6 +53,9 @@ abstract class $FichaTecnicaCopyWith<$Res> {
     double precoVenda,
     bool deletado,
     String formatoId,
+    String descricao,
+    int validadeDias,
+    String conservacao,
     Map<String, dynamic> nutriRaw,
   });
 }
@@ -77,6 +83,9 @@ class _$FichaTecnicaCopyWithImpl<$Res, $Val extends FichaTecnica>
     Object? precoVenda = null,
     Object? deletado = null,
     Object? formatoId = null,
+    Object? descricao = null,
+    Object? validadeDias = null,
+    Object? conservacao = null,
     Object? nutriRaw = null,
   }) {
     return _then(
@@ -113,6 +122,18 @@ class _$FichaTecnicaCopyWithImpl<$Res, $Val extends FichaTecnica>
                 ? _value.formatoId
                 : formatoId // ignore: cast_nullable_to_non_nullable
                       as String,
+            descricao: null == descricao
+                ? _value.descricao
+                : descricao // ignore: cast_nullable_to_non_nullable
+                      as String,
+            validadeDias: null == validadeDias
+                ? _value.validadeDias
+                : validadeDias // ignore: cast_nullable_to_non_nullable
+                      as int,
+            conservacao: null == conservacao
+                ? _value.conservacao
+                : conservacao // ignore: cast_nullable_to_non_nullable
+                      as String,
             nutriRaw: null == nutriRaw
                 ? _value.nutriRaw
                 : nutriRaw // ignore: cast_nullable_to_non_nullable
@@ -141,6 +162,9 @@ abstract class _$$FichaTecnicaImplCopyWith<$Res>
     double precoVenda,
     bool deletado,
     String formatoId,
+    String descricao,
+    int validadeDias,
+    String conservacao,
     Map<String, dynamic> nutriRaw,
   });
 }
@@ -167,6 +191,9 @@ class __$$FichaTecnicaImplCopyWithImpl<$Res>
     Object? precoVenda = null,
     Object? deletado = null,
     Object? formatoId = null,
+    Object? descricao = null,
+    Object? validadeDias = null,
+    Object? conservacao = null,
     Object? nutriRaw = null,
   }) {
     return _then(
@@ -203,6 +230,18 @@ class __$$FichaTecnicaImplCopyWithImpl<$Res>
             ? _value.formatoId
             : formatoId // ignore: cast_nullable_to_non_nullable
                   as String,
+        descricao: null == descricao
+            ? _value.descricao
+            : descricao // ignore: cast_nullable_to_non_nullable
+                  as String,
+        validadeDias: null == validadeDias
+            ? _value.validadeDias
+            : validadeDias // ignore: cast_nullable_to_non_nullable
+                  as int,
+        conservacao: null == conservacao
+            ? _value.conservacao
+            : conservacao // ignore: cast_nullable_to_non_nullable
+                  as String,
         nutriRaw: null == nutriRaw
             ? _value._nutriRaw
             : nutriRaw // ignore: cast_nullable_to_non_nullable
@@ -224,6 +263,9 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
     this.precoVenda = 0,
     this.deletado = false,
     this.formatoId = '',
+    this.descricao = '',
+    this.validadeDias = 0,
+    this.conservacao = '',
     final Map<String, dynamic> nutriRaw = const <String, dynamic>{},
   }) : _nutriRaw = nutriRaw,
        super._();
@@ -250,6 +292,15 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
   @override
   @JsonKey()
   final String formatoId;
+  @override
+  @JsonKey()
+  final String descricao;
+  @override
+  @JsonKey()
+  final int validadeDias;
+  @override
+  @JsonKey()
+  final String conservacao;
   final Map<String, dynamic> _nutriRaw;
   @override
   @JsonKey()
@@ -261,7 +312,7 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
 
   @override
   String toString() {
-    return 'FichaTecnica(id: $id, nome: $nome, categoria: $categoria, custoProduto: $custoProduto, pesoProduto: $pesoProduto, precoVenda: $precoVenda, deletado: $deletado, formatoId: $formatoId, nutriRaw: $nutriRaw)';
+    return 'FichaTecnica(id: $id, nome: $nome, categoria: $categoria, custoProduto: $custoProduto, pesoProduto: $pesoProduto, precoVenda: $precoVenda, deletado: $deletado, formatoId: $formatoId, descricao: $descricao, validadeDias: $validadeDias, conservacao: $conservacao, nutriRaw: $nutriRaw)';
   }
 
   @override
@@ -283,6 +334,9 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
                 other.deletado == deletado) &&
             (identical(other.formatoId, formatoId) ||
                 other.formatoId == formatoId) &&
+            (identical(other.descricao, descricao) || other.descricao == descricao) &&
+            (identical(other.validadeDias, validadeDias) || other.validadeDias == validadeDias) &&
+            (identical(other.conservacao, conservacao) || other.conservacao == conservacao) &&
             const DeepCollectionEquality().equals(other._nutriRaw, _nutriRaw));
   }
 
@@ -297,6 +351,9 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
     precoVenda,
     deletado,
     formatoId,
+    descricao,
+    validadeDias,
+    conservacao,
     const DeepCollectionEquality().hash(_nutriRaw),
   );
 
@@ -319,6 +376,9 @@ abstract class _FichaTecnica extends FichaTecnica {
     final double precoVenda,
     final bool deletado,
     final String formatoId,
+    final String descricao,
+    final int validadeDias,
+    final String conservacao,
     final Map<String, dynamic> nutriRaw,
   }) = _$FichaTecnicaImpl;
   const _FichaTecnica._() : super._();
@@ -339,6 +399,12 @@ abstract class _FichaTecnica extends FichaTecnica {
   bool get deletado;
   @override
   String get formatoId;
+  @override
+  String get descricao;
+  @override
+  int get validadeDias;
+  @override
+  String get conservacao;
   @override
   Map<String, dynamic> get nutriRaw;
 

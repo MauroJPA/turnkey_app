@@ -27,43 +27,52 @@ Se o tempo apertar: o bloco 4 e a etiqueta *resumida* do bloco 5 são o mínimo
 
 ## 1. Branches (Git)
 
-Estado atual: uma só linha (`master`), sem fluxo definido.
+Fluxo em `docs/FLUXO_GIT.md`. Script de verificação em `scripts/verificar.sh`.
 
-- [ ] Definir o modelo: `main` (produção, só recebe merges testados) · `develop` (integração) · `feature/*` (uma por funcionalidade) · `hotfix/*` (correções urgentes em produção).
-- [ ] Criar `develop` a partir do estado atual e passar a trabalhar em `feature/*` → `develop` → `main`.
+- [x] Definir o modelo: `main` (produção, só recebe merges testados) · `develop` (integração) · `feature/*` (uma por funcionalidade) · `hotfix/*` (correções urgentes em produção).
+- [x] Criar `develop` (feito 2026-09-24; `master` renomeado para `main`, etiqueta `v1.5.0` mantida) e passar a trabalhar em `feature/*` → `develop` → `main`.
 - [ ] Etiquetar versões (`v1.0.0` na entrada em produção) e manter o `CHANGELOG.md` (está parado na 1.5.0 antiga).
 - [ ] Proteger `main`/`develop` no remoto (merge só por pull request, verificações a passar).
-- [ ] Pipeline mínimo (CI): `flutter analyze` + `flutter test` + `node --check` dos hooks + aplicar as migrations numa BD vazia.
-- [ ] Documentar o fluxo (2–3 linhas no `README.md`) e como se faz um hotfix.
+- [x] Verificação mínima local: `bash scripts/verificar.sh` (analyze + testes + `node --check` dos hooks + migrations numa BD vazia).
+- [ ] Correr essa verificação automaticamente (CI) — precisa de um repositório remoto (ver `docs/FLUXO_GIT.md`).
+- [x] Documentar o fluxo e como se faz um hotfix (`docs/FLUXO_GIT.md`).
+- [ ] Criar repositório remoto **privado** (cópia de segurança do código) e enviar `main`, `develop` e etiquetas.
 
 ## 2. Backups automáticos da base de dados
 
-A BD é o PocketBase (SQLite em `pb_data/` + ficheiros enviados).
+A BD é o PocketBase (SQLite em `pb_data/` + ficheiros enviados). **Decidido: Google Drive + rclone crypt + USB semanal. Plano em `docs/BACKUPS.md`, instalação em `pb/backup/LEIA-ME.md`.** Scripts e migration prontos e testados com rclone simulado.
 
-- [ ] Ativar os **backups automáticos do próprio PocketBase** (Definições → Backups: cron diário + retenção, ex. 14 diários e 8 semanais).
+- [x] Backups automáticos do próprio PocketBase por migration (03:00, guarda 7). Aplica-se ao reiniciar o servidor em produção.
 - [ ] **Cópia fora da máquina** (outro disco/nuvem/S3): um backup só no mesmo PC não protege contra falha do disco.
-- [ ] Script agendado (Agendador de Tarefas do Windows no Mini PC) que copia `pb_data` (incl. `storage/`) para o destino externo.
-- [ ] Cifrar os backups que saem da máquina (contêm dados de clientes, faturas, chaves).
-- [ ] **Testar o restauro** numa instalação limpa e registar o tempo que demora. Um backup por testar não conta.
-- [ ] Alerta se o backup diário falhar ou não aparecer.
-- [ ] Documentar em `pb/DEPLOY.md` (onde ficam, como restaurar, quem faz).
+- [x] Scripts `pb/backup/copia-externa.ps1` e `instalar-tarefas.ps1` (escritos e testados com rclone simulado).
+- [ ] **No Mini PC:** instalar o rclone, ligar ao Google Drive, criar o remoto cifrado, guardar a chave e instalar a tarefa (`pb/backup/LEIA-ME.md`).
+- [x] Cifra definida: rclone crypt (chave com o Mauro). Falta gerar a chave no Mini PC.
+- [x] Script `teste-restauro.ps1` pronto (testado a partir de um backup real).
+- [ ] Fazer o **primeiro restauro** a sério a partir da nuvem e registar o tempo. Repetir todos os meses.
+- [x] Alerta por email se falhar (opcional, variáveis `BACKUP_*` em `pb\.env`).
+- [ ] Configurar essas variáveis e o USB semanal (BitLocker + `copia-usb.ps1`).
+- [x] Documentado em `docs/BACKUPS.md` e `pb/backup/LEIA-ME.md`.
 
 ## 3. Testes de segurança (só no nosso sistema, com autorização)
 
-Ambiente: uma cópia descartável (nunca a produção). Objetivo: encontrar falhas antes de outros.
+Relatório completo e lista para a produção: **`docs/SEGURANCA.md`**. Testes repetíveis em `test/security/` (correm no `scripts/verificar.sh`).
 
-- [ ] **Isolamento entre empresas (multi-tenant)**: com dois utilizadores de empresas diferentes, tentar ler/alterar/apagar registos um do outro por API em *todas* as coleções e endpoints `/api/turnkey/*` (IDOR).
-- [ ] **Papéis**: Leitura/Editor/Administrador a tentar o que não podem (escrever, apagar, mudar papéis, gravar a matriz de permissões, ver dados financeiros).
-- [ ] **Endpoints próprios** (hooks): todos exigem autenticação? validam a empresa? o que acontece com dados inválidos/enormes?
-- [ ] **Autenticação**: limite de tentativas de login, palavras-passe fracas, expiração de sessão, recuperação de conta.
-- [ ] **Uploads** (imagens, PDFs, fontes, rótulos): tipos, tamanho máximo, nomes de ficheiro maliciosos.
-- [ ] **HTML de impressão** (talão, DRE, futuras etiquetas): garantir que texto de clientes/produtos é escapado (XSS).
-- [ ] **Segredos**: nenhuma chave no repositório nem nos logs/erros mostrados; `.env` fora do git; **rodar a chave do Vendus** (foi exposta antes) e confirmar as chaves de IA.
-- [ ] **Painel de administração** do PocketBase: não exposto à internet (ou protegido); superutilizador com palavra-passe forte.
-- [ ] **HTTPS**, cabeçalhos de segurança, CORS restrito ao domínio da app.
-- [ ] **Dependências**: verificar versões do PocketBase, pacotes Flutter e npm em busca de vulnerabilidades conhecidas.
-- [ ] Guardar os testes em `test/security/` (scripts repetíveis) e correr antes de cada versão.
-- [ ] Relatório curto: o que se encontrou, o que se corrigiu, o que fica em risco aceite.
+- [x] **Isolamento entre empresas (multi-tenant)** em todas as coleções e endpoints (IDOR) — falha encontrada e corrigida (relações entre empresas).
+- [x] **Papéis**: Leitura/Editor/Admin/Owner — corrigidos: registo público escolhia empresa/papel (**crítico**); admin rebaixava proprietários.
+- [x] **Endpoints próprios** (hooks): exigem sessão, validam a empresa, dados inválidos/enormes sem erro 500.
+- [x] **Autenticação**: limite de tentativas ligado, mesma resposta para email existente/inexistente, palavra-passe mínima 8.
+- [x] **Uploads**: tipos e tamanhos restringidos; faturas protegidas (token de ficheiro).
+- [x] **HTML de impressão**: XSS no título do talão corrigido; testes com texto malicioso.
+- [x] **Segredos**: nada no repositório nem no histórico; `.env` fora do git.
+- [x] Tokens de integrações **cifrados por empresa** (Vendus) — Configurações → Integrações; chave-mestra `TURNKEY_ENC_KEY` (gerar com `pb\gerar-chave-cifra.ps1 -Gravar`).
+- [ ] **Rodar a chave do Vendus** (foi exposta antes): guardar a nova na app e apagar `VENDUS_API_KEY` do `pb\.env`.
+- [x] **PocketBase atualizado** para a 0.40.4 (binário trocado; reiniciar o servidor para o usar) e testes repetidos.
+- [ ] **Painel `/_/`**, **HTTPS**, cabeçalhos de segurança, CORS e *trusted proxy* no servidor definitivo (lista em `docs/SEGURANCA.md`).
+- [x] **Registo público** aberto, mas com **aprovação** manual (painel `/_/` → users → `aprovado`); ver `docs/SEGURANCA.md`.
+- [ ] Opcional: página "Aprovações" na app e/ou email quando alguém se regista.
+- [ ] Dependências Flutter/npm: rever versões (várias versões maiores atrás).
+- [x] Testes guardados em `test/security/` e ligados ao `scripts/verificar.sh`.
+- [x] Relatório curto: `docs/SEGURANCA.md`.
 
 ## 4. Página "Produtos Gookie" (nova)
 
@@ -71,22 +80,27 @@ Uma página com **tudo o que a Gookie produz** (produtos finais das fichas técn
 e, se fizer sentido, intermédios), para ver de forma simples e clara a
 **declaração nutricional** e a **lista de ingredientes** e imprimir etiquetas.
 
-- [ ] Nova página no menu (entra em `paginasApp`, com permissões por nível e cor na grelha).
-- [ ] Lista com pesquisa e estado de cada produto: nutrição **completa / incompleta** (ingredientes sem dados nutricionais) e alergénios.
-- [ ] Detalhe do produto: nome, descrição, formato/peso, **declaração nutricional** (por 100 g e por unidade), **lista de ingredientes**, alergénios, conservação.
-- [ ] **Lista de ingredientes** conforme o Regulamento (UE) 1169/2011: por ordem decrescente de peso, alergénios destacados (negrito), ingredientes compostos com o seu detalhe; gerada a partir da ficha → receitas → ingredientes (a nutrição por 100 g já existe).
-- [ ] Campos novos na ficha/produto: **descrição** (curta, para a etiqueta), **prazo de validade em dias**, **modo de conservação**, texto "consumir até / de preferência antes de".
-- [ ] Avisar quando faltar informação obrigatória (ex.: ingrediente sem nutrição, sem alergénios definidos).
-- [ ] Testes de unidade da lista de ingredientes (ordem, compostos, alergénios).
+- [x] Nova página no menu (`paginasApp`, permissões por nível e cor na grelha) — branch `feature/produtos-gookie`.
+- [x] Lista com pesquisa e estado de cada produto: nutrição **completa / incompleta** e alergénios (+ filtro "só os que faltam completar").
+- [x] Detalhe do produto: nome, descrição, formato/peso, **declaração nutricional** (por 100 g e por unidade), **lista de ingredientes**, alergénios, conservação.
+- [x] **Lista de ingredientes** conforme o Regulamento (UE) 1169/2011: por ordem decrescente de peso, alergénios destacados (negrito), ingredientes compostos com o seu detalhe; gerada a partir da ficha → receitas → ingredientes (a nutrição por 100 g já existe).
+- [x] Campos novos na ficha/produto (migration `1707696000_ficha_rotulo.js`; falta ainda o texto "consumir até / de preferência antes de", que se decide na etiqueta): **descrição** (curta, para a etiqueta), **prazo de validade em dias**, **modo de conservação**, texto "consumir até / de preferência antes de".
+- [x] Avisar quando faltar informação obrigatória (ex.: ingrediente sem nutrição, sem alergénios definidos).
+- [x] Testes de unidade da lista de ingredientes (ordem, somas, alergénios) e das pendências.
+- [ ] Nome de ingrediente **para o rótulo** (hoje usa o nome interno, ex. "Chocolate Negro 50% METRO Chef"): campo opcional "nome no rótulo".
+- [ ] Ingredientes compostos comprados (ex. chocolate, com a sua própria composição): hoje entram como um só ingrediente.
+- [ ] Incluir os **intermédios** (massas, recheios) na página, se se quiser.
 
 ## 5. Impressão de etiquetas
 
 Primeira impressora: **papel térmico autocolante**. Dois modelos, escolhidos na hora de imprimir:
 
+> **Antes de fechar o layout: confirmar a lei** — ver `docs/ROTULAGEM_LEGAL.md` (perguntas prontas para a ASAE/DGAV: isenção da declaração nutricional, lista resumida, tamanho de letra, lote, ℮). Não assumir nada como legal até haver resposta.
+
 - **Completo** — nome, descrição, declaração nutricional em tabela, lista de ingredientes, alergénios, conservação, lote, fabrico e validade, dados do produtor (o que a norma da UE pede).
 - **Resumido** — só o mínimo exigido pela norma da UE, para caber no papel mais pequeno.
 
-Layout definido (etiqueta 50 × 80 mm, com dobra):
+Layout definido (etiqueta 50 × 80 mm: **25 mm** da 1.ª parte + **55 mm** depois da dobra):
 
 ```
 Nome do produto            ┐ 1.ª parte: no máximo 25 mm
@@ -96,36 +110,53 @@ Tabela nutricional, ingredientes, alergénios, etc.
 Data de fabrico e validade
 ```
 
-- [ ] Escolher o modelo (completo/resumido) e o **número de etiquetas** a imprimir.
-- [ ] Campos **data de fabrico** (por omissão, hoje) e **data de validade** (por omissão, fabrico + prazo em dias do produto), editáveis; opcionalmente **lote**.
-- [ ] Gerar a etiqueta em HTML/CSS com `@page { size: 50mm 80mm }` e reaproveitar o mecanismo de impressão já usado no talão/DRE (`core/printing/print_html.dart`).
-- [ ] Ajustar os tamanhos de letra ao espaço (a norma tem tamanho mínimo de letra; em embalagens pequenas há regras próprias) e testar com a impressora real.
-- [ ] Pré-visualização na app antes de imprimir.
+- [x] Ecrã **Etiqueta** (ícone da impressora no produto): lista **completa/resumida**, nutrição **tabela / linear / nenhuma**, **número de etiquetas**, data de fabrico (hoje), expressão da data ("de preferência antes de" / "até"), **lote** (por omissão aammdd), **℮ opcional**, **produtor** (nome e morada, guardado na empresa pelo proprietário; migration `1707868800`) **largura**, **altura da frente** e **altura da parte de baixo** (50 / 25 / 55 mm por omissão). A app **mede** o texto e mostra o **mínimo recomendado** para esses dados (com botão "Usar o mínimo"). Alergénio já contido no nome ("Leite condensado", "Ovo líquido") fica a negrito e em maiúsculas na própria palavra, sem repetir entre parênteses.
+- [x] Página de impressão em HTML/CSS (`@page 50mm × 80mm`, uma etiqueta por página) com **pré-visualização ampliada**, botão Imprimir e **aviso a vermelho se o texto não couber** (frente 25 mm / parte de baixo). Peso líquido vai para a **frente** (mesmo campo visual que o nome).
+- [ ] **Testar com a impressora real** (papel térmico 50 × 80 mm, escala 100 %, margens nenhumas, tamanho de letra legível). O browser tem de **permitir pop-ups** para a app.
+- [ ] **Decidir o que fazer com o espaço** (ver abaixo): 55 mm **não chega** para um produto com ~17 ingredientes.
+- [ ] **Enviar as perguntas à ASAE/DGAV** (`docs/ROTULAGEM_LEGAL.md`) e registar as respostas.
 - [ ] Verificar com a norma (Reg. UE 1169/2011) e, se possível, com a ASAE/consultor: conteúdo mínimo obrigatório, isenções para embalagens pequenas, expressão da data.
 - [ ] Mais tarde: outros tamanhos de papel e impressoras (guardar o formato como configuração).
 
-### Dúvidas a resolver antes de desenhar a etiqueta
+### Medição: quanto espaço ocupa mesmo (produto "Provença", 17 ingredientes, letra 6 pt)
 
-1. **As medidas não fecham**: a etiqueta é 50 × 80 mm, mas a 1.ª parte (25 mm) + "os restantes 75 mm" dá 100 mm. É 50 × 100 mm? Ou a 2.ª parte tem 55 mm? Qual é a orientação (50 de largura × 80 de altura)?
+| Versão | Altura necessária | Cabe em 55 mm? |
+|---|---|---|
+| Completa + tabela | ≈ 74 mm | não |
+| Resumida + tabela | ≈ 66 mm | não |
+| Completa + linear | ≈ 60 mm | não |
+| Completa, sem declaração | ≤ 55 mm | sim (justo) |
+| Resumida + linear | ≤ 55 mm | sim |
+| Resumida, sem declaração | ≤ 55 mm | sim |
+
+Caminhos: (a) **aumentar a parte de baixo** (campo "Altura", ex. 75 mm → etiqueta 50 × 100); (b) usar **nutrição linear** + **lista resumida** (só depois de a ASAE confirmar a resumida); (c) **sem declaração nutricional**, se a ASAE confirmar a isenção. A letra de 6 pt está perto do mínimo legal (a confirmar), por isso **não se deve reduzir mais**.
+
+### Dúvidas a resolver antes de fechar a etiqueta
+
+1. ~~Medidas~~ **Resolvido:** 50 mm de largura × 80 mm de altura = 25 mm (nome + descrição) + 55 mm (depois da dobra). Falta confirmar que a dobra fica no sentido do comprimento (80 mm).
 2. Qual é a **impressora** (marca/modelo, resolução) e como liga (USB, rede, Bluetooth)? Se for necessário imprimir sem a janela do browser, teremos de usar outra via (ex.: comandos da própria impressora).
-3. Os **dados do produtor** (nome, morada, NIF/contacto) entram na etiqueta completa? Onde ficam guardados?
+3. ~~Dados do produtor~~ **Feito:** nome e morada, guardados na empresa (o proprietário grava; os outros podem escrever para essa impressão).
 4. Data de validade: "consumir até" ou "consumir de preferência antes de"? Varia por produto?
 5. Os produtos vendidos ao balcão sem embalagem também precisam de etiqueta/informação de alergénios?
 
 ## 6. Ida para produção (go-live)
 
-- [ ] Servidor definitivo (Mini PC): PocketBase como serviço, arranque automático, reinício em caso de falha.
-- [ ] Domínio + **HTTPS** + acesso externo seguro (túnel/reverse proxy).
-- [ ] Variáveis de ambiente de produção (`pb/.env`): IA, Vendus, SMTP, contabilidade (ver `pb/DEPLOY.md`); **chaves novas**.
-- [ ] Criar a empresa real, utilizadores e papéis; carregar os dados iniciais (ingredientes, receitas, fichas, formatos).
-- [ ] Definir a navegação e as permissões por nível (Configurações → Navegação e permissões).
-- [ ] Ensaio geral do ciclo completo (comprar → produzir → stock → vender) com dados reais.
-- [ ] Monitorização básica (espaço em disco, serviço ativo, erros) e quem é avisado.
-- [ ] Plano de retrocesso: como voltar à versão anterior + restaurar backup.
-- [ ] Congelar o código (`v1.0.0` em `main`) antes da data.
+Guia passo a passo: **`docs/MINI_PC.md`**. Pacote: `scripts\empacotar-producao.ps1` → `dist\gookie-producao-<versão>.zip`.
+
+- [x] Pacote de produção, arranque automático (Agendador de Tarefas) com reinício e vigia — `pb\serve-producao.ps1`, `pb\instalar-arranque.ps1`.
+- [x] `TURNKEY_DEV` fica sempre a 0 em `serve-producao.ps1`.
+- [x] Código congelado: `v1.6.0` em `main`.
+- [ ] Levar o pacote para o Mini PC e instalar (`docs/MINI_PC.md`, passos 0–6).
+- [ ] Escolher a via de acesso com **HTTPS** (Cloudflare Tunnel / Tailscale / rede local) e configurar *Application URL* e *Trusted proxy headers*.
+- [ ] Variáveis de ambiente de produção (`pb\.env`): IA, `TURNKEY_ENC_KEY`; **chaves novas**.
+- [ ] Criar a empresa real, aprovar o registo, utilizadores e papéis; carregar os dados iniciais.
+- [ ] Definir a navegação e as permissões por nível.
+- [ ] Backups a sério no Mini PC (`pb\backup\LEIA-ME.md`) e primeiro restauro de teste.
+- [ ] Ensaio geral do ciclo completo (comprar → produzir → stock → vender) e **imprimir uma etiqueta e um talão** na impressora real.
+- [ ] Monitorização: espaço em disco, log, quem é avisado.
 
 ## 7. Pequenos ajustes já identificados
 
 - [ ] Menu ⋮ da encomenda oferece "Cancelar" mesmo se já cancelada/entregue (esconder).
-- [ ] `CHANGELOG.md` desatualizado.
+- [x] `CHANGELOG.md` atualizado (1.6.0).
 - [ ] Impressão do talão nunca foi testada numa impressora real.

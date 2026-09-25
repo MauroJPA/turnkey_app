@@ -39,6 +39,7 @@ mixin _$Ingrediente {
 
   /// Nome do ficheiro da foto da tabela nutricional (rótulo), se houver.
   String get nutriFoto => throw _privateConstructorUsedError;
+  String get nomeRotulo => throw _privateConstructorUsedError;
 
   /// Se preenchido, este "ingrediente" é na verdade um produto Gookie — um
   /// espelho da receita com este id. A nutrição vem da receita, não se
@@ -79,6 +80,7 @@ abstract class $IngredienteCopyWith<$Res> {
     List<String> alergenios,
     List<String> alergeniosTracos,
     String nutriFoto,
+    String nomeRotulo,
     String? receitaEspelhoId,
   });
 }
@@ -117,6 +119,7 @@ class _$IngredienteCopyWithImpl<$Res, $Val extends Ingrediente>
     Object? alergenios = null,
     Object? alergeniosTracos = null,
     Object? nutriFoto = null,
+    Object? nomeRotulo = null,
     Object? receitaEspelhoId = freezed,
   }) {
     return _then(
@@ -197,6 +200,10 @@ class _$IngredienteCopyWithImpl<$Res, $Val extends Ingrediente>
                 ? _value.nutriFoto
                 : nutriFoto // ignore: cast_nullable_to_non_nullable
                       as String,
+            nomeRotulo: null == nomeRotulo
+                ? _value.nomeRotulo
+                : nomeRotulo // ignore: cast_nullable_to_non_nullable
+                      as String,
             receitaEspelhoId: freezed == receitaEspelhoId
                 ? _value.receitaEspelhoId
                 : receitaEspelhoId // ignore: cast_nullable_to_non_nullable
@@ -236,6 +243,7 @@ abstract class _$$IngredienteImplCopyWith<$Res>
     List<String> alergenios,
     List<String> alergeniosTracos,
     String nutriFoto,
+    String nomeRotulo,
     String? receitaEspelhoId,
   });
 }
@@ -273,6 +281,7 @@ class __$$IngredienteImplCopyWithImpl<$Res>
     Object? alergenios = null,
     Object? alergeniosTracos = null,
     Object? nutriFoto = null,
+    Object? nomeRotulo = null,
     Object? receitaEspelhoId = freezed,
   }) {
     return _then(
@@ -353,6 +362,10 @@ class __$$IngredienteImplCopyWithImpl<$Res>
             ? _value.nutriFoto
             : nutriFoto // ignore: cast_nullable_to_non_nullable
                   as String,
+        nomeRotulo: null == nomeRotulo
+            ? _value.nomeRotulo
+            : nomeRotulo // ignore: cast_nullable_to_non_nullable
+                  as String,
         receitaEspelhoId: freezed == receitaEspelhoId
             ? _value.receitaEspelhoId
             : receitaEspelhoId // ignore: cast_nullable_to_non_nullable
@@ -385,6 +398,7 @@ class _$IngredienteImpl extends _Ingrediente {
     final List<String> alergenios = const <String>[],
     final List<String> alergeniosTracos = const <String>[],
     this.nutriFoto = '',
+    this.nomeRotulo = '',
     this.receitaEspelhoId,
   }) : _alergenios = alergenios,
        _alergeniosTracos = alergeniosTracos,
@@ -458,6 +472,9 @@ class _$IngredienteImpl extends _Ingrediente {
   @override
   @JsonKey()
   final String nutriFoto;
+  @override
+  @JsonKey()
+  final String nomeRotulo;
 
   /// Se preenchido, este "ingrediente" é na verdade um produto Gookie — um
   /// espelho da receita com este id. A nutrição vem da receita, não se
@@ -467,7 +484,7 @@ class _$IngredienteImpl extends _Ingrediente {
 
   @override
   String toString() {
-    return 'Ingrediente(id: $id, nome: $nome, caracteristica: $caracteristica, marca: $marca, fornecedor: $fornecedor, preco: $preco, gramasEmbalagem: $gramasEmbalagem, precoAtualizadoEm: $precoAtualizadoEm, disponivel: $disponivel, origem: $origem, deletado: $deletado, nutri: $nutri, nutriBase: $nutriBase, nutriDensidade: $nutriDensidade, nutriOrigem: $nutriOrigem, nutriAtualizadoEm: $nutriAtualizadoEm, alergenios: $alergenios, alergeniosTracos: $alergeniosTracos, nutriFoto: $nutriFoto, receitaEspelhoId: $receitaEspelhoId)';
+    return 'Ingrediente(id: $id, nome: $nome, caracteristica: $caracteristica, marca: $marca, fornecedor: $fornecedor, preco: $preco, gramasEmbalagem: $gramasEmbalagem, precoAtualizadoEm: $precoAtualizadoEm, disponivel: $disponivel, origem: $origem, deletado: $deletado, nutri: $nutri, nutriBase: $nutriBase, nutriDensidade: $nutriDensidade, nutriOrigem: $nutriOrigem, nutriAtualizadoEm: $nutriAtualizadoEm, alergenios: $alergenios, alergeniosTracos: $alergeniosTracos, nutriFoto: $nutriFoto, nomeRotulo: $nomeRotulo, receitaEspelhoId: $receitaEspelhoId)';
   }
 
   @override
@@ -511,6 +528,8 @@ class _$IngredienteImpl extends _Ingrediente {
             ) &&
             (identical(other.nutriFoto, nutriFoto) ||
                 other.nutriFoto == nutriFoto) &&
+            (identical(other.nomeRotulo, nomeRotulo) ||
+                other.nomeRotulo == nomeRotulo) &&
             (identical(other.receitaEspelhoId, receitaEspelhoId) ||
                 other.receitaEspelhoId == receitaEspelhoId));
   }
@@ -537,6 +556,7 @@ class _$IngredienteImpl extends _Ingrediente {
     const DeepCollectionEquality().hash(_alergenios),
     const DeepCollectionEquality().hash(_alergeniosTracos),
     nutriFoto,
+    nomeRotulo,
     receitaEspelhoId,
   ]);
 
@@ -570,6 +590,7 @@ abstract class _Ingrediente extends Ingrediente {
     final List<String> alergenios,
     final List<String> alergeniosTracos,
     final String nutriFoto,
+    final String nomeRotulo,
     final String? receitaEspelhoId,
   }) = _$IngredienteImpl;
   const _Ingrediente._() : super._();
@@ -614,6 +635,8 @@ abstract class _Ingrediente extends Ingrediente {
   /// Nome do ficheiro da foto da tabela nutricional (rótulo), se houver.
   @override
   String get nutriFoto;
+  @override
+  String get nomeRotulo;
 
   /// Se preenchido, este "ingrediente" é na verdade um produto Gookie — um
   /// espelho da receita com este id. A nutrição vem da receita, não se

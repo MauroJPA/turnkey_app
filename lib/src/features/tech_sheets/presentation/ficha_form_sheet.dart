@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../cookie_formats/application/cookie_format_providers.dart';
+import '../../products/domain/produto_gookie.dart';
 import '../domain/tech_sheet.dart';
 
 Future<FichaInput?> showFichaFormSheet(
@@ -30,11 +31,31 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
   late final _categoria =
       TextEditingController(text: widget.existente?.categoria ?? '');
   late String _formatoId = widget.existente?.formatoId ?? '';
+  late final _descricao =
+      TextEditingController(text: widget.existente?.descricao ?? '');
+  late final _validade = TextEditingController(
+    text: (widget.existente?.validadeDias ?? 0) > 0
+        ? '${widget.existente!.validadeDias}'
+        : '',
+  );
+  late final _conservacao =
+      TextEditingController(text: widget.existente?.conservacao ?? '');
+
+  /// '' = sem escolha, uma das [conservacoesPadrao], ou [_outro] (texto livre).
+  static const _outro = '__outro';
+  late String _conservacaoSel = () {
+    final c = (widget.existente?.conservacao ?? '').trim();
+    if (c.isEmpty) return '';
+    return conservacoesPadrao.contains(c) ? c : _outro;
+  }();
 
   @override
   void dispose() {
     _nome.dispose();
     _categoria.dispose();
+    _descricao.dispose();
+    _validade.dispose();
+    _conservacao.dispose();
     super.dispose();
   }
 
@@ -46,6 +67,11 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
         nome: _nome.text,
         categoria: _categoria.text,
         formatoId: _formatoId,
+        descricao: _descricao.text,
+        validadeDias: int.tryParse(_validade.text.trim()) ?? 0,
+        conservacao: _conservacaoSel == _outro
+            ? _conservacao.text
+            : _conservacaoSel,
       ),
     );
   }
@@ -110,6 +136,48 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
               ],
               onChanged: (v) => setState(() => _formatoId = v ?? ''),
             ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _descricao,
+              maxLength: 300,
+              minLines: 1,
+              maxLines: 3,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Descrição (opcional)',
+                helperText: 'Curta: aparece por baixo do nome na etiqueta.',
+              ),
+            ),
+            TextFormField(
+              controller: _validade,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Validade (dias)',
+                helperText: 'a contar da data de fabrico',
+              ),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              key: ValueKey('conservacao-$_conservacaoSel'),
+              initialValue: _conservacaoSel,
+              isExpanded: true,
+              decoration: const InputDecoration(labelText: 'Conservação'),
+              items: [
+                const DropdownMenuItem(value: '', child: Text('— escolher —')),
+                for (final c in conservacoesPadrao)
+                  DropdownMenuItem(value: c, child: Text(c)),
+                const DropdownMenuItem(value: _outro, child: Text('Outro…')),
+              ],
+              onChanged: (v) => setState(() => _conservacaoSel = v ?? ''),
+            ),
+            if (_conservacaoSel == _outro)
+              TextFormField(
+                controller: _conservacao,
+                maxLength: 200,
+                decoration: const InputDecoration(
+                  labelText: 'Modo de conservação',
+                ),
+              ),
             const SizedBox(height: 16),
             FilledButton(
               onPressed: _submit,

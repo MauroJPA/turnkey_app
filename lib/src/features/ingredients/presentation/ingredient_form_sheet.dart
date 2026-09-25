@@ -40,6 +40,8 @@ class _IngredientFormSheetState extends ConsumerState<_IngredientFormSheet> {
   late final _caracteristica =
       TextEditingController(text: widget.existente?.caracteristica ?? '');
   late final _marca = TextEditingController(text: widget.existente?.marca ?? '');
+  late final _nomeRotulo =
+      TextEditingController(text: widget.existente?.nomeRotulo ?? '');
   late final _fornecedor =
       TextEditingController(text: widget.existente?.fornecedor ?? '');
   late final _preco = TextEditingController(
@@ -82,6 +84,7 @@ class _IngredientFormSheetState extends ConsumerState<_IngredientFormSheet> {
       _nome,
       _caracteristica,
       _marca,
+      _nomeRotulo,
       _fornecedor,
       _preco,
       _gramas,
@@ -215,6 +218,7 @@ class _IngredientFormSheetState extends ConsumerState<_IngredientFormSheet> {
           nome: _nome.text,
           caracteristica: _caracteristica.text,
           marca: _marca.text,
+          nomeRotulo: _nomeRotulo.text,
           fornecedor: _fornecedor.text,
           preco: _num(_preco),
           gramasEmbalagem: _num(_gramas),
@@ -353,6 +357,16 @@ class _IngredientFormSheetState extends ConsumerState<_IngredientFormSheet> {
                 controller: _caracteristica,
                 decoration: const InputDecoration(
                   labelText: 'Tipo / característica',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _nomeRotulo,
+                decoration: const InputDecoration(
+                  labelText: 'Nome na etiqueta resumida (opcional)',
+                  helperText: 'Curto e genérico, ex.: "Framboesa" em vez de '
+                      '"Framboesa Congelada". Vazio = a app deduz.',
+                  helperMaxLines: 2,
                 ),
               ),
               const SizedBox(height: 12),

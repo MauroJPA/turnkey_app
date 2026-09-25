@@ -48,6 +48,7 @@ routerAdd(
       u.set('empresa', empresaId);
       u.set('papel', papel);
       u.set('verified', true);
+      u.set('aprovado', true);
       tx.save(u);
       novoId = u.id;
     });
@@ -90,6 +91,15 @@ routerAdd(
         throw new ForbiddenError('Utilizador de outra empresa.');
       }
       const papelAtual = target.getString('papel');
+      if (
+        papelCaller === 'admin' &&
+        papelAtual !== 'editor' &&
+        papelAtual !== 'viewer'
+      ) {
+        throw new ForbiddenError(
+          'Só o proprietário pode alterar administradores e proprietários.',
+        );
+      }
       if (papelAtual === 'owner' && novoPapel !== 'owner') {
         const owners = tx.findRecordsByFilter(
           'users',

@@ -455,7 +455,34 @@ class _RevisaoState extends ConsumerState<_Revisao> {
   /// Pré-visualização grande da fatura, para conferir os dados ao lado (ecrã
   /// largo) ou por cima (telemóvel) das linhas.
   Widget _previewFatura(Fatura f, {required bool wide}) {
-    final url = ref.read(invoiceRepositoryProvider).ficheiroUrl(f);
+    _urlFuture ??= ref.read(invoiceRepositoryProvider).ficheiroUrlSeguro(f);
+    return FutureBuilder<String>(
+      future: _urlFuture,
+      builder: (ctx, snap) {
+        if (snap.hasError) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Text('Não foi possível abrir o ficheiro da fatura.'),
+            ),
+          );
+        }
+        if (!snap.hasData) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+        return _previewComUrl(f, snap.data!, wide: wide);
+      },
+    );
+  }
+
+  Future<String>? _urlFuture;
+
+  Widget _previewComUrl(Fatura f, String url, {required bool wide}) {
     final cs = Theme.of(context).colorScheme;
 
     if (f.ficheiroEhPdf) {
@@ -473,10 +500,15 @@ class _RevisaoState extends ConsumerState<_Revisao> {
             const Text('Fatura em PDF'),
             const SizedBox(height: 8),
             FilledButton.icon(
-              onPressed: () => launchUrl(
-                Uri.parse(url),
-                mode: LaunchMode.externalApplication,
-              ),
+              onPressed: () async {
+                final u = await ref
+                    .read(invoiceRepositoryProvider)
+                    .ficheiroUrlSeguro(f);
+                await launchUrl(
+                  Uri.parse(u),
+                  mode: LaunchMode.externalApplication,
+                );
+              },
               icon: const Icon(Icons.open_in_new),
               label: const Text('Abrir PDF'),
             ),

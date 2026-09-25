@@ -6,6 +6,7 @@ import '../core/auth/auth_controller.dart';
 import '../core/auth/auth_state.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/onboarding_screen.dart';
+import '../features/auth/presentation/pending_approval_screen.dart';
 import '../features/cookie_formats/presentation/cookie_formats_screen.dart';
 import '../features/dashboard/presentation/home_shell.dart';
 import '../features/dashboard/presentation/main_shell.dart';
@@ -26,6 +27,8 @@ import '../features/orders/presentation/encomendas_screen.dart';
 import '../features/packaging/presentation/embalagens_screen.dart';
 import '../features/production/presentation/cart_review_screen.dart';
 import '../features/production/presentation/production_screen.dart';
+import '../features/products/presentation/produto_gookie_detail_screen.dart';
+import '../features/products/presentation/produtos_gookie_screen.dart';
 import '../features/recipes/presentation/recipe_detail_screen.dart';
 import '../features/recipes/presentation/recipes_screen.dart';
 import '../features/sales/presentation/sales_screen.dart';
@@ -58,10 +61,17 @@ final routerProvider = Provider<GoRouter>((ref) {
           return loc == Routes.splash ? null : Routes.splash;
         case AuthSignedOut():
           return loc == Routes.login ? null : Routes.login;
+        case AuthPendingApproval():
+          return loc == Routes.pendente ? null : Routes.pendente;
         case AuthNeedsOnboarding():
           return loc == Routes.onboarding ? null : Routes.onboarding;
         case AuthSignedIn():
-          const gates = {Routes.splash, Routes.login, Routes.onboarding};
+          const gates = {
+            Routes.splash,
+            Routes.login,
+            Routes.onboarding,
+            Routes.pendente,
+          };
           return gates.contains(loc) ? Routes.home : null;
       }
     },
@@ -77,6 +87,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.onboarding,
         builder: (_, __) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        path: Routes.pendente,
+        builder: (_, __) => const PendingApprovalScreen(),
       ),
       // Todas as secções autenticadas — sempre com a barra de navegação
       // inferior (rodapé) para acesso rápido a qualquer página.
@@ -198,6 +212,18 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: ':id',
                 builder: (_, state) => RecipeDetailScreen(
                   recipeId: state.pathParameters['id']!,
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: Routes.produtosGookie,
+            builder: (_, __) => const ProdutosGookieScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                builder: (_, state) => ProdutoGookieDetailScreen(
+                  fichaId: state.pathParameters['id']!,
                 ),
               ),
             ],
