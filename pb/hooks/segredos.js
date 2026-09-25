@@ -18,6 +18,11 @@ function chaveMestra() {
   return k;
 }
 
+// true se o servidor tem a chave-mestra (32 caracteres) para cifrar/decifrar.
+function cifraDisponivel() {
+  return ($os.getenv('TURNKEY_ENC_KEY') || '').length === 32;
+}
+
 function procurar(app, empresaId, servico) {
   try {
     return app.findFirstRecordByFilter(
@@ -58,12 +63,13 @@ function ler(app, empresaId, servico) {
 // Só metadados: nunca o valor.
 function estado(app, empresaId, servico) {
   var rec = procurar(app, empresaId, servico);
-  if (!rec) return { configurada: false, sufixo: '', atualizadoEm: '' };
-  return {
+  var base = { cifraDisponivel: cifraDisponivel() };
+  if (!rec) return Object.assign(base, { configurada: false, sufixo: '', atualizadoEm: '' });
+  return Object.assign(base, {
     configurada: true,
     sufixo: rec.getString('sufixo'),
     atualizadoEm: rec.getString('updated'),
-  };
+  });
 }
 
 function apagar(app, empresaId, servico) {
@@ -71,4 +77,4 @@ function apagar(app, empresaId, servico) {
   if (rec) app.delete(rec);
 }
 
-module.exports = { guardar, ler, estado, apagar };
+module.exports = { guardar, ler, estado, apagar, cifraDisponivel };

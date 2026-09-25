@@ -6,18 +6,19 @@ import '../../../core/pocketbase/pb_client.dart';
 
 /// Estado de uma integração: o token nunca sai do servidor, só se sabe se está
 /// guardado e como termina.
-typedef EstadoIntegracao = ({bool configurada, String sufixo});
+typedef EstadoIntegracao = ({bool configurada, String sufixo, bool cifraOk});
 
-final integracaoVendusProvider =
-    FutureProvider.autoDispose<EstadoIntegracao>((ref) async {
-  final r = await ref.watch(pbProvider).send(
-        '/api/turnkey/integracoes/vendus',
-        method: 'GET',
-      );
+final integracaoVendusProvider = FutureProvider.autoDispose<EstadoIntegracao>((
+  ref,
+) async {
+  final r = await ref
+      .watch(pbProvider)
+      .send('/api/turnkey/integracoes/vendus', method: 'GET');
   final m = r as Map;
   return (
     configurada: m['configurada'] == true,
     sufixo: (m['sufixo'] ?? '').toString(),
+    cifraOk: m['cifraDisponivel'] != false,
   );
 });
 
@@ -70,7 +71,9 @@ class _SheetState extends ConsumerState<_Sheet> {
       _erro = null;
     });
     try {
-      await ref.read(pbProvider).send(
+      await ref
+          .read(pbProvider)
+          .send(
             '/api/turnkey/integracoes/vendus',
             method: 'PUT',
             body: {'valor': valor},
@@ -95,10 +98,9 @@ class _SheetState extends ConsumerState<_Sheet> {
       _erro = null;
     });
     try {
-      await ref.read(pbProvider).send(
-            '/api/turnkey/integracoes/vendus',
-            method: 'DELETE',
-          );
+      await ref
+          .read(pbProvider)
+          .send('/api/turnkey/integracoes/vendus', method: 'DELETE');
       ref.invalidate(integracaoVendusProvider);
     } on Object catch (e) {
       if (mounted) setState(() => _erro = _mensagem(e));
@@ -154,6 +156,21 @@ class _SheetState extends ConsumerState<_Sheet> {
               ],
             ),
           ),
+          if (estado.valueOrNull?.cifraOk == false)
+            Card(
+              color: Theme.of(context).colorScheme.errorContainer,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text(
+                  'O servidor ainda não tem a chave de cifra, por isso não pode '
+                  'guardar tokens. Quem administra o servidor tem de a gerar '
+                  '(pb\\gerar-chave-cifra.ps1 -Gravar) e reiniciar o PocketBase.',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onErrorContainer,
+                  ),
+                ),
+              ),
+            ),
           const SizedBox(height: 12),
           TextField(
             controller: _token,
@@ -178,7 +195,9 @@ class _SheetState extends ConsumerState<_Sheet> {
             ),
           const SizedBox(height: 16),
           FilledButton(
-            onPressed: _busy ? null : _guardar,
+            onPressed: _busy || estado.valueOrNull?.cifraOk == false
+                ? null
+                : _guardar,
             child: const Text('Guardar token'),
           ),
         ],

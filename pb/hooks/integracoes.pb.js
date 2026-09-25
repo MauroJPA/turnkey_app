@@ -46,10 +46,19 @@ routerAdd(
       throw new BadRequestError('Token inválido (8 a 300 caracteres, sem espaços).');
     }
     const seg = require(`${__hooks}/segredos.js`);
+    if (!seg.cifraDisponivel()) {
+      throw new ApiError(
+        503,
+        'O servidor ainda não tem a chave de cifra (TURNKEY_ENC_KEY em pb\\.env, 32 caracteres). ' +
+          'Gera-a com pb\\gerar-chave-cifra.ps1 -Gravar e reinicia o PocketBase.',
+        null,
+      );
+    }
     try {
       seg.guardar(e.app, auth.getString('empresa'), servico, valor, auth.id);
     } catch (err) {
-      throw new ApiError(503, 'Não foi possível guardar o token de forma segura neste servidor.', null);
+      console.log('[integracoes] erro ao guardar segredo: ' + String(err && err.message ? err.message : 'desconhecido'));
+      throw new ApiError(503, 'Não foi possível guardar o token neste servidor (ver os registos do servidor).', null);
     }
     return e.json(200, seg.estado(e.app, auth.getString('empresa'), servico));
   },
@@ -72,7 +81,7 @@ routerAdd(
     if (!['vendus'].includes(servico)) throw new NotFoundError('Serviço desconhecido.');
     const seg = require(`${__hooks}/segredos.js`);
     seg.apagar(e.app, auth.getString('empresa'), servico);
-    return e.json(200, { configurada: false, sufixo: '', atualizadoEm: '' });
+    return e.json(200, seg.estado(e.app, auth.getString('empresa'), servico));
   },
   $apis.requireAuth('users'),
 );
