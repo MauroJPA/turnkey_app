@@ -7,6 +7,7 @@ import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
+import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../application/consumivel_providers.dart';
@@ -53,6 +54,28 @@ class _ConsumiveisScreenState extends ConsumerState<ConsumiveisScreen> {
   bool _soPendentes = false;
 
   bool get _podeEditar => ref.read(currentPapelProvider).canEditBusiness;
+
+  Future<void> _apagar(Consumivel c) async {
+    final ok = await confirmDialog(
+      context,
+      titulo: 'Apagar produto?',
+      mensagem:
+          'Remove "${c.nome}" da lista, com os documentos anexados. Uma fatura '
+          'já aplicada não muda.',
+      confirmar: 'Apagar',
+      destrutivo: true,
+    );
+    if (!ok) return;
+    try {
+      await ref.read(consumivelActionsProvider).apagar(c.id);
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Não foi possível apagar.')),
+        );
+      }
+    }
+  }
 
   /// Registo em texto (CSV) para a fiscalização: o que existe e o que falta.
   String _registoCsv(List<Consumivel> cs, List<DocumentoConsumivel> docs) {
@@ -217,13 +240,28 @@ class _ConsumiveisScreenState extends ConsumerState<ConsumiveisScreen> {
                                 '$nDocs doc.',
                               ].join(' · '),
                             ),
-                            trailing: Chip(
-                              avatar: Icon(ap.icone, size: 16, color: ap.cor),
-                              label: Text(
-                                ap.texto,
-                                style: TextStyle(color: ap.cor),
-                              ),
-                              visualDensity: VisualDensity.compact,
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Chip(
+                                  avatar: Icon(
+                                    ap.icone,
+                                    size: 16,
+                                    color: ap.cor,
+                                  ),
+                                  label: Text(
+                                    ap.texto,
+                                    style: TextStyle(color: ap.cor),
+                                  ),
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                                if (_podeEditar)
+                                  IconButton(
+                                    tooltip: 'Apagar produto',
+                                    icon: const Icon(Icons.delete_outline),
+                                    onPressed: () => _apagar(x),
+                                  ),
+                              ],
                             ),
                             onTap: () =>
                                 abrirConsumivelSheet(context, existente: x),
