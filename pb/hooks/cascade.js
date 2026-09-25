@@ -799,7 +799,9 @@ function runCascade(app, kind, rootId) {
 // devolve { [ingredienteId]: gramas } SÓ dos ingredientes `comprado`, descendo
 // por sub-receitas e por ingredientes de fabrico próprio com receita_espelho.
 // ---------------------------------------------------------------------------
-function explodeCompras(app, receitaId, alvoG) {
+// `porProduto` (opcional): se dado, regista também {[ingId]: {[produtoId|'']: g}} —
+// o que cada receita pede de cada produto de compra fixado ('' = automático).
+function explodeCompras(app, receitaId, alvoG, porProduto) {
   const num = (rec, f) => {
     try {
       return rec.getFloat(f);
@@ -853,6 +855,11 @@ function explodeCompras(app, receitaId, alvoG) {
           walk(espelho, g);
         } else {
           acc[ingRel] = (acc[ingRel] || 0) + g;
+          if (porProduto) {
+            const pid = it.getString('produto') || '';
+            const b = (porProduto[ingRel] = porProduto[ingRel] || {});
+            b[pid] = (b[pid] || 0) + g;
+          }
         }
       }
     }
@@ -934,8 +941,8 @@ function explodeProducao(app, receitaId, alvoG) {
 
 // Explode "o que comprar" de uma linha de ficha (que aponta para uma receita
 // OU para um ingrediente que pode ser um espelho de fabrico próprio).
-function explodeComprasDe(app, alvo, receitaId, ingredienteId) {
-  if (receitaId) return explodeCompras(app, receitaId, alvo);
+function explodeComprasDe(app, alvo, receitaId, ingredienteId, porProduto) {
+  if (receitaId) return explodeCompras(app, receitaId, alvo, porProduto);
   if (!ingredienteId) return {};
   let ing;
   try {
@@ -945,10 +952,14 @@ function explodeComprasDe(app, alvo, receitaId, ingredienteId) {
   }
   const espelho = ing.getString('receita_espelho');
   if (ing.getString('origem') === 'fabrico_proprio' && espelho) {
-    return explodeCompras(app, espelho, alvo);
+    return explodeCompras(app, espelho, alvo, porProduto);
   }
   const out = {};
   out[ingredienteId] = alvo;
+  if (porProduto) {
+    const b = (porProduto[ingredienteId] = porProduto[ingredienteId] || {});
+    b[''] = (b[''] || 0) + alvo;
+  }
   return out;
 }
 

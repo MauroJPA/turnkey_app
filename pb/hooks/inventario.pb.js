@@ -369,9 +369,10 @@ routerAdd(
     };
 
     const agg = {};
+    const pp = {}; // {ingId: {produtoId|'': g}}
     for (const it of ctx.itens) {
       const alvoG = num(it, 'quantidade_kg') * 1000;
-      const parcial = cascade.explodeCompras(app, it.getString('receita'), alvoG);
+      const parcial = cascade.explodeCompras(app, it.getString('receita'), alvoG, pp);
       for (const k in parcial) agg[k] = (agg[k] || 0) + parcial[k];
 
       // recheios / coberturas / extra — da ficha técnica se existir
@@ -416,11 +417,12 @@ routerAdd(
                 g,
                 sl.getString('receita'),
                 sl.getString('ingrediente'),
+                pp,
               );
               for (const k in pr) agg[k] = (agg[k] || 0) + pr[k];
             }
           } else if (recheioId && recheioG > 0) {
-            const pr = cascade.explodeCompras(app, recheioId, N * recheioG);
+            const pr = cascade.explodeCompras(app, recheioId, N * recheioG, pp);
             for (const k in pr) agg[k] = (agg[k] || 0) + pr[k];
           }
         }
@@ -449,38 +451,91 @@ routerAdd(
         );
         if (inv.length > 0) emStock = inv[0].getFloat('quantidade');
         const faltaG = Math.max(0, necessario - emStock);
-        const embG = num(ing, 'gramas_embalagem');
-        const comprar =
-          embG > 0 ? Math.ceil(faltaG / embG) * embG : faltaG;
-        const cpg = embG > 0 ? num(ing, 'preco') / embG : 0;
-        const custoEstimado = comprar * cpg;
 
-        const existentes = tx.findRecordsByFilter(
+        // Divide o que falta pelos produtos fixados nas receitas (o stock é um só,
+        // do ingrediente); o que não fixa produto fica em "automático" ('').
+        const baldes = pp[ingId] || {};
+        const partes = {}; // produtoId|'' -> { prod, g }
+        let somaB = 0;
+        for (const pid in baldes) {
+          let prod = null;
+          if (pid !== '') {
+            try {
+              prod = tx.findRecordById('ingrediente_produtos', pid);
+              if (prod.getString('ingrediente') !== ingId) prod = null;
+            } catch (_) {
+              prod = null;
+            }
+          }
+          const chave = prod ? prod.id : '';
+          if (!partes[chave]) partes[chave] = { prod: prod, g: 0 };
+          partes[chave].g += baldes[pid];
+          somaB += baldes[pid];
+        }
+        if (somaB <= 0) partes[''] = { prod: null, g: necessario };
+        const totalB = somaB > 0 ? somaB : necessario;
+
+        const manter = {};
+        for (const chave in partes) {
+          const parte = partes[chave];
+          const prod = parte.prod;
+          const necessarioP = necessario * (parte.g / totalB);
+          const faltaP = faltaG * (parte.g / totalB);
+          const embProd = prod ? num(prod, 'embalagem_g') : 0;
+          const embG = embProd > 0 ? embProd : num(ing, 'gramas_embalagem');
+          const precoProd = prod ? num(prod, 'preco') : 0;
+          const cpg =
+            embProd > 0 && precoProd > 0
+              ? precoProd / embProd
+              : num(ing, 'gramas_embalagem') > 0
+                ? num(ing, 'preco') / num(ing, 'gramas_embalagem')
+                : 0;
+          const comprar = Math.max(0, embG > 0 ? Math.ceil(faltaP / embG - 1e-9) * embG : faltaP);
+
+          const existentes = tx.findRecordsByFilter(
+            'lista_compras',
+            'empresa = {:e} && ingrediente = {:i} && comprado = false && producao = {:p} && produto = {:pr}',
+            '',
+            1,
+            0,
+            { e: ctx.empresaId, i: ingId, p: ctx.producao.id, pr: chave },
+          );
+          let row;
+          if (existentes.length > 0) {
+            row = existentes[0];
+          } else {
+            row = new Record(tx.findCollectionByNameOrId('lista_compras'));
+            row.set('empresa', ctx.empresaId);
+            row.set('ingrediente', ingId);
+            row.set('producao', ctx.producao.id);
+            row.set('comprado', false);
+          }
+          row.set('produto', chave);
+          row.set(
+            'descricao',
+            prod
+              ? ing.getString('nome') + ' — ' + (prod.getString('marca') || prod.getString('nome'))
+              : ing.getString('nome'),
+          );
+          row.set('fornecedor', (prod && prod.getString('fornecedor')) || ing.getString('fornecedor'));
+          row.set('quantidade_necessaria_g', necessarioP);
+          row.set('quantidade_comprar_g', comprar);
+          row.set('embalagem_g', embG);
+          row.set('custo_estimado', comprar * cpg);
+          tx.save(row);
+          manter[row.id] = true;
+          linhas++;
+        }
+        // linhas antigas deste ingrediente (ex.: de um produto que já não está fixado)
+        const antigas = tx.findRecordsByFilter(
           'lista_compras',
           'empresa = {:e} && ingrediente = {:i} && comprado = false && producao = {:p}',
           '',
-          1,
+          0,
           0,
           { e: ctx.empresaId, i: ingId, p: ctx.producao.id },
         );
-        let row;
-        if (existentes.length > 0) {
-          row = existentes[0];
-        } else {
-          row = new Record(tx.findCollectionByNameOrId('lista_compras'));
-          row.set('empresa', ctx.empresaId);
-          row.set('ingrediente', ingId);
-          row.set('producao', ctx.producao.id);
-          row.set('comprado', false);
-        }
-        row.set('descricao', ing.getString('nome'));
-        row.set('fornecedor', ing.getString('fornecedor'));
-        row.set('quantidade_necessaria_g', necessario);
-        row.set('quantidade_comprar_g', comprar);
-        row.set('embalagem_g', embG);
-        row.set('custo_estimado', custoEstimado);
-        tx.save(row);
-        linhas++;
+        for (const a of antigas) if (!manter[a.id]) tx.delete(a);
       }
     });
 
