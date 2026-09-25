@@ -7,6 +7,7 @@ import '../core/auth/auth_state.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/onboarding_screen.dart';
 import '../features/auth/presentation/pending_approval_screen.dart';
+import '../features/consumables/presentation/consumiveis_screen.dart';
 import '../features/cookie_formats/presentation/cookie_formats_screen.dart';
 import '../features/dashboard/presentation/home_shell.dart';
 import '../features/dashboard/presentation/main_shell.dart';
@@ -199,6 +200,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: Routes.embalagens,
             builder: (_, __) => const EmbalagensScreen(),
+          ),
+          GoRoute(
+            path: Routes.consumiveis,
+            builder: (_, __) => const ConsumiveisScreen(),
           ),
           GoRoute(
             path: Routes.ingredients,

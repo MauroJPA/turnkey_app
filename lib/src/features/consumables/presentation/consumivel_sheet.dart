@@ -1,0 +1,536 @@
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../../core/auth/current_user.dart';
+import '../../../core/widgets/confirm_dialog.dart';
+import '../application/consumivel_providers.dart';
+import '../domain/consumivel.dart';
+import 'consumiveis_screen.dart' show apresentaEstadoFds;
+
+Future<void> abrirConsumivelSheet(
+  BuildContext context, {
+  Consumivel? existente,
+}) => showModalBottomSheet<void>(
+  context: context,
+  isScrollControlled: true,
+  showDragHandle: true,
+  builder: (_) => ConsumivelSheet(existente: existente),
+);
+
+String _dataCurta(DateTime? d) => d == null
+    ? 'sem data'
+    : '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+
+class ConsumivelSheet extends ConsumerStatefulWidget {
+  const ConsumivelSheet({super.key, this.existente});
+
+  final Consumivel? existente;
+
+  @override
+  ConsumerState<ConsumivelSheet> createState() => _ConsumivelSheetState();
+}
+
+class _ConsumivelSheetState extends ConsumerState<ConsumivelSheet> {
+  late Consumivel? _atual = widget.existente;
+  late final _nome = TextEditingController(text: _atual?.nome ?? '');
+  late final _marca = TextEditingController(text: _atual?.marca ?? '');
+  late final _fornecedor = TextEditingController(
+    text: _atual?.fornecedor ?? '',
+  );
+  late final _embalagem = TextEditingController(text: _atual?.embalagem ?? '');
+  late final _preco = TextEditingController(
+    text: (_atual?.preco ?? 0) > 0 ? '${_atual!.preco}' : '',
+  );
+  late final _notas = TextEditingController(text: _atual?.notas ?? '');
+  late CategoriaConsumivel _categoria =
+      _atual?.categoria ?? CategoriaConsumivel.limpeza;
+  late bool _exigeFds = _atual?.exigeFds ?? true;
+  bool _busy = false;
+  String? _erro;
+
+  bool get _podeEditar => ref.read(currentPapelProvider).canEditBusiness;
+
+  @override
+  void dispose() {
+    for (final c in [_nome, _marca, _fornecedor, _embalagem, _preco, _notas]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  double get _precoV =>
+      double.tryParse(_preco.text.replaceAll(',', '.').trim()) ?? 0;
+
+  Future<void> _guardar() async {
+    if (_nome.text.trim().isEmpty) {
+      setState(() => _erro = 'Indica o nome do produto.');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _erro = null;
+    });
+    try {
+      final input = ConsumivelInput(
+        nome: _nome.text,
+        categoria: _categoria,
+        marca: _marca.text,
+        fornecedor: _fornecedor.text,
+        embalagem: _embalagem.text,
+        preco: _precoV,
+        exigeFds: _exigeFds,
+        notas: _notas.text,
+      );
+      final a = ref.read(consumivelActionsProvider);
+      if (_atual == null) {
+        _atual = await a.criar(input);
+      } else {
+        final id = _atual!.id;
+        await a.atualizar(id, input, precoMudou: _precoV != _atual!.preco);
+        final lista = await ref.read(consumiveisListProvider.future);
+        _atual = lista.where((c) => c.id == id).firstOrNull ?? _atual;
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Guardado. Já podes anexar documentos.'),
+          ),
+        );
+      }
+    } on Object {
+      _erro = 'Não foi possível guardar. Tenta de novo.';
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _apagar() async {
+    final c = _atual;
+    if (c == null) return;
+    final ok = await confirmDialog(
+      context,
+      titulo: 'Apagar produto?',
+      mensagem:
+          'Remove "${c.nome}" da lista. Os documentos anexados também deixam '
+          'de aparecer.',
+      confirmar: 'Apagar',
+      destrutivo: true,
+    );
+    if (!ok) return;
+    await ref.read(consumivelActionsProvider).apagar(c.id);
+    if (mounted) Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    final ler = !_podeEditar;
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              _atual == null ? 'Novo produto' : 'Produto',
+              style: tt.titleLarge,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _nome,
+              readOnly: ler,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(labelText: 'Nome'),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<CategoriaConsumivel>(
+              initialValue: _categoria,
+              decoration: const InputDecoration(labelText: 'Categoria'),
+              items: [
+                for (final c in CategoriaConsumivel.values)
+                  DropdownMenuItem(value: c, child: Text(c.label)),
+              ],
+              onChanged: ler
+                  ? null
+                  : (v) => setState(() {
+                      if (v == null) return;
+                      _categoria = v;
+                      if (_atual == null) _exigeFds = v.exigeFdsPorOmissao;
+                    }),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Exige ficha de dados de segurança'),
+              subtitle: const Text(
+                'Produtos químicos (limpeza, desinfeção) têm de ter a FDS '
+                'do fornecedor.',
+              ),
+              value: _exigeFds,
+              onChanged: ler ? null : (v) => setState(() => _exigeFds = v),
+            ),
+            TextField(
+              controller: _marca,
+              readOnly: ler,
+              decoration: const InputDecoration(labelText: 'Marca'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _fornecedor,
+              readOnly: ler,
+              decoration: const InputDecoration(labelText: 'Fornecedor'),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _embalagem,
+                    readOnly: ler,
+                    decoration: const InputDecoration(
+                      labelText: 'Embalagem',
+                      hintText: '5 L',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _preco,
+                    readOnly: ler,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: const InputDecoration(labelText: 'Preço (€)'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _notas,
+              readOnly: ler,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'Notas de uso',
+                hintText: 'Diluição, onde se usa, EPI…',
+              ),
+            ),
+            if (_erro != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  _erro!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
+            if (_podeEditar) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                children: [
+                  FilledButton(
+                    onPressed: _busy ? null : _guardar,
+                    child: Text(
+                      _atual == null ? 'Guardar' : 'Guardar alterações',
+                    ),
+                  ),
+                  if (_atual != null)
+                    TextButton(
+                      onPressed: _busy ? null : _apagar,
+                      child: const Text('Apagar'),
+                    ),
+                ],
+              ),
+            ],
+            const Divider(height: 32),
+            if (_atual == null)
+              Text(
+                'Guarda o produto para poderes anexar a ficha de dados de '
+                'segurança e outros documentos.',
+                style: tt.bodySmall,
+              )
+            else
+              DocumentosSection(consumivel: _atual!, podeEditar: _podeEditar),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Lista de documentos de um consumível + anexar/abrir/apagar.
+class DocumentosSection extends ConsumerWidget {
+  const DocumentosSection({
+    super.key,
+    required this.consumivel,
+    required this.podeEditar,
+  });
+
+  final Consumivel consumivel;
+  final bool podeEditar;
+
+  Future<void> _abrir(
+    BuildContext context,
+    WidgetRef ref,
+    DocumentoConsumivel d,
+  ) async {
+    try {
+      final url = await ref.read(consumivelActionsProvider).urlDocumento(d);
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } on Object {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Não foi possível abrir o documento.')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final docs = ref.watch(documentosDoConsumivelProvider(consumivel.id));
+    final ap = apresentaEstadoFds(estadoFds(consumivel, docs), cs);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text('Documentos (${docs.length})', style: tt.titleSmall),
+            ),
+            Icon(ap.icone, size: 18, color: ap.cor),
+            const SizedBox(width: 4),
+            Text(ap.texto, style: TextStyle(color: ap.cor)),
+          ],
+        ),
+        if (consumivel.exigeFds &&
+            estadoFds(consumivel, docs) == EstadoFds.antiga)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              'A FDS tem mais de 3 anos: pede ao fornecedor a versão mais '
+              'recente, se existir.',
+              style: tt.bodySmall,
+            ),
+          ),
+        const SizedBox(height: 8),
+        for (final d in docs)
+          Card(
+            margin: const EdgeInsets.only(bottom: 6),
+            child: ListTile(
+              dense: true,
+              leading: Icon(
+                d.tipo == TipoDocumento.fds
+                    ? Icons.health_and_safety_outlined
+                    : Icons.description_outlined,
+              ),
+              title: Text(d.nomeVisivel),
+              subtitle: Text(
+                [
+                  d.tipo.label,
+                  if (d.versao.isNotEmpty) 'v. ${d.versao}',
+                  _dataCurta(d.dataEfetiva),
+                ].join(' · '),
+              ),
+              onTap: () => _abrir(context, ref, d),
+              trailing: podeEditar
+                  ? IconButton(
+                      tooltip: 'Apagar documento',
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: () async {
+                        final ok = await confirmDialog(
+                          context,
+                          titulo: 'Apagar documento?',
+                          mensagem: 'Remove "${d.nomeVisivel}" deste produto.',
+                          confirmar: 'Apagar',
+                          destrutivo: true,
+                        );
+                        if (ok) {
+                          await ref
+                              .read(consumivelActionsProvider)
+                              .apagarDocumento(d.id);
+                        }
+                      },
+                    )
+                  : null,
+            ),
+          ),
+        if (podeEditar)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (_) => _AnexarDialog(consumivel: consumivel),
+              ),
+              icon: const Icon(Icons.attach_file),
+              label: const Text('Anexar documento'),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _AnexarDialog extends ConsumerStatefulWidget {
+  const _AnexarDialog({required this.consumivel});
+  final Consumivel consumivel;
+
+  @override
+  ConsumerState<_AnexarDialog> createState() => _AnexarDialogState();
+}
+
+class _AnexarDialogState extends ConsumerState<_AnexarDialog> {
+  TipoDocumento _tipo = TipoDocumento.fds;
+  final _titulo = TextEditingController();
+  final _versao = TextEditingController();
+  DateTime? _data;
+  PlatformFile? _ficheiro;
+  bool _busy = false;
+  String? _erro;
+
+  @override
+  void dispose() {
+    _titulo.dispose();
+    _versao.dispose();
+    super.dispose();
+  }
+
+  Future<void> _escolher() async {
+    final r = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['pdf', 'jpg', 'jpeg', 'png', 'webp'],
+      withData: true,
+    );
+    final f = r?.files.firstOrNull;
+    if (f != null) setState(() => _ficheiro = f);
+  }
+
+  Future<void> _escolherData() async {
+    final agora = DateTime.now();
+    final d = await showDatePicker(
+      context: context,
+      initialDate: _data ?? agora,
+      firstDate: DateTime(2000),
+      lastDate: agora,
+    );
+    if (d != null) setState(() => _data = d);
+  }
+
+  Future<void> _guardar() async {
+    final f = _ficheiro;
+    if (f == null || f.bytes == null) {
+      setState(() => _erro = 'Escolhe o ficheiro (PDF ou imagem).');
+      return;
+    }
+    if (f.size > 20 * 1024 * 1024) {
+      setState(() => _erro = 'O ficheiro é grande demais (máximo 20 MB).');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _erro = null;
+    });
+    try {
+      await ref
+          .read(consumivelActionsProvider)
+          .anexar(
+            consumivelId: widget.consumivel.id,
+            tipo: _tipo,
+            bytes: f.bytes!,
+            nomeFicheiro: f.name,
+            titulo: _titulo.text,
+            versao: _versao.text,
+            dataDocumento: _data,
+          );
+      if (mounted) Navigator.pop(context);
+    } on Object {
+      if (mounted) {
+        setState(() => _erro = 'Não foi possível anexar. Tenta de novo.');
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Anexar documento'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            DropdownButtonFormField<TipoDocumento>(
+              initialValue: _tipo,
+              decoration: const InputDecoration(labelText: 'Tipo'),
+              isExpanded: true,
+              items: [
+                for (final t in TipoDocumento.values)
+                  DropdownMenuItem(value: t, child: Text(t.label)),
+              ],
+              onChanged: (v) => setState(() => _tipo = v ?? _tipo),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _titulo,
+              decoration: const InputDecoration(labelText: 'Título (opcional)'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _versao,
+              decoration: const InputDecoration(
+                labelText: 'Versão / revisão (opcional)',
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _escolherData,
+                  icon: const Icon(Icons.event),
+                  label: Text(
+                    _data == null ? 'Data do documento' : _dataCurta(_data),
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _escolher,
+                  icon: const Icon(Icons.upload_file),
+                  label: Text(_ficheiro?.name ?? 'Escolher ficheiro'),
+                ),
+              ],
+            ),
+            if (_erro != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  _erro!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _busy ? null : () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: _busy ? null : _guardar,
+          child: const Text('Anexar'),
+        ),
+      ],
+    );
+  }
+}

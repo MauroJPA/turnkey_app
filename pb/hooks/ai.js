@@ -69,7 +69,9 @@ function analisarImagemIA(opts) {
       'number|null, "moeda": string|null, "paginas": [number], "linhas": ' +
       '[{"descricao": string, "nome_generico": string, "marca": string|null, ' +
       '"quantidade": number|null, "unidade": string|null, "preco_unitario": ' +
-      'number|null, "total": number|null, "embalagem_g": number|null}]}]}. ' +
+      'number|null, "total": number|null, "embalagem_g": number|null, ' +
+      '"tipo_item": "ingrediente"|"consumivel", "categoria_consumivel": ' +
+      '"limpeza"|"desinfecao"|"higiene"|"insumo"|"outro"|null}]}]}. ' +
       '"paginas" são os números (a começar em 1) das páginas do ficheiro onde ' +
       'aparece esse documento; numa imagem, [1]. Uma página pertence a um só ' +
       'documento. Uma continuação ("página 2 de 2", "continua") pertence ao ' +
@@ -80,6 +82,15 @@ function analisarImagemIA(opts) {
       'Président 250g" -> "Manteiga". Mantém as variedades que mudam o produto ' +
       '(açúcar branco, amarelo, demerara e mascavado são diferentes). "marca" é ' +
       'a marca comercial (ex.: Sidul, Margão) ou null. ' +
+      'tipo_item: "ingrediente" para o que se come ou entra numa receita ' +
+      '(farinha, açúcar, chocolate, ovos, especiarias); "consumivel" para ' +
+      'produtos de limpeza, detergentes, desinfetantes, lixívia, esponjas, ' +
+      'luvas, papel, sacos do lixo e outros insumos que não se comem. Para ' +
+      'consumíveis, nome_generico é o tipo de produto sem marca ("Detergente ' +
+      'loiça", "Desinfetante superfícies") e categoria_consumivel: limpeza ' +
+      '(detergentes, desengordurantes, lixívia), desinfecao (desinfetantes, ' +
+      'álcool), higiene (sabonete, luvas, toucas, papel de mãos), insumo ' +
+      '(outros materiais), outro; para ingredientes é null. ' +
       'Regras: preco_unitario é o preço por unidade/embalagem, NÃO o total da ' +
       'linha. Não incluas descontos, portes ou totais como linhas de produto. ' +
       'embalagem_g só quando o peso/volume da embalagem aparecer (converte kg->g, ' +

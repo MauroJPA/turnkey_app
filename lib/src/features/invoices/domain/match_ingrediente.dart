@@ -1,3 +1,4 @@
+import '../../consumables/domain/consumivel.dart';
 import '../../ingredients/domain/ingredient.dart';
 import '../../ingredients/domain/produto_ingrediente.dart';
 
@@ -134,4 +135,45 @@ MatchLinha? emparelharLinha({
     ingrediente: ing,
     produto: produtoDaMarca(ing, produtos, marca: marca, embalagemG: embalagemG),
   );
+}
+
+/// Liga uma linha de fatura a um produto de limpeza/insumo: primeiro pelo nome
+/// de fatura já aprendido, depois por semelhança de palavras com o nome
+/// (o nome genérico da IA conta tanto como a descrição).
+Consumivel? emparelharConsumivel({
+  required String descricao,
+  String nomeGenerico = '',
+  String marca = '',
+  required List<Consumivel> consumiveis,
+  double minScore = 0.34,
+}) {
+  final desc = normalizarDescricao(descricao);
+  for (final c in consumiveis) {
+    if (c.nomesFatura.contains(desc)) return c;
+  }
+  Consumivel? melhor;
+  var melhorScore = 0.0;
+  for (final c in consumiveis) {
+    final b = _tokens('${c.nome} ${c.marca}');
+    if (b.isEmpty) continue;
+    var score = 0.0;
+    for (final texto in [descricao, if (nomeGenerico.isNotEmpty) nomeGenerico]) {
+      final a = _tokens(texto);
+      if (a.isEmpty) continue;
+      final j = a.intersection(b).length / a.union(b).length;
+      if (j > score) score = j;
+    }
+    final m = _normalizar(marca.isNotEmpty ? marca : '').trim();
+    if (score > 0 &&
+        c.marca.isNotEmpty &&
+        (_normalizar(descricao).contains(_normalizar(c.marca)) ||
+            (m.isNotEmpty && m == _normalizar(c.marca)))) {
+      score += 0.15;
+    }
+    if (score > melhorScore) {
+      melhorScore = score;
+      melhor = c;
+    }
+  }
+  return melhorScore >= minScore ? melhor : null;
 }
