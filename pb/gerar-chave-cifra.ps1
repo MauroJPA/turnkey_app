@@ -33,6 +33,5 @@ if ((Test-Path $ficheiroEnv) -and (Select-String -Path $ficheiroEnv -Pattern '^\
   exit 0
 }
 Add-Content -Path $ficheiroEnv -Value "`nTURNKEY_ENC_KEY=$chave" -Encoding UTF8
-Write-Host "Chave gravada em pb\.env. Guarda agora uma copia no gestor de palavras-passe:"
-Write-Host "TURNKEY_ENC_KEY=$chave"
-Write-Host "Reinicia o PocketBase (.\serve.ps1) para a usar."
+Write-Host "Chave gravada em pb\.env (nao e mostrada aqui de proposito)."
+Write-Host "Abre pb\.env, copia a linha TURNKEY_ENC_KEY para o gestor de palavras-passe e reinicia o PocketBase (.\serve.ps1)."
