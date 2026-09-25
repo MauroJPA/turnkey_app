@@ -992,6 +992,85 @@ def teste_faturas_ia():
         srv.shutdown()
 
 
+def teste_produtos():
+    """9. Ingredientes genéricos e produtos de compra: custo pela compra mais recente."""
+    sec('9. Ingredientes genéricos e produtos')
+    t = tok['editorA']
+    base = dict(dados[('ingredientes', 'A')][1])
+    base.update(nome='Açúcar branco', origem='comprado', preco=0, gramas_embalagem=0)
+    st, ing, _ = call('POST', '/api/collections/ingredientes/records', base, t)
+    check(st == 200, 'criar o ingrediente genérico', f'status {st} {str(ing)[:120]}')
+    gid = ing['id']
+
+    def produto(nome, marca, emb, preco, data):
+        return call('POST', '/api/collections/ingrediente_produtos/records',
+                    {'empresa': empresas['A'], 'ingrediente': gid, 'nome': nome, 'marca': marca, 'embalagem_g': emb,
+                     'preco': preco, 'preco_atualizado_em': data + ' 00:00:00.000Z'}, t)
+
+    def generico():
+        return call('GET', f'/api/collections/ingredientes/records/{gid}', tok=t)[1]
+
+    st, p1, _ = produto('Açúcar Sidul branco 1 kg', 'Sidul', 1000, 1.20, '2026-09-01')
+    check(st == 200, 'criar o produto Sidul', f'status {st} {str(p1)[:120]}')
+    g = generico()
+    check(abs(g['preco'] - 1.20) < 1e-6 and g['gramas_embalagem'] == 1000, 'o genérico assume o custo do único produto', str(g)[:120])
+    st, p2, _ = produto('Açúcar Makro branco 5 kg', 'Makro', 5000, 5.00, '2026-09-10')
+    g = generico()
+    check(abs(g['preco'] - 5.00) < 1e-6 and g['gramas_embalagem'] == 5000, 'compra mais recente manda (Makro, 10/09)', str(g)[:120])
+    call('PATCH', f'/api/collections/ingrediente_produtos/records/{p1["id"]}', {'preco': 1.10, 'preco_atualizado_em': '2026-09-20 00:00:00.000Z'}, t)
+    g = generico()
+    check(abs(g['preco'] - 1.10) < 1e-6 and g['gramas_embalagem'] == 1000, 'novo preço do Sidul (20/09) volta a ser o mais recente', str(g)[:120])
+    call('DELETE', f'/api/collections/ingrediente_produtos/records/{p1["id"]}', tok=t)
+    g = generico()
+    check(abs(g['preco'] - 5.00) < 1e-6 and g['gramas_embalagem'] == 5000, 'apagar o mais recente: o custo volta ao anterior', str(g)[:120])
+
+    # permissões e isolamento
+    st, _, _ = call('POST', '/api/collections/ingrediente_produtos/records',
+                    {'empresa': empresas['A'], 'ingrediente': gid, 'nome': 'x', 'embalagem_g': 1, 'preco': 1}, tok['viewerA'])
+    check(st != 200, 'o papel Leitura não cria produtos', f'status {st}')
+    st, _, _ = call('POST', '/api/collections/ingrediente_produtos/records',
+                    {'empresa': empresas['B'], 'ingrediente': gid, 'nome': 'x', 'embalagem_g': 1, 'preco': 1}, tok['ownerB'])
+    check(st != 200, 'a empresa B não cria produtos para um ingrediente da empresa A', f'status {st}')
+    st, r, _ = call('GET', '/api/collections/ingrediente_produtos/records', tok=tok['ownerB'])
+    check(st == 200 and not [i for i in r.get('items', []) if i['empresa'] == empresas['A']], 'a empresa B não vê produtos da empresa A')
+
+    # --- faturas: o preço vai para o produto e o nome da fatura é aprendido
+    def fatura(data):
+        st, f, _ = call('POST', '/api/collections/faturas/records',
+                        {'empresa': empresas['A'], 'autor': users['editorA'], 'tipo': 'fatura', 'estado': 'analisada',
+                         'fornecedor': 'Margão Distribuição', 'data_fatura': data + ' 00:00:00.000Z'}, su)
+        return f['id']
+
+    desc = 'Cravinho moído margao pac 14gr'
+    linha = {'ingredienteId': gid, 'descricaoFatura': desc, 'marca': 'Margão', 'quantidadeG': 0, 'precoUnitario': 1.5,
+             'totalLinha': 1.5, 'embalagemG': 14, 'acao': 'preco'}
+    f1 = fatura('2026-09-25')
+    st, r, _ = call('POST', f'/api/gc_turnkey/faturas/{f1}/aplicar', {'linhas': [linha]}, t)
+    check(st == 200 and r.get('precos') == 1, 'aplicar fatura: 1 preço atualizado', f'{st} {str(r)[:120]}')
+    st, lista, _ = call('GET', f"/api/collections/ingrediente_produtos/records?filter=ingrediente='{gid}'&perPage=50", tok=t)
+    itens = lista.get('items', [])
+    novo = [i for i in itens if i['marca'] == 'Margão']
+    check(len(novo) == 1 and abs(novo[0]['preco'] - 1.5) < 1e-6 and novo[0]['embalagem_g'] == 14, 'a fatura criou o produto Margão (14 g, 1,50)', str(itens)[:200])
+    check('cravinho mo' in json.dumps(novo[0].get('nomes_fatura', [])).lower() if novo else False, 'o nome da fatura ficou guardado para a próxima vez')
+    g = generico()
+    check(abs(g['preco'] - 1.5) < 1e-6 and g['gramas_embalagem'] == 14, 'o genérico assume a compra mais recente (fatura de 25/09)', str(g)[:120])
+
+    # segunda fatura, mais recente, com o mesmo texto: reutiliza o produto (sem duplicar) e atualiza o preço
+    f2 = fatura('2026-09-30')
+    linha2 = dict(linha, precoUnitario=1.8)
+    st, r, _ = call('POST', f'/api/gc_turnkey/faturas/{f2}/aplicar', {'linhas': [linha2]}, t)
+    st, lista, _ = call('GET', f"/api/collections/ingrediente_produtos/records?filter=ingrediente='{gid}'&perPage=50", tok=t)
+    check(len(lista.get('items', [])) == len(itens), 'mesmo texto de fatura: reutiliza o produto (não cria outro)', str(len(lista.get('items', []))))
+    check(abs(generico()['preco'] - 1.8) < 1e-6, 'preço novo do produto passa ao genérico')
+
+    # fatura mais antiga: não mexe no custo
+    f3 = fatura('2026-09-05')
+    linha3 = dict(linha, precoUnitario=0.5)
+    st, r, _ = call('POST', f'/api/gc_turnkey/faturas/{f3}/aplicar', {'linhas': [linha3]}, t)
+    check(st == 200 and r.get('precosIgnorados') == 1, 'fatura mais antiga: preço ignorado', str(r)[:120])
+    check(abs(generico()['preco'] - 1.8) < 1e-6, 'o custo do genérico não mudou com a fatura antiga')
+
+
 def main():
     arrancar()
     try:
@@ -1004,6 +1083,7 @@ def main():
         teste_segredos()
         teste_sem_chave()
         teste_faturas_ia()
+        teste_produtos()
         teste_implantacao()
         teste_autenticacao()  # por último: gasta o limite de tentativas
     finally:

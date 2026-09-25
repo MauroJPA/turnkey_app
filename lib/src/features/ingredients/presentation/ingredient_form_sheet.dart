@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/nutrition/nutrition.dart';
 import '../application/ingredients_providers.dart';
+import '../data/ingredient_product_repository.dart';
 import '../data/ingredient_repository.dart';
 import '../domain/ingredient.dart';
 import '../domain/nutri_ingresso.dart';
+import 'ingredient_products_section.dart';
 import 'nutricao_sheet.dart';
 
 /// Folha de baixo para criar/editar um ingrediente. Ao criar, também se pode
@@ -37,20 +39,23 @@ class _IngredientFormSheet extends ConsumerStatefulWidget {
 class _IngredientFormSheetState extends ConsumerState<_IngredientFormSheet> {
   final _formKey = GlobalKey<FormState>();
   late final _nome = TextEditingController(text: widget.existente?.nome ?? '');
-  late final _caracteristica =
-      TextEditingController(text: widget.existente?.caracteristica ?? '');
-  late final _marca = TextEditingController(text: widget.existente?.marca ?? '');
-  late final _nomeRotulo =
-      TextEditingController(text: widget.existente?.nomeRotulo ?? '');
-  late final _fornecedor =
-      TextEditingController(text: widget.existente?.fornecedor ?? '');
+  late final _caracteristica = TextEditingController(
+    text: widget.existente?.caracteristica ?? '',
+  );
+  late final _marca = TextEditingController(
+    text: widget.existente?.marca ?? '',
+  );
+  late final _nomeRotulo = TextEditingController(
+    text: widget.existente?.nomeRotulo ?? '',
+  );
+  late final _fornecedor = TextEditingController(
+    text: widget.existente?.fornecedor ?? '',
+  );
   late final _preco = TextEditingController(
     text: widget.existente == null ? '' : _n(widget.existente!.preco),
   );
   late final _gramas = TextEditingController(
-    text: widget.existente == null
-        ? ''
-        : _n(widget.existente!.gramasEmbalagem),
+    text: widget.existente == null ? '' : _n(widget.existente!.gramasEmbalagem),
   );
   late OrigemIngrediente _origem =
       widget.existente?.origem ?? OrigemIngrediente.comprado;
@@ -74,9 +79,8 @@ class _IngredientFormSheetState extends ConsumerState<_IngredientFormSheet> {
   bool _lendo = false;
   bool _abrirNutricao = false;
 
-  static String _n(double v) => v == v.roundToDouble()
-      ? v.toStringAsFixed(0)
-      : v.toString();
+  static String _n(double v) =>
+      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
 
   @override
   void dispose() {
@@ -232,100 +236,110 @@ class _IngredientFormSheetState extends ConsumerState<_IngredientFormSheet> {
   }
 
   Widget _campoNutri(String label, TextEditingController c) => TextFormField(
-        controller: c,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        decoration: InputDecoration(labelText: label, isDense: true),
-      );
+    controller: c,
+    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    decoration: InputDecoration(labelText: label, isDense: true),
+  );
 
   Widget _par(Widget a, Widget b) => Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Row(
-          children: [
-            Expanded(child: a),
-            const SizedBox(width: 12),
-            Expanded(child: b),
-          ],
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Row(
+      children: [
+        Expanded(child: a),
+        const SizedBox(width: 12),
+        Expanded(child: b),
+      ],
+    ),
+  );
 
   Widget _seccaoNutricao() => ExpansionTile(
-        key: const ValueKey('nutri-opcional'),
-        tilePadding: EdgeInsets.zero,
-        childrenPadding: const EdgeInsets.only(bottom: 8),
-        leading: const Icon(Icons.local_dining_outlined),
-        title: const Text('Informação nutricional (opcional)'),
-        subtitle: const Text('Valores por 100 g / 100 ml e alergénios'),
-        children: [
-          if (_lendo) const LinearProgressIndicator(),
-          OutlinedButton.icon(
-            onPressed: _lendo ? null : _daInsa,
-            icon: const Icon(Icons.menu_book_outlined),
-            label: const Text('Escolher da tabela INSA'),
-          ),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: _lendo ? null : _lerFoto,
-            icon: const Icon(Icons.photo_camera_outlined),
-            label: Text(
-              _foto == null
-                  ? 'Foto do rótulo (preencher com IA)'
-                  : 'Rótulo lido: ${_foto!.nome} — trocar foto',
-            ),
-          ),
-          const SizedBox(height: 12),
-          SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: '100g', label: Text('por 100 g')),
-              ButtonSegment(value: '100ml', label: Text('por 100 ml')),
-            ],
-            selected: {_baseNutri},
-            onSelectionChanged: (s) => setState(() => _baseNutri = s.first),
-          ),
-          const SizedBox(height: 12),
-          _par(_campoNutri('Energia (kcal)', _kcal),
-              _campoNutri('Lípidos (g)', _lip)),
-          _par(_campoNutri('dos quais saturados (g)', _sat),
-              _campoNutri('Hidratos de carbono (g)', _hc)),
-          _par(_campoNutri('dos quais açúcares (g)', _ac),
-              _campoNutri('Fibra (g)', _fib)),
-          _par(_campoNutri('Proteína (g)', _prot),
-              _campoNutri('Sal (g)', _sal)),
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: EdgeInsets.only(bottom: 6),
-              child: Text('Contém (alergénios)'),
-            ),
-          ),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              for (final a in kAlergenios)
-                FilterChip(
-                  label: Text(a),
-                  selected: _alerg.contains(a),
-                  onSelected: (v) => setState(() {
-                    v ? _alerg.add(a) : _alerg.remove(a);
-                  }),
-                ),
-            ],
-          ),
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            controlAffinity: ListTileControlAffinity.leading,
-            title: const Text(
-              'Abrir a folha completa depois (tabela INSA, foto do rótulo)',
-            ),
-            value: _abrirNutricao,
-            onChanged: (v) => setState(() => _abrirNutricao = v ?? false),
-          ),
+    key: const ValueKey('nutri-opcional'),
+    tilePadding: EdgeInsets.zero,
+    childrenPadding: const EdgeInsets.only(bottom: 8),
+    leading: const Icon(Icons.local_dining_outlined),
+    title: const Text('Informação nutricional (opcional)'),
+    subtitle: const Text('Valores por 100 g / 100 ml e alergénios'),
+    children: [
+      if (_lendo) const LinearProgressIndicator(),
+      OutlinedButton.icon(
+        onPressed: _lendo ? null : _daInsa,
+        icon: const Icon(Icons.menu_book_outlined),
+        label: const Text('Escolher da tabela INSA'),
+      ),
+      const SizedBox(height: 8),
+      OutlinedButton.icon(
+        onPressed: _lendo ? null : _lerFoto,
+        icon: const Icon(Icons.photo_camera_outlined),
+        label: Text(
+          _foto == null
+              ? 'Foto do rótulo (preencher com IA)'
+              : 'Rótulo lido: ${_foto!.nome} — trocar foto',
+        ),
+      ),
+      const SizedBox(height: 12),
+      SegmentedButton<String>(
+        segments: const [
+          ButtonSegment(value: '100g', label: Text('por 100 g')),
+          ButtonSegment(value: '100ml', label: Text('por 100 ml')),
         ],
-      );
+        selected: {_baseNutri},
+        onSelectionChanged: (s) => setState(() => _baseNutri = s.first),
+      ),
+      const SizedBox(height: 12),
+      _par(
+        _campoNutri('Energia (kcal)', _kcal),
+        _campoNutri('Lípidos (g)', _lip),
+      ),
+      _par(
+        _campoNutri('dos quais saturados (g)', _sat),
+        _campoNutri('Hidratos de carbono (g)', _hc),
+      ),
+      _par(
+        _campoNutri('dos quais açúcares (g)', _ac),
+        _campoNutri('Fibra (g)', _fib),
+      ),
+      _par(_campoNutri('Proteína (g)', _prot), _campoNutri('Sal (g)', _sal)),
+      const Align(
+        alignment: Alignment.centerLeft,
+        child: Padding(
+          padding: EdgeInsets.only(bottom: 6),
+          child: Text('Contém (alergénios)'),
+        ),
+      ),
+      Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: [
+          for (final a in kAlergenios)
+            FilterChip(
+              label: Text(a),
+              selected: _alerg.contains(a),
+              onSelected: (v) => setState(() {
+                v ? _alerg.add(a) : _alerg.remove(a);
+              }),
+            ),
+        ],
+      ),
+      CheckboxListTile(
+        contentPadding: EdgeInsets.zero,
+        controlAffinity: ListTileControlAffinity.leading,
+        title: const Text(
+          'Abrir a folha completa depois (tabela INSA, foto do rótulo)',
+        ),
+        value: _abrirNutricao,
+        onChanged: (v) => setState(() => _abrirNutricao = v ?? false),
+      ),
+    ],
+  );
 
   @override
   Widget build(BuildContext context) {
     final editar = widget.existente != null;
+    final temProdutos =
+        editar &&
+        ref
+            .watch(produtosDoIngredienteProvider(widget.existente!.id))
+            .isNotEmpty;
     return Padding(
       padding: EdgeInsets.only(
         left: 16,
@@ -364,7 +378,8 @@ class _IngredientFormSheetState extends ConsumerState<_IngredientFormSheet> {
                 controller: _nomeRotulo,
                 decoration: const InputDecoration(
                   labelText: 'Nome na etiqueta resumida (opcional)',
-                  helperText: 'Curto e genérico, ex.: "Framboesa" em vez de '
+                  helperText:
+                      'Curto e genérico, ex.: "Framboesa" em vez de '
                       '"Framboesa Congelada". Vazio = a app deduz.',
                   helperMaxLines: 2,
                 ),
@@ -382,44 +397,56 @@ class _IngredientFormSheetState extends ConsumerState<_IngredientFormSheet> {
                   Expanded(
                     child: TextFormField(
                       controller: _fornecedor,
-                      decoration:
-                          const InputDecoration(labelText: 'Fornecedor'),
+                      decoration: const InputDecoration(
+                        labelText: 'Fornecedor',
+                      ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _preco,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: const InputDecoration(
-                        labelText: 'Preço da embalagem (€) *',
-                      ),
-                      validator: (v) =>
-                          _num(_preco) <= 0 ? 'Indica o preço' : null,
-                    ),
+              if (temProdutos)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    'Custo atual: ${_n(widget.existente!.preco)} € por '
+                    '${_n(widget.existente!.gramasEmbalagem)} g (compra mais '
+                    'recente). Muda-se nos produtos de compra, em baixo.',
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _gramas,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _preco,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: const InputDecoration(
+                          labelText: 'Preço da embalagem (€) *',
+                        ),
+                        validator: (v) =>
+                            _num(_preco) <= 0 ? 'Indica o preço' : null,
                       ),
-                      decoration: const InputDecoration(
-                        labelText: 'Gramas da embalagem *',
-                      ),
-                      validator: (v) =>
-                          _num(_gramas) <= 0 ? 'Indica as gramas' : null,
                     ),
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _gramas,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: const InputDecoration(
+                          labelText: 'Gramas da embalagem *',
+                        ),
+                        validator: (v) =>
+                            _num(_gramas) <= 0 ? 'Indica as gramas' : null,
+                      ),
+                    ),
+                  ],
+                ),
               const SizedBox(height: 16),
               SegmentedButton<OrigemIngrediente>(
                 segments: const [
@@ -436,6 +463,11 @@ class _IngredientFormSheetState extends ConsumerState<_IngredientFormSheet> {
                 onSelectionChanged: (s) => setState(() => _origem = s.first),
               ),
               const SizedBox(height: 4),
+              if (editar && _origem == OrigemIngrediente.comprado) ...[
+                const SizedBox(height: 8),
+                IngredientProductsSection(ingrediente: widget.existente!),
+                const SizedBox(height: 8),
+              ],
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Disponível no fornecedor'),

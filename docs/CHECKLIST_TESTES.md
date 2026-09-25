@@ -628,6 +628,22 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Carregar outra vez o mesmo PDF: as faturas já existentes ficam como **duplicadas** (não se criam repetidas).
 - [ ] Se a IA responder "sobrecarregada", o ecrã de erro tem **Tentar de novo**; passados uns minutos funciona.
 
+## 30. Ingredientes genéricos e produtos de compra
+
+- [ ] Abrir um ingrediente comprado: aparece **Produtos de compra** com um produto (criado da migração) e o
+      chip "custo atual". O preço/embalagem do ingrediente são só de leitura.
+- [ ] **Adicionar produto** (outra marca, outra embalagem, preço diferente): o custo do ingrediente passa a ser
+      o do produto com a data mais recente. Editar o preço do outro produto (data de hoje) inverte.
+- [ ] Apagar o produto mais recente: o custo volta ao anterior.
+- [ ] Carregar uma fatura com "Açúcar Sidul BCO granulado KG": a linha vem ligada a "Açúcar branco" (ou
+      propõe **criar ingrediente genérico** com esse nome) e mostra a **Marca** lida.
+- [ ] Aplicar: o preço fica num **produto** (novo, se a marca/embalagem for nova) e o ingrediente assume o custo.
+- [ ] Carregar outra fatura com o **mesmo texto**: liga sozinha ao mesmo produto ("Produto já conhecido").
+- [ ] Fatura com data **anterior** à última compra: aparece o aviso e o custo não muda.
+- [ ] Criar ingrediente novo pela revisão de uma fatura só com "Preço": fica **um só** produto (sem duplicado).
+- [ ] Criar/editar um ingrediente comprado com preço e embalagem (sem produtos): cria-se logo o 1.º produto.
+- [ ] Importar ingredientes por CSV: continuam a aparecer com custo e ficam com um produto.
+
 ---
 
 ## Notas / ajustes pedidos

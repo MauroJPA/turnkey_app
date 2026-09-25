@@ -38,9 +38,17 @@ class FaturaLinhaIa {
     this.precoUnitario,
     this.total,
     this.embalagemG,
+    this.nomeGenerico = '',
+    this.marca = '',
   });
 
   final String descricao;
+
+  /// Ingrediente em termos genéricos, sem marca nem embalagem (sugestão da IA).
+  final String nomeGenerico;
+
+  /// Marca comercial lida da linha (vazio se não houver).
+  final String marca;
   final double? quantidade;
   final String unidade;
   final double? precoUnitario;
@@ -62,6 +70,8 @@ class FaturaLinhaIa {
     precoUnitario: (j['preco_unitario'] as num?)?.toDouble(),
     total: (j['total'] as num?)?.toDouble(),
     embalagemG: (j['embalagem_g'] as num?)?.toDouble(),
+    nomeGenerico: (j['nome_generico'] ?? '').toString().trim(),
+    marca: (j['marca'] ?? '').toString().trim(),
   );
 }
 
