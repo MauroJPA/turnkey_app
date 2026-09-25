@@ -110,9 +110,56 @@ routerAdd(
       for (const l of linhas) {
         const acao = l.acao || 'ignorar';
         const ingId = l.ingredienteId || '';
+        const consId = l.consumivelId || '';
         const q = Number(l.quantidadeG || 0);
         const pu = Number(l.precoUnitario || 0);
         const emb = Number(l.embalagemG || 0);
+
+        // Limpeza / insumos: guarda o preço e o nome desta fatura no consumível
+        // (sem stock). Os documentos (FDS…) ficam onde estão — a app mostra-os.
+        if (acao !== 'ignorar' && consId && !ingId) {
+          let cons = null;
+          try {
+            cons = tx.findRecordById('consumiveis', String(consId));
+            if (cons.getString('empresa') !== empresaId) cons = null;
+          } catch (_) {
+            cons = null;
+          }
+          if (cons) {
+            const prods = require(`${__hooks}/produtos.js`);
+            const desc = prods.normalizarDescricao(l.descricaoFatura);
+            let nomes = [];
+            try {
+              const v = JSON.parse(cons.getString('nomes_fatura') || '[]');
+              if (Array.isArray(v)) nomes = v;
+            } catch (_) {}
+            if (desc && nomes.indexOf(desc) === -1) {
+              nomes.push(desc);
+              while (nomes.length > 50) nomes.shift();
+              cons.set('nomes_fatura', nomes);
+            }
+            if (l.marca && !cons.getString('marca')) {
+              cons.set('marca', String(l.marca).substring(0, 200));
+            }
+            if (!cons.getString('fornecedor') && fatura.getString('fornecedor')) {
+              cons.set('fornecedor', fatura.getString('fornecedor'));
+            }
+            if (pu > 0 && (acao === 'preco' || acao === 'ambos')) {
+              const ultima = soData(cons.getString('preco_atualizado_em'));
+              if (!ultima || (dataFatura && dataFatura >= ultima)) {
+                cons.set('preco', pu);
+                cons.set(
+                  'preco_atualizado_em',
+                  (dataFatura || soData(new Date().toISOString())) + 'T00:00:00.000Z',
+                );
+                precos++;
+              } else {
+                precosIgnorados++;
+              }
+            }
+            tx.save(cons);
+          }
+        }
 
         if (acao !== 'ignorar' && ingId) {
           if (acao === 'preco' || acao === 'ambos') {
@@ -216,13 +263,14 @@ routerAdd(
         row.set('empresa', empresaId);
         row.set('fatura', id);
         if (ingId) row.set('ingrediente', ingId);
+        else if (consId) row.set('consumivel', consId);
         row.set('descricao_fatura', String(l.descricaoFatura || ''));
         row.set('quantidade_g', q);
         row.set('preco_unitario', pu);
         row.set('total_linha', Number(l.totalLinha || 0));
         row.set('embalagem_g', emb);
         row.set('acao', acao);
-        row.set('aplicado', acao !== 'ignorar' && !!ingId);
+        row.set('aplicado', acao !== 'ignorar' && (!!ingId || !!consId));
         tx.save(row);
       }
 

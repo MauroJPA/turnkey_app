@@ -24,6 +24,7 @@ abstract class Routes {
   static const equipamentos = '/financeiro/equipamentos';
   static const numerosMagicos = '/financeiro/numeros-magicos';
   static const embalagens = '/embalagens';
+  static const consumiveis = '/consumiveis';
   static const settings = '/opcoes';
   static const team = '/opcoes/equipa';
   static const cookieFormats = '/opcoes/formatos';

@@ -24,6 +24,7 @@ final invoiceRepositoryProvider = Provider<InvoiceRepository>((ref) {
 /// Uma linha pronta a aplicar (do ecrã de revisão).
 typedef LinhaAAplicar = ({
   String? ingredienteId,
+  String? consumivelId,
   String descricaoFatura,
   double quantidadeG,
   double precoUnitario,
@@ -215,6 +216,7 @@ class InvoiceRepository {
               'embalagemG': l.embalagemG,
               'acao': l.acao.api,
               if (l.produtoId != null) 'produtoId': l.produtoId,
+              if (l.consumivelId != null) 'consumivelId': l.consumivelId,
               if (l.marca.isNotEmpty) 'marca': l.marca,
               'produtoNome': l.produtoNome,
             },

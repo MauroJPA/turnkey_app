@@ -40,6 +40,8 @@ class FaturaLinhaIa {
     this.embalagemG,
     this.nomeGenerico = '',
     this.marca = '',
+    this.consumivel = false,
+    this.categoriaConsumivel = '',
   });
 
   final String descricao;
@@ -49,6 +51,12 @@ class FaturaLinhaIa {
 
   /// Marca comercial lida da linha (vazio se não houver).
   final String marca;
+
+  /// A IA acha que é limpeza/insumo (não um ingrediente).
+  final bool consumivel;
+
+  /// `limpeza`, `desinfecao`, `higiene`, `insumo` ou `outro` (só se [consumivel]).
+  final String categoriaConsumivel;
   final double? quantidade;
   final String unidade;
   final double? precoUnitario;
@@ -72,6 +80,8 @@ class FaturaLinhaIa {
     embalagemG: (j['embalagem_g'] as num?)?.toDouble(),
     nomeGenerico: (j['nome_generico'] ?? '').toString().trim(),
     marca: (j['marca'] ?? '').toString().trim(),
+    consumivel: j['tipo_item'] == 'consumivel',
+    categoriaConsumivel: (j['categoria_consumivel'] ?? '').toString().trim(),
   );
 }
 

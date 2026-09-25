@@ -644,6 +644,23 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Criar/editar um ingrediente comprado com preço e embalagem (sem produtos): cria-se logo o 1.º produto.
 - [ ] Importar ingredientes por CSV: continuam a aparecer com custo e ficam com um produto.
 
+## 31. Limpeza e insumos e fichas de segurança
+
+- [ ] Início → **Limpeza e insumos** abre a página (aparece também em Configurações → Navegação, com permissões).
+- [ ] **+ Produto**: criar "Desengordurante" (Limpeza). Guardar; passa a mostrar **Documentos** e "Falta FDS".
+- [ ] **Anexar documento** → tipo FDS, ficheiro PDF, data e versão: aparece na lista; o estado passa a "FDS ok".
+      Tocar no documento abre o PDF. Anexar também uma imagem (ficha técnica) e um ficheiro `.html` (tem de ser recusado).
+- [ ] Anexar uma FDS com data de há mais de 3 anos: estado "FDS antiga" com o aviso.
+- [ ] Um produto "Luvas" (Insumo, sem FDS exigida) mostra "Sem FDS" e nunca fica pendente.
+- [ ] Filtros: pesquisa, categoria e **A precisar de FDS**. O ícone de copiar o registo cola um CSV completo.
+- [ ] Apagar um documento (pede confirmação); apagar um produto (some da lista).
+- [ ] Papel Leitura: vê e abre os documentos, mas não vê "+ Produto", "Anexar" nem apagar.
+- [ ] **Fatura** com um produto de limpeza (ex.: detergente da loiça): a IA marca a linha como "Limpeza / insumo".
+      Se já existir o produto, liga-se e mostra os documentos já anexados; se não, propõe "Criar produto novo".
+- [ ] Trocar uma linha entre "Ingrediente" e "Limpeza / insumo": volta a procurar a correspondência do outro tipo.
+- [ ] Aplicar: o preço fica no produto; se falta a FDS, aparece o aviso com **Anexar**.
+- [ ] Carregar outra fatura com a mesma descrição: liga sozinha ao mesmo produto.
+
 ---
 
 ## Notas / ajustes pedidos

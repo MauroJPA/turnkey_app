@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gc_turnkey/src/features/consumables/domain/consumivel.dart';
 import 'package:gc_turnkey/src/features/ingredients/domain/ingredient.dart';
 import 'package:gc_turnkey/src/features/ingredients/domain/produto_ingrediente.dart';
 import 'package:gc_turnkey/src/features/invoices/domain/match_ingrediente.dart';
@@ -117,6 +118,44 @@ void main() {
 
     test('normalizarDescricao tira acentos e espaços a mais', () {
       expect(normalizarDescricao('  Açúcar   BCO  Kg '), 'acucar bco kg');
+    });
+  });
+
+  group('emparelharConsumivel', () {
+    const detergente = Consumivel(
+      id: 'c1',
+      nome: 'Detergente loiça',
+      marca: 'Fairy',
+      nomesFatura: ['det loica fairy original 750ml'],
+    );
+    const lixivia = Consumivel(id: 'c2', nome: 'Lixívia');
+    const lista = [detergente, lixivia];
+
+    test('nome de fatura aprendido', () {
+      final c = emparelharConsumivel(
+        descricao: 'Det. loiça Fairy Original 750ml',
+        consumiveis: lista,
+      );
+      expect(c?.id, 'c1');
+    });
+
+    test('semelhança com o nome genérico da IA', () {
+      final c = emparelharConsumivel(
+        descricao: 'Detergente manual loiça Pingo Doce 1L',
+        nomeGenerico: 'Detergente loiça',
+        consumiveis: lista,
+      );
+      expect(c?.id, 'c1');
+    });
+
+    test('sem correspondência devolve null', () {
+      expect(
+        emparelharConsumivel(
+          descricao: 'Luvas nitrilo caixa 100',
+          consumiveis: lista,
+        ),
+        isNull,
+      );
     });
   });
 }

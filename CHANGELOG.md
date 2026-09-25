@@ -2,6 +2,27 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.10.0 — 2026-09-25 — Limpeza e insumos, com fichas de segurança
+
+- **Nova página "Limpeza e insumos"** (chave `consumiveis`, entra na grelha do Início e nas permissões por
+  página): produtos de limpeza, desinfeção, higiene e outros insumos, com categoria, marca, fornecedor,
+  embalagem, preço e notas de uso.
+- **Documentos por produto** (PDF ou imagem, até 20 MB): ficha de dados de segurança (FDS), ficha técnica,
+  certificados e outros, cada um com título, versão e data. Os ficheiros são **protegidos** (só abrem com sessão
+  e token de curta duração, como as faturas) e ficam nos backups.
+- **Estado da FDS** em cada produto: "FDS ok", "Falta FDS" (exige e não tem), "FDS antiga" (a mais recente tem
+  mais de 3 anos: aviso para confirmar se há revisão nova) e "Sem FDS" (não exige). Filtro "A precisar de FDS"
+  e botão para copiar o registo de todos os produtos (CSV) para a fiscalização.
+- **Faturas:** a IA distingue ingredientes de limpeza/insumos (`tipo_item`, `categoria_consumivel`). Na revisão
+  cada linha tem "Ingrediente | Limpeza / insumo"; a linha liga-se a um produto existente (nome de fatura já
+  aprendido ou semelhança) ou cria um novo (categoria sugerida). Mostra logo o estado da FDS e os documentos já
+  anexados. O preço, a marca, o fornecedor e o nome da fatura ficam no produto (fatura mais antiga não muda o
+  preço). No fim, lista os produtos a que **falta a FDS**, com atalho para a anexar.
+- Migration `1707955206_consumiveis` (coleções `consumiveis` e `consumivel_documentos`; `faturas_itens.consumivel`).
+- Testes: secção 10 do `test/security/seguranca.py` (isolamento, papéis, ficheiro protegido, HTML recusado,
+  faturas) e testes do estado da FDS e do emparelhamento.
+- Não incluído (fica para depois): exportar tudo num único ZIP/PDF, e stock de consumíveis.
+
 ## 1.9.0 — 2026-09-25 — Ingredientes genéricos e produtos de compra
 
 - **Ingrediente genérico + produtos de compra.** Uma receita usa "Açúcar branco"; as compras (Sidul 1 kg,
