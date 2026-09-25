@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/nutrition/nutrition.dart' show kAlergenios;
 import '../application/ingredients_providers.dart';
 import '../data/ingredient_product_repository.dart';
 import '../domain/ingredient.dart';
@@ -61,8 +62,12 @@ class IngredientProductsSection extends ConsumerWidget {
               ),
               subtitle: Text(
                 '${p.resumo} · ${_euro(p.preco)} · ${_dataCurta(p.precoAtualizadoEm)}'
-                '${p.fornecedor.isNotEmpty ? ' · ${p.fornecedor}' : ''}',
+                '${p.fornecedor.isNotEmpty ? ' · ${p.fornecedor}' : ''}'
+                '${p.alergenios.isNotEmpty ? '\nContém também: ${p.alergenios.join(', ')}' : ''}'
+                '${p.alergeniosTracos.isNotEmpty ? '\nPode conter: ${p.alergeniosTracos.join(', ')}' : ''}',
               ),
+              isThreeLine:
+                  p.alergenios.isNotEmpty || p.alergeniosTracos.isNotEmpty,
               trailing: p.id == atual?.id
                   ? Chip(
                       label: const Text('custo atual'),
@@ -112,6 +117,8 @@ class _ProdutoDialogState extends ConsumerState<_ProdutoDialog> {
   late final _preco = TextEditingController(
     text: widget.existente == null ? '' : _n(widget.existente!.preco),
   );
+  late final Set<String> _alerg = {...?widget.existente?.alergenios};
+  late final Set<String> _tracos = {...?widget.existente?.alergeniosTracos};
   bool _busy = false;
   String? _erro;
 
@@ -155,6 +162,8 @@ class _ProdutoDialogState extends ConsumerState<_ProdutoDialog> {
           fornecedor: _fornecedor.text,
           embalagemG: _num(_emb),
           preco: _num(_preco),
+          alergenios: _alerg.toList(),
+          alergeniosTracos: _tracos.toList(),
         );
       } else {
         await repo.atualizar(
@@ -165,6 +174,8 @@ class _ProdutoDialogState extends ConsumerState<_ProdutoDialog> {
           embalagemG: _num(_emb),
           preco: _num(_preco),
           data: mudouPreco ? DateTime.now() : e.precoAtualizadoEm,
+          alergenios: _alerg.toList(),
+          alergeniosTracos: _tracos.toList(),
         );
       }
       if (mounted) Navigator.pop(context, true);
@@ -190,6 +201,26 @@ class _ProdutoDialogState extends ConsumerState<_ProdutoDialog> {
       if (mounted) setState(() => _busy = false);
     }
   }
+
+  Widget _chips(Set<String> sel) => Wrap(
+    spacing: 6,
+    runSpacing: 0,
+    children: [
+      for (final a in kAlergenios)
+        FilterChip(
+          label: Text(a),
+          selected: sel.contains(a),
+          visualDensity: VisualDensity.compact,
+          onSelected: (v) => setState(() {
+            if (v) {
+              sel.add(a);
+            } else {
+              sel.remove(a);
+            }
+          }),
+        ),
+    ],
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -239,6 +270,34 @@ class _ProdutoDialogState extends ConsumerState<_ProdutoDialog> {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Alergénios a mais neste produto',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Só contam quando uma receita fixa este produto; juntam-se aos '
+                'do ingrediente.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+            const SizedBox(height: 4),
+            _chips(_alerg),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Pode conter (vestígios) neste produto',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+            ),
+            const SizedBox(height: 4),
+            _chips(_tracos),
             if (_erro != null)
               Padding(
                 padding: const EdgeInsets.only(top: 8),

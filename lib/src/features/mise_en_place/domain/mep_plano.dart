@@ -5,7 +5,11 @@ class MepIngrediente {
     required this.nome,
     required this.gramas,
     this.emStock = 0,
+    this.produtoIds = const [],
   });
+
+  /// Produtos de compra fixados nas receitas (para juntar os seus alergénios).
+  final List<String> produtoIds;
 
   final String ingredienteId;
   final String nome;
@@ -19,6 +23,9 @@ class MepIngrediente {
         nome: j['nome'] as String? ?? '',
         gramas: (j['gramas'] as num?)?.toDouble() ?? 0,
         emStock: (j['emStock'] as num?)?.toDouble() ?? 0,
+        produtoIds: [
+          for (final p in (j['produtoIds'] as List? ?? const [])) '$p',
+        ],
       );
 }
 

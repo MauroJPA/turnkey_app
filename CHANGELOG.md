@@ -2,6 +2,23 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.14.0 — 2026-09-25 — Alergénios por produto de compra
+
+- **Cada produto de compra pode ter alergénios a mais** ("Contém também") e **vestígios** ("Pode conter"), ao
+  editar o produto no ingrediente. Ex.: o chocolate da marca X "pode conter frutos de casca rija".
+- **Só contam quando a receita fixa esse produto.** Juntam-se aos do ingrediente genérico (nunca os
+  substituem). Uma receita em "automático", ou que fixa outro produto, leva apenas os alergénios do ingrediente.
+- Aplica-se à declaração de alergénios da receita e da ficha técnica (recalculada quando o produto muda ou a
+  linha deixa de fixá-lo) e ao **negrito dos alergénios na lista de ingredientes do rótulo** (o plano da ficha
+  indica os produtos fixados pelas receitas).
+- Na escolha do produto de uma linha de receita aparecem os alergénios do produto, e o "Automático" avisa que
+  usa só os do ingrediente.
+- Migration `1707955209_produto_alergenios` (campos `alergenios` e `alergenios_tracos` em `ingrediente_produtos`).
+- Testes: secção 9e do `test/security/seguranca.py` (307 verificações, 0 falhas).
+- Cuidado: em "automático" não conta o alergénio do produto que realmente compraste. Se um produto tem
+  alergénios a mais, fixa-o nas receitas que o usam.
+- Não incluído: os valores nutricionais continuam a ser os do ingrediente (não há nutrição por produto).
+
 ## 1.13.0 — 2026-09-25 — Lista de compras com o produto escolhido nas receitas
 
 - **A lista de compras respeita o produto fixado nas receitas.** Se uma receita fixa "Farinha Sidul 1 kg" e

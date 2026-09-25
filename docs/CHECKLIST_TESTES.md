@@ -699,6 +699,19 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Marcar uma linha como comprada continua a dar entrada no stock do ingrediente.
 - [ ] Produções sem produtos fixados: a lista fica igual à de antes.
 
+## 35. Alergénios por produto
+
+- [ ] Ingrediente "Chocolate" com dois produtos. Editar o produto X: em **Alergénios a mais** marcar "Leite" e em
+      **Pode conter** "Frutos de casca rija". Guardar: a lista de produtos mostra "Contém também / Pode conter".
+- [ ] Receita A fixa o produto X; receita B fixa o produto Y; receita C fica em automático (todas com 500 g).
+      Na informação nutricional/alergénios: só a **A** tem Leite e o vestígio; B e C não.
+- [ ] Na escolha do produto de uma linha aparecem os alergénios do produto; "Automático" avisa que usa só os do ingrediente.
+- [ ] Acrescentar um alergénio ao produto Y: a receita B passa a mostrá-lo (sem mexer na receita).
+- [ ] Tirar o produto fixado da receita A: deixa de ter os alergénios do produto X.
+- [ ] Ficha técnica que usa a receita A: a declaração e o **negrito da lista de ingredientes do rótulo** incluem
+      o Leite; numa ficha que usa a receita C, não.
+- [ ] Os alergénios do ingrediente (ex.: Glúten) contam sempre, com ou sem produto fixado.
+
 ---
 
 ## Notas / ajustes pedidos

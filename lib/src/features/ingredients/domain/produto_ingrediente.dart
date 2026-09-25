@@ -13,6 +13,8 @@ class ProdutoIngrediente {
     this.preco = 0,
     this.precoAtualizadoEm,
     this.nomesFatura = const [],
+    this.alergenios = const [],
+    this.alergeniosTracos = const [],
   });
 
   final String id;
@@ -27,6 +29,11 @@ class ProdutoIngrediente {
   /// Descrições de fatura (normalizadas) já associadas a este produto.
   final List<String> nomesFatura;
 
+  /// Alergénios EXTRA deste produto: só contam quando uma receita o fixa
+  /// (juntam-se aos do ingrediente genérico).
+  final List<String> alergenios;
+  final List<String> alergeniosTracos;
+
   bool get temPreco => preco > 0 && embalagemG > 0;
 
   /// Custo por grama (0 se faltarem dados).
@@ -34,6 +41,11 @@ class ProdutoIngrediente {
 
   factory ProdutoIngrediente.fromRecord(RecordModel r) {
     final nomes = r.data['nomes_fatura'];
+    List<String> lista(String campo) {
+      final v = r.data[campo];
+      return v is List ? [for (final a in v) '$a'] : const [];
+    }
+
     return ProdutoIngrediente(
       id: r.id,
       ingredienteId: r.getStringValue('ingrediente'),
@@ -48,6 +60,8 @@ class ProdutoIngrediente {
       nomesFatura: nomes is List
           ? [for (final n in nomes) n.toString()]
           : const [],
+      alergenios: lista('alergenios'),
+      alergeniosTracos: lista('alergenios_tracos'),
     );
   }
 

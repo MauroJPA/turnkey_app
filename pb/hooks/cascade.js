@@ -87,6 +87,19 @@ function runCascade(app, kind, rootId) {
     } catch (_) {}
     return [];
   };
+  // alergénios/vestígios EXTRA do produto que a linha fixa (só contam quando a
+  // linha fixa esse produto; juntam-se aos do ingrediente genérico)
+  const alergProduto = (item, ing, campo) => {
+    const pid = item.getString('produto');
+    if (!pid) return [];
+    try {
+      const p = app.findRecordById('ingrediente_produtos', pid);
+      if (p.getString('ingrediente') !== ing.id) return [];
+      return listaSel(p, campo);
+    } catch (_) {
+      return [];
+    }
+  };
   const unir = (a, b) => {
     const s = new Set(a);
     for (const x of b) s.add(x);
@@ -638,6 +651,8 @@ function runCascade(app, kind, rootId) {
         addEscN(absN, n100, qtd / 100);
         alergN = unir(alergN, listaSel(ing, 'alergenios'));
         tracosN = unir(tracosN, listaSel(ing, 'alergenios_tracos'));
+        alergN = unir(alergN, alergProduto(item, ing, 'alergenios'));
+        tracosN = unir(tracosN, alergProduto(item, ing, 'alergenios_tracos'));
       } else if (subRel) {
         const sub = receitaNutriPor100(subRel);
         if (sub) {
@@ -1249,6 +1264,7 @@ function planoFicha(app, fichaId, unidades) {
   if (!info) return null;
   const comprar = {};
   const produzir = {};
+  const pp = {}; // {ingId: {produtoId|'': g}} — produtos fixados nas receitas
   const merge = (dst, src) => {
     for (const k in src) dst[k] = (dst[k] || 0) + src[k];
   };
@@ -1277,12 +1293,13 @@ function planoFicha(app, fichaId, unidades) {
       const ep = explodeProducao(app, recId, g);
       merge(comprar, ep.comprar);
       merge(produzir, ep.produzir);
+      explodeCompras(app, recId, g, pp);
     } else if (l.getString('ingrediente')) {
       const ingId = l.getString('ingrediente');
       comprar[ingId] = (comprar[ingId] || 0) + g;
     }
   }
-  return { info: info, comprar: comprar, produzir: produzir };
+  return { info: info, comprar: comprar, produzir: produzir, produtosFixados: pp };
 }
 
 module.exports = {
