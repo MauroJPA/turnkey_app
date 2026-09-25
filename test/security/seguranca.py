@@ -708,6 +708,7 @@ def teste_segredos():
     check(s == 404, 'serviço desconhecido recusado', f'status {s}')
     s, r, _ = call('PUT', url, {'valor': TOKEN_VENDUS}, tok['adminA'])
     check(s == 200 and r.get('configurada') is True and r.get('sufixo') == '7890', 'admin guarda o token', f'{s} {r}')
+    check(r.get('cifraDisponivel') is True, 'o estado diz que a cifra está disponível no servidor')
     check(TOKEN_VENDUS not in json.dumps(r), 'a resposta nunca devolve o token')
     s, r, _ = call('GET', url, tok=tok['editorA'])
     check(s == 200 and r.get('configurada') is True and TOKEN_VENDUS not in json.dumps(r), 'editor vê só o estado')
@@ -749,6 +750,55 @@ def teste_segredos():
         check(TOKEN_VENDUS not in open(os.path.join(tmp, 'pb.log'), errors='ignore').read(), 'o token não aparece nos logs do servidor')
 
 
+def teste_sem_chave():
+    """Servidor sem TURNKEY_ENC_KEY (esquecimento comum): a app tem de dizer o que falta."""
+    global URL
+    if 'PB_URL' in os.environ:
+        return
+    sec('7c. Servidor sem chave de cifra')
+    original = URL
+    tmp2 = tempfile.mkdtemp(prefix='pbsec2_')
+    dados2 = os.path.join(tmp2, 'data')
+    mig = os.path.join(RAIZ, 'pb', 'migrations')
+    subprocess.run([PB_BIN, 'superuser', 'upsert', SUPER[0], SUPER[1], '--dir', dados2, '--migrationsDir', mig],
+                   check=True, capture_output=True)
+    env = {k: v for k, v in os.environ.items() if k not in ('TURNKEY_DEV', 'TURNKEY_ENC_KEY')}
+    p2 = subprocess.Popen([PB_BIN, 'serve', '--dir', dados2, '--migrationsDir', mig,
+                           '--hooksDir', os.path.join(RAIZ, 'pb', 'hooks'), '--http', '127.0.0.1:8198'],
+                          stdout=open(os.path.join(tmp2, 'pb.log'), 'w'), stderr=subprocess.STDOUT, env=env)
+    URL = 'http://127.0.0.1:8198'
+    try:
+        for _ in range(40):
+            try:
+                if call('GET', '/api/health')[0] == 200:
+                    break
+            except Exception:
+                pass
+            time.sleep(0.5)
+        s1, r, _ = call('POST', '/api/collections/_superusers/auth-with-password', {'identity': SUPER[0], 'password': SUPER[1]})
+        su2 = r['token']
+        s1, e, _ = call('POST', '/api/collections/empresas/records',
+                        {'nome': 'X', 'slug': 'x-sem-chave', 'moeda': 'EUR', 'regra_arredondamento': 'cima'}, su2)
+        s1, u, _ = call('POST', '/api/collections/users/records',
+                        {'email': 'dono@semchave.local', 'password': 'Teste12345!', 'passwordConfirm': 'Teste12345!',
+                         'verified': True, 'empresa': e['id'], 'papel': 'owner'}, su2)
+        s1, r, _ = call('POST', '/api/collections/users/auth-with-password', {'identity': 'dono@semchave.local', 'password': 'Teste12345!'})
+        t = r['token']
+        s1, r, _ = call('GET', '/api/turnkey/integracoes/vendus', tok=t)
+        check(s1 == 200 and r.get('cifraDisponivel') is False, 'o estado avisa que falta a chave de cifra', str(r))
+        s1, r, _ = call('PUT', '/api/turnkey/integracoes/vendus', {'valor': 'TOKEN-QUALQUER-12345'}, t)
+        msg = r.get('message', '') if isinstance(r, dict) else ''
+        check(s1 == 503 and 'TURNKEY_ENC_KEY' in msg, 'guardar sem chave: erro claro a dizer o que falta', f'{s1} {msg}')
+    finally:
+        URL = original
+        p2.terminate()
+        try:
+            p2.wait(10)
+        except Exception:
+            p2.kill()
+        shutil.rmtree(tmp2, ignore_errors=True)
+
+
 def main():
     arrancar()
     try:
@@ -759,6 +809,7 @@ def main():
         teste_uploads()
         teste_aprovacao()
         teste_segredos()
+        teste_sem_chave()
         teste_implantacao()
         teste_autenticacao()  # por último: gasta o limite de tentativas
     finally:
