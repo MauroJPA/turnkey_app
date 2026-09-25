@@ -55,9 +55,9 @@ Qualquer pessoa pode criar conta, mas **só entra depois de tu a aprovares**.
 - Cada empresa introduz o **seu** token em **Configurações → Integrações** (proprietário/admin).
   Fica em `segredos_empresa`, cifrado com **AES-256-GCM**; a coleção não tem acesso por REST,
   a resposta da app só diz "guardado (termina em …)" — o token **nunca volta a sair** do servidor.
-- A chave que cifra é a `TURNKEY_ENC_KEY` (32 caracteres, só em `pb\.env`), **fora da base de
+- A chave que cifra é a `TURNKEY_ENC_KEY` (32 caracteres, só no `.env` do servidor), **fora da base de
   dados e dos backups**: quem roubar um backup só leva texto cifrado. Gerar:
-  `cd pb ; .\gerar-chave-cifra.ps1 -Gravar`. **Guarda uma cópia no gestor de palavras-passe** e
+  `bash gookie.sh instalar` (no servidor Linux; gera-a sem a mostrar) ou `pb\gerar-chave-cifra.ps1 -Gravar` (PC de desenvolvimento). **Guarda uma cópia no gestor de palavras-passe** e
   nunca a mudes depois de haver tokens (ficam ilegíveis; teria de os reintroduzir).
 - A sincronização do Vendus usa o token da própria empresa. A variável `VENDUS_API_KEY` do
   ambiente passa a ser só um recurso para a empresa de `VENDUS_SYNC_EMPRESA` e **já não serve a
@@ -70,7 +70,7 @@ Qualquer pessoa pode criar conta, mas **só entra depois de tu a aprovares**.
 
 Feita em 2026-09-24: **0.35.0 → 0.40.4** (traz as correções de OAuth2 e da queda do servidor).
 Testada com os testes de segurança, com uma cópia dos dados reais e sem alterações necessárias
-nos hooks. Script: `pb\atualizar-pocketbase.ps1` (descarrega, confere o SHA-256, faz cópia de
+nos hooks. No PC de desenvolvimento: `pb\atualizar-pocketbase.ps1`; no servidor a versão vem do `Dockerfile`/`PB_VERSION` (descarrega, confere o SHA-256, faz cópia de
 `pb_data` para `pb_data_antes_*`, guarda o binário antigo como `pocketbase.exe.antiga`).
 Um servidor já a correr só passa à nova versão quando o reiniciares.
 
@@ -79,8 +79,8 @@ Um servidor já a correr só passa à nova versão quando o reiniciares.
 1. **Reiniciar o PocketBase** depois de gerar a chave de cifra (ver acima) — as migrations novas
    (aprovação, segredos, relações, limites) só se aplicam ao reiniciar.
 2. **Rodar a chave do Vendus** (foi exposta antes): gerar uma nova no Vendus, guardá-la em
-   Configurações → Integrações e **apagar `VENDUS_API_KEY` do `pb\.env`**. Confirmar as chaves de
-   IA só em `pb\.env`.
+   Configurações → Integrações e **apagar `VENDUS_API_KEY` do `.env`**. Confirmar as chaves de
+   IA só no `.env`.
 3. **Servidor definitivo:**
    - **HTTPS** obrigatório e cabeçalhos de segurança no proxy: `Strict-Transport-Security`,
      `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Content-Security-Policy`.
@@ -91,8 +91,8 @@ Um servidor já a correr só passa à nova versão quando o reiniciares.
    - **Proxy fiável:** se houver proxy/túnel à frente, configurar em *Definições → Trusted proxy
      headers* (ex.: `X-Forwarded-For`), senão o limite de pedidos trata todos os utilizadores
      como um só IP.
-   - **`TURNKEY_DEV` não pode estar ligado** (`pb/serve.ps1` liga-o para desenvolvimento).
-   - Manter o servidor e o Windows atualizados.
+   - **`TURNKEY_DEV` não pode estar ligado** (o `pb/serve.ps1` liga-o só no PC de desenvolvimento; o contentor força `TURNKEY_DEV=0`).
+   - Manter o Debian atualizado (`unattended-upgrades`) e o PocketBase na versão mais recente segura.
 4. ~~Registo público~~ **Decidido:** fica aberto, mas cada conta nova tem de ser aprovada por ti.
 5. **Novas coleções/relações** têm de levar a cláusula "mesma empresa" (o teste avisa se faltar).
 6. Sessão dura 7 dias; palavras-passe: mínimo 8 (o PocketBase não bloqueia palavras-passe fracas

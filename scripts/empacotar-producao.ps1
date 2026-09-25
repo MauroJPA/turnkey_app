@@ -1,11 +1,12 @@
-# Cria o pacote para instalar no Mini PC: a app web compilada + PocketBase +
-# hooks/migrations + scripts de arranque, backups e atualizacao + documentos.
+# Cria o pacote para instalar no servidor Linux (Docker): a app web compilada,
+# hooks/migrations do PocketBase, Dockerfile + compose, scripts de gestao e de
+# backups, e os documentos.
 #
 #   powershell -ExecutionPolicy Bypass -File scripts\empacotar-producao.ps1
 #
-# Resultado: dist\gookie-producao-<versao>.zip  (e a pasta dist\gookie-producao).
+# Resultado: dist\gookie-servidor-<versao>.tar.gz  (e a pasta dist\gookie-servidor).
 # Correr na raiz do projeto, no ramo main (versao lancada). Nao inclui dados
-# (pb_data), chaves (pb\.env) nem cópias de seguranca.
+# (data), chaves (.env) nem copias de seguranca. Instalar: docs\SERVIDOR_LINUX.md
 
 $ErrorActionPreference = "Stop"
 Set-Location (Join-Path $PSScriptRoot "..")
@@ -20,41 +21,49 @@ Write-Host "1/4  A compilar a app web (v$versao) ..."
 flutter build web --release --no-wasm-dry-run --dart-define=PB_URL=origin
 if ($LASTEXITCODE -ne 0) { throw "flutter build web falhou" }
 
-$saida = Join-Path (Get-Location) "dist\gookie-producao"
+$saida = Join-Path (Get-Location) "dist\gookie-servidor"
 if (Test-Path $saida) { Remove-Item $saida -Recurse -Force }
-New-Item -ItemType Directory -Force "$saida\pb", "$saida\docs" | Out-Null
+New-Item -ItemType Directory -Force "$saida\docs", "$saida\backup" | Out-Null
 
 Write-Host "2/4  A juntar ficheiros ..."
-Copy-Item "build\web" "$saida\pb\web" -Recurse
-New-Item -ItemType Directory -Force "$saida\pb\bin" | Out-Null
-Copy-Item "pb\bin\pocketbase.exe" "$saida\pb\bin\pocketbase.exe"
-Copy-Item "pb\hooks" "$saida\pb\hooks" -Recurse
-Copy-Item "pb\migrations" "$saida\pb\migrations" -Recurse
-Copy-Item "pb\backup" "$saida\pb\backup" -Recurse
-Remove-Item "$saida\pb\backup\logs" -Recurse -Force -ErrorAction SilentlyContinue
-foreach ($f in "serve-producao.ps1", "instalar-arranque.ps1", "gerar-chave-cifra.ps1", "atualizar-pocketbase.ps1") {
-  Copy-Item "pb\$f" "$saida\pb\$f"
+Copy-Item "build\web" "$saida\web" -Recurse
+Copy-Item "pb\hooks" "$saida\hooks" -Recurse
+Copy-Item "pb\migrations" "$saida\migrations" -Recurse
+foreach ($f in "Dockerfile", "compose.yaml", ".env.example", "gookie.sh") {
+  Copy-Item "deploy\$f" "$saida\$f"
 }
-Copy-Item "pb\.env.example" "$saida\pb\.env.example"
-foreach ($d in "MINI_PC.md", "BACKUPS.md", "SEGURANCA.md") {
+Copy-Item "deploy\backup\*" "$saida\backup" -Recurse
+Remove-Item "$saida\backup\logs" -Recurse -Force -ErrorAction SilentlyContinue
+foreach ($d in "SERVIDOR_LINUX.md", "BACKUPS.md", "SEGURANCA.md") {
   Copy-Item "docs\$d" "$saida\docs\$d"
 }
-$pbv = ((& "pb\bin\pocketbase.exe" --version) -join " ")
+$pbv = (Select-String -Path deploy\compose.yaml -Pattern 'PB_VERSION:-([0-9.]+)').Matches[0].Groups[1].Value
 @"
-Gookie - pacote de producao
+Gookie - pacote de producao (Linux/Docker)
 App:        v$versao (commit $commit, ramo $ramo)
-PocketBase: $pbv
+PocketBase: $pbv (descarregado ao construir a imagem, com SHA-256 conferido)
 Criado em:  $(Get-Date -Format s)
-Instalar:   ver docs\MINI_PC.md
+Instalar:   ver docs/SERVIDOR_LINUX.md
 "@ | Set-Content "$saida\VERSAO.txt" -Encoding UTF8
 
-Write-Host "3/4  A criar o zip ..."
-$zip = Join-Path (Get-Location) "dist\gookie-producao-$versao.zip"
-if (Test-Path $zip) { Remove-Item $zip -Force }
-Compress-Archive -Path "$saida\*" -DestinationPath $zip
-$hash = (Get-FileHash $zip -Algorithm SHA256).Hash
+# Tudo o que e texto vai com fins de linha Unix (LF): os scripts .sh nao
+# funcionam com CRLF. (A app web compilada nao se mexe.)
+$utf8 = New-Object System.Text.UTF8Encoding($false)
+Get-ChildItem $saida -Recurse -File | Where-Object {
+  $_.FullName -notlike "$saida\web\*" -and $_.Extension -in ".sh", ".md", ".yaml", ".js", ".txt", ".example", ""
+} | ForEach-Object {
+  $t = [System.IO.File]::ReadAllText($_.FullName)
+  [System.IO.File]::WriteAllText($_.FullName, ($t -replace "`r`n", "`n"), $utf8)
+}
+
+Write-Host "3/4  A criar o .tar.gz ..."
+$tgz = Join-Path (Get-Location) "dist\gookie-servidor-$versao.tar.gz"
+if (Test-Path $tgz) { Remove-Item $tgz -Force }
+tar -czf $tgz -C $saida .
+if ($LASTEXITCODE -ne 0) { throw "tar falhou" }
+$hash = (Get-FileHash $tgz -Algorithm SHA256).Hash
 
 Write-Host "4/4  Pronto."
-Write-Host "  $zip  ($([math]::Round((Get-Item $zip).Length / 1MB, 1)) MB)"
+Write-Host "  $tgz  ($([math]::Round((Get-Item $tgz).Length / 1MB, 1)) MB)"
 Write-Host "  SHA-256: $hash"
-Write-Host "Copia o zip para o Mini PC (USB/rede) e segue docs\MINI_PC.md. Confere o SHA-256 la."
+Write-Host "Copia para o servidor (scp) e segue docs\SERVIDOR_LINUX.md. Confere o SHA-256 la (sha256sum)."

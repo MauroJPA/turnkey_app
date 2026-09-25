@@ -49,8 +49,8 @@ routerAdd(
     if (!seg.cifraDisponivel()) {
       throw new ApiError(
         503,
-        'O servidor ainda não tem a chave de cifra (TURNKEY_ENC_KEY em pb\\.env, 32 caracteres). ' +
-          'Gera-a com pb\\gerar-chave-cifra.ps1 -Gravar e reinicia o PocketBase.',
+        'O servidor ainda não tem a chave de cifra (TURNKEY_ENC_KEY no .env, 32 caracteres). ' +
+          'No servidor Linux corre "bash gookie.sh instalar" (gera-a) e reinicia; no PC de desenvolvimento, pb\\gerar-chave-cifra.ps1 -Gravar.',
         null,
       );
     }

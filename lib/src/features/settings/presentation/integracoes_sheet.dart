@@ -164,7 +164,7 @@ class _SheetState extends ConsumerState<_Sheet> {
                 child: Text(
                   'O servidor ainda não tem a chave de cifra, por isso não pode '
                   'guardar tokens. Quem administra o servidor tem de a gerar '
-                  '(pb\\gerar-chave-cifra.ps1 -Gravar) e reiniciar o PocketBase.',
+                  '(bash gookie.sh instalar) e reiniciar.',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onErrorContainer,
                   ),
