@@ -11,12 +11,18 @@ class Env {
 
   /// URL base do servidor PocketBase.
   ///
-  /// Local por omissão; em produção passa-se o endereço do Mini PC
-  /// (ex.: via Tailscale) por `--dart-define=PB_URL=...`.
-  static const String pbUrl = String.fromEnvironment(
+  /// Local por omissão. Em produção a app web é servida pelo próprio
+  /// PocketBase (pasta `web`), por isso compila-se com
+  /// `--dart-define=PB_URL=origin` e usa o endereço de onde foi aberta
+  /// (funciona igual em `http://mini-pc:8090` e em `https://dominio`).
+  /// Também aceita um endereço fixo: `--dart-define=PB_URL=https://...`.
+  static const String _pbUrlDefine = String.fromEnvironment(
     'PB_URL',
     defaultValue: 'http://127.0.0.1:8090',
   );
+
+  static String get pbUrl =>
+      _pbUrlDefine == 'origin' ? Uri.base.origin : _pbUrlDefine;
 
   /// Locale por omissão para formatação de números e datas.
   static const String defaultLocale = String.fromEnvironment(

@@ -81,6 +81,17 @@ def _call(method, path, body, tok, headers, raw, ctype):
     data = raw if raw is not None else (json.dumps(body).encode() if body is not None else None)
     req = urllib.request.Request(URL + path, method=method, data=data, headers=h)
     try:
+        return _abrir(req)
+    except (ConnectionError, urllib.error.URLError, TimeoutError):
+        time.sleep(1)  # o Windows por vezes fecha a ligação sob muitos pedidos seguidos
+        try:
+            return _abrir(req)
+        except (ConnectionError, urllib.error.URLError, TimeoutError):
+            return 0, {}, {}
+
+
+def _abrir(req):
+    try:
         with urllib.request.urlopen(req, timeout=30) as r:
             txt = r.read()
             try:

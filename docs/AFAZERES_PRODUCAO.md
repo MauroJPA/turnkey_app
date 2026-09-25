@@ -141,19 +141,22 @@ Caminhos: (a) **aumentar a parte de baixo** (campo "Altura", ex. 75 mm → etiqu
 
 ## 6. Ida para produção (go-live)
 
-- [ ] Servidor definitivo (Mini PC): PocketBase como serviço, arranque automático, reinício em caso de falha.
-- [ ] Domínio + **HTTPS** + acesso externo seguro (túnel/reverse proxy).
-- [ ] Variáveis de ambiente de produção (`pb/.env`): IA, Vendus, SMTP, contabilidade (ver `pb/DEPLOY.md`); **chaves novas**.
-- [ ] **`TURNKEY_DEV=0` no `pb/.env` de produção** — o `serve.ps1` liga-o por omissão (contas novas ficam “verificadas” sem email). Confirmar que está desligado.
-- [ ] Criar a empresa real, utilizadores e papéis; carregar os dados iniciais (ingredientes, receitas, fichas, formatos).
-- [ ] Definir a navegação e as permissões por nível (Configurações → Navegação e permissões).
-- [ ] Ensaio geral do ciclo completo (comprar → produzir → stock → vender) com dados reais.
-- [ ] Monitorização básica (espaço em disco, serviço ativo, erros) e quem é avisado.
-- [ ] Plano de retrocesso: como voltar à versão anterior + restaurar backup.
-- [ ] Congelar o código (`v1.0.0` em `main`) antes da data.
+Guia passo a passo: **`docs/MINI_PC.md`**. Pacote: `scripts\empacotar-producao.ps1` → `dist\gookie-producao-<versão>.zip`.
+
+- [x] Pacote de produção, arranque automático (Agendador de Tarefas) com reinício e vigia — `pb\serve-producao.ps1`, `pb\instalar-arranque.ps1`.
+- [x] `TURNKEY_DEV` fica sempre a 0 em `serve-producao.ps1`.
+- [x] Código congelado: `v1.6.0` em `main`.
+- [ ] Levar o pacote para o Mini PC e instalar (`docs/MINI_PC.md`, passos 0–6).
+- [ ] Escolher a via de acesso com **HTTPS** (Cloudflare Tunnel / Tailscale / rede local) e configurar *Application URL* e *Trusted proxy headers*.
+- [ ] Variáveis de ambiente de produção (`pb\.env`): IA, `TURNKEY_ENC_KEY`; **chaves novas**.
+- [ ] Criar a empresa real, aprovar o registo, utilizadores e papéis; carregar os dados iniciais.
+- [ ] Definir a navegação e as permissões por nível.
+- [ ] Backups a sério no Mini PC (`pb\backup\LEIA-ME.md`) e primeiro restauro de teste.
+- [ ] Ensaio geral do ciclo completo (comprar → produzir → stock → vender) e **imprimir uma etiqueta e um talão** na impressora real.
+- [ ] Monitorização: espaço em disco, log, quem é avisado.
 
 ## 7. Pequenos ajustes já identificados
 
 - [ ] Menu ⋮ da encomenda oferece "Cancelar" mesmo se já cancelada/entregue (esconder).
-- [ ] `CHANGELOG.md` desatualizado.
+- [x] `CHANGELOG.md` atualizado (1.6.0).
 - [ ] Impressão do talão nunca foi testada numa impressora real.

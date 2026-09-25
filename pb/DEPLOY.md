@@ -7,7 +7,10 @@ pb/migrations/*.js   -> schema (coleções, campos, regras)
 pb/hooks/*           -> lógica (cascata de custos, onboarding, equipa, admin)
 ```
 
-As 41 migrations aplicam-se limpas a uma base de dados vazia (verificado). A
+**Para instalar no Mini PC segue `docs/MINI_PC.md`** (pacote pronto, arranque automático,
+HTTPS, backups). Este ficheiro descreve o detalhe do servidor.
+
+As 50 migrations aplicam-se limpas a uma base de dados vazia (verificado). A
 `1706227200_seed_insa.js` insere 1376 alimentos na `ingredientes_referencia`
 (demora alguns segundos no 1.º arranque; é idempotente).
 
@@ -15,7 +18,7 @@ As 41 migrations aplicam-se limpas a uma base de dados vazia (verificado). A
 
 ## Pré-requisito
 
-O Mini PC corre **PocketBase v0.35.0**. Confirma:
+O Mini PC corre **PocketBase v0.40.4** (mínimo seguro: 0.39.7). Confirma:
 
 ```bash
 ./pocketbase --version
@@ -74,6 +77,11 @@ O Mini PC corre **PocketBase v0.35.0**. Confirma:
    - Confirmar depois de arrancar:
      `curl -X POST http://127.0.0.1:8090/api/turnkey/faturas/x/analisar` →
      deve dar `401` (falta auth), **não** `503`. Um `503` = chave não carregada.
+
+   **Segredos por empresa (token do Vendus):** exigem `TURNKEY_ENC_KEY` (32 caracteres,
+   `pb\gerar-chave-cifra.ps1 -Gravar`) — ver `docs/SEGURANCA.md`. O token de cada empresa
+   guarda-se na app (Configurações → Integrações), cifrado; `VENDUS_API_KEY` só serve de recurso
+   para a empresa de `VENDUS_SYNC_EMPRESA`.
 
    **Sincronização com o Vendus** (`vendus.pb.js`): opcional — sem estas
    variáveis, o botão "Sincronizar com o Vendus" na app dá `503` e o cron
