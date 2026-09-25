@@ -20,7 +20,7 @@ class RecipeItemRepository {
   Future<List<ItemReceita>> listForRecipe(String recipeId) async {
     final recs = await _c.getFullList(
       filter: 'receita = "$recipeId"',
-      expand: 'ingrediente,sub_receita',
+      expand: 'ingrediente,sub_receita,produto',
       sort: 'created',
     );
     return recs.map(ItemReceita.fromRecord).toList();
@@ -29,14 +29,16 @@ class RecipeItemRepository {
   Future<void> addIngrediente(
     String recipeId,
     String ingredienteId,
-    double quantidadeG,
-  ) {
+    double quantidadeG, {
+    String? produtoId,
+  }) {
     return _c.create(
       body: {
         'empresa': _empresaId,
         'receita': recipeId,
         'ingrediente': ingredienteId,
         'quantidade_g': quantidadeG,
+        if (produtoId != null) 'produto': produtoId,
       },
     );
   }
@@ -72,6 +74,10 @@ class RecipeItemRepository {
     );
   }
 
+  /// Fixa um produto de compra na linha (null = volta ao custo do genérico).
+  Future<void> setProduto(String itemId, String? produtoId) =>
+      _c.update(itemId, body: {'produto': produtoId ?? ''});
+
   Future<void> setQuantidade(String itemId, double quantidadeG) =>
       _c.update(itemId, body: {'quantidade_g': quantidadeG});
 
@@ -86,6 +92,7 @@ class RecipeItemRepository {
       itemId,
       body: {
         'ingrediente': ingredienteId ?? '',
+        'produto': '',
         'sub_receita': subReceitaId ?? '',
         'nome_provisorio': '',
       },
