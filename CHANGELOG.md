@@ -2,6 +2,13 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.10.1 — 2026-09-25 — Limpeza e insumos: anexar já na criação e apagar na lista
+
+- **Anexar documentos logo ao criar** o produto: escolhes a FDS (PDF ou imagem) antes de guardar e ela segue
+  ao guardar. Se algum ficheiro falhar, o produto fica guardado e o documento fica na lista "Por enviar" para
+  tentar de novo.
+- **Apagar produtos** diretamente na lista (ícone do caixote, com confirmação), além do botão Apagar da ficha.
+
 ## 1.10.0 — 2026-09-25 — Limpeza e insumos, com fichas de segurança
 
 - **Nova página "Limpeza e insumos"** (chave `consumiveis`, entra na grelha do Início e nas permissões por

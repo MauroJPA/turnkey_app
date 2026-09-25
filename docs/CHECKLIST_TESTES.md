@@ -648,6 +648,9 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 
 - [ ] Início → **Limpeza e insumos** abre a página (aparece também em Configurações → Navegação, com permissões).
 - [ ] **+ Produto**: criar "Desengordurante" (Limpeza). Guardar; passa a mostrar **Documentos** e "Falta FDS".
+- [ ] **+ Produto** e, ainda antes de guardar, **Anexar documento** (FDS em PDF): fica na lista do produto novo;
+      ao **Guardar** o documento segue e aparece em Documentos, com "FDS ok".
+- [ ] Na lista, o ícone do **caixote** apaga o produto (pede confirmação) e ele desaparece.
 - [ ] **Anexar documento** → tipo FDS, ficheiro PDF, data e versão: aparece na lista; o estado passa a "FDS ok".
       Tocar no documento abre o PDF. Anexar também uma imagem (ficha técnica) e um ficheiro `.html` (tem de ser recusado).
 - [ ] Anexar uma FDS com data de há mais de 3 anos: estado "FDS antiga" com o aviso.

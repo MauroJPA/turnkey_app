@@ -19,6 +19,25 @@ Future<void> abrirConsumivelSheet(
   builder: (_) => ConsumivelSheet(existente: existente),
 );
 
+/// Documento escolhido antes de o produto estar guardado: envia-se ao guardar.
+class DocumentoPendente {
+  const DocumentoPendente({
+    required this.tipo,
+    required this.ficheiro,
+    this.titulo = '',
+    this.versao = '',
+    this.data,
+  });
+
+  final TipoDocumento tipo;
+  final PlatformFile ficheiro;
+  final String titulo;
+  final String versao;
+  final DateTime? data;
+
+  String get nomeVisivel => titulo.isNotEmpty ? titulo : ficheiro.name;
+}
+
 String _dataCurta(DateTime? d) => d == null
     ? 'sem data'
     : '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
@@ -49,6 +68,7 @@ class _ConsumivelSheetState extends ConsumerState<ConsumivelSheet> {
   late bool _exigeFds = _atual?.exigeFds ?? true;
   bool _busy = false;
   String? _erro;
+  final List<DocumentoPendente> _pendentes = [];
 
   bool get _podeEditar => ref.read(currentPapelProvider).canEditBusiness;
 
@@ -92,10 +112,40 @@ class _ConsumivelSheetState extends ConsumerState<ConsumivelSheet> {
         final lista = await ref.read(consumiveisListProvider.future);
         _atual = lista.where((c) => c.id == id).firstOrNull ?? _atual;
       }
-      if (mounted) {
+      // documentos escolhidos antes de guardar: envia os que conseguir; os que
+      // falharem ficam na lista para tentar de novo (o produto já está guardado)
+      final falharam = <DocumentoPendente>[];
+      for (final d in _pendentes) {
+        try {
+          await a.anexar(
+            consumivelId: _atual!.id,
+            tipo: d.tipo,
+            bytes: d.ficheiro.bytes!,
+            nomeFicheiro: d.ficheiro.name,
+            titulo: d.titulo,
+            versao: d.versao,
+            dataDocumento: d.data,
+          );
+        } on Object {
+          falharam.add(d);
+        }
+      }
+      final enviados = _pendentes.length - falharam.length;
+      _pendentes
+        ..clear()
+        ..addAll(falharam);
+      if (falharam.isNotEmpty) {
+        _erro =
+            'O produto ficou guardado, mas ${falharam.length} documento(s) '
+            'não seguiram. Carrega em Guardar para tentar de novo.';
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Guardado. Já podes anexar documentos.'),
+          SnackBar(
+            content: Text(
+              enviados > 0
+                  ? 'Guardado, com $enviados documento(s) anexado(s).'
+                  : 'Guardado.',
+            ),
           ),
         );
       }
@@ -122,6 +172,64 @@ class _ConsumivelSheetState extends ConsumerState<ConsumivelSheet> {
     await ref.read(consumivelActionsProvider).apagar(c.id);
     if (mounted) Navigator.pop(context);
   }
+
+  Future<void> _anexarPendente() async {
+    final d = await showDialog<DocumentoPendente>(
+      context: context,
+      builder: (_) => const _AnexarDialog(),
+    );
+    if (d != null) setState(() => _pendentes.add(d));
+  }
+
+  /// Documentos ainda por enviar (escolhidos antes de guardar o produto).
+  Widget _blocoPendentes(TextTheme tt) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Text(
+        _atual == null
+            ? 'Documentos (${_pendentes.length})'
+            : 'Por enviar (${_pendentes.length})',
+        style: tt.titleSmall,
+      ),
+      const SizedBox(height: 4),
+      if (_atual == null)
+        Text(
+          'Podes escolher já a ficha de dados de segurança: segue quando '
+          'guardares o produto.',
+          style: tt.bodySmall,
+        ),
+      for (final d in _pendentes)
+        Card(
+          margin: const EdgeInsets.only(top: 6),
+          child: ListTile(
+            dense: true,
+            leading: const Icon(Icons.attach_file),
+            title: Text(d.nomeVisivel),
+            subtitle: Text(
+              [
+                d.tipo.label,
+                if (d.versao.isNotEmpty) 'v. ${d.versao}',
+                if (d.data != null) _dataCurta(d.data),
+              ].join(' · '),
+            ),
+            trailing: IconButton(
+              tooltip: 'Tirar',
+              icon: const Icon(Icons.close),
+              onPressed: () => setState(() => _pendentes.remove(d)),
+            ),
+          ),
+        ),
+      if (_podeEditar)
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: _busy ? null : _anexarPendente,
+            icon: const Icon(Icons.attach_file),
+            label: const Text('Anexar documento'),
+          ),
+        ),
+    ],
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -248,13 +356,8 @@ class _ConsumivelSheetState extends ConsumerState<ConsumivelSheet> {
               ),
             ],
             const Divider(height: 32),
-            if (_atual == null)
-              Text(
-                'Guarda o produto para poderes anexar a ficha de dados de '
-                'segurança e outros documentos.',
-                style: tt.bodySmall,
-              )
-            else
+            if (_pendentes.isNotEmpty || _atual == null) _blocoPendentes(tt),
+            if (_atual != null)
               DocumentosSection(consumivel: _atual!, podeEditar: _podeEditar),
           ],
         ),
@@ -380,8 +483,10 @@ class DocumentosSection extends ConsumerWidget {
 }
 
 class _AnexarDialog extends ConsumerStatefulWidget {
-  const _AnexarDialog({required this.consumivel});
-  final Consumivel consumivel;
+  const _AnexarDialog({this.consumivel});
+
+  /// Produto já guardado a que anexar; `null` = devolve o documento por enviar.
+  final Consumivel? consumivel;
 
   @override
   ConsumerState<_AnexarDialog> createState() => _AnexarDialogState();
@@ -434,6 +539,19 @@ class _AnexarDialogState extends ConsumerState<_AnexarDialog> {
       setState(() => _erro = 'O ficheiro é grande demais (máximo 20 MB).');
       return;
     }
+    if (widget.consumivel == null) {
+      Navigator.pop(
+        context,
+        DocumentoPendente(
+          tipo: _tipo,
+          ficheiro: f,
+          titulo: _titulo.text.trim(),
+          versao: _versao.text.trim(),
+          data: _data,
+        ),
+      );
+      return;
+    }
     setState(() {
       _busy = true;
       _erro = null;
@@ -442,7 +560,7 @@ class _AnexarDialogState extends ConsumerState<_AnexarDialog> {
       await ref
           .read(consumivelActionsProvider)
           .anexar(
-            consumivelId: widget.consumivel.id,
+            consumivelId: widget.consumivel!.id,
             tipo: _tipo,
             bytes: f.bytes!,
             nomeFicheiro: f.name,
