@@ -7,8 +7,9 @@ pb/migrations/*.js   -> schema (coleções, campos, regras)
 pb/hooks/*           -> lógica (cascata de custos, onboarding, equipa, admin)
 ```
 
-**Para instalar no Mini PC segue `docs/MINI_PC.md`** (pacote pronto, arranque automático,
-HTTPS, backups). Este ficheiro descreve o detalhe do servidor.
+**Para instalar no servidor (Debian + Docker + Tailscale) segue `docs/SERVIDOR_LINUX.md`**
+(pacote pronto, arranque automático, HTTPS, backups). Este ficheiro descreve o detalhe do PocketBase
+(algumas instruções abaixo são de Windows/systemd e servem só de referência).
 
 As 50 migrations aplicam-se limpas a uma base de dados vazia (verificado). A
 `1706227200_seed_insa.js` insere 1376 alimentos na `ingredientes_referencia`

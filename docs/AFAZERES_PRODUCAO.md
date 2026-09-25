@@ -44,14 +44,14 @@ A BD é o PocketBase (SQLite em `pb_data/` + ficheiros enviados). **Decidido: Go
 
 - [x] Backups automáticos do próprio PocketBase por migration (03:00, guarda 7). Aplica-se ao reiniciar o servidor em produção.
 - [ ] **Cópia fora da máquina** (outro disco/nuvem/S3): um backup só no mesmo PC não protege contra falha do disco.
-- [x] Scripts `pb/backup/copia-externa.ps1` e `instalar-tarefas.ps1` (escritos e testados com rclone simulado).
+- [x] Scripts `deploy/backup/copia-externa.sh` e `instalar-agendamento.sh` (Linux; testados com rclone simulado).
 - [ ] **No Mini PC:** instalar o rclone, ligar ao Google Drive, criar o remoto cifrado, guardar a chave e instalar a tarefa (`pb/backup/LEIA-ME.md`).
 - [x] Cifra definida: rclone crypt (chave com o Mauro). Falta gerar a chave no Mini PC.
-- [x] Script `teste-restauro.ps1` pronto (testado a partir de um backup real).
+- [x] Script `deploy/backup/teste-restauro.sh` pronto.
 - [ ] Fazer o **primeiro restauro** a sério a partir da nuvem e registar o tempo. Repetir todos os meses.
 - [x] Alerta por email se falhar (opcional, variáveis `BACKUP_*` em `pb\.env`).
-- [ ] Configurar essas variáveis e o USB semanal (BitLocker + `copia-usb.ps1`).
-- [x] Documentado em `docs/BACKUPS.md` e `pb/backup/LEIA-ME.md`.
+- [ ] Configurar essas variáveis e o USB semanal (LUKS + `copia-usb.sh`).
+- [x] Documentado em `docs/BACKUPS.md` e `deploy/backup/LEIA-ME.md`.
 
 ## 3. Testes de segurança (só no nosso sistema, com autorização)
 
@@ -141,17 +141,19 @@ Caminhos: (a) **aumentar a parte de baixo** (campo "Altura", ex. 75 mm → etiqu
 
 ## 6. Ida para produção (go-live)
 
-Guia passo a passo: **`docs/MINI_PC.md`**. Pacote: `scripts\empacotar-producao.ps1` → `dist\gookie-producao-<versão>.zip`.
+Servidor: **Mini PC Debian** (partilhado com Immich, Portainer e outro PocketBase) com **Docker Compose**;
+acesso por **Tailscale**; **dados limpos**. Mais tarde, migração para uma máquina Linux na nuvem.
+Guia passo a passo: **`docs/SERVIDOR_LINUX.md`**. Pacote: `scripts\empacotar-producao.ps1` → `dist\gookie-servidor-<versão>.tar.gz`.
 
-- [x] Pacote de produção, arranque automático (Agendador de Tarefas) com reinício e vigia — `pb\serve-producao.ps1`, `pb\instalar-arranque.ps1`.
-- [x] `TURNKEY_DEV` fica sempre a 0 em `serve-producao.ps1`.
-- [x] Código congelado: `v1.6.0` em `main`.
-- [ ] Levar o pacote para o Mini PC e instalar (`docs/MINI_PC.md`, passos 0–6).
-- [ ] Escolher a via de acesso com **HTTPS** (Cloudflare Tunnel / Tailscale / rede local) e configurar *Application URL* e *Trusted proxy headers*.
-- [ ] Variáveis de ambiente de produção (`pb\.env`): IA, `TURNKEY_ENC_KEY`; **chaves novas**.
-- [ ] Criar a empresa real, aprovar o registo, utilizadores e papéis; carregar os dados iniciais.
+- [x] Pacote Docker (Dockerfile, compose, `gookie.sh`), porta local livre escolhida sozinha (não choca com o PocketBase existente).
+- [x] Backups em Linux (`deploy/backup/*.sh`, timer do systemd, USB com LUKS).
+- [x] Código congelado em `main` (`v1.6.0`; a `v1.6.1` traz o pacote Linux).
+- [ ] Levar o pacote para o Mini PC e instalar (`docs/SERVIDOR_LINUX.md`, passos 0–3).
+- [ ] Tailscale: `tailscale serve` numa porta HTTPS livre + *Application URL* e *Trusted proxy headers* (`X-Forwarded-For`) + ACL.
+- [ ] `.env`: `GEMINI_API_KEY` e guardar a `TURNKEY_ENC_KEY` fora do servidor.
+- [ ] Superutilizador, aprovar o registo, criar a empresa real, utilizadores e papéis; carregar os dados iniciais.
 - [ ] Definir a navegação e as permissões por nível.
-- [ ] Backups a sério no Mini PC (`pb\backup\LEIA-ME.md`) e primeiro restauro de teste.
+- [ ] Backups a sério (`deploy/backup/LEIA-ME.md`) e primeiro restauro de teste.
 - [ ] Ensaio geral do ciclo completo (comprar → produzir → stock → vender) e **imprimir uma etiqueta e um talão** na impressora real.
 - [ ] Monitorização: espaço em disco, log, quem é avisado.
 

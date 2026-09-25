@@ -6,3 +6,7 @@
 *.ico binary
 *.ttf binary
 *.otf binary
+*.sh text eol=lf
+deploy/Dockerfile text eol=lf
+deploy/compose.yaml text eol=lf
+deploy/.env.example text eol=lf
