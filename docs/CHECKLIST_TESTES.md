@@ -688,6 +688,17 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Ingredientes de fabrico próprio não têm a opção; o papel Leitura não vê o menu.
 - [ ] Fatura com o nome antigo ("Açúcar Makro…"): liga sozinha a "Açúcar branco" (nome já aprendido).
 
+## 34. Lista de compras com produto escolhido
+
+- [ ] Ingrediente com 2 produtos (ex.: farinha 1 kg e 5 kg, o de 5 kg é a compra mais recente). Receita A com o
+      produto de 1 kg fixado e receita B em automático, ambas com 1 kg desse ingrediente.
+- [ ] Produção com as duas receitas → **gerar lista de compras**: aparecem **duas linhas** da farinha, uma com
+      a marca do produto de 1 kg (1 embalagem de 1 kg) e outra em automático (1 embalagem de 5 kg).
+- [ ] Com stock do ingrediente, o total a comprar desce (o stock desconta-se do total, uma vez só).
+- [ ] Tirar o produto fixado na receita A e gerar de novo: fica uma só linha (2 kg → 1 embalagem de 5 kg).
+- [ ] Marcar uma linha como comprada continua a dar entrada no stock do ingrediente.
+- [ ] Produções sem produtos fixados: a lista fica igual à de antes.
+
 ---
 
 ## Notas / ajustes pedidos
