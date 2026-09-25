@@ -1,0 +1,36 @@
+# Gookie — servidor (PocketBase + app web). Uso:  bash gookie.sh instalar
+#
+# Tudo o que interessa fica em ./data (base de dados + ficheiros) e ./.env
+# (segredos): para mudar de maquina (ou para a nuvem) basta levar estas duas coisas.
+services:
+  gookie:
+    build:
+      context: .
+      args:
+        PB_VERSION: ${PB_VERSION:-0.40.4}
+    image: gookie:${GOOKIE_VERSAO:-local}
+    container_name: gookie
+    restart: unless-stopped
+    # o utilizador dono de ./data (o gookie.sh preenche estes valores)
+    user: "${GOOKIE_UID:-1000}:${GOOKIE_GID:-1000}"
+    # so acessivel neste servidor; o Tailscale (ou um proxy) da o HTTPS.
+    # Porta 8091 (nao 8090) para nao chocar com outro PocketBase no mesmo PC.
+    ports:
+      - "127.0.0.1:${GOOKIE_PORTA:-8091}:8090"
+    env_file: .env
+    environment:
+      TURNKEY_DEV: "0"
+      TZ: Europe/Lisbon
+    volumes:
+      - ./data:/pb/pb_data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8090/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"

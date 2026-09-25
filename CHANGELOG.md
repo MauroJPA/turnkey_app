@@ -2,6 +2,21 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.6.1 — 2026-09-25 — Servidor Linux (Docker)
+
+O servidor de produção passa a ser um **Mini PC Debian com Docker** (e, mais tarde, uma máquina Linux
+na nuvem), em vez de Windows.
+
+- `deploy/`: `Dockerfile` (PocketBase 0.40.4 para amd64/arm64, SHA-256 conferido), `compose.yaml`
+  (contentor `gookie`, só em 127.0.0.1, porta escolhida livre, `restart: unless-stopped`, healthcheck),
+  `gookie.sh` (`instalar`, `superutilizador`, `estado`, `logs`, `backup-agora`, `restaurar`, `atualizar`).
+- Acesso por **Tailscale** (`tailscale serve`); guia `docs/SERVIDOR_LINUX.md` (inclui mudar para a nuvem).
+- Backups em Linux: `deploy/backup/*.sh` (rclone cifrado → Google Drive, timer systemd, USB com LUKS,
+  teste de restauro em contentor).
+- `scripts/empacotar-producao.ps1` cria `dist/gookie-servidor-<versão>.tar.gz` (LF nos scripts).
+- Removidos os scripts de servidor Windows (`serve-producao.ps1`, `instalar-arranque.ps1`, `pb/backup/*.ps1`)
+  e `docs/MINI_PC.md`; o `pb/serve.ps1` continua a servir o desenvolvimento no Windows.
+
 ## 1.6.0 — 2026-09-25 — Primeira versão para produção
 
 Tudo o que entrou desde a 1.5.0, pronto para o Mini PC.

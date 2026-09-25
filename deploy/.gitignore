@@ -1,0 +1,5 @@
+# dados e segredos do servidor (nunca no git)
+data/
+data.antes-*/
+backups-manuais/
+.env

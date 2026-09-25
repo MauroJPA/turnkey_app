@@ -1,6 +1,6 @@
 # Backups da base de dados — plano
 
-> Estado: **decidido e implementado** (2026-09-24). Falta só instalar no Mini PC — passos em `pb/backup/LEIA-ME.md`.
+> Estado: **decidido e implementado** (2026-09-24). O servidor é **Linux (Debian) com Docker**; falta só instalar — passos em `deploy/backup/LEIA-ME.md`.
 >
 > **Decisões do Mauro:** destino **Google Drive** (talvez migrar mais tarde) · a chave de cifra fica **com o Mauro** · retenção **30 diários + 12 mensais** · cópia semanal para **USB** (pen ou disco; 32 GB chegam, recomendado 64 GB).
 
@@ -24,7 +24,7 @@ cópias custa cêntimos.
 2. **Cópia na nuvem, cifrada** — todas as noites, depois da 1.ª, uma tarefa envia o
    `.zip` mais recente para um armazenamento externo (ver abaixo), **já cifrado antes de
    sair do computador**. Retenção: 30 dias diários + 1 por mês durante 12 meses.
-3. **Cópia física** — uma vez por semana, um disco USB externo (com BitLocker) que fica
+3. **Cópia física** — uma vez por semana, um disco USB externo (com LUKS) que fica
    guardado noutro sítio que não o Mini PC.
 
 ## Para onde enviar (opções)
@@ -55,7 +55,7 @@ nuvem só vê dados ilegíveis.
   - **nunca** no repositório Git nem no mesmo disco dos backups.
 - Alternativa equivalente: `age` (chave pública para cifrar, chave privada guardada
   offline). Só a trocamos se preferirem esse modelo.
-- O disco USB e o Mini PC ficam com **BitLocker** ligado (cifra do disco em repouso).
+- O disco USB e o Mini PC ficam com **LUKS** ligado (cifra do disco em repouso).
 
 ## O que corre e quando
 
@@ -85,18 +85,18 @@ o que faltou. Um backup que nunca foi restaurado não é um backup.
 1. **Destino externo:** Google Drive (com `scope drive.file`, só vê o que o rclone cria). Migrar para Backblaze B2 ou outro é trocar o nome do remoto.
 2. **Chave de cifra:** fica com o Mauro (gestor de palavras-passe + cópia em papel).
 3. **Retenção:** 30 diários + 12 mensais.
-4. **USB:** pen drive ou disco externo, com BitLocker; 32 GB chegam, 64 GB de margem.
+4. **USB:** pen drive ou disco externo, com LUKS; 32 GB chegam, 64 GB de margem.
 
 ## O que ficou implementado
 
 | Ficheiro | Para quê |
 |---|---|
 | `pb/migrations/1707609600_backups_cron.js` | Liga o backup diário do PocketBase (03:00, guarda 7) |
-| `pb/backup/copia-externa.ps1` | Envia o último backup cifrado para o Drive, confirma, faz a retenção e avisa por email se falhar |
-| `pb/backup/instalar-tarefas.ps1` | Cria a tarefa agendada (03:30) |
-| `pb/backup/copia-usb.ps1` | Cópia semanal para o USB (mantém 12) |
-| `pb/backup/teste-restauro.ps1` | Teste mensal de restauro (nuvem ou USB) |
-| `pb/backup/LEIA-ME.md` | Instalação passo a passo |
+| `deploy/backup/copia-externa.sh` | Envia o último backup cifrado para o Drive, confirma, faz a retenção e avisa por email se falhar |
+| `deploy/backup/instalar-agendamento.sh` | Cria o timer do systemd (03:30) |
+| `deploy/backup/copia-usb.sh` | Cópia semanal para o USB cifrado com LUKS (mantém 12) |
+| `deploy/backup/teste-restauro.sh` | Teste mensal de restauro (nuvem ou USB) num contentor descartável |
+| `deploy/backup/LEIA-ME.md` | Instalação passo a passo |
 
 Testado aqui com um rclone simulado: envio, confirmação, falha por backup antigo /
 pasta inexistente (saída ≠ 0), cópia USB e restauro a partir de um backup real.
