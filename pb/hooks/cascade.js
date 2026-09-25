@@ -79,6 +79,23 @@ function runCascade(app, kind, rootId) {
     }
     return n;
   };
+  // nutrição por 100 g da linha de receita: se fixa um produto com nutrição
+  // PRÓPRIA (desse ingrediente), são os valores do produto; senão, os do genérico.
+  const nutriLinha = (item, ing) => {
+    const pid = item.getString('produto');
+    if (pid) {
+      try {
+        const p = app.findRecordById('ingrediente_produtos', pid);
+        if (p.getString('ingrediente') === ing.id && p.getBool('nutri_propria')) {
+          return {
+            n100: nutriIngPor100(p),
+            nome: p.getString('nome') || ing.getString('nome') || ing.id,
+          };
+        }
+      } catch (_) {}
+    }
+    return { n100: nutriIngPor100(ing), nome: ing.getString('nome') || ing.id };
+  };
   const listaSel = (rec, campo) => {
     try {
       const v = rec.get(campo);
@@ -643,10 +660,11 @@ function runCascade(app, kind, rootId) {
           }
           continue;
         }
-        const n100 = nutriIngPor100(ing);
+        const nl = nutriLinha(item, ing);
+        const n100 = nl.n100;
         if (vazioN(n100)) {
           completoN = false;
-          semDadosN.push({ id: ingRel, nome: ing.getString('nome') || ingRel });
+          semDadosN.push({ id: ingRel, nome: nl.nome });
         }
         addEscN(absN, n100, qtd / 100);
         alergN = unir(alergN, listaSel(ing, 'alergenios'));

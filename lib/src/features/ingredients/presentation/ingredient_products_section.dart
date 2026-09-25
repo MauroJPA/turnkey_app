@@ -1,9 +1,11 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/nutrition/nutrition.dart' show kAlergenios;
+import '../../../core/nutrition/nutrition.dart' show Nutrientes, kAlergenios;
 import '../application/ingredients_providers.dart';
 import '../data/ingredient_product_repository.dart';
+import '../data/ingredient_repository.dart';
 import '../domain/ingredient.dart';
 import '../domain/produto_ingrediente.dart';
 
@@ -64,10 +66,13 @@ class IngredientProductsSection extends ConsumerWidget {
                 '${p.resumo} · ${_euro(p.preco)} · ${_dataCurta(p.precoAtualizadoEm)}'
                 '${p.fornecedor.isNotEmpty ? ' · ${p.fornecedor}' : ''}'
                 '${p.alergenios.isNotEmpty ? '\nContém também: ${p.alergenios.join(', ')}' : ''}'
-                '${p.alergeniosTracos.isNotEmpty ? '\nPode conter: ${p.alergeniosTracos.join(', ')}' : ''}',
+                '${p.alergeniosTracos.isNotEmpty ? '\nPode conter: ${p.alergeniosTracos.join(', ')}' : ''}'
+                '${p.nutriPropria ? '\nNutrição própria (${p.nutri.kcal.toStringAsFixed(0)} kcal)' : ''}',
               ),
               isThreeLine:
-                  p.alergenios.isNotEmpty || p.alergeniosTracos.isNotEmpty,
+                  p.alergenios.isNotEmpty ||
+                  p.alergeniosTracos.isNotEmpty ||
+                  p.nutriPropria,
               trailing: p.id == atual?.id
                   ? Chip(
                       label: const Text('custo atual'),
@@ -119,8 +124,93 @@ class _ProdutoDialogState extends ConsumerState<_ProdutoDialog> {
   );
   late final Set<String> _alerg = {...?widget.existente?.alergenios};
   late final Set<String> _tracos = {...?widget.existente?.alergeniosTracos};
+  late bool _nutriPropria = widget.existente?.nutriPropria ?? false;
+  late String _nutriBase = widget.existente?.nutriBase ?? '100g';
+  late final _kcal = _ctrl(widget.existente?.nutri.kcal);
+  late final _lip = _ctrl(widget.existente?.nutri.lipidos);
+  late final _sat = _ctrl(widget.existente?.nutri.saturados);
+  late final _hc = _ctrl(widget.existente?.nutri.hidratos);
+  late final _ac = _ctrl(widget.existente?.nutri.acucares);
+  late final _fib = _ctrl(widget.existente?.nutri.fibra);
+  late final _prot = _ctrl(widget.existente?.nutri.proteina);
+  late final _sal = _ctrl(widget.existente?.nutri.sal);
+  late final _dens = _ctrl(
+    (widget.existente?.nutriDensidade ?? 1) == 1
+        ? null
+        : widget.existente?.nutriDensidade,
+  );
+  bool _lendo = false;
   bool _busy = false;
   String? _erro;
+
+  static TextEditingController _ctrl(double? v) =>
+      TextEditingController(text: (v == null || v == 0) ? '' : _n(v));
+
+  Nutrientes _nutrientes() => Nutrientes(
+    kcal: _num(_kcal),
+    lipidos: _num(_lip),
+    saturados: _num(_sat),
+    hidratos: _num(_hc),
+    acucares: _num(_ac),
+    fibra: _num(_fib),
+    proteina: _num(_prot),
+    sal: _num(_sal),
+  );
+
+  NutriProduto _nutriProduto() => NutriProduto(
+    propria: _nutriPropria,
+    nutri: _nutrientes(),
+    base: _nutriBase,
+    densidade: _num(_dens) > 0 ? _num(_dens) : 1,
+  );
+
+  void _preencher(Nutrientes n, {String base = '100g', double densidade = 1}) {
+    String t(double v) => v == 0 ? '' : _n(v);
+    _kcal.text = t(n.kcal);
+    _lip.text = t(n.lipidos);
+    _sat.text = t(n.saturados);
+    _hc.text = t(n.hidratos);
+    _ac.text = t(n.acucares);
+    _fib.text = t(n.fibra);
+    _prot.text = t(n.proteina);
+    _sal.text = t(n.sal);
+    _nutriBase = base;
+    _dens.text = densidade == 1 ? '' : _n(densidade);
+  }
+
+  /// Lê a tabela nutricional do rótulo deste produto por IA (o servidor guarda a chave).
+  Future<void> _lerRotulo() async {
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
+      withData: true,
+    );
+    final f = (picked != null && picked.files.isNotEmpty)
+        ? picked.files.first
+        : null;
+    if (f == null || f.bytes == null || !mounted) return;
+    setState(() => _lendo = true);
+    try {
+      final r = await ref
+          .read(ingredientRepositoryProvider)
+          .lerRotulo(bytes: f.bytes!.toList(), nome: f.name);
+      if (!mounted) return;
+      setState(() {
+        _preencher(r.nutri, base: r.base, densidade: r.densidade);
+        _nutriPropria = true;
+        // os alergénios lidos juntam-se aos deste produto
+        _alerg.addAll(r.alergenios);
+        _tracos.addAll(r.tracos);
+        _erro = null;
+      });
+    } on Object {
+      if (mounted) {
+        setState(() => _erro = 'Não foi possível ler o rótulo. Tenta de novo.');
+      }
+    } finally {
+      if (mounted) setState(() => _lendo = false);
+    }
+  }
 
   static String _n(double v) =>
       v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
@@ -134,6 +224,9 @@ class _ProdutoDialogState extends ConsumerState<_ProdutoDialog> {
     _fornecedor.dispose();
     _emb.dispose();
     _preco.dispose();
+    for (final c in [_kcal, _lip, _sat, _hc, _ac, _fib, _prot, _sal, _dens]) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -141,6 +234,13 @@ class _ProdutoDialogState extends ConsumerState<_ProdutoDialog> {
     if (_nome.text.trim().isEmpty || _num(_emb) <= 0 || _num(_preco) <= 0) {
       setState(
         () => _erro = 'Indica o nome, o peso da embalagem (g) e o preço.',
+      );
+      return;
+    }
+    if (_nutriPropria && _nutrientes().vazio) {
+      setState(
+        () => _erro =
+            'Preenche a nutrição do produto, ou desliga "Nutrição própria".',
       );
       return;
     }
@@ -164,6 +264,7 @@ class _ProdutoDialogState extends ConsumerState<_ProdutoDialog> {
           preco: _num(_preco),
           alergenios: _alerg.toList(),
           alergeniosTracos: _tracos.toList(),
+          nutri: _nutriProduto(),
         );
       } else {
         await repo.atualizar(
@@ -176,6 +277,7 @@ class _ProdutoDialogState extends ConsumerState<_ProdutoDialog> {
           data: mudouPreco ? DateTime.now() : e.precoAtualizadoEm,
           alergenios: _alerg.toList(),
           alergeniosTracos: _tracos.toList(),
+          nutri: _nutriProduto(),
         );
       }
       if (mounted) Navigator.pop(context, true);
@@ -201,6 +303,23 @@ class _ProdutoDialogState extends ConsumerState<_ProdutoDialog> {
       if (mounted) setState(() => _busy = false);
     }
   }
+
+  Widget _campoNutri(String label, TextEditingController c) => TextField(
+    controller: c,
+    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    decoration: InputDecoration(labelText: label, isDense: true),
+  );
+
+  Widget _par(Widget a, Widget b) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Row(
+      children: [
+        Expanded(child: a),
+        const SizedBox(width: 8),
+        Expanded(child: b),
+      ],
+    ),
+  );
 
   Widget _chips(Set<String> sel) => Wrap(
     spacing: 6,
@@ -298,6 +417,64 @@ class _ProdutoDialogState extends ConsumerState<_ProdutoDialog> {
             ),
             const SizedBox(height: 4),
             _chips(_tracos),
+            const SizedBox(height: 8),
+            ExpansionTile(
+              key: const ValueKey('nutri-produto'),
+              tilePadding: EdgeInsets.zero,
+              initiallyExpanded: _nutriPropria,
+              leading: const Icon(Icons.local_dining_outlined),
+              title: const Text('Nutrição própria do produto'),
+              subtitle: const Text(
+                'Só conta quando uma receita fixa este produto',
+              ),
+              children: [
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Usar estes valores'),
+                  subtitle: const Text(
+                    'Substituem os do ingrediente nas receitas que fixam '
+                    'este produto.',
+                  ),
+                  value: _nutriPropria,
+                  onChanged: (v) => setState(() => _nutriPropria = v),
+                ),
+                if (_lendo) const LinearProgressIndicator(),
+                OutlinedButton.icon(
+                  onPressed: _lendo ? null : _lerRotulo,
+                  icon: const Icon(Icons.photo_camera_outlined),
+                  label: const Text('Foto do rótulo (preencher com IA)'),
+                ),
+                const SizedBox(height: 8),
+                SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: '100g', label: Text('por 100 g')),
+                    ButtonSegment(value: '100ml', label: Text('por 100 ml')),
+                  ],
+                  selected: {_nutriBase},
+                  onSelectionChanged: (s) =>
+                      setState(() => _nutriBase = s.first),
+                ),
+                const SizedBox(height: 8),
+                _par(
+                  _campoNutri('Energia (kcal)', _kcal),
+                  _campoNutri('Lípidos (g)', _lip),
+                ),
+                _par(
+                  _campoNutri('saturados (g)', _sat),
+                  _campoNutri('Hidratos (g)', _hc),
+                ),
+                _par(
+                  _campoNutri('açúcares (g)', _ac),
+                  _campoNutri('Fibra (g)', _fib),
+                ),
+                _par(
+                  _campoNutri('Proteína (g)', _prot),
+                  _campoNutri('Sal (g)', _sal),
+                ),
+                if (_nutriBase == '100ml')
+                  _campoNutri('Densidade (g/ml)', _dens),
+              ],
+            ),
             if (_erro != null)
               Padding(
                 padding: const EdgeInsets.only(top: 8),

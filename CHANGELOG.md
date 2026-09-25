@@ -2,6 +2,21 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.15.0 — 2026-09-25 — Nutrição própria por produto de compra
+
+- **Cada produto de compra pode ter a sua própria informação nutricional** (energia, lípidos, saturados,
+  hidratos, açúcares, fibra, proteína, sal; por 100 g ou 100 ml, com densidade). Ao editar o produto:
+  "Nutrição própria do produto" → ligar "Usar estes valores" e preencher, ou **foto do rótulo (IA)**, que preenche
+  os valores e acrescenta os alergénios lidos aos do produto.
+- **Só conta quando a receita fixa esse produto**, e aí **substitui** a nutrição do ingrediente genérico. Receita
+  em "Automático", ou que fixa outro produto (ou um sem nutrição própria), usa a do ingrediente.
+- Aplica-se ao cálculo nutricional da receita (e, por cascata, das fichas técnicas e do rótulo). Se o produto
+  fixado tem a nutrição própria ligada mas vazia, a receita fica "incompleta" (como um ingrediente sem dados).
+- Quando os valores do produto mudam, as receitas que o fixam refazem a nutrição.
+- Migration `1707955210_produto_nutricao` (campos `nutri_*`, `nutri_propria`, `nutri_base`, `nutri_densidade`).
+- Testes: secção 9f do `test/security/seguranca.py` (313 verificações, 0 falhas) e `test/produto_nutricao_test.dart`.
+- Com isto ficam completas as três partes dos produtos de compra: custo, alergénios e nutrição.
+
 ## 1.14.0 — 2026-09-25 — Alergénios por produto de compra
 
 - **Cada produto de compra pode ter alergénios a mais** ("Contém também") e **vestígios** ("Pode conter"), ao

@@ -1,5 +1,29 @@
 import 'package:pocketbase/pocketbase.dart';
 
+import '../../../core/nutrition/nutrition.dart';
+
+/// Nutrição própria de um produto (por 100 g ou 100 ml), a gravar nos campos `nutri_*`.
+class NutriProduto {
+  const NutriProduto({
+    required this.propria,
+    this.nutri = const Nutrientes(),
+    this.base = '100g',
+    this.densidade = 1,
+  });
+
+  final bool propria;
+  final Nutrientes nutri;
+  final String base;
+  final double densidade;
+
+  Map<String, dynamic> toCampos() => {
+    'nutri_propria': propria,
+    ...nutri.toCampos(),
+    'nutri_base': base,
+    'nutri_densidade': densidade,
+  };
+}
+
 /// Um produto de compra de um ingrediente genérico: a marca/embalagem/preço
 /// que se compra ("Açúcar Sidul branco 1 kg" é um produto de "Açúcar branco").
 class ProdutoIngrediente {
@@ -15,6 +39,10 @@ class ProdutoIngrediente {
     this.nomesFatura = const [],
     this.alergenios = const [],
     this.alergeniosTracos = const [],
+    this.nutriPropria = false,
+    this.nutri = const Nutrientes(),
+    this.nutriBase = '100g',
+    this.nutriDensidade = 1,
   });
 
   final String id;
@@ -33,6 +61,13 @@ class ProdutoIngrediente {
   /// (juntam-se aos do ingrediente genérico).
   final List<String> alergenios;
   final List<String> alergeniosTracos;
+
+  /// Nutrição própria deste produto: só conta quando uma receita o fixa
+  /// (substitui a do ingrediente genérico).
+  final bool nutriPropria;
+  final Nutrientes nutri;
+  final String nutriBase;
+  final double nutriDensidade;
 
   bool get temPreco => preco > 0 && embalagemG > 0;
 
@@ -62,6 +97,12 @@ class ProdutoIngrediente {
           : const [],
       alergenios: lista('alergenios'),
       alergeniosTracos: lista('alergenios_tracos'),
+      nutriPropria: r.getBoolValue('nutri_propria'),
+      nutri: Nutrientes.fromRecord(r),
+      nutriBase: r.getStringValue('nutri_base') == '100ml' ? '100ml' : '100g',
+      nutriDensidade: r.getDoubleValue('nutri_densidade') > 0
+          ? r.getDoubleValue('nutri_densidade')
+          : 1,
     );
   }
 
