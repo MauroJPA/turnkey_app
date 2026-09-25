@@ -12,8 +12,11 @@ Nunca apontar para a produção: cria e apaga dados de teste.
 Saída: FALHA (tem de se corrigir), AVISO (risco de configuração/implantação),
 OK. Código de saída 1 se houver FALHA.
 """
+import base64
 import io
 import json
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 import os
 import re
 import shutil
@@ -138,6 +141,7 @@ def arrancar():
                    check=True, capture_output=True)
     env = {k: v for k, v in os.environ.items() if k not in ('GC_TURNKEY_DEV', 'VENDUS_API_KEY', 'VENDUS_SYNC_EMPRESA')}
     env['GC_TURNKEY_ENC_KEY'] = 'K' * 32  # chave-mestra só de teste
+    env.update(ambiente_ia_falsa())
     porta = URL.rsplit(':', 1)[1]
     proc = subprocess.Popen(
         [PB_BIN, 'serve', '--dir', dados, '--migrationsDir', os.path.join(RAIZ, 'pb', 'migrations'),
@@ -552,7 +556,7 @@ def teste_endpoints():
     s, r, _ = call('POST', '/api/gc_turnkey/inventario/ajustar', raw=b'{isto nao e json', tok=tok['editorA'])
     check(s in (400, 403, 422), 'inventario/ajustar com JSON inválido: erro 4xx', f'status {s}')
     s, r, _ = call('POST', '/api/gc_turnkey/nutricao/ler-rotulo', {'imagemBase64': 'A' * 12_000_000}, tok['editorA'])
-    check(s in (400, 413, 503, 403, 422), 'ler-rotulo com corpo enorme: recusado ou sem IA', f'status {s}')
+    check(s in (400, 413, 502, 503, 403, 422), 'ler-rotulo com corpo enorme: recusado ou sem IA', f'status {s}')
 
 
 # ---------------------------------------------------------------------------
@@ -810,6 +814,184 @@ def teste_sem_chave():
         shutil.rmtree(tmp2, ignore_errors=True)
 
 
+# ---------------------------------------------------------------------------
+# IA falsa (Gemini) e qpdf falso, para testar faturas com vários documentos
+# ---------------------------------------------------------------------------
+PORTA_IA = 8188
+ia_modo = {'modo': 'tres', 'chamadas': {}}
+
+
+class _GeminiFalso(BaseHTTPRequestHandler):
+    def log_message(self, *a):
+        pass
+
+    def do_POST(self):
+        modelo = self.path.split('/models/')[-1].split(':')[0]
+        ia_modo['chamadas'][modelo] = ia_modo['chamadas'].get(modelo, 0) + 1
+        self.rfile.read(int(self.headers.get('Content-Length', 0)))
+
+        def enviar(codigo, corpo):
+            b = json.dumps(corpo).encode()
+            self.send_response(codigo)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Length', str(len(b)))
+            self.end_headers()
+            self.wfile.write(b)
+
+        if modelo == 'modelo-a':
+            return enviar(503, {'error': {'status': 'UNAVAILABLE', 'message': 'This model is currently experiencing high demand.'}})
+        if modelo == 'modelo-b':
+            return enviar(404, {'error': {'status': 'NOT_FOUND', 'message': 'model is no longer available'}})
+        linha = {'descricao': 'Farinha', 'quantidade': 1, 'preco_unitario': 2.0, 'total': 2.0}
+        suf = ia_modo.get('sufixo', '')
+
+        def fat(f, n, pag, data='2026-09-10'):
+            return {'fornecedor': f, 'numero': n + suf, 'data': data, 'total': 10.0, 'paginas': pag, 'linhas': [linha]}
+
+        m = ia_modo['modo']
+        if m == 'tres':
+            dados = {'faturas': [fat('Fornecedor A', 'A-1', [1, 2]), fat('Fornecedor B', 'B-1', [3, 4]), fat('Fornecedor C', 'C-1', [5, 6, 7, 8])]}
+        elif m == 'datas':  # mesmo fornecedor, datas e números diferentes no mesmo PDF
+            dados = {'faturas': [fat('Fornecedor G', 'G-1', [1], '2026-09-01'), fat('Fornecedor G', 'G-2', [2, 3], '2026-09-08'),
+                                 fat('Fornecedor H', 'H-1', [4], '2026-09-08')]}
+        elif m == 'sobrepostas':
+            dados = {'faturas': [fat('Fornecedor D', 'D-1', [1, 2]), fat('Fornecedor E', 'E-1', [2, 3])]}
+        else:  # 'lista': a IA devolve uma lista solta com uma só fatura
+            dados = [fat('Fornecedor F', 'F-1', [1])]
+        enviar(200, {'candidates': [{'content': {'parts': [{'text': json.dumps(dados)}]}}]})
+
+
+def ambiente_ia_falsa():
+    """Variáveis para o PocketBase de teste + qpdf falso no PATH."""
+    pasta = tempfile.mkdtemp(prefix='fakeqpdf_')
+    py = os.path.join(pasta, 'fake_qpdf.py')
+    open(py, 'w').write(
+        "import re, sys\n"
+        "a = sys.argv[1:]\n"
+        "if a[0] == '--show-npages':\n"
+        "    print(len(re.findall(rb'/Type /Page\\b', open(a[1], 'rb').read())))\n"
+        "elif a[0] == '--empty':\n"
+        "    open(a[5], 'wb').write(b'%PDF-fake ' + a[3].encode())\n")
+    if os.name == 'nt':
+        open(os.path.join(pasta, 'qpdf.cmd'), 'w').write('@"%s" "%%~dp0fake_qpdf.py" %%*\r\n' % sys.executable)
+    else:
+        f = os.path.join(pasta, 'qpdf')
+        open(f, 'w').write('#!/bin/sh\nexec "%s" "$(dirname "$0")/fake_qpdf.py" "$@"\n' % sys.executable)
+        os.chmod(f, 0o755)
+    global _pasta_qpdf
+    _pasta_qpdf = pasta
+    return {
+        'GEMINI_API_KEY': 'chave-falsa', 'GC_TURNKEY_AI_PROVIDER': 'gemini',
+        'GC_TURNKEY_GEMINI_URL': f'http://127.0.0.1:{PORTA_IA}/v1beta/models/',
+        'GC_TURNKEY_AI_MODEL': 'modelo-a', 'GC_TURNKEY_AI_MODEL_FALLBACK': 'modelo-b,modelo-c',
+        'GC_TURNKEY_AI_ESPERAS': '0,0',
+        'PATH': pasta + os.pathsep + os.environ.get('PATH', ''),
+    }
+
+
+_pasta_qpdf = None
+
+
+def pdf_de_paginas(n):
+    """PDF mínimo com n páginas (só o necessário para o qpdf falso as contar)."""
+    objs = ['<< /Type /Catalog /Pages 2 0 R >>',
+            '<< /Type /Pages /Kids [%s] /Count %d >>' % (' '.join('%d 0 R' % (3 + i) for i in range(n)), n)]
+    for _ in range(n):
+        objs.append('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] >>')
+    out = '%PDF-1.4\n'
+    for i, o in enumerate(objs, 1):
+        out += '%d 0 obj\n%s\nendobj\n' % (i, o)
+    out += 'trailer\n<< /Size %d /Root 1 0 R >>\n%%%%EOF' % (len(objs) + 1)
+    return out.encode('latin-1')
+
+
+def criar_fatura_pdf(quem, n_paginas, nome='fatura.pdf'):
+    pdf = pdf_de_paginas(n_paginas)
+    corpo, ct = multipart({'empresa': empresas['A'], 'autor': users[quem], 'tipo': 'fatura', 'estado': 'nova', 'fornecedor': ''},
+                          {'ficheiro': (nome, pdf, 'application/pdf')})
+    s, r, _ = call('POST', '/api/collections/faturas/records', raw=corpo, ctype=ct, tok=tok[quem])
+    return s, r, pdf
+
+
+def teste_faturas_ia():
+    """8. Faturas com IA: repetição, modelos de reserva e divisão de PDFs com várias faturas."""
+    if 'PB_URL' in os.environ:
+        return
+    sec('8. Faturas com IA (Gemini e qpdf falsos)')
+    srv = HTTPServer(('127.0.0.1', PORTA_IA), _GeminiFalso)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        # --- 8 páginas, 3 fornecedores → 3 ficheiros
+        ia_modo.update(modo='tres', sufixo='', chamadas={})
+        st, rec, pdf = criar_fatura_pdf('editorA', 8)
+        check(st == 200, 'criar a fatura com o PDF de 8 páginas', f'status {st} {str(rec)[:120]}')
+        s2, r, _ = call('POST', f'/api/gc_turnkey/faturas/{rec["id"]}/analisar',
+                        {'imagem': base64.b64encode(pdf).decode(), 'mime': 'application/pdf'}, tok['editorA'])
+        check(s2 == 200, 'análise devolve 200 mesmo com o modelo principal sobrecarregado', f'status {s2} {str(r)[:160]}')
+        ids = r.get('faturas', []) if isinstance(r, dict) else []
+        check(len(ids) == 3 and r.get('dividido') is True, 'PDF de 8 páginas → 3 faturas separadas', str(r)[:160])
+        ch = ia_modo['chamadas']
+        check(ch.get('modelo-a') == 3, 'modelo principal: 3 tentativas antes de passar ao de reserva', str(ch))
+        check(ch.get('modelo-b') == 1, 'modelo de reserva inexistente (404): passa logo ao seguinte', str(ch))
+        check(ch.get('modelo-c') == 1, 'terceiro modelo responde uma vez', str(ch))
+        esperado = [('Fornecedor A', b'%PDF-fake 1-2'), ('Fornecedor B', b'%PDF-fake 3-4'), ('Fornecedor C', b'%PDF-fake 5-8')]
+        s3, ft, _ = call('POST', '/api/files/token', {}, tok['editorA'])
+        ftoken = ft.get('token') if isinstance(ft, dict) else ''
+        for i, fid in enumerate(ids):
+            s4, f, _ = call('GET', f'/api/collections/faturas/records/{fid}', tok=su)
+            forn, conteudo = esperado[i]
+            check(f.get('fornecedor') == forn and f.get('estado') == 'analisada', f'fatura {i + 1}: {forn}, analisada', str(f)[:120])
+            nome = f.get('ficheiro', '')
+            s5, corpo_f, _ = call('GET', f'/api/files/faturas/{fid}/{nome}?token={ftoken}')
+            check(s5 == 200 and isinstance(corpo_f, bytes) and corpo_f == conteudo,
+                  f'fatura {i + 1}: ficheiro próprio com as páginas certas ({conteudo.decode()[10:]})', f'{s5} {str(corpo_f)[:60]} nome={nome}')
+            check('parte' in nome, f'fatura {i + 1}: nome do ficheiro identifica a parte', nome)
+
+        if tmp and os.path.exists(os.path.join(tmp, 'pb.log')):
+            for l in open(os.path.join(tmp, 'pb.log'), errors='ignore'):
+                if 'dividir' in l:
+                    print('   (registo do servidor)', l.strip()[:220])
+
+        # --- mesmo fornecedor com datas diferentes no mesmo PDF (digitalização em lote)
+        ia_modo.update(modo='datas', chamadas={})
+        st, rec, pdf = criar_fatura_pdf('editorA', 4)
+        s2, r, _ = call('POST', f'/api/gc_turnkey/faturas/{rec["id"]}/analisar',
+                        {'imagem': base64.b64encode(pdf).decode(), 'mime': 'application/pdf'}, tok['editorA'])
+        ids = r.get('faturas', []) if isinstance(r, dict) else []
+        check(s2 == 200 and len(ids) == 3 and r.get('dividido') is True and r.get('duplicadas') == 0,
+              'mesmo fornecedor com datas diferentes: 3 faturas, nenhuma tomada por duplicada', str(r)[:160])
+        esperado2 = [('Fornecedor G', '2026-09-01', b'%PDF-fake 1'), ('Fornecedor G', '2026-09-08', b'%PDF-fake 2-3'),
+                     ('Fornecedor H', '2026-09-08', b'%PDF-fake 4')]
+        s3, ft, _ = call('POST', '/api/files/token', {}, tok['editorA'])
+        for i, fid in enumerate(ids):
+            s4, f, _ = call('GET', f'/api/collections/faturas/records/{fid}', tok=su)
+            forn, data, conteudo = esperado2[i]
+            check(f.get('fornecedor') == forn and str(f.get('data_fatura', ''))[:10] == data and f.get('estado') == 'analisada',
+                  f'lote {i + 1}: {forn} em {data}', str(f)[:140])
+            s5, cf, _ = call('GET', f'/api/files/faturas/{fid}/{f.get("ficheiro", "")}?token={ft.get("token")}')
+            check(cf == conteudo, f'lote {i + 1}: ficheiro com as páginas certas', str(cf)[:50])
+
+        # --- páginas que a IA repete → não corta, mas não perde nada
+        ia_modo.update(modo='sobrepostas', chamadas={})
+        st, rec, pdf = criar_fatura_pdf('editorA', 3)
+        s2, r, _ = call('POST', f'/api/gc_turnkey/faturas/{rec["id"]}/analisar',
+                        {'imagem': base64.b64encode(pdf).decode(), 'mime': 'application/pdf'}, tok['editorA'])
+        ids = r.get('faturas', []) if isinstance(r, dict) else []
+        check(s2 == 200 and len(ids) == 2 and r.get('dividido') is False, 'páginas sobrepostas: 2 faturas, sem cortar', str(r)[:160])
+        for fid in ids:
+            s4, f, _ = call('GET', f'/api/collections/faturas/records/{fid}', tok=su)
+            check(bool(f.get('ficheiro')) and 'separá-las' in f.get('notas', ''), 'cada uma fica com o ficheiro inteiro e um aviso', str(f)[:140])
+
+        # --- resposta como lista solta com uma só fatura (formato antigo)
+        ia_modo.update(modo='lista', chamadas={})
+        st, rec, pdf = criar_fatura_pdf('editorA', 1)
+        s2, r, _ = call('POST', f'/api/gc_turnkey/faturas/{rec["id"]}/analisar',
+                        {'imagem': base64.b64encode(pdf).decode(), 'mime': 'application/pdf'}, tok['editorA'])
+        check(s2 == 200 and r.get('faturas') == [rec['id']] and r.get('dividido') is False, 'uma só fatura: continua igual', str(r)[:140])
+    finally:
+        srv.shutdown()
+
+
 def main():
     arrancar()
     try:
@@ -821,6 +1003,7 @@ def main():
         teste_aprovacao()
         teste_segredos()
         teste_sem_chave()
+        teste_faturas_ia()
         teste_implantacao()
         teste_autenticacao()  # por último: gasta o limite de tentativas
     finally:

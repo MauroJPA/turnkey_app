@@ -18,15 +18,15 @@ enum FaturaEstado {
   erro;
 
   static FaturaEstado fromApi(String? v) => FaturaEstado.values.firstWhere(
-        (e) => e.name == v,
-        orElse: () => FaturaEstado.nova,
-      );
+    (e) => e.name == v,
+    orElse: () => FaturaEstado.nova,
+  );
   String get label => switch (this) {
-        FaturaEstado.nova => 'Nova',
-        FaturaEstado.analisada => 'Analisada',
-        FaturaEstado.confirmada => 'Confirmada',
-        FaturaEstado.erro => 'Erro',
-      };
+    FaturaEstado.nova => 'Nova',
+    FaturaEstado.analisada => 'Analisada',
+    FaturaEstado.confirmada => 'Confirmada',
+    FaturaEstado.erro => 'Erro',
+  };
 }
 
 /// Uma linha extraída pela IA (dentro de `faturas.dados_ia.linhas`).
@@ -56,13 +56,13 @@ class FaturaLinhaIa {
   }
 
   factory FaturaLinhaIa.fromJson(Map<String, dynamic> j) => FaturaLinhaIa(
-        descricao: (j['descricao'] ?? j['nome'] ?? '').toString(),
-        quantidade: (j['quantidade'] as num?)?.toDouble(),
-        unidade: (j['unidade'] ?? '').toString(),
-        precoUnitario: (j['preco_unitario'] as num?)?.toDouble(),
-        total: (j['total'] as num?)?.toDouble(),
-        embalagemG: (j['embalagem_g'] as num?)?.toDouble(),
-      );
+    descricao: (j['descricao'] ?? j['nome'] ?? '').toString(),
+    quantidade: (j['quantidade'] as num?)?.toDouble(),
+    unidade: (j['unidade'] ?? '').toString(),
+    precoUnitario: (j['preco_unitario'] as num?)?.toDouble(),
+    total: (j['total'] as num?)?.toDouble(),
+    embalagemG: (j['embalagem_g'] as num?)?.toDouble(),
+  );
 }
 
 class Fatura {
@@ -142,9 +142,9 @@ enum AcaoFatura {
 
   String get api => name;
   String get label => switch (this) {
-        AcaoFatura.preco => 'Preço',
-        AcaoFatura.stock => 'Stock',
-        AcaoFatura.ambos => 'Preço + Stock',
-        AcaoFatura.ignorar => 'Ignorar',
-      };
+    AcaoFatura.preco => 'Preço',
+    AcaoFatura.stock => 'Stock',
+    AcaoFatura.ambos => 'Preço + Stock',
+    AcaoFatura.ignorar => 'Ignorar',
+  };
 }

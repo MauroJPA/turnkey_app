@@ -12,7 +12,7 @@ antes de começar, para carregar as últimas migrations (há **43**; a última �
 13 Faturas · 14 Nutrição · 15 Embalagens · **16 Vendas · 17 Análise de vendas ·
 18 Encomendas · 19 Custos fixos · 20 Equipamentos · 21 Números mágicos ·
 22 Painel financeiro · 23 DRE · 24 Configurações (empresa/percentuais) ·
-25 Equipa · 26 Navegação e permissões · 27 Produtos · 28 Segurança**.
+25 Equipa · 26 Navegação e permissões · 27 Produtos · 28 Segurança · 29 Faturas em lote**.
 
 **Limites conhecidos do teste automático** (verifica sempre à mão): tudo o que
 abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
@@ -617,6 +617,16 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Vendas → **Sincronizar com o Vendus** usa o token guardado (com token real). Sem token dá a
       mensagem "indica o token em Configurações → Integrações".
 - [ ] Abrir uma **fatura** (imagem e PDF): abre normalmente (o ficheiro agora pede um token).
+
+## 29. Faturas: vários documentos no mesmo PDF
+
+- [ ] Carregar Fatura **sem preencher o fornecedor**: a IA lê-o; a fatura fica com o fornecedor certo.
+- [ ] Digitalizar num só **PDF várias faturas** (de fornecedores diferentes e também duas do mesmo fornecedor com
+      datas/números diferentes): no fim aparece "N faturas detetadas neste ficheiro" e a lista mostra **uma por
+      documento**, cada uma com as **suas páginas** (abrir o PDF de cada uma e confirmar).
+- [ ] Uma fatura de 2 páginas seguidas continua a ser **uma só** fatura (2 páginas no mesmo ficheiro).
+- [ ] Carregar outra vez o mesmo PDF: as faturas já existentes ficam como **duplicadas** (não se criam repetidas).
+- [ ] Se a IA responder "sobrecarregada", o ecrã de erro tem **Tentar de novo**; passados uns minutos funciona.
 
 ---
 

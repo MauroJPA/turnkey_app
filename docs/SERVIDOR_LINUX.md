@@ -166,6 +166,11 @@ Depois:
 - **Painel do PocketBase** (`/_/` → Settings → Application): confirma o *Application name* `gc_turnkey`.
 - Se a app pedir para voltar a entrar, é normal (o browser guarda a app antiga em cache): recarrega a página.
 
+**Atualizar para a 1.8.0 (faturas com vários documentos por PDF):** a imagem Docker passou a incluir o `qpdf`
+(para cortar PDFs). Segue o mesmo procedimento de atualização acima (`gc_turnkey.sh atualizar` reconstrói a imagem).
+Depois confirma: `docker exec gc_turnkey qpdf --version`. Se a IA estiver sobrecarregada, o servidor repete e usa os
+modelos de reserva do `.env`.
+
 ## 10. Se correr mal (retrocesso)
 
 1. `bash gc_turnkey.sh parar`.

@@ -2,6 +2,22 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.8.0 — 2026-09-25 — Faturas: vários documentos por PDF e IA mais robusta
+
+- **Um PDF com várias faturas** (fornecedores diferentes, ou o mesmo com datas/números diferentes) é dividido:
+  a IA indica as páginas de cada documento e o servidor **corta o PDF** (com o `qpdf`, já incluído na imagem
+  Docker) e cria **uma fatura por documento, cada uma com o seu ficheiro** (ex.: 8 páginas → págs. 1–2, 3–4 e
+  5–8). Cada fatura passa pela deteção de duplicados. Se as páginas indicadas não fizerem sentido, ou não for
+  PDF, ficam todas com o ficheiro inteiro e um aviso "confere as páginas".
+- **Fornecedor opcional** ao carregar: a IA lê-o da fatura.
+- **Gemini mais robusto:** quando a Google responde "muita procura" (429/500/503/504) repete 3 vezes (pausas
+  de 3 s e 8 s) e passa a modelos de reserva (`GC_TURNKEY_AI_MODEL_FALLBACK`, por omissão
+  `gemini-3.5-flash,gemini-3.5-flash-lite`); modelos retirados (404) são saltados; mensagem clara em português.
+- Ecrã de erro da fatura com **"Tentar de novo"** (sem ter de apagar e voltar a enviar).
+- Variáveis novas (opcionais): `GC_TURNKEY_AI_MODEL_FALLBACK`, `GC_TURNKEY_AI_ESPERAS`.
+- Testes: `test/security/seguranca.py` passa a incluir um Gemini e um `qpdf` falsos (retentativas, reserva,
+  divisão em 3 ficheiros, mesmo fornecedor com datas diferentes, páginas sobrepostas).
+
 ## 1.7.0 — 2026-09-25 — Renomeada para gc_turnkey
 
 A aplicação passa a chamar-se **gc_turnkey** e deixa de ter o nome de uma empresa: a Gookie Cookies

@@ -33,9 +33,8 @@ class InvoiceReviewScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.canPop()
-              ? context.pop()
-              : context.go(Routes.invoices),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(Routes.invoices),
         ),
         title: const Text('Rever fatura'),
         actions: const [HelpActions(topic: HelpTopic.faturaRevisao)],
@@ -61,33 +60,73 @@ class InvoiceReviewScreen extends ConsumerWidget {
   }
 }
 
-class _Erro extends ConsumerWidget {
+class _Erro extends ConsumerStatefulWidget {
   const _Erro({required this.fatura});
   final Fatura fatura;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_Erro> createState() => _ErroState();
+}
+
+class _ErroState extends ConsumerState<_Erro> {
+  bool _busy = false;
+
+  Future<void> _tentarDeNovo() async {
+    setState(() => _busy = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final r = await ref
+          .read(invoiceActionsProvider)
+          .tentarDeNovo(widget.fatura);
+      if (r.ids.length > 1) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              '${r.ids.length} faturas detetadas neste ficheiro. Revê-as na lista.',
+            ),
+          ),
+        );
+        if (mounted && context.canPop()) context.pop();
+      }
+    } on Object {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Ainda não foi possível analisar. Tenta daqui a uns minutos.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final fatura = widget.fatura;
     final duplicada = fatura.duplicadaDe.isNotEmpty;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(duplicada ? Icons.copy_all_outlined : Icons.error_outline,
-              size: 40, color: Theme.of(context).colorScheme.error),
+          Icon(
+            duplicada ? Icons.copy_all_outlined : Icons.error_outline,
+            size: 40,
+            color: Theme.of(context).colorScheme.error,
+          ),
           const SizedBox(height: 12),
           Text(
-            duplicada
-                ? fatura.erroIa
-                : 'A análise falhou: ${fatura.erroIa}',
+            duplicada ? fatura.erroIa : 'A análise falhou: ${fatura.erroIa}',
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           Text(
             duplicada
                 ? 'Esta fatura já tinha sido carregada. Podes apagá-la.'
-                : 'Verifica a configuração da IA no servidor (fornecedor e '
-                    'chave) e tenta de novo com uma foto nítida.',
+                : 'Se a IA estava sobrecarregada, tenta de novo daqui a uns '
+                      'minutos. Se persistir, verifica a configuração da IA no '
+                      'servidor (fornecedor e chave) ou usa uma foto mais nítida.',
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
@@ -103,7 +142,19 @@ class _Erro extends ConsumerWidget {
                   icon: const Icon(Icons.open_in_new),
                   label: const Text('Abrir a original'),
                 ),
-              FilledButton.icon(
+              if (!duplicada)
+                FilledButton.icon(
+                  onPressed: _busy ? null : _tentarDeNovo,
+                  icon: _busy
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh),
+                  label: const Text('Tentar de novo'),
+                ),
+              OutlinedButton.icon(
                 onPressed: () async {
                   final ok = await confirmDialog(
                     context,
@@ -113,9 +164,7 @@ class _Erro extends ConsumerWidget {
                     destrutivo: true,
                   );
                   if (!ok) return;
-                  await ref
-                      .read(invoiceActionsProvider)
-                      .apagar(fatura.id);
+                  await ref.read(invoiceActionsProvider).apagar(fatura.id);
                   if (context.mounted && context.canPop()) context.pop();
                 },
                 icon: const Icon(Icons.delete_outline),
@@ -140,8 +189,11 @@ class _SemLinhas extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.receipt_long_outlined,
-              size: 40, color: Theme.of(context).colorScheme.outline),
+          Icon(
+            Icons.receipt_long_outlined,
+            size: 40,
+            color: Theme.of(context).colorScheme.outline,
+          ),
           const SizedBox(height: 12),
           const Text(
             'A IA não devolveu nenhuma linha desta fatura. Se acabaste de a '
@@ -155,7 +207,8 @@ class _SemLinhas extends ConsumerWidget {
               final ok = await confirmDialog(
                 context,
                 titulo: 'Apagar esta fatura?',
-                mensagem: 'Remove o registo e o ficheiro carregado. '
+                mensagem:
+                    'Remove o registo e o ficheiro carregado. '
                     'Fica registo em "Faturas apagadas".',
                 confirmar: 'Apagar',
                 destrutivo: true,
@@ -173,30 +226,31 @@ class _SemLinhas extends ConsumerWidget {
   }
 }
 
-String _normNome(String s) => s.toLowerCase().trim().replaceAll(RegExp(r'\s+'), ' ');
+String _normNome(String s) =>
+    s.toLowerCase().trim().replaceAll(RegExp(r'\s+'), ' ');
 
 class _LinhaState {
   _LinhaState(this.ia, Ingrediente? match, bool isLista)
-      : ingrediente = match,
-        qtd = TextEditingController(
-          text: ia.quantidadeG > 0 ? ia.quantidadeG.toStringAsFixed(0) : '',
-        ),
-        preco = TextEditingController(
-          text: (ia.precoUnitario ?? 0) > 0
-              ? ia.precoUnitario!.toStringAsFixed(2)
-              : '',
-        ),
-        emb = TextEditingController(
-          text: (ia.embalagemG ?? 0) > 0
-              ? ia.embalagemG!.toStringAsFixed(0)
-              : (match != null && match.gramasEmbalagem > 0
+    : ingrediente = match,
+      qtd = TextEditingController(
+        text: ia.quantidadeG > 0 ? ia.quantidadeG.toStringAsFixed(0) : '',
+      ),
+      preco = TextEditingController(
+        text: (ia.precoUnitario ?? 0) > 0
+            ? ia.precoUnitario!.toStringAsFixed(2)
+            : '',
+      ),
+      emb = TextEditingController(
+        text: (ia.embalagemG ?? 0) > 0
+            ? ia.embalagemG!.toStringAsFixed(0)
+            : (match != null && match.gramasEmbalagem > 0
                   ? match.gramasEmbalagem.toStringAsFixed(0)
                   : ''),
-        ),
-        nome = TextEditingController(text: ia.descricao),
-        acao = match == null
-            ? AcaoFatura.ignorar
-            : (isLista ? AcaoFatura.preco : AcaoFatura.ambos);
+      ),
+      nome = TextEditingController(text: ia.descricao),
+      acao = match == null
+          ? AcaoFatura.ignorar
+          : (isLista ? AcaoFatura.preco : AcaoFatura.ambos);
 
   final FaturaLinhaIa ia;
 
@@ -233,14 +287,14 @@ class _LinhaState {
   bool get temAlvo => ingrediente != null || criarNovo;
 
   LinhaAAplicar toAplicar(String? ingredienteId) => (
-        ingredienteId: ingredienteId,
-        descricaoFatura: ia.descricao,
-        quantidadeG: _n(qtd),
-        precoUnitario: _n(preco),
-        totalLinha: ia.total ?? 0,
-        embalagemG: _n(emb),
-        acao: acao,
-      );
+    ingredienteId: ingredienteId,
+    descricaoFatura: ia.descricao,
+    quantidadeG: _n(qtd),
+    precoUnitario: _n(preco),
+    totalLinha: ia.total ?? 0,
+    embalagemG: _n(emb),
+    acao: acao,
+  );
 }
 
 class _Revisao extends ConsumerStatefulWidget {
@@ -305,19 +359,28 @@ class _RevisaoState extends ConsumerState<_Revisao> {
   }
 
   Future<void> _aplicar() async {
-    final aAplicar = _linhas.where((l) => l.acao != AcaoFatura.ignorar).toList();
+    final aAplicar = _linhas
+        .where((l) => l.acao != AcaoFatura.ignorar)
+        .toList();
     if (aAplicar.any((l) => !l.temAlvo)) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Há linhas sem ingrediente. Liga, cria um novo, ou põe '
-            'em Ignorar.'),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Há linhas sem ingrediente. Liga, cria um novo, ou põe '
+            'em Ignorar.',
+          ),
+        ),
+      );
       return;
     }
-    if (aAplicar.any((l) =>
-        (l.criarNovo || l.renomear) && l.nome.text.trim().isEmpty)) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Dá um nome ao ingrediente a criar/renomear.'),
-      ));
+    if (aAplicar.any(
+      (l) => (l.criarNovo || l.renomear) && l.nome.text.trim().isEmpty,
+    )) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Dá um nome ao ingrediente a criar/renomear.'),
+        ),
+      );
       return;
     }
     final novos = aAplicar.where((l) => l.criarNovo).length;
@@ -372,13 +435,15 @@ class _RevisaoState extends ConsumerState<_Revisao> {
           continue;
         }
         if (l.criarNovo) {
-          final novo = await repo.create(IngredienteInput(
-            nome: l.nome.text.trim(),
-            fornecedor: forn,
-            preco: l.precoV,
-            gramasEmbalagem: l.embV,
-            origem: OrigemIngrediente.comprado,
-          ));
+          final novo = await repo.create(
+            IngredienteInput(
+              nome: l.nome.text.trim(),
+              fornecedor: forn,
+              preco: l.precoV,
+              gramasEmbalagem: l.embV,
+              origem: OrigemIngrediente.comprado,
+            ),
+          );
           ids[l] = novo.id;
         } else if (l.renomear && l.ingrediente != null) {
           final ing = l.ingrediente!;
@@ -401,26 +466,33 @@ class _RevisaoState extends ConsumerState<_Revisao> {
         }
       }
 
-      final res = await ref.read(invoiceActionsProvider).aplicar(
+      final res = await ref
+          .read(invoiceActionsProvider)
+          .aplicar(
             widget.fatura.id,
             _linhas.map((l) => l.toAplicar(ids[l])).toList(),
           );
       ref.invalidate(ingredientsListProvider);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text([
-          '${res.precos} preço(s), ${res.movimentos} entrada(s) de stock',
-          if (res.precosIgnorados > 0)
-            '${res.precosIgnorados} preço(s) mantidos (fatura mais antiga)',
-          if (novos > 0) '$novos novo(s)',
-          if (renomes > 0) '$renomes renomeado(s)',
-        ].join(' · ')),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            [
+              '${res.precos} preço(s), ${res.movimentos} entrada(s) de stock',
+              if (res.precosIgnorados > 0)
+                '${res.precosIgnorados} preço(s) mantidos (fatura mais antiga)',
+              if (novos > 0) '$novos novo(s)',
+              if (renomes > 0) '$renomes renomeado(s)',
+            ].join(' · '),
+          ),
+        ),
+      );
       if (context.canPop()) context.pop();
     } on Object catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -559,8 +631,11 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                     color: Colors.black.withValues(alpha: 0.45),
                     shape: const CircleBorder(),
                     child: IconButton(
-                      icon: const Icon(Icons.zoom_out_map,
-                          color: Colors.white, size: 20),
+                      icon: const Icon(
+                        Icons.zoom_out_map,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                       tooltip: 'Ampliar',
                       onPressed: () => _abrirZoom(url),
                     ),
@@ -572,41 +647,46 @@ class _RevisaoState extends ConsumerState<_Revisao> {
   }
 
   Widget _toggleBar(Fatura f) => Material(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        child: InkWell(
-          onTap: () => setState(() => _verFatura = !_verFatura),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: Row(
-              children: [
-                Icon(_verFatura ? Icons.expand_less : Icons.expand_more,
-                    size: 20),
-                const SizedBox(width: 6),
-                Text(_verFatura ? 'Ocultar fatura' : 'Ver fatura'),
-                const Spacer(),
-                if (!f.ficheiroEhPdf && _verFatura)
-                  Text('toca para ampliar',
-                      style: Theme.of(context).textTheme.bodySmall),
-              ],
-            ),
-          ),
+    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+    child: InkWell(
+      onTap: () => setState(() => _verFatura = !_verFatura),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Row(
+          children: [
+            Icon(_verFatura ? Icons.expand_less : Icons.expand_more, size: 20),
+            const SizedBox(width: 6),
+            Text(_verFatura ? 'Ocultar fatura' : 'Ver fatura'),
+            const Spacer(),
+            if (!f.ficheiroEhPdf && _verFatura)
+              Text(
+                'toca para ampliar',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 
   Widget _cabecalho(Fatura f) => Card(
-        child: ListTile(
-          leading: Icon(f.ficheiroEhPdf
-              ? Icons.picture_as_pdf_outlined
-              : Icons.receipt_long_outlined),
-          title: Text(f.fornecedor.isEmpty ? 'Fornecedor?' : f.fornecedor),
-          subtitle: Text([
-            f.tipo.label,
-            if (f.numero.isNotEmpty) 'nº ${f.numero}',
-            if (f.dataFatura.isNotEmpty) formatDateShort(f.dataFatura),
-            if (f.total > 0) 'total ${f.total.toStringAsFixed(2)}',
-          ].join(' · ')),
-        ),
-      );
+    child: ListTile(
+      leading: Icon(
+        f.ficheiroEhPdf
+            ? Icons.picture_as_pdf_outlined
+            : Icons.receipt_long_outlined,
+      ),
+      title: Text(f.fornecedor.isEmpty ? 'Fornecedor?' : f.fornecedor),
+      subtitle: Text(
+        [
+          f.tipo.label,
+          if (f.numero.isNotEmpty) 'nº ${f.numero}',
+          if (f.dataFatura.isNotEmpty) formatDateShort(f.dataFatura),
+          if (f.total > 0) 'total ${f.total.toStringAsFixed(2)}',
+        ].join(' · '),
+      ),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -616,8 +696,10 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       children: [
         _cabecalho(f),
         const SizedBox(height: 8),
-        Text('Linhas lidas pela IA — confirma cada uma',
-            style: Theme.of(context).textTheme.titleSmall),
+        Text(
+          'Linhas lidas pela IA — confirma cada uma',
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
         const SizedBox(height: 4),
         for (final l in _linhas)
           Card(
@@ -627,8 +709,10 @@ class _RevisaoState extends ConsumerState<_Revisao> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(l.ia.descricao,
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  Text(
+                    l.ia.descricao,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   const SizedBox(height: 6),
                   InkWell(
                     onTap: () => _escolherIngrediente(l),
@@ -640,8 +724,8 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                         helperText: l.criarNovo
                             ? 'Vai criar um ingrediente novo'
                             : (l.renomear
-                                ? 'Vai renomear o ingrediente ligado'
-                                : null),
+                                  ? 'Vai renomear o ingrediente ligado'
+                                  : null),
                       ),
                       child: Text(
                         l.criarNovo
@@ -680,8 +764,10 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                         dense: true,
                         contentPadding: EdgeInsets.zero,
                         controlAffinity: ListTileControlAffinity.leading,
-                        title: Text('Passar «${l.ingrediente!.nome}» a '
-                            'chamar-se «${l.ia.descricao}»'),
+                        title: Text(
+                          'Passar «${l.ingrediente!.nome}» a '
+                          'chamar-se «${l.ia.descricao}»',
+                        ),
                         subtitle: const Text(
                           'muda em todas as receitas e fichas que o usam',
                         ),
@@ -695,7 +781,8 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                           child: TextField(
                             controller: l.qtd,
                             keyboardType: const TextInputType.numberWithOptions(
-                                decimal: true),
+                              decimal: true,
+                            ),
                             decoration: const InputDecoration(
                               labelText: 'Comprado',
                               suffixText: 'g',
@@ -709,7 +796,8 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                         child: TextField(
                           controller: l.preco,
                           keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true),
+                            decimal: true,
+                          ),
                           decoration: const InputDecoration(
                             labelText: 'Preço embalagem',
                             prefixText: '€ ',
@@ -722,7 +810,8 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                         child: TextField(
                           controller: l.emb,
                           keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true),
+                            decimal: true,
+                          ),
                           decoration: const InputDecoration(
                             labelText: 'Embalagem',
                             suffixText: 'g',
@@ -741,7 +830,9 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                     key: ValueKey('${identityHashCode(l)}_${l.acao.name}'),
                     initialValue: l.acao,
                     decoration: const InputDecoration(
-                        labelText: 'Ação', isDense: true),
+                      labelText: 'Ação',
+                      isDense: true,
+                    ),
                     items: [
                       for (final a in AcaoFatura.values)
                         if (!_isLista ||
@@ -826,7 +917,9 @@ class _IngredientePickerState extends State<_IngredientePicker> {
   @override
   Widget build(BuildContext context) {
     final itens = widget.ingredientes
-        .where((i) => _q.isEmpty || i.nome.toLowerCase().contains(_q.toLowerCase()))
+        .where(
+          (i) => _q.isEmpty || i.nome.toLowerCase().contains(_q.toLowerCase()),
+        )
         .toList();
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.8,
@@ -856,11 +949,13 @@ class _IngredientePickerState extends State<_IngredientePicker> {
               itemCount: itens.length,
               itemBuilder: (_, i) => ListTile(
                 title: Text(itens[i].nome),
-                subtitle: Text([
-                  if (itens[i].marca.isNotEmpty) itens[i].marca,
-                  if (itens[i].gramasEmbalagem > 0)
-                    gramasParaTexto(itens[i].gramasEmbalagem),
-                ].join(' · ')),
+                subtitle: Text(
+                  [
+                    if (itens[i].marca.isNotEmpty) itens[i].marca,
+                    if (itens[i].gramasEmbalagem > 0)
+                      gramasParaTexto(itens[i].gramasEmbalagem),
+                  ].join(' · '),
+                ),
                 onTap: () =>
                     Navigator.pop(context, _EscolhaExistente(itens[i])),
               ),
