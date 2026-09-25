@@ -49,6 +49,26 @@ e numa folha impressa num sítio seguro. **Sem elas os backups não se abrem —
 pela Google.** Guardar também uma cópia do `rclone.conf` (`rclone config file` diz onde
 está): tem o acesso ao Drive **e** as chaves. Nunca no Git nem no mesmo disco dos backups.
 
+## 2b. Alternativa: Backblaze B2 em vez do Google Drive (mais simples)
+
+Sem projeto Google, sem ecrã de consentimento e sem expiração de autorização. Grátis até **10 GB**
+(depois cerca de 6 US$/TB por mês; confirmar em backblaze.com/cloud-storage/pricing).
+
+1. Criar conta em backblaze.com (B2 Cloud Storage), escolhendo a região **EU Central (Amsterdão)**
+   (a região não se muda depois).
+2. *Buckets → Create a Bucket*: nome único (ex.: `gookie-backups-xxxx`), **Private**.
+3. Nas definições do bucket, **Lifecycle Settings → Keep only the last version of the file**
+   (senão os ficheiros "apagados" ficam escondidos e continuam a ocupar espaço).
+4. *Application Keys → Add a New Application Key*: nome `gookie-rclone`, acesso **só a esse bucket**,
+   Read and Write. Copiar o **keyID** e a **applicationKey** (só aparece uma vez).
+5. No servidor: `rclone config` → `n` → nome **`b2gookie`** → storage **`b2`** → `account` = keyID,
+   `key` = applicationKey, **`hard_delete` = true**, avançadas = n.
+6. Passo 3 abaixo, mas com `remote` = **`b2gookie:NOME-DO-BUCKET/GookieBackups`** (em vez de `gdrive:…`).
+
+Limites do plano gratuito: 10 GB guardados, 1 GB/dia de descarga (o teste de restauro mensal cabe),
+2 500 operações "B" e 2 500 "C" por dia. Com 42 cópias, cada uma tem de ter **< ~240 MB** para
+ficar grátis; para ficar dentro do gratuito por mais tempo, baixar `DIAS_DIARIOS` (ex.: 14).
+
 ## 4. Testar a ligação
 
 ```bash
