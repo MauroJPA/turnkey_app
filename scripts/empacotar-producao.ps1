@@ -17,7 +17,7 @@ if ($ramo -ne "main") { Write-Host "AVISO: estas a empacotar o ramo '$ramo' (o n
 if ((git status --porcelain | Where-Object { $_ -notmatch '^\?\?' })) { throw "Ha alteracoes por gravar no git. Faz commit primeiro." }
 
 Write-Host "1/4  A compilar a app web (v$versao) ..."
-flutter build web --release --dart-define=PB_URL=origin
+flutter build web --release --no-wasm-dry-run --dart-define=PB_URL=origin
 if ($LASTEXITCODE -ne 0) { throw "flutter build web falhou" }
 
 $saida = Join-Path (Get-Location) "dist\gookie-producao"
