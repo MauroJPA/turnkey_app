@@ -63,12 +63,31 @@ class FaturaLinhaIa {
   final double? total;
   final double? embalagemG;
 
-  /// Quantidade convertida para gramas (kg/L -> g/ml aproximado).
+  String get _u => unidade.toLowerCase().trim().replaceAll('.', '');
+
+  /// A quantidade vem em peso/volume (g, kg, l, ml…)? Caso contrário conta
+  /// embalagens/unidades ("2 un" de 15 g são 30 g).
+  bool get unidadeEPeso =>
+      const {'g', 'gr', 'grs', 'kg', 'l', 'lt', 'ml', 'cl', 'dl'}.contains(_u);
+
+  /// A quantidade lida conta embalagens e sabe-se o peso de cada uma.
+  bool get contaEmbalagens => !unidadeEPeso && (embalagemG ?? 0) > 0;
+
+  /// Quantidade convertida para gramas (kg/L -> g/ml aproximado). Em unidades
+  /// ("2 un") multiplica pelo peso da embalagem, se se conhecer.
   double get quantidadeG {
     final q = quantidade ?? 0;
-    final u = unidade.toLowerCase().trim();
-    if (u == 'kg' || u == 'l') return q * 1000;
-    return q;
+    switch (_u) {
+      case 'kg' || 'l' || 'lt':
+        return q * 1000;
+      case 'dl':
+        return q * 100;
+      case 'cl':
+        return q * 10;
+      case 'g' || 'gr' || 'grs' || 'ml':
+        return q;
+    }
+    return contaEmbalagens ? q * embalagemG! : q;
   }
 
   factory FaturaLinhaIa.fromJson(Map<String, dynamic> j) => FaturaLinhaIa(

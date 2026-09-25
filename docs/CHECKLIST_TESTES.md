@@ -638,6 +638,8 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Carregar uma fatura com "Açúcar Sidul BCO granulado KG": a linha vem ligada a "Açúcar branco" (ou
       propõe **criar ingrediente genérico** com esse nome) e mostra a **Marca** lida.
 - [ ] Aplicar: o preço fica num **produto** (novo, se a marca/embalagem for nova) e o ingrediente assume o custo.
+- [ ] Fatura com "2 un" de uma embalagem de 15 g: o campo **Comprado** mostra 2 **un** ("= 30 g"); trocar para
+      **g** mostra 30. Ao aplicar, o stock sobe 30 g. Uma linha em kg ou g continua em **g**.
 - [ ] Carregar outra fatura com o **mesmo texto**: liga sozinha ao mesmo produto ("Produto já conhecido").
 - [ ] Fatura com data **anterior** à última compra: aparece o aviso e o custo não muda.
 - [ ] Criar ingrediente novo pela revisão de uma fatura só com "Preço": fica **um só** produto (sem duplicado).

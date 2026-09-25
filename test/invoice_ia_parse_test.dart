@@ -55,6 +55,60 @@ void main() {
         500,
       );
     });
+
+    test('unidades: quantidade x peso da embalagem (2 un de 15 g = 30 g)', () {
+      final noz = FaturaLinhaIa.fromJson(const {
+        'descricao': 'Noz moscada moída 15g',
+        'quantidade': 2,
+        'unidade': 'un',
+        'embalagem_g': 15,
+      });
+      expect(noz.contaEmbalagens, isTrue);
+      expect(noz.quantidadeG, 30);
+      final cravo = FaturaLinhaIa.fromJson(const {
+        'descricao': 'Cravinho moído 14gr',
+        'quantidade': 1,
+        'unidade': 'un',
+        'embalagem_g': 14,
+      });
+      expect(cravo.quantidadeG, 14);
+      // sem unidade escrita também conta embalagens
+      final semUn = FaturaLinhaIa.fromJson(const {
+        'descricao': 'x',
+        'quantidade': 3,
+        'embalagem_g': 100,
+      });
+      expect(semUn.quantidadeG, 300);
+    });
+
+    test('unidades sem peso de embalagem: fica a quantidade lida', () {
+      final l = FaturaLinhaIa.fromJson(const {
+        'descricao': 'x',
+        'quantidade': 2,
+        'unidade': 'un',
+      });
+      expect(l.contaEmbalagens, isFalse);
+      expect(l.quantidadeG, 2);
+    });
+
+    test('peso/volume com embalagem conhecida não se multiplica', () {
+      final l = FaturaLinhaIa.fromJson(const {
+        'descricao': 'x',
+        'quantidade': 500,
+        'unidade': 'g',
+        'embalagem_g': 250,
+      });
+      expect(l.contaEmbalagens, isFalse);
+      expect(l.quantidadeG, 500);
+      expect(
+        FaturaLinhaIa.fromJson(const {
+          'descricao': 'x',
+          'quantidade': 25,
+          'unidade': 'cl',
+        }).quantidadeG,
+        250,
+      );
+    });
   });
 
   group('Fatura.linhasIa', () {
