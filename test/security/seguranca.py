@@ -1281,6 +1281,72 @@ def teste_juntar():
     check(abs(rec.get('custo_receita', -1) - 1.2) < 1e-6, 'a receita refez o custo com o custo do destino (1,20 €/kg)', str(rec.get('custo_receita')))
 
 
+def teste_compras_produto():
+    """9d. Lista de compras: uma linha por produto fixado nas receitas."""
+    sec('9d. Lista de compras por produto')
+    t = tok['editorA']
+    base = dict(dados[('ingredientes', 'A')][1])
+    base.update(nome='Farinha compras', origem='comprado', preco=0, gramas_embalagem=0)
+    gid = call('POST', '/api/collections/ingredientes/records', base, t)[1]['id']
+
+    def produto(nome, marca, emb, preco, data):
+        return call('POST', '/api/collections/ingrediente_produtos/records',
+                    {'empresa': empresas['A'], 'ingrediente': gid, 'nome': nome, 'marca': marca, 'embalagem_g': emb,
+                     'preco': preco, 'preco_atualizado_em': data + ' 00:00:00.000Z'}, t)[1]
+
+    p1 = produto('Farinha pequena', 'Sidul', 1000, 2.0, '2026-09-01')
+    produto('Farinha grande', 'Makro', 5000, 5.0, '2026-09-10')  # a mais recente: o automático
+
+    def receita(nome, produto_id=None):
+        rb = dict(dados[('receitas', 'A')][1])
+        rb.update(nome=nome, rendimento_manual=False)
+        for k in ('custo_receita', 'custo_por_grama', 'rendimento_esperado'):
+            rb.pop(k, None)
+        rid = call('POST', '/api/collections/receitas/records', rb, t)[1]['id']
+        item = {'empresa': empresas['A'], 'receita': rid, 'ingrediente': gid, 'quantidade_g': 1000}
+        if produto_id:
+            item['produto'] = produto_id
+        it = call('POST', '/api/collections/itens_receita/records', item, t)[1]
+        return rid, it['id']
+
+    r1, it1 = receita('Massa fixa Sidul', p1['id'])
+    r2, _ = receita('Massa automática')
+
+    pb_ = dict(dados[('producoes', 'A')][1])
+    pb_.update(titulo='Compras por produto')
+    prod = call('POST', '/api/collections/producoes/records', pb_, t)[1]
+    for r in (r1, r2):
+        pi = dict(dados[('producao_itens', 'A')][1])
+        pi.update(producao=prod['id'], receita=r, quantidade_kg=1)
+        for k in ('formato', 'recheio', 'ficha'):
+            pi.pop(k, None)
+        st, x, _ = call('POST', '/api/collections/producao_itens/records', pi, t)
+        check(st == 200, 'linha de produção', f'status {st} {str(x)[:120]}')
+
+    def linhas():
+        st, r, _ = call('GET', f"/api/collections/lista_compras/records?filter=producao='{prod['id']}'&perPage=50", tok=t)
+        return [i for i in r.get('items', []) if i.get('ingrediente') == gid]
+
+    st, r, _ = call('POST', f"/api/gc_turnkey/producoes/{prod['id']}/lista-compras", {}, t)
+    check(st == 200, 'gerar a lista de compras', f'status {st} {str(r)[:120]}')
+    ls = linhas()
+    check(len(ls) == 2, 'duas linhas: o produto fixado e o automático', str(len(ls)))
+    fixa = [l for l in ls if l.get('produto') == p1['id']]
+    auto = [l for l in ls if not l.get('produto')]
+    check(len(fixa) == 1 and fixa[0]['embalagem_g'] == 1000 and abs(fixa[0]['quantidade_comprar_g'] - 1000) < 1e-6
+          and 'Sidul' in fixa[0]['descricao'], 'produto fixado: embalagem de 1 kg, 1 embalagem, nome com a marca', str(fixa)[:220])
+    check(len(auto) == 1 and auto[0]['embalagem_g'] == 5000 and abs(auto[0]['quantidade_comprar_g'] - 5000) < 1e-6,
+          'automático: embalagem de 5 kg (compra mais recente)', str(auto)[:220])
+    check(fixa and abs(fixa[0]['custo_estimado'] - 2.0) < 1e-6, 'custo estimado do produto fixado (2 €)', str(fixa)[:220])
+
+    # deixa de fixar: fica só o automático (2 kg -> 1 embalagem de 5 kg)
+    call('PATCH', f'/api/collections/itens_receita/records/{it1}', {'produto': ''}, t)
+    st, r, _ = call('POST', f"/api/gc_turnkey/producoes/{prod['id']}/lista-compras", {}, t)
+    ls = linhas()
+    check(len(ls) == 1 and not ls[0].get('produto') and abs(ls[0]['quantidade_necessaria_g'] - 2000) < 1e-6
+          and abs(ls[0]['quantidade_comprar_g'] - 5000) < 1e-6, 'sem produto fixado: uma só linha (2 kg → 1 embalagem de 5 kg)', str(ls)[:260])
+
+
 def main():
     arrancar()
     try:
@@ -1296,6 +1362,7 @@ def main():
         teste_produtos()
         teste_produto_na_receita()
         teste_juntar()
+        teste_compras_produto()
         teste_consumiveis()
         teste_implantacao()
         teste_autenticacao()  # por último: gasta o limite de tentativas

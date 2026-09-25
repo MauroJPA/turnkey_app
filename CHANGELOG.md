@@ -2,6 +2,19 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.13.0 — 2026-09-25 — Lista de compras com o produto escolhido nas receitas
+
+- **A lista de compras respeita o produto fixado nas receitas.** Se uma receita fixa "Farinha Sidul 1 kg" e
+  outra fica em automático (compra mais recente: "Makro 5 kg"), a lista traz **uma linha por produto**, cada uma
+  com a sua embalagem, o nº de embalagens a comprar, o custo estimado e o fornecedor do produto. O nome da
+  linha inclui a marca ("Farinha — Sidul").
+- O **stock continua a ser um só por ingrediente**: desconta-se do total e o que falta reparte-se pelos
+  produtos, em proporção do que cada receita pede.
+- Ao gerar de novo a lista de uma produção, as linhas de um produto que já não está fixado desaparecem.
+- Migration `1707955208_lista_compras_produto` (campo `lista_compras.produto`, com a regra da mesma empresa).
+- Testes: secção 9d do `test/security/seguranca.py` (298 verificações, 0 falhas).
+- Ainda por fazer: nutrição/alergénios por produto.
+
 ## 1.12.0 — 2026-09-25 — Juntar ingredientes
 
 - **Juntar com outro ingrediente**: no menu (⋮) de cada ingrediente comprado escolhes o ingrediente que fica e
