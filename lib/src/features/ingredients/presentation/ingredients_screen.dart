@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pocketbase/pocketbase.dart' show ClientException;
 
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
@@ -17,8 +18,10 @@ import '../../import_csv/domain/import_result.dart';
 import '../../recipes/application/recipes_providers.dart';
 import '../../recipes/presentation/nutricao_receita_sheet.dart';
 import '../application/ingredients_providers.dart';
+import '../data/ingredient_repository.dart';
 import '../domain/ingredient.dart';
 import 'ingredient_form_sheet.dart';
+import 'juntar_ingrediente_sheet.dart';
 import 'nutricao_sheet.dart';
 
 class IngredientsScreen extends ConsumerStatefulWidget {
@@ -43,6 +46,75 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
   }
 
   bool get _podeEditar => ref.read(currentPapelProvider).canEditBusiness;
+
+  /// Junta [origem] com outro ingrediente (que fica): tudo passa para ele.
+  Future<void> _juntar(Ingrediente origem) async {
+    final todos = await ref.read(ingredientsListProvider(false).future);
+    if (!mounted) return;
+    final destino = await escolherDestinoJuntar(
+      context,
+      origem: origem,
+      todos: todos,
+    );
+    if (destino == null || !mounted) return;
+    final ok = await confirmDialog(
+      context,
+      titulo: 'Juntar ingredientes?',
+      mensagem:
+          '«${origem.nome}» passa a fazer parte de «${destino.nome}»: as '
+          'receitas, fichas, stock, compras e produtos de compra passam '
+          'para «${destino.nome}», e os alergénios juntam-se. «${origem.nome}» '
+          'vai para a lixeira.',
+      confirmar: 'Juntar',
+    );
+    if (!ok) return;
+    final ResultadoJuntar r;
+    setState(() => _busy = true);
+    try {
+      r = await ref
+          .read(ingredientActionsProvider)
+          .juntar(origem.id, destino.id);
+      ref.invalidate(recipesListProvider);
+    } on ClientException catch (e) {
+      // só a mensagem do servidor (em português); nunca o erro de rede em bruto
+      final msg = e.response['message'];
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              msg is String && msg.isNotEmpty
+                  ? msg
+                  : 'Não foi possível juntar os ingredientes.',
+            ),
+          ),
+        );
+      }
+      return;
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Não foi possível juntar os ingredientes.'),
+          ),
+        );
+      }
+      return;
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+    if (!mounted) return;
+    final extra = [
+      if (r.alergeniosAdicionados.isNotEmpty)
+        'Alergénios acrescentados: ${r.alergeniosAdicionados.join(', ')}.',
+    ].join(' ');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '«${origem.nome}» juntou-se a «${destino.nome}». $extra'.trim(),
+        ),
+      ),
+    );
+  }
 
   Future<bool> _run(Future<void> Function() action) async {
     setState(() => _busy = true);
@@ -459,6 +531,24 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           trailing,
+          if (_podeEditar && i.origem == OrigemIngrediente.comprado)
+            PopupMenuButton<String>(
+              tooltip: 'Mais ações',
+              icon: const Icon(Icons.more_vert, size: 20),
+              onSelected: (v) {
+                if (v == 'juntar') _juntar(i);
+                if (v == 'duplicar') {
+                  _run(() => ref.read(ingredientActionsProvider).duplicate(i));
+                }
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(
+                  value: 'juntar',
+                  child: Text('Juntar com outro ingrediente…'),
+                ),
+                PopupMenuItem(value: 'duplicar', child: Text('Duplicar')),
+              ],
+            ),
           if (_podeEditar)
             Builder(builder: (context) {
               final cs = Theme.of(context).colorScheme;

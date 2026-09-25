@@ -676,6 +676,18 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Duplicar a receita: a cópia mantém o produto fixado.
 - [ ] Ingrediente com um só produto: não mostra o alfinete nem pergunta nada.
 
+## 33. Juntar ingredientes
+
+- [ ] Criar dois ingredientes parecidos (ex.: "Açúcar branco" e "Açúcar Makro"), cada um com um produto, stock,
+      e o segundo numa receita e numa ficha.
+- [ ] No ⋮ de "Açúcar Makro" → **Juntar com outro ingrediente…** → escolher "Açúcar branco" → confirmar.
+- [ ] "Açúcar Makro" desaparece da lista e está na lixeira; "Açúcar branco" tem agora **os dois produtos**.
+- [ ] O stock do que ficou é a soma; a receita e a ficha passam a usar "Açúcar branco" e o custo é refeito
+      (compra mais recente).
+- [ ] Se o juntado tinha um alergénio que o outro não tinha, aparece no que ficou (e a mensagem avisa).
+- [ ] Ingredientes de fabrico próprio não têm a opção; o papel Leitura não vê o menu.
+- [ ] Fatura com o nome antigo ("Açúcar Makro…"): liga sozinha a "Açúcar branco" (nome já aprendido).
+
 ---
 
 ## Notas / ajustes pedidos

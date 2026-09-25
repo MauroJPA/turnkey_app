@@ -2,6 +2,20 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.12.0 — 2026-09-25 — Juntar ingredientes
+
+- **Juntar com outro ingrediente**: no menu (⋮) de cada ingrediente comprado escolhes o ingrediente que fica e
+  o outro passa a fazer parte dele. Serve para limpar duplicados ("Açúcar Sidul BCO", "Açúcar Makro") e ficar
+  com um ingrediente genérico só ("Açúcar branco").
+- O que passa para o ingrediente que fica: linhas de receitas e fichas (o produto fixado numa linha mantém-se),
+  stock (soma-se), movimentos, lista de compras, linhas de faturas e os **produtos de compra** (com os nomes de
+  fatura já aprendidos). Os alergénios (e vestígios) juntam-se: nunca se perde um aviso. O custo passa a ser o da
+  compra mais recente e receitas/fichas refazem o custo.
+- O ingrediente juntado vai para a **lixeira** (recuperável). Os ingredientes de fabrico próprio não se juntam.
+- Endpoint `POST /api/gc_turnkey/ingredientes/juntar` (papel Leitura e outras empresas recusados).
+- Testes: secção 9c do `test/security/seguranca.py` (289 verificações, 0 falhas).
+- Ainda por fazer: nutrição/alergénios por produto e usar o produto fixado na lista de compras.
+
 ## 1.11.0 — 2026-09-25 — Escolher o produto de compra nas receitas
 
 - **Cada linha de receita pode fixar um produto** do ingrediente genérico (ex.: "Açúcar branco" → "Sidul 1 kg").
