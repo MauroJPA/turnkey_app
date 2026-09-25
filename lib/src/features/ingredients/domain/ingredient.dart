@@ -77,6 +77,13 @@ class Ingrediente with _$Ingrediente {
     /// espelho da receita com este id. A nutrição vem da receita, não se
     /// preenche aqui.
     String? receitaEspelhoId,
+
+    /// Unidade de medida das quantidades deste ingrediente: `g` (por omissão),
+    /// `ml` ou `un`. Embalagem, receitas, stock e compras usam esta unidade.
+    @Default('g') String unidade,
+
+    /// Peso de cada unidade em gramas (só se [unidade] for `un`).
+    @Default(0) double gramasUnidade,
   }) = _Ingrediente;
 
   const Ingrediente._();
@@ -84,6 +91,13 @@ class Ingrediente with _$Ingrediente {
   /// Preço por grama — base de todos os cálculos de custo.
   double get custoPorGrama =>
       gramasEmbalagem > 0 ? preco / gramasEmbalagem : 0;
+
+  /// "Farinha de trigo T55": o nome seguido da característica (se houver).
+  String get nomeComCaracteristica =>
+      caracteristica.trim().isEmpty ? nome : '$nome ${caracteristica.trim()}';
+
+  /// Unidade normalizada (`g`, `ml` ou `un`).
+  String get un => (unidade == 'ml' || unidade == 'un') ? unidade : 'g';
 
   /// É um produto de fabrico próprio (espelho de uma receita).
   bool get eProdutoProprio =>
@@ -144,6 +158,12 @@ class Ingrediente with _$Ingrediente {
       receitaEspelhoId: r.getStringValue('receita_espelho').isEmpty
           ? null
           : r.getStringValue('receita_espelho'),
+      unidade: switch (r.getStringValue('unidade')) {
+        'ml' => 'ml',
+        'un' => 'un',
+        _ => 'g',
+      },
+      gramasUnidade: r.getDoubleValue('gramas_unidade'),
     );
   }
 }
@@ -160,6 +180,8 @@ class IngredienteInput {
     this.gramasEmbalagem = 0,
     this.disponivel = true,
     this.origem = OrigemIngrediente.comprado,
+    this.unidade = 'g',
+    this.gramasUnidade = 0,
   });
 
   final String nome;
@@ -174,6 +196,10 @@ class IngredienteInput {
   final bool disponivel;
   final OrigemIngrediente origem;
 
+  /// `g`, `ml` ou `un` (ver [Ingrediente.unidade]).
+  final String unidade;
+  final double gramasUnidade;
+
   factory IngredienteInput.fromModel(Ingrediente i, {String? nome}) =>
       IngredienteInput(
         nome: nome ?? i.nome,
@@ -185,6 +211,8 @@ class IngredienteInput {
         gramasEmbalagem: i.gramasEmbalagem,
         disponivel: i.disponivel,
         origem: i.origem,
+        unidade: i.un,
+        gramasUnidade: i.gramasUnidade,
       );
 
   Map<String, dynamic> toBody() => {
@@ -197,6 +225,8 @@ class IngredienteInput {
         'gramas_embalagem': gramasEmbalagem,
         'disponivel': disponivel,
         'origem': origem.api,
+        'unidade': unidade,
+        'gramas_unidade': gramasUnidade,
         'preco_atualizado_em': DateTime.now().toUtc().toIso8601String(),
       };
 }

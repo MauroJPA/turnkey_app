@@ -268,8 +268,15 @@ String _fmtNum(double v) {
   return v.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '');
 }
 
-double _n0(TextEditingController c) =>
-    double.tryParse(c.text.replaceAll(',', '.').trim()) ?? 0;
+/// Converte entre g e ml (com a densidade em g/ml). `null` = sem conversão
+/// conhecida (por exemplo, unidades para gramas).
+double? _converter(double v, String de, String para, {double densidade = 1}) {
+  if (de == para) return v;
+  final d = densidade > 0 ? densidade : 1;
+  if (de == 'g' && para == 'ml') return v / d;
+  if (de == 'ml' && para == 'g') return v * d;
+  return null;
+}
 
 String _normNome(String s) =>
     s.toLowerCase().trim().replaceAll(RegExp(r'\s+'), ' ');
@@ -287,13 +294,21 @@ class _LinhaState {
       marca = TextEditingController(
         text: ia.marca.isNotEmpty ? ia.marca : (match?.produto?.marca ?? ''),
       ),
-      // "2 un" de 15 g: mostra 2 unidades (=30 g); "200 g": mostra 200 g
-      unidadeQtd = ia.contaEmbalagens ? 'un' : 'g',
+      // "2 un" de 15 g: mostra 2 unidades (=30 g); "200 g": mostra 200 g; "1 L": 1000 ml
+      unidadeQtd = ia.contaEmbalagens ? 'un' : (ia.unidadeEVolume ? 'ml' : 'g'),
       qtd = TextEditingController(
         text: ia.contaEmbalagens
             ? ((ia.quantidade ?? 0) > 0 ? _fmtNum(ia.quantidade!) : '')
             : (ia.quantidadeG > 0 ? ia.quantidadeG.toStringAsFixed(0) : ''),
       ),
+      // a embalagem lida vem na unidade da IA; a do ingrediente/produto ligado, na dele
+      unidadeEmb = (ia.embalagemG ?? 0) > 0
+          ? ia.embalagemUnidade
+          : (match?.ingrediente.un ?? 'g'),
+      unidadeIng = (ia.embalagemG ?? 0) > 0
+          ? ia.embalagemUnidade
+          : (ia.contaEmbalagens ? 'g' : (ia.unidadeEVolume ? 'ml' : 'g')),
+      caracteristica = TextEditingController(text: ia.caracteristica),
       preco = TextEditingController(
         text: (ia.precoUnitario ?? 0) > 0
             ? ia.precoUnitario!.toStringAsFixed(2)
@@ -340,9 +355,18 @@ class _LinhaState {
   /// e fichas (que referenciam o ingrediente por id).
   bool renomear = false;
 
-  /// Unidade da quantidade comprada: `g` (gramas) ou `un` (embalagens, cada
-  /// uma com o peso do campo [emb]).
+  /// Unidade da quantidade comprada: `g`, `ml` ou `un` (embalagens, cada uma
+  /// com o tamanho do campo [emb]).
   String unidadeQtd;
+
+  /// Unidade em que está escrito o campo [emb] (`g`, `ml` ou `un`).
+  String unidadeEmb;
+
+  /// Unidade do ingrediente NOVO a criar (`g`, `ml` ou `un`).
+  String unidadeIng;
+
+  /// Característica do ingrediente novo (T55, T65, integral…).
+  final TextEditingController caracteristica;
 
   final TextEditingController qtd;
   final TextEditingController preco;
@@ -356,10 +380,40 @@ class _LinhaState {
   double _n(TextEditingController c) =>
       double.tryParse(c.text.replaceAll(',', '.').trim()) ?? 0;
 
-  /// Gramas realmente compradas (o que dá entrada no stock).
+  /// Unidade do ingrediente desta linha: a do ingrediente ligado, ou a escolhida
+  /// para o novo; sem ingrediente, a da embalagem.
+  String get ingUn => criarNovo
+      ? unidadeIng
+      : (ingrediente?.un ?? (unidadeEmb == 'un' ? 'un' : unidadeEmb));
+
+  double get _densidade => ingrediente?.nutriDensidade ?? 1;
+
+  /// Embalagem convertida para a unidade do ingrediente (`null` se não dá).
+  double? get embNaUnidade =>
+      embV > 0 ? _converter(embV, unidadeEmb, ingUn, densidade: _densidade) : 0;
+
+  /// Quantidade realmente comprada, na unidade do ingrediente (o que dá entrada
+  /// no stock): unidades = nº de embalagens x tamanho da embalagem.
   double get gramasComprados {
-    if (unidadeQtd != 'un') return _n(qtd);
-    return embV > 0 ? _n(qtd) * embV : 0;
+    if (unidadeQtd == 'un') {
+      final e = embNaUnidade;
+      return (e == null || e <= 0) ? 0 : _n(qtd) * e;
+    }
+    return _converter(_n(qtd), unidadeQtd, ingUn, densidade: _densidade) ?? 0;
+  }
+
+  /// Aviso se as unidades não se entendem (ex.: embalagem em un, ingrediente em g).
+  String? get problemaUnidade {
+    if (embV > 0 && embNaUnidade == null) {
+      return 'A embalagem está em $unidadeEmb e o ingrediente em $ingUn: '
+          'não dá para converter. Muda uma das unidades.';
+    }
+    if (unidadeQtd != 'un' &&
+        _n(qtd) > 0 &&
+        _converter(_n(qtd), unidadeQtd, ingUn, densidade: _densidade) == null) {
+      return 'O comprado está em $unidadeQtd e o ingrediente em $ingUn.';
+    }
+    return null;
   }
 
   double get precoV => _n(preco);
@@ -380,7 +434,7 @@ class _LinhaState {
     quantidadeG: gramasComprados,
     precoUnitario: _n(preco),
     totalLinha: ia.total ?? 0,
-    embalagemG: _n(emb),
+    embalagemG: embNaUnidade ?? 0,
     acao: acao,
     produtoId: produto?.id,
     marca: marca.text.trim(),
@@ -429,6 +483,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
     descricao: ia.descricao,
     nomeGenerico: ia.nomeGenerico,
     marca: ia.marca,
+    caracteristica: ia.caracteristica,
     embalagemG: ia.embalagemG ?? 0,
     ingredientes: widget.ingredientes,
     produtos: widget.produtos,
@@ -566,6 +621,15 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       );
       return;
     }
+    final semUnidade = aAplicar.where(
+      (l) => !l.consumivel && l.problemaUnidade != null,
+    );
+    if (semUnidade.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(semUnidade.first.problemaUnidade!)),
+      );
+      return;
+    }
     final novos = aAplicar.where((l) => l.criarNovo && !l.consumivel).length;
     final novosCons = aAplicar.where((l) => l.criarNovo && l.consumivel).length;
     final renomes = aAplicar.where((l) => l.renomear).length;
@@ -645,10 +709,14 @@ class _RevisaoState extends ConsumerState<_Revisao> {
           final novo = await repo.create(
             IngredienteInput(
               nome: l.nome.text.trim(),
+              caracteristica: l.caracteristica.text.trim(),
+              unidade: l.unidadeIng,
               // o preço e a marca ficam no produto de compra, criado ao aplicar
               // (só numa linha "só stock" é que o preço vai já no ingrediente)
               preco: l.acao == AcaoFatura.stock ? l.precoV : 0,
-              gramasEmbalagem: l.acao == AcaoFatura.stock ? l.embV : 0,
+              gramasEmbalagem: l.acao == AcaoFatura.stock
+                  ? (l.embNaUnidade ?? 0)
+                  : 0,
               origem: OrigemIngrediente.comprado,
             ),
           );
@@ -666,6 +734,8 @@ class _RevisaoState extends ConsumerState<_Revisao> {
               gramasEmbalagem: ing.gramasEmbalagem,
               disponivel: ing.disponivel,
               origem: ing.origem,
+              unidade: ing.un,
+              gramasUnidade: ing.gramasUnidade,
             ),
           );
           ids[l] = ing.id;
@@ -961,6 +1031,79 @@ class _RevisaoState extends ConsumerState<_Revisao> {
     ),
   );
 
+  Widget _dropUnidade(String valor, void Function(String) onChanged) =>
+      DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: valor,
+          isDense: true,
+          items: const [
+            DropdownMenuItem(value: 'g', child: Text('g')),
+            DropdownMenuItem(value: 'ml', child: Text('ml')),
+            DropdownMenuItem(value: 'un', child: Text('un')),
+          ],
+          onChanged: (u) {
+            if (u != null) onChanged(u);
+          },
+        ),
+      );
+
+  /// "Comprado": em g, ml ou un (nº de embalagens). Mudar a unidade converte o
+  /// número já escrito, se a embalagem se conhece.
+  Widget _campoComprado(_LinhaState l) => TextField(
+    controller: l.qtd,
+    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    onChanged: (_) => setState(() {}),
+    decoration: InputDecoration(
+      labelText: 'Comprado',
+      isDense: true,
+      helperText: l.unidadeQtd == 'un'
+          ? (l.gramasComprados > 0
+                ? '= ${_fmtNum(l.gramasComprados)} ${l.ingUn}'
+                : 'Indica a embalagem')
+          : null,
+      suffix: _dropUnidade(l.unidadeQtd, (u) {
+        setState(() {
+          if (u == l.unidadeQtd) return;
+          final atual = l.gramasComprados; // na unidade do ingrediente
+          if (atual > 0) {
+            if (u == 'un') {
+              final e = l.embNaUnidade;
+              if (e != null && e > 0) l.qtd.text = _fmtNum(atual / e);
+            } else {
+              final v = _converter(
+                atual,
+                l.ingUn,
+                u,
+                densidade: l.ingrediente?.nutriDensidade ?? 1,
+              );
+              if (v != null) l.qtd.text = _fmtNum(v);
+            }
+          }
+          l.unidadeQtd = u;
+        });
+      }),
+    ),
+  );
+
+  /// "Embalagem": tamanho de cada embalagem, em g, ml ou un.
+  Widget _campoEmbalagem(_LinhaState l) => TextField(
+    controller: l.emb,
+    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    onChanged: (_) => setState(() {}),
+    decoration: InputDecoration(
+      labelText: 'Embalagem (tamanho)',
+      isDense: true,
+      helperText:
+          l.embV > 0 && l.embNaUnidade != null && l.unidadeEmb != l.ingUn
+          ? '= ${_fmtNum(l.embNaUnidade!)} ${l.ingUn} (o ingrediente está em ${l.ingUn})'
+          : null,
+      suffix: _dropUnidade(
+        l.unidadeEmb,
+        (u) => setState(() => l.unidadeEmb = u),
+      ),
+    ),
+  );
+
   /// Campos de uma linha que é limpeza/insumo: produto, marca e documentos.
   List<Widget> _blocoConsumivel(_LinhaState l) {
     final docs =
@@ -1110,7 +1253,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                         child: Text(
                           l.criarNovo
                               ? 'Novo ingrediente'
-                              : (l.ingrediente?.nome ??
+                              : (l.ingrediente?.nomeComCaracteristica ??
                                     'Escolher ingrediente…'),
                           style: TextStyle(
                             color: !l.temAlvo
@@ -1158,6 +1301,37 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                       ),
                       onChanged: (_) => setState(() {}),
                     ),
+                    if (l.criarNovo) ...[
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: l.caracteristica,
+                        decoration: const InputDecoration(
+                          labelText: 'Característica (opcional)',
+                          hintText: 'T55, T65, integral, 70% cacau…',
+                          isDense: true,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Unidade do ingrediente',
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                      const SizedBox(height: 4),
+                      SegmentedButton<String>(
+                        showSelectedIcon: false,
+                        style: const ButtonStyle(
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        segments: const [
+                          ButtonSegment(value: 'g', label: Text('g')),
+                          ButtonSegment(value: 'ml', label: Text('ml')),
+                          ButtonSegment(value: 'un', label: Text('un')),
+                        ],
+                        selected: {l.unidadeIng},
+                        onSelectionChanged: (v) =>
+                            setState(() => l.unidadeIng = v.first),
+                      ),
+                    ],
                   ],
                   if (!l.consumivel && l.ingrediente != null && l.nomeDiferente)
                     Padding(
@@ -1184,50 +1358,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                   Row(
                     children: [
                       if (!_isLista && !l.consumivel) ...[
-                        Expanded(
-                          child: TextField(
-                            controller: l.qtd,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            onChanged: (_) => setState(() {}),
-                            decoration: InputDecoration(
-                              labelText: 'Comprado',
-                              isDense: true,
-                              helperText: l.unidadeQtd == 'un'
-                                  ? (l.embV > 0
-                                        ? '= ${_fmtNum(l.gramasComprados)} g'
-                                        : 'Indica a embalagem (g)')
-                                  : null,
-                              suffix: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value: l.unidadeQtd,
-                                  isDense: true,
-                                  items: const [
-                                    DropdownMenuItem(
-                                      value: 'g',
-                                      child: Text('g'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'un',
-                                      child: Text('un'),
-                                    ),
-                                  ],
-                                  onChanged: (u) => setState(() {
-                                    if (u == null || u == l.unidadeQtd) return;
-                                    // converte o número já escrito (se a embalagem se conhece)
-                                    if (l.embV > 0 && _n0(l.qtd) > 0) {
-                                      l.qtd.text = u == 'un'
-                                          ? _fmtNum(_n0(l.qtd) / l.embV)
-                                          : _fmtNum(_n0(l.qtd) * l.embV);
-                                    }
-                                    l.unidadeQtd = u;
-                                  }),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
+                        Expanded(child: _campoComprado(l)),
                         const SizedBox(width: 8),
                       ],
                       Expanded(
@@ -1243,23 +1374,23 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                           ),
                         ),
                       ),
-                      if (!l.consumivel) const SizedBox(width: 8),
-                      if (!l.consumivel)
-                        Expanded(
-                          child: TextField(
-                            controller: l.emb,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            decoration: const InputDecoration(
-                              labelText: 'Embalagem',
-                              suffixText: 'g',
-                              isDense: true,
-                            ),
-                          ),
-                        ),
                     ],
                   ),
+                  if (!l.consumivel) ...[
+                    const SizedBox(height: 8),
+                    _campoEmbalagem(l),
+                    if (l.problemaUnidade != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          l.problemaUnidade!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                  ],
                   const SizedBox(height: 8),
                   DropdownButtonFormField<AcaoFatura>(
                     // `l.acao` também muda por fora (ex.: ao escolher

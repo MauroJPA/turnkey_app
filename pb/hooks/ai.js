@@ -69,7 +69,8 @@ function analisarImagemIA(opts) {
       'number|null, "moeda": string|null, "paginas": [number], "linhas": ' +
       '[{"descricao": string, "nome_generico": string, "marca": string|null, ' +
       '"quantidade": number|null, "unidade": string|null, "preco_unitario": ' +
-      'number|null, "total": number|null, "embalagem_g": number|null, ' +
+      'number|null, "total": number|null, "embalagem_g": number|null, "embalagem_unidade": "g"|"ml"|"un", ' +
+      '"caracteristica": string|null, ' +
       '"tipo_item": "ingrediente"|"consumivel", "categoria_consumivel": ' +
       '"limpeza"|"desinfecao"|"higiene"|"insumo"|"outro"|null}]}]}. ' +
       '"paginas" são os números (a começar em 1) das páginas do ficheiro onde ' +
@@ -82,6 +83,15 @@ function analisarImagemIA(opts) {
       'Président 250g" -> "Manteiga". Mantém as variedades que mudam o produto ' +
       '(açúcar branco, amarelo, demerara e mascavado são diferentes). "marca" é ' +
       'a marca comercial (ex.: Sidul, Margão) ou null. ' +
+      'embalagem_unidade é a unidade em que está embalagem_g: "g" por omissão ' +
+      '(sólidos e em kg/g), "ml" para líquidos e bebidas (L, cl, dl e ml -> ml: ' +
+      '"Leite 1L" -> embalagem_g 1000, "ml"; "Coca-Cola 33cl" -> 330, "ml"), ' +
+      '"un" só quando a embalagem conta unidades ("Ovos cx 12" -> 12, "un"). ' +
+      'Na dúvida usa "g". caracteristica é o que distingue variedades do mesmo ' +
+      'ingrediente e NÃO faz parte do nome_generico: "Farinha de trigo T55" -> ' +
+      'nome_generico "Farinha de trigo", caracteristica "T55"; "Chocolate negro ' +
+      '70%" -> "Chocolate negro", "70% cacau"; "Farinha integral" -> "Farinha de ' +
+      'trigo", "integral". null se não houver. ' +
       'tipo_item: "ingrediente" para o que se come ou entra numa receita ' +
       '(farinha, açúcar, chocolate, ovos, especiarias); "consumivel" para ' +
       'produtos de limpeza, detergentes, desinfetantes, lixívia, esponjas, ' +
@@ -98,8 +108,8 @@ function analisarImagemIA(opts) {
       'Se a coluna estiver em kg/g/L, usa essa unidade. ' +
       'Regras: preco_unitario é o preço por unidade/embalagem, NÃO o total da ' +
       'linha. Não incluas descontos, portes ou totais como linhas de produto. ' +
-      'embalagem_g só quando o peso/volume da embalagem aparecer (converte kg->g, ' +
-      'L->ml tratado como g). ' +
+      'embalagem_g só quando o tamanho da embalagem aparecer (converte kg->g, ' +
+      'L->ml, cl->ml), com a unidade em embalagem_unidade. ' +
       (isLista ? 'Numa lista de preços, quantidade e total são null.' : '');
     instrucao = 'Extrai os dados. Só JSON.';
   }

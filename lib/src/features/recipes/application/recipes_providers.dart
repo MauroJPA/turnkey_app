@@ -19,7 +19,7 @@ class RecipeDetail {
   final List<ItemReceita> itens;
 
   double get pesoLinhas =>
-      itens.fold(0, (s, i) => s + i.quantidadeG);
+      itens.fold(0, (s, i) => s + i.pesoG);
 
   double get pesoTotal => receita.rendimentoManual && receita.rendimentoEsperado > 0
       ? receita.rendimentoEsperado
@@ -34,7 +34,7 @@ class RecipeDetail {
   bool get temPendencias => itens.any((i) => i.pendente);
 
   double percentagem(ItemReceita i) =>
-      pesoLinhas > 0 ? (i.quantidadeG / pesoLinhas) * 100 : 0;
+      pesoLinhas > 0 ? (i.pesoG / pesoLinhas) * 100 : 0;
 }
 
 final recipeDetailProvider =

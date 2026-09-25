@@ -38,6 +38,8 @@ class FaturaLinhaIa {
     this.precoUnitario,
     this.total,
     this.embalagemG,
+    this.embalagemUnidade = 'g',
+    this.caracteristica = '',
     this.nomeGenerico = '',
     this.marca = '',
     this.consumivel = false,
@@ -45,6 +47,13 @@ class FaturaLinhaIa {
   });
 
   final String descricao;
+
+  /// Unidade da embalagem (`embalagem_g` está nela): `g` (por omissão), `ml` ou `un`.
+  final String embalagemUnidade;
+
+  /// Característica que distingue variedades do mesmo ingrediente (T55, T65,
+  /// integral, 70% cacau…). Vazio se não houver.
+  final String caracteristica;
 
   /// Ingrediente em termos genéricos, sem marca nem embalagem (sugestão da IA).
   final String nomeGenerico;
@@ -69,6 +78,9 @@ class FaturaLinhaIa {
   /// embalagens/unidades ("2 un" de 15 g são 30 g).
   bool get unidadeEPeso =>
       const {'g', 'gr', 'grs', 'kg', 'l', 'lt', 'ml', 'cl', 'dl'}.contains(_u);
+
+  /// A quantidade vem em volume (l, ml, cl, dl)?
+  bool get unidadeEVolume => const {'l', 'lt', 'ml', 'cl', 'dl'}.contains(_u);
 
   /// A quantidade lida conta embalagens e sabe-se o peso de cada uma.
   bool get contaEmbalagens => !unidadeEPeso && (embalagemG ?? 0) > 0;
@@ -97,6 +109,12 @@ class FaturaLinhaIa {
     precoUnitario: (j['preco_unitario'] as num?)?.toDouble(),
     total: (j['total'] as num?)?.toDouble(),
     embalagemG: (j['embalagem_g'] as num?)?.toDouble(),
+    embalagemUnidade: switch ((j['embalagem_unidade'] ?? '').toString().trim().toLowerCase()) {
+      'ml' => 'ml',
+      'un' => 'un',
+      _ => 'g',
+    },
+    caracteristica: (j['caracteristica'] ?? '').toString().trim(),
     nomeGenerico: (j['nome_generico'] ?? '').toString().trim(),
     marca: (j['marca'] ?? '').toString().trim(),
     consumivel: j['tipo_item'] == 'consumivel',

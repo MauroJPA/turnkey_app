@@ -24,7 +24,7 @@ final produtoIngredientesProvider = FutureProvider.autoDispose
         for (final c in plano.comprar)
           IngredienteRotulo(
             nome: c.nome,
-            gramas: c.gramas,
+            gramas: c.pesoG,
             // os do genérico + os dos produtos que as receitas fixam
             alergenios: {
               ...?porId[c.ingredienteId]?.alergenios,

@@ -1,5 +1,6 @@
 import 'package:pocketbase/pocketbase.dart';
 
+import '../../../core/formatting/quantities.dart';
 import '../../../core/nutrition/nutrition.dart';
 
 /// Nutrição própria de um produto (por 100 g ou 100 ml), a gravar nos campos `nutri_*`.
@@ -43,6 +44,7 @@ class ProdutoIngrediente {
     this.nutri = const Nutrientes(),
     this.nutriBase = '100g',
     this.nutriDensidade = 1,
+    this.unidade = 'g',
   });
 
   final String id;
@@ -68,6 +70,29 @@ class ProdutoIngrediente {
   final Nutrientes nutri;
   final String nutriBase;
   final double nutriDensidade;
+
+  /// Unidade do ingrediente (`g`, `ml`, `un`): [embalagemG] está nela. Preenchida
+  /// pelo provider a partir do ingrediente.
+  final String unidade;
+
+  ProdutoIngrediente comUnidade(String u) => ProdutoIngrediente(
+    id: id,
+    ingredienteId: ingredienteId,
+    nome: nome,
+    marca: marca,
+    fornecedor: fornecedor,
+    embalagemG: embalagemG,
+    preco: preco,
+    precoAtualizadoEm: precoAtualizadoEm,
+    nomesFatura: nomesFatura,
+    alergenios: alergenios,
+    alergeniosTracos: alergeniosTracos,
+    nutriPropria: nutriPropria,
+    nutri: nutri,
+    nutriBase: nutriBase,
+    nutriDensidade: nutriDensidade,
+    unidade: unidadeNormalizada(u),
+  );
 
   bool get temPreco => preco > 0 && embalagemG > 0;
 
@@ -111,9 +136,11 @@ class ProdutoIngrediente {
     final partes = <String>[
       if (marca.isNotEmpty) marca,
       if (embalagemG > 0)
-        embalagemG >= 1000
-            ? '${_n(embalagemG / 1000)} kg'
-            : '${_n(embalagemG)} g',
+        unidade == 'g'
+            ? (embalagemG >= 1000
+                  ? '${_n(embalagemG / 1000)} kg'
+                  : '${_n(embalagemG)} g')
+            : quantidadeParaTexto(embalagemG, unidade),
     ];
     return partes.isEmpty ? nome : partes.join(' · ');
   }

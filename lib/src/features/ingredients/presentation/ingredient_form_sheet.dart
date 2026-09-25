@@ -57,6 +57,12 @@ class _IngredientFormSheetState extends ConsumerState<_IngredientFormSheet> {
   late final _gramas = TextEditingController(
     text: widget.existente == null ? '' : _n(widget.existente!.gramasEmbalagem),
   );
+  late String _unidade = widget.existente?.un ?? 'g';
+  late final _gramasUn = TextEditingController(
+    text: (widget.existente?.gramasUnidade ?? 0) > 0
+        ? _n(widget.existente!.gramasUnidade)
+        : '',
+  );
   late OrigemIngrediente _origem =
       widget.existente?.origem ?? OrigemIngrediente.comprado;
   late bool _disponivel = widget.existente?.disponivel ?? true;
@@ -92,6 +98,7 @@ class _IngredientFormSheetState extends ConsumerState<_IngredientFormSheet> {
       _fornecedor,
       _preco,
       _gramas,
+      _gramasUn,
       _kcal,
       _lip,
       _sat,
@@ -226,6 +233,8 @@ class _IngredientFormSheetState extends ConsumerState<_IngredientFormSheet> {
           fornecedor: _fornecedor.text,
           preco: _num(_preco),
           gramasEmbalagem: _num(_gramas),
+          unidade: _unidade,
+          gramasUnidade: _unidade == 'un' ? _num(_gramasUn) : 0,
           disponivel: _disponivel,
           origem: _origem,
         ),
@@ -405,12 +414,65 @@ class _IngredientFormSheetState extends ConsumerState<_IngredientFormSheet> {
                 ],
               ),
               const SizedBox(height: 12),
+              Text(
+                'Unidade de medida',
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+              const SizedBox(height: 4),
+              SegmentedButton<String>(
+                showSelectedIcon: false,
+                segments: const [
+                  ButtonSegment(value: 'g', label: Text('Gramas (g)')),
+                  ButtonSegment(value: 'ml', label: Text('Mililitros (ml)')),
+                  ButtonSegment(value: 'un', label: Text('Unidades')),
+                ],
+                selected: {_unidade},
+                onSelectionChanged: (v) => setState(() => _unidade = v.first),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  switch (_unidade) {
+                    'ml' =>
+                      'Bebidas e líquidos: a embalagem, as receitas e o stock '
+                          'ficam em ml. O peso usa a densidade da nutrição (1 g/ml se vazia).',
+                    'un' =>
+                      'Ovos, garrafas, sacos…: a embalagem, as receitas e o stock '
+                          'ficam em unidades.',
+                    _ => 'Por omissão: tudo em gramas.',
+                  },
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+              if (editar && _unidade != widget.existente!.un)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    'Atenção: as quantidades já guardadas (receitas, embalagem, '
+                    'stock) não são convertidas — confere-as.',
+                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  ),
+                ),
+              if (_unidade == 'un') ...[
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _gramasUn,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Peso de cada unidade (g)',
+                    helperText: 'Para o peso da receita e a nutrição',
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
               if (temProdutos)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Text(
                     'Custo atual: ${_n(widget.existente!.preco)} € por '
-                    '${_n(widget.existente!.gramasEmbalagem)} g (compra mais '
+                    '${_n(widget.existente!.gramasEmbalagem)} ${widget.existente!.un} (compra mais '
                     'recente). Muda-se nos produtos de compra, em baixo.',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
@@ -438,11 +500,11 @@ class _IngredientFormSheetState extends ConsumerState<_IngredientFormSheet> {
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
-                        decoration: const InputDecoration(
-                          labelText: 'Gramas da embalagem *',
+                        decoration: InputDecoration(
+                          labelText: 'Embalagem ($_unidade) *',
                         ),
                         validator: (v) =>
-                            _num(_gramas) <= 0 ? 'Indica as gramas' : null,
+                            _num(_gramas) <= 0 ? 'Indica a embalagem' : null,
                       ),
                     ),
                   ],
