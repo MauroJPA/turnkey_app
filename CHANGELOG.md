@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.15.1 — 2026-09-25 — Faturas: quantidade em unidades ou gramas
+
+- **Corrigido:** uma linha "2 un" de "Noz moscada 15 g" entrava como 2 g (e "1 un" de "Cravinho 14 g" como 1 g).
+  Agora as unidades multiplicam pelo peso da embalagem: 2 × 15 g = **30 g**; 1 × 14 g = **14 g**.
+- No campo **Comprado** da revisão há agora um seletor **g | un**: em "un" escreves o nº de embalagens e o ecrã
+  mostra o total em gramas ("= 30 g"); mudar entre g e un converte o número que já escreveste. O que dá entrada
+  no stock são sempre as gramas. Sem o peso da embalagem, pede-o.
+- A IA passa a ser instruída a dar a quantidade tal como está na fatura (sem multiplicar). As faturas já lidas
+  não precisam de ser lidas de novo: a conversão faz-se no ecrã.
+- Testes: `test/invoice_ia_parse_test.dart`.
+
 ## 1.15.0 — 2026-09-25 — Nutrição própria por produto de compra
 
 - **Cada produto de compra pode ter a sua própria informação nutricional** (energia, lípidos, saturados,
