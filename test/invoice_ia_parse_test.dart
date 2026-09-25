@@ -1,9 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gc_turnkey/src/features/invoices/data/invoice_repository.dart';
+import 'package:gc_turnkey/src/features/invoices/domain/fatura.dart';
 import 'package:pocketbase/pocketbase.dart';
-import 'package:turnkey_app/src/features/invoices/data/invoice_repository.dart';
-import 'package:turnkey_app/src/features/invoices/domain/fatura.dart';
 
 void main() {
   group('FaturaLinhaIa.fromJson', () {

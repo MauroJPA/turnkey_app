@@ -1,13 +1,13 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-// Financeiro (F-FIN-6) — sincronização com o Vendus (POS/faturação da
-// Gookie). Traz as vendas (documentos não cancelados que não sejam
+// Financeiro (F-FIN-6) — sincronização com o Vendus (POS/faturação).
+// Traz as vendas (documentos não cancelados que não sejam
 // orçamentos/guias/encomendas/notas de crédito ou débito — ver
 // TIPOS_NAO_VENDA em vendus_core.js) como `vendas`+`vendas_itens` (origem
 // 'vendus'), com emparelhamento automático por nome à ficha técnica —
 // mesma lógica da importação CSV.
 //
-//   POST /api/turnkey/vendus/sincronizar
+//   POST /api/gc_turnkey/vendus/sincronizar
 //     body opcional: { desde?: "YYYY-MM-DD", ate?: "YYYY-MM-DD" }
 //     -> { vendasCriadas, duplicadasIgnoradas, itensCriados, itensSemFicha }
 //     -> 503 se faltar VENDUS_API_KEY no ambiente do servidor
@@ -28,7 +28,7 @@
 
 routerAdd(
   'POST',
-  '/api/turnkey/vendus/sincronizar',
+  '/api/gc_turnkey/vendus/sincronizar',
   (e) => {
     const auth = e.auth;
     if (!auth || auth.collection().name !== 'users') {

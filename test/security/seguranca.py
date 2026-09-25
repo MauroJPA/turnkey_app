@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Testes de segurança do PocketBase do turnkey_app (repetíveis).
+"""Testes de segurança do PocketBase do gc_turnkey (repetíveis).
 
 Arranca um PocketBase DESCARTÁVEL (dados temporários, porta 8197, sem
-TURNKEY_DEV) com as migrations e hooks do projeto, cria duas empresas com
+GC_TURNKEY_DEV) com as migrations e hooks do projeto, cria duas empresas com
 utilizadores de todos os papéis e tenta o que NÃO deve ser possível.
 
     python test/security/seguranca.py            # arranca o seu próprio servidor
@@ -136,8 +136,8 @@ def arrancar():
     base = [PB_BIN, '--dir', dados, '--migrationsDir', os.path.join(RAIZ, 'pb', 'migrations')]
     subprocess.run(base[:1] + ['superuser', 'upsert', SUPER[0], SUPER[1]] + base[1:],
                    check=True, capture_output=True)
-    env = {k: v for k, v in os.environ.items() if k not in ('TURNKEY_DEV', 'VENDUS_API_KEY', 'VENDUS_SYNC_EMPRESA')}
-    env['TURNKEY_ENC_KEY'] = 'K' * 32  # chave-mestra só de teste
+    env = {k: v for k, v in os.environ.items() if k not in ('GC_TURNKEY_DEV', 'VENDUS_API_KEY', 'VENDUS_SYNC_EMPRESA')}
+    env['GC_TURNKEY_ENC_KEY'] = 'K' * 32  # chave-mestra só de teste
     porta = URL.rsplit(':', 1)[1]
     proc = subprocess.Popen(
         [PB_BIN, 'serve', '--dir', dados, '--migrationsDir', os.path.join(RAIZ, 'pb', 'migrations'),
@@ -375,7 +375,7 @@ def teste_papeis():
                    {'email': 'normal@seg.local', 'password': 'Normal12345', 'passwordConfirm': 'Normal12345'})
     check(s == 200 and not r.get('empresa') and not r.get('papel'), 'registo normal fica sem empresa nem papel', str(r)[:120])
     if s == 200:
-        check(not r.get('verified'), 'registo novo não vem verificado (sem TURNKEY_DEV)')
+        check(not r.get('verified'), 'registo novo não vem verificado (sem GC_TURNKEY_DEV)')
         call('DELETE', f'/api/collections/users/records/{r["id"]}', tok=su)
 
     # auto-promoção
@@ -442,38 +442,38 @@ def teste_papeis():
 
     # endpoints de equipa
     for quem in ('viewerA', 'editorA'):
-        s, _, _ = call('POST', '/api/turnkey/team/members',
+        s, _, _ = call('POST', '/api/gc_turnkey/team/members',
                        {'email': f'x{quem}@seg.local', 'password': 'Teste12345!', 'papel': 'viewer'}, tok[quem])
         check(s == 403, f'equipa: {quem} não cria membros', f'status {s}')
-        s, _, _ = call('PATCH', f'/api/turnkey/team/members/{users["viewerA"]}', {'papel': 'admin'}, tok[quem])
+        s, _, _ = call('PATCH', f'/api/gc_turnkey/team/members/{users["viewerA"]}', {'papel': 'admin'}, tok[quem])
         check(s == 403, f'equipa: {quem} não muda papéis', f'status {s}')
-    s, r, _ = call('POST', '/api/turnkey/team/members',
+    s, r, _ = call('POST', '/api/gc_turnkey/team/members',
                    {'email': 'novoadmin@seg.local', 'password': 'Teste12345!', 'papel': 'admin'}, tok['adminA'])
     if s == 200:
         s2, r2, _ = call('GET', f'/api/collections/users/records/{r["id"]}', tok=su)
         check(r2.get('papel') != 'admin', 'equipa: admin não cria outro admin', f'papel={r2.get("papel")}')
-    s, r, _ = call('POST', '/api/turnkey/team/members',
+    s, r, _ = call('POST', '/api/gc_turnkey/team/members',
                    {'email': 'curta@seg.local', 'password': '123', 'papel': 'viewer'}, tok['ownerA'])
     check(s == 400, 'equipa: palavra-passe curta recusada', f'status {s}')
-    s, r, _ = call('POST', '/api/turnkey/team/members',
+    s, r, _ = call('POST', '/api/gc_turnkey/team/members',
                    {'email': 'ownera@seg.local', 'password': 'Teste12345!', 'papel': 'viewer'}, tok['ownerA'])
     check(s in (400, 409), 'equipa: email repetido não dá erro 500', f'status {s}')
     # o admin não mexe em proprietários nem noutros admins
-    s, _, _ = call('PATCH', f'/api/turnkey/team/members/{users["ownerA2"]}', {'papel': 'viewer'}, tok['adminA'])
+    s, _, _ = call('PATCH', f'/api/gc_turnkey/team/members/{users["ownerA2"]}', {'papel': 'viewer'}, tok['adminA'])
     check(s == 403, 'equipa: admin não rebaixa um proprietário', f'status {s}')
     call('PATCH', f'/api/collections/users/records/{users["ownerA2"]}', {'papel': 'owner'}, su)
-    s, _, _ = call('POST', '/api/turnkey/team/members',
+    s, _, _ = call('POST', '/api/gc_turnkey/team/members',
                    {'email': 'admin2@seg.local', 'password': 'Teste12345!', 'papel': 'admin'}, tok['ownerA'])
     s, r, _ = call('GET', "/api/collections/users/records?filter=email='admin2@seg.local'", tok=su)
     if r.get('items'):
         a2 = r['items'][0]['id']
-        s, _, _ = call('PATCH', f'/api/turnkey/team/members/{a2}', {'papel': 'viewer'}, tok['adminA'])
+        s, _, _ = call('PATCH', f'/api/gc_turnkey/team/members/{a2}', {'papel': 'viewer'}, tok['adminA'])
         check(s == 403, 'equipa: admin não rebaixa outro admin', f'status {s}')
-    s, _, _ = call('PATCH', f'/api/turnkey/team/members/{users["viewerA"]}', {'papel': 'viewer'}, tok['ownerB'])
+    s, _, _ = call('PATCH', f'/api/gc_turnkey/team/members/{users["viewerA"]}', {'papel': 'viewer'}, tok['ownerB'])
     check(s in (403, 404), 'equipa: owner de B não mexe em utilizadores de A', f'status {s}')
     # último proprietário
     call('PATCH', f'/api/collections/users/records/{users["ownerA2"]}', {'papel': 'viewer'}, su)
-    s, _, _ = call('PATCH', f'/api/turnkey/team/members/{users["ownerA"]}', {'papel': 'viewer'}, tok['ownerA'])
+    s, _, _ = call('PATCH', f'/api/gc_turnkey/team/members/{users["ownerA"]}', {'papel': 'viewer'}, tok['ownerA'])
     check(s == 400, 'equipa: não se remove o último proprietário', f'status {s}')
 
 
@@ -481,25 +481,25 @@ def teste_papeis():
 # 3. endpoints próprios
 # ---------------------------------------------------------------------------
 ROTAS = [
-    ('POST', '/api/turnkey/admin/recompute'),
-    ('POST', '/api/turnkey/admin/relink-espelhos'),
-    ('POST', '/api/turnkey/faturas/{faturas}/analisar'),
-    ('POST', '/api/turnkey/faturas/{faturas}/aplicar'),
-    ('GET', '/api/turnkey/faturas/export'),
-    ('POST', '/api/turnkey/inventario/ajustar'),
-    ('GET', '/api/turnkey/producoes/{producoes}/plano'),
-    ('POST', '/api/turnkey/producoes/{producoes}/lista-compras'),
-    ('POST', '/api/turnkey/producoes/{producoes}/concluir'),
-    ('GET', '/api/turnkey/fichas/resolver'),
-    ('GET', '/api/turnkey/receitas/{receitas}/plano'),
-    ('GET', '/api/turnkey/fichas/{fichas_tecnicas}/plano'),
-    ('POST', '/api/turnkey/ingredientes/{ingredientes}/rotulo'),
-    ('POST', '/api/turnkey/nutricao/ler-rotulo'),
-    ('POST', '/api/turnkey/ingredientes/auto-insa'),
-    ('POST', '/api/turnkey/onboarding'),
-    ('POST', '/api/turnkey/team/members'),
-    ('PATCH', '/api/turnkey/team/members/{users}'),
-    ('POST', '/api/turnkey/vendus/sincronizar'),
+    ('POST', '/api/gc_turnkey/admin/recompute'),
+    ('POST', '/api/gc_turnkey/admin/relink-espelhos'),
+    ('POST', '/api/gc_turnkey/faturas/{faturas}/analisar'),
+    ('POST', '/api/gc_turnkey/faturas/{faturas}/aplicar'),
+    ('GET', '/api/gc_turnkey/faturas/export'),
+    ('POST', '/api/gc_turnkey/inventario/ajustar'),
+    ('GET', '/api/gc_turnkey/producoes/{producoes}/plano'),
+    ('POST', '/api/gc_turnkey/producoes/{producoes}/lista-compras'),
+    ('POST', '/api/gc_turnkey/producoes/{producoes}/concluir'),
+    ('GET', '/api/gc_turnkey/fichas/resolver'),
+    ('GET', '/api/gc_turnkey/receitas/{receitas}/plano'),
+    ('GET', '/api/gc_turnkey/fichas/{fichas_tecnicas}/plano'),
+    ('POST', '/api/gc_turnkey/ingredientes/{ingredientes}/rotulo'),
+    ('POST', '/api/gc_turnkey/nutricao/ler-rotulo'),
+    ('POST', '/api/gc_turnkey/ingredientes/auto-insa'),
+    ('POST', '/api/gc_turnkey/onboarding'),
+    ('POST', '/api/gc_turnkey/team/members'),
+    ('PATCH', '/api/gc_turnkey/team/members/{users}'),
+    ('POST', '/api/gc_turnkey/vendus/sincronizar'),
 ]
 
 
@@ -514,7 +514,7 @@ def caminho(rota, emp):
 
 
 def teste_endpoints():
-    sec('3. Endpoints próprios (/api/turnkey/*)')
+    sec('3. Endpoints próprios (/api/gc_turnkey/*)')
     for metodo, rota in ROTAS:
         a = caminho(rota, 'A')
         corpo = {} if metodo != 'GET' else None
@@ -530,14 +530,14 @@ def teste_endpoints():
             falha(f'{metodo} {rota}: resposta com detalhes internos', txt[:150])
     # papéis nos endpoints administrativos
     for quem in ('viewerA', 'editorA'):
-        s, _, _ = call('POST', '/api/turnkey/admin/recompute', {}, tok[quem])
+        s, _, _ = call('POST', '/api/gc_turnkey/admin/recompute', {}, tok[quem])
         check(s == 403, f'admin/recompute: {quem} recusado', f'status {s}')
-    s, _, _ = call('POST', '/api/turnkey/admin/recompute', {'empresa': empresas['B']}, tok['adminA'])
-    s2, r2, _ = call('POST', '/api/turnkey/admin/recompute', {'empresa': empresas['B']}, tok['adminA'])
+    s, _, _ = call('POST', '/api/gc_turnkey/admin/recompute', {'empresa': empresas['B']}, tok['adminA'])
+    s2, r2, _ = call('POST', '/api/gc_turnkey/admin/recompute', {'empresa': empresas['B']}, tok['adminA'])
     check(s in (200, 400), 'admin/recompute: admin de A só afeta a própria empresa (ignora o corpo)')
     for quem in ('viewerA',):
-        for rota in ('/api/turnkey/inventario/ajustar', '/api/turnkey/vendus/sincronizar',
-                     '/api/turnkey/ingredientes/auto-insa'):
+        for rota in ('/api/gc_turnkey/inventario/ajustar', '/api/gc_turnkey/vendus/sincronizar',
+                     '/api/gc_turnkey/ingredientes/auto-insa'):
             s, _, _ = call('POST', rota, {}, tok[quem])
             check(s in (400, 403), f'{rota}: Leitura não escreve', f'status {s}')
     ing = dados.get(('ingredientes', 'A'))
@@ -547,11 +547,11 @@ def teste_endpoints():
                 {'ingredienteId': ing[0], 'quantidade': -5}, {'ingredienteId': {'$ne': 1}, 'quantidade': 1},
                 {'ingredienteId': 'x' * 100000}, [], 'texto', {'quantidade': None}]
         for i, corpo in enumerate(lixo):
-            s, r, _ = call('POST', '/api/turnkey/inventario/ajustar', corpo, tok['editorA'])
+            s, r, _ = call('POST', '/api/gc_turnkey/inventario/ajustar', corpo, tok['editorA'])
             check(s != 500, f'inventario/ajustar com dados inválidos #{i}: sem erro 500', f'status {s}')
-    s, r, _ = call('POST', '/api/turnkey/inventario/ajustar', raw=b'{isto nao e json', tok=tok['editorA'])
+    s, r, _ = call('POST', '/api/gc_turnkey/inventario/ajustar', raw=b'{isto nao e json', tok=tok['editorA'])
     check(s in (400, 403, 422), 'inventario/ajustar com JSON inválido: erro 4xx', f'status {s}')
-    s, r, _ = call('POST', '/api/turnkey/nutricao/ler-rotulo', {'imagemBase64': 'A' * 12_000_000}, tok['editorA'])
+    s, r, _ = call('POST', '/api/gc_turnkey/nutricao/ler-rotulo', {'imagemBase64': 'A' * 12_000_000}, tok['editorA'])
     check(s in (400, 413, 503, 403, 422), 'ler-rotulo com corpo enorme: recusado ou sem IA', f'status {s}')
 
 
@@ -685,7 +685,7 @@ def teste_aprovacao():
     s, r, _ = call('POST', '/api/collections/users/auth-with-password', {'identity': 'pendente@seg.local', 'password': 'Pendente1234'})
     t = r.get('token')
     check(bool(t), 'utilizador por aprovar consegue entrar (vê o ecrã "em análise")')
-    s, _, _ = call('POST', '/api/turnkey/onboarding', {'nome': 'Empresa Pendente'}, t)
+    s, _, _ = call('POST', '/api/gc_turnkey/onboarding', {'nome': 'Empresa Pendente'}, t)
     check(s == 403, 'por aprovar: não cria empresa', f'status {s}')
     s, _, _ = call('PATCH', f'/api/collections/users/records/{uid}', {'aprovado': True}, t)
     check(s != 200, 'por aprovar: não se aprova a si próprio', f'status {s}')
@@ -696,9 +696,9 @@ def teste_aprovacao():
         check(s != 200 or not r.get('items'), f'por aprovar: não vê dados ({col})', f'status {s}')
     s, _, _ = call('PATCH', f'/api/collections/users/records/{uid}', {'aprovado': True}, su)
     check(s == 200, 'o operador (superutilizador) aprova')
-    s, _, _ = call('POST', '/api/turnkey/onboarding', {'nome': 'Empresa Aprovada'}, t)
+    s, _, _ = call('POST', '/api/gc_turnkey/onboarding', {'nome': 'Empresa Aprovada'}, t)
     check(s == 200, 'depois de aprovado cria a empresa', f'status {s}')
-    s, r, _ = call('POST', '/api/turnkey/team/members',
+    s, r, _ = call('POST', '/api/gc_turnkey/team/members',
                    {'email': 'membro-aprovado@seg.local', 'password': 'Teste12345!', 'papel': 'viewer'}, tok['ownerA'])
     if s == 200:
         s2, r2, _ = call('GET', f'/api/collections/users/records/{r["id"]}', tok=su)
@@ -707,7 +707,7 @@ def teste_aprovacao():
 
 def teste_segredos():
     sec('7b. Segredos cifrados (token do Vendus)')
-    url = '/api/turnkey/integracoes/vendus'
+    url = '/api/gc_turnkey/integracoes/vendus'
     for quem in ('viewerA', 'editorA'):
         s, _, _ = call('PUT', url, {'valor': TOKEN_VENDUS}, tok[quem])
         check(s == 403, f'{quem} não guarda tokens', f'status {s}')
@@ -715,7 +715,7 @@ def teste_segredos():
     check(s in (401, 403), 'sem sessão não guarda tokens', f'status {s}')
     s, _, _ = call('PUT', url, {'valor': 'curto'}, tok['ownerA'])
     check(s == 400, 'token curto recusado', f'status {s}')
-    s, _, _ = call('PUT', '/api/turnkey/integracoes/outro', {'valor': TOKEN_VENDUS}, tok['ownerA'])
+    s, _, _ = call('PUT', '/api/gc_turnkey/integracoes/outro', {'valor': TOKEN_VENDUS}, tok['ownerA'])
     check(s == 404, 'serviço desconhecido recusado', f'status {s}')
     s, r, _ = call('PUT', url, {'valor': TOKEN_VENDUS}, tok['adminA'])
     check(s == 200 and r.get('configurada') is True and r.get('sufixo') == '7890', 'admin guarda o token', f'{s} {r}')
@@ -747,14 +747,14 @@ def teste_segredos():
                     achou = True
         check(not achou, 'o ficheiro da base de dados não contém o token em claro')
     # sincronizar usa o token da própria empresa; outra empresa não herda
-    s, r, _ = call('POST', '/api/turnkey/vendus/sincronizar', {}, tok['ownerA'])
+    s, r, _ = call('POST', '/api/gc_turnkey/vendus/sincronizar', {}, tok['ownerA'])
     check(TOKEN_VENDUS not in json.dumps(r) if not isinstance(r, bytes) else True, 'erros do Vendus não expõem o token', f'status {s}')
     check(s != 503, 'sincronizar usa o token guardado (decifrado no servidor)', f'status {s}')
-    s, r, _ = call('POST', '/api/turnkey/vendus/sincronizar', {}, tok['ownerB'])
+    s, r, _ = call('POST', '/api/gc_turnkey/vendus/sincronizar', {}, tok['ownerB'])
     check(s == 503, 'empresa sem token não usa o de outra (503 "não configurado")', f'status {s}')
     s, r, _ = call('DELETE', url, tok=tok['ownerA'])
     check(s == 200 and r.get('configurada') is False, 'proprietário remove o token')
-    s, r, _ = call('POST', '/api/turnkey/vendus/sincronizar', {}, tok['ownerA'])
+    s, r, _ = call('POST', '/api/gc_turnkey/vendus/sincronizar', {}, tok['ownerA'])
     check(s == 503, 'sem token guardado volta a 503', f'status {s}')
     # nada de segredos no registo do servidor
     if tmp and os.path.exists(os.path.join(tmp, 'pb.log')):
@@ -762,7 +762,7 @@ def teste_segredos():
 
 
 def teste_sem_chave():
-    """Servidor sem TURNKEY_ENC_KEY (esquecimento comum): a app tem de dizer o que falta."""
+    """Servidor sem GC_TURNKEY_ENC_KEY (esquecimento comum): a app tem de dizer o que falta."""
     global URL
     if 'PB_URL' in os.environ:
         return
@@ -773,7 +773,7 @@ def teste_sem_chave():
     mig = os.path.join(RAIZ, 'pb', 'migrations')
     subprocess.run([PB_BIN, 'superuser', 'upsert', SUPER[0], SUPER[1], '--dir', dados2, '--migrationsDir', mig],
                    check=True, capture_output=True)
-    env = {k: v for k, v in os.environ.items() if k not in ('TURNKEY_DEV', 'TURNKEY_ENC_KEY')}
+    env = {k: v for k, v in os.environ.items() if k not in ('GC_TURNKEY_DEV', 'GC_TURNKEY_ENC_KEY')}
     p2 = subprocess.Popen([PB_BIN, 'serve', '--dir', dados2, '--migrationsDir', mig,
                            '--hooksDir', os.path.join(RAIZ, 'pb', 'hooks'), '--http', '127.0.0.1:8198'],
                           stdout=open(os.path.join(tmp2, 'pb.log'), 'w'), stderr=subprocess.STDOUT, env=env)
@@ -795,11 +795,11 @@ def teste_sem_chave():
                          'verified': True, 'empresa': e['id'], 'papel': 'owner'}, su2)
         s1, r, _ = call('POST', '/api/collections/users/auth-with-password', {'identity': 'dono@semchave.local', 'password': 'Teste12345!'})
         t = r['token']
-        s1, r, _ = call('GET', '/api/turnkey/integracoes/vendus', tok=t)
+        s1, r, _ = call('GET', '/api/gc_turnkey/integracoes/vendus', tok=t)
         check(s1 == 200 and r.get('cifraDisponivel') is False, 'o estado avisa que falta a chave de cifra', str(r))
-        s1, r, _ = call('PUT', '/api/turnkey/integracoes/vendus', {'valor': 'TOKEN-QUALQUER-12345'}, t)
+        s1, r, _ = call('PUT', '/api/gc_turnkey/integracoes/vendus', {'valor': 'TOKEN-QUALQUER-12345'}, t)
         msg = r.get('message', '') if isinstance(r, dict) else ''
-        check(s1 == 503 and 'TURNKEY_ENC_KEY' in msg, 'guardar sem chave: erro claro a dizer o que falta', f'{s1} {msg}')
+        check(s1 == 503 and 'GC_TURNKEY_ENC_KEY' in msg, 'guardar sem chave: erro claro a dizer o que falta', f'{s1} {msg}')
     finally:
         URL = original
         p2.terminate()

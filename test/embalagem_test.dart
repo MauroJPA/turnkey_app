@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/features/packaging/domain/embalagem.dart';
+import 'package:gc_turnkey/src/features/packaging/domain/embalagem.dart';
 
 void main() {
   test('custoPeca = preço da compra ÷ peças; custoUnidade divide pelo rende',

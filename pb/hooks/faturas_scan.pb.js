@@ -6,20 +6,20 @@
 // em 5 minutos, o cron cria uma `faturas` (estado 'nova') por cada ficheiro,
 // manda-a analisar pela IA e move o original para `<pasta>/processadas/`.
 //
-//   TURNKEY_SCAN_DIR       pasta que o scanner alimenta (ex.: D:\scan\faturas)
-//   TURNKEY_SCAN_EMPRESA   id da empresa a que as faturas pertencem
+//   GC_TURNKEY_SCAN_DIR       pasta que o scanner alimenta (ex.: D:\scan\faturas)
+//   GC_TURNKEY_SCAN_EMPRESA   id da empresa a que as faturas pertencem
 //
 // Sem estas duas variáveis o cron não faz nada.
 
 cronAdd('scan_faturas', '*/5 * * * *', () => {
-  const dir = $os.getenv('TURNKEY_SCAN_DIR');
-  const empId = $os.getenv('TURNKEY_SCAN_EMPRESA');
+  const dir = $os.getenv('GC_TURNKEY_SCAN_DIR');
+  const empId = $os.getenv('GC_TURNKEY_SCAN_EMPRESA');
   if (!dir || !empId) return;
 
   try {
     $app.findRecordById('empresas', empId);
   } catch (_) {
-    console.log('[scan] TURNKEY_SCAN_EMPRESA inválida: ' + empId);
+    console.log('[scan] GC_TURNKEY_SCAN_EMPRESA inválida: ' + empId);
     return;
   }
 

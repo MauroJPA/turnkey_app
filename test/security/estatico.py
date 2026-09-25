@@ -110,11 +110,11 @@ print('  (feito)')
 
 print('== Opções de desenvolvimento')
 sv = open('pb/serve.ps1', encoding='utf-8', errors='ignore').read() if os.path.exists('pb/serve.ps1') else ''
-if 'TURNKEY_DEV' in sv:
-    aviso('pb/serve.ps1 liga TURNKEY_DEV=1 (contas novas ficam verificadas) — em produção NÃO usar (ver docs/SEGURANCA.md)')
+if 'GC_TURNKEY_DEV' in sv:
+    aviso('pb/serve.ps1 liga GC_TURNKEY_DEV=1 (contas novas ficam verificadas) — em produção NÃO usar (ver docs/SEGURANCA.md)')
 ex = open('pb/.env.example', encoding='utf-8', errors='ignore').read() if os.path.exists('pb/.env.example') else ''
-if re.search(r'TURNKEY_DEV\s*=\s*1', ex):
-    falha('pb/.env.example liga TURNKEY_DEV=1')
+if re.search(r'GC_TURNKEY_DEV\s*=\s*1', ex):
+    falha('pb/.env.example liga GC_TURNKEY_DEV=1')
 
 print('== Versões')
 v = subprocess.run([os.path.join('pb', 'bin', 'pocketbase.exe' if os.name == 'nt' else 'pocketbase'), '--version'],

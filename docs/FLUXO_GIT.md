@@ -6,7 +6,7 @@
 |---|---|---|
 | `main` | **Produção.** Só código testado e pronto a instalar. | Nunca se trabalha diretamente aqui. Só recebe merges de `develop` (ou de `hotfix/*`), sempre com uma etiqueta de versão. |
 | `develop` | **Integração.** Onde as funcionalidades se juntam e se testam. | Base de todas as `feature/*`. Tem de passar `scripts/verificar.sh` antes de juntar coisas novas. |
-| `feature/<nome>` | Uma funcionalidade ou ajuste (ex. `feature/produtos-gookie`, `feature/etiqueta-termica`). | Sai de `develop`, volta a `develop` quando estiver pronta e verificada. |
+| `feature/<nome>` | Uma funcionalidade ou ajuste (ex. `feature/produtos`, `feature/etiqueta-termica`). | Sai de `develop`, volta a `develop` quando estiver pronta e verificada. |
 | `hotfix/<nome>` | Correção urgente de algo que já está em produção. | Sai de `main`; volta a `main` **e** a `develop`. |
 
 Estado inicial (2026-09-24): `master` foi renomeado para `main` (ficou igual ao estado
@@ -18,7 +18,7 @@ atual, etiqueta `v1.5.0` mantida) e `develop` criado a partir dele. **Trabalha-s
 ```bash
 # começar uma funcionalidade
 git switch develop
-git switch -c feature/produtos-gookie
+git switch -c feature/produtos
 
 # ... trabalhar, ir fazendo commits pequenos ...
 
@@ -27,8 +27,8 @@ bash scripts/verificar.sh          # analyze + testes + hooks + migrations
 
 # juntar a develop
 git switch develop
-git merge --no-ff feature/produtos-gookie
-git branch -d feature/produtos-gookie
+git merge --no-ff feature/produtos
+git branch -d feature/produtos
 ```
 
 ## Lançar uma versão para produção

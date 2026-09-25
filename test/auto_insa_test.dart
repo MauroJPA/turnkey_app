@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/features/ingredients/domain/auto_insa.dart';
+import 'package:gc_turnkey/src/features/ingredients/domain/auto_insa.dart';
 
 void main() {
   test('ResumoAutoInsa.fromJson lê aplicados, total e os resultados', () {

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/features/finance/domain/numeros_magicos.dart';
-import 'package:turnkey_app/src/features/finance/domain/periodo.dart';
+import 'package:gc_turnkey/src/features/finance/domain/numeros_magicos.dart';
+import 'package:gc_turnkey/src/features/finance/domain/periodo.dart';
 
 Periodo _mesCheio() => Periodo(
       desde: DateTime(2026, 9, 1),

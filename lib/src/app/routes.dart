@@ -28,5 +28,5 @@ abstract class Routes {
   static const team = '/opcoes/equipa';
   static const cookieFormats = '/opcoes/formatos';
   static const navegacao = '/opcoes/navegacao';
-  static const produtosGookie = '/produtos-gookie';
+  static const produtos = '/produtos';
 }

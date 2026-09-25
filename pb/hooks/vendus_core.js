@@ -1,7 +1,7 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-// Núcleo da sincronização com o Vendus (POS/faturação da Gookie) — partilhado
-// pelo endpoint POST /api/turnkey/vendus/sincronizar e pelo cron horário.
+// Núcleo da sincronização com o Vendus (POS/faturação) — partilhado
+// pelo endpoint POST /api/gc_turnkey/vendus/sincronizar e pelo cron horário.
 //
 //   sincronizarEmpresa(app, empresaId, opts)
 //     -> { ok:true, vendasCriadas, duplicadasIgnoradas, itensCriados, itensSemFicha }
@@ -229,7 +229,7 @@ function importarDocumento(app, empresaId, doc, itens, fichas) {
 function sincronizarEmpresa(app, empresaId, opts) {
   // Token da própria empresa (cifrado na base de dados). A variável de
   // ambiente VENDUS_API_KEY é só um recurso para a empresa indicada em
-  // VENDUS_SYNC_EMPRESA (a Gookie, antes de guardar o token na app): nunca
+  // VENDUS_SYNC_EMPRESA (uma só empresa, antes de guardar o token na app): nunca
   // serve a outras empresas.
   var apiKey = null;
   try {

@@ -2,9 +2,9 @@
 
 // Integrações externas por empresa (tokens cifrados — ver segredos.js).
 //
-//   GET    /api/turnkey/integracoes/{servico}   -> { configurada, sufixo, atualizadoEm }
-//   PUT    /api/turnkey/integracoes/{servico}   { valor }   (owner/admin)
-//   DELETE /api/turnkey/integracoes/{servico}               (owner/admin)
+//   GET    /api/gc_turnkey/integracoes/{servico}   -> { configurada, sufixo, atualizadoEm }
+//   PUT    /api/gc_turnkey/integracoes/{servico}   { valor }   (owner/admin)
+//   DELETE /api/gc_turnkey/integracoes/{servico}               (owner/admin)
 //
 // O valor guardado nunca volta a sair do servidor. Serviços aceites: vendus.
 //
@@ -12,7 +12,7 @@
 
 routerAdd(
   'GET',
-  '/api/turnkey/integracoes/{servico}',
+  '/api/gc_turnkey/integracoes/{servico}',
   (e) => {
     const auth = e.auth;
     if (!auth || auth.collection().name !== 'users' || !auth.getString('empresa')) {
@@ -29,7 +29,7 @@ routerAdd(
 
 routerAdd(
   'PUT',
-  '/api/turnkey/integracoes/{servico}',
+  '/api/gc_turnkey/integracoes/{servico}',
   (e) => {
     const auth = e.auth;
     if (!auth || auth.collection().name !== 'users' || !auth.getString('empresa')) {
@@ -49,8 +49,8 @@ routerAdd(
     if (!seg.cifraDisponivel()) {
       throw new ApiError(
         503,
-        'O servidor ainda não tem a chave de cifra (TURNKEY_ENC_KEY no .env, 32 caracteres). ' +
-          'No servidor Linux corre "bash gookie.sh instalar" (gera-a) e reinicia; no PC de desenvolvimento, pb\\gerar-chave-cifra.ps1 -Gravar.',
+        'O servidor ainda não tem a chave de cifra (GC_TURNKEY_ENC_KEY no .env, 32 caracteres). ' +
+          'No servidor Linux corre "bash gc_turnkey.sh instalar" (gera-a) e reinicia; no PC de desenvolvimento, pb\\gerar-chave-cifra.ps1 -Gravar.',
         null,
       );
     }
@@ -67,7 +67,7 @@ routerAdd(
 
 routerAdd(
   'DELETE',
-  '/api/turnkey/integracoes/{servico}',
+  '/api/gc_turnkey/integracoes/{servico}',
   (e) => {
     const auth = e.auth;
     if (!auth || auth.collection().name !== 'users' || !auth.getString('empresa')) {

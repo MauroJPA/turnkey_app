@@ -2,6 +2,23 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.7.0 — 2026-09-25 — Renomeada para gc_turnkey
+
+A aplicação passa a chamar-se **gc_turnkey** e deixa de ter o nome de uma empresa: a Gookie Cookies
+é só mais uma empresa (utilizadora) da aplicação.
+
+- Nome da app: título do browser, login, manifest, pacote Dart (`gc_turnkey`), classe `GcTurnkeyApp`,
+  ids nativos (`com.gcturnkey.app`), nome da aplicação no PocketBase.
+- **API:** as rotas passam de `/api/turnkey/…` para `/api/gc_turnkey/…`.
+- **Variáveis de ambiente:** `TURNKEY_*` e `GOOKIE_*` passam a `GC_TURNKEY_*` (ex.: `GC_TURNKEY_ENC_KEY`,
+  `GC_TURNKEY_DEV`, `GC_TURNKEY_AI_PROVIDER`). O `gc_turnkey.sh` migra o `.env` sozinho.
+- **Servidor:** contentor/imagem/projeto `gc_turnkey`, script `gc_turnkey.sh`, pasta `/opt/gc_turnkey`,
+  unidades `gc_turnkey-backup.*`, remoto rclone `gc_turnkey-crypt`, pacote `gc_turnkey-servidor-<versão>.tar.gz`.
+  A instalação antiga (`gookie`) é removida pelo `atualizar` (os dados em `data/` ficam).
+- **Páginas neutras:** "Produtos Gookie" passa a **Produtos** (rota `/produtos`); "produto/ingrediente Gookie"
+  passa a "produto/ingrediente de fabrico próprio". Removido o critério `marca ~ 'Gookie'` do relink de espelhos.
+- Como atualizar um servidor já instalado: `docs/SERVIDOR_LINUX.md`, secção "Atualizar da 1.6.x".
+
 ## 1.6.1 — 2026-09-25 — Servidor Linux (Docker)
 
 O servidor de produção passa a ser um **Mini PC Debian com Docker** (e, mais tarde, uma máquina Linux

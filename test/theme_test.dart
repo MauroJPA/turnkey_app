@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/app/theme/app_theme.dart';
-import 'package:turnkey_app/src/features/settings/domain/empresa.dart';
+import 'package:gc_turnkey/src/app/theme/app_theme.dart';
+import 'package:gc_turnkey/src/features/settings/domain/empresa.dart';
 
 void main() {
   test('parseHex aceita #RRGGBB e RRGGBB, rejeita o resto', () {

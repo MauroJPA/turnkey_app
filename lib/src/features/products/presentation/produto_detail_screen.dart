@@ -18,13 +18,13 @@ import '../../tech_sheets/presentation/declaracao_nutricional_sheet.dart';
 import '../../tech_sheets/presentation/ficha_form_sheet.dart';
 import '../application/produtos_providers.dart';
 import '../domain/lista_ingredientes.dart';
-import '../domain/produto_gookie.dart';
+import '../domain/produto_rotulo.dart';
 import 'etiqueta_sheet.dart';
 
-/// Um produto Gookie: descrição, declaração nutricional, lista de ingredientes
+/// Um produto de fabrico próprio: descrição, declaração nutricional, lista de ingredientes
 /// e alergénios, de forma simples e pronta a copiar/imprimir.
-class ProdutoGookieDetailScreen extends ConsumerWidget {
-  const ProdutoGookieDetailScreen({super.key, required this.fichaId});
+class ProdutoDetailScreen extends ConsumerWidget {
+  const ProdutoDetailScreen({super.key, required this.fichaId});
 
   final String fichaId;
 
@@ -110,11 +110,11 @@ class ProdutoGookieDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(Routes.produtosGookie),
+          onPressed: () => context.go(Routes.produtos),
         ),
         title: Text(ficha?.nome ?? 'Produto'),
         actions: [
-          const HelpActions(topic: HelpTopic.produtosGookie),
+          const HelpActions(topic: HelpTopic.produtos),
           if (ficha != null)
             IconButton(
               tooltip: 'Copiar tudo',

@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
 # Teste de restauro (fazer todos os meses): descarrega e DECIFRA o backup mais
 # recente da nuvem (ou usa um ficheiro/USB), descompacta numa pasta temporária,
-# arranca um contentor descartável do Gookie nessa pasta e confirma que responde.
+# arranca um contentor descartável do gc_turnkey nessa pasta e confirma que responde.
 # Não toca na produção.
 #
 #   bash backup/teste-restauro.sh                        # a partir da nuvem
-#   bash backup/teste-restauro.sh /mnt/gookie-usb/GookieBackups   # pasta com .zip
+#   bash backup/teste-restauro.sh /mnt/gc_turnkey-usb/gc_turnkey_backups   # pasta com .zip
 #   bash backup/teste-restauro.sh /caminho/backup.zip
 set -uo pipefail
 
 AQUI="$(cd "$(dirname "$0")" && pwd)"
 RAIZ="$(dirname "$AQUI")"
-REMOTE="${REMOTE:-gookie-crypt:}"
+REMOTE="${REMOTE:-gc_turnkey-crypt:}"
 PORTA="${PORTA:-18090}"
 ORIGEM="${1:-}"
 INICIO=$(date +%s)
-TMP="$(mktemp -d /tmp/gookie-restauro.XXXXXX)"
-trap 'docker rm -f gookie-restauro >/dev/null 2>&1; rm -rf "$TMP"' EXIT
+TMP="$(mktemp -d /tmp/gc_turnkey-restauro.XXXXXX)"
+trap 'docker rm -f gc_turnkey-restauro >/dev/null 2>&1; rm -rf "$TMP"' EXIT
 
 command -v docker >/dev/null || { echo "Falta o Docker."; exit 1; }
 command -v unzip >/dev/null || { echo "Falta 'unzip' (apt install unzip)."; exit 1; }
@@ -40,9 +40,9 @@ unzip -q "$ZIP" -d "$TMP/data" || { echo "Zip inválido."; exit 1; }
 [ -f "$TMP/data/data.db" ] || { echo "O zip não tem data.db - backup inválido."; exit 1; }
 echo "Descompactado. Ficheiros em storage: $(find "$TMP/data/storage" -type f 2>/dev/null | wc -l)"
 
-IMG="$(docker images --format '{{.Repository}}:{{.Tag}}' | grep '^gookie:' | head -n1)"
-[ -n "$IMG" ] || { echo "Não encontrei a imagem gookie (corre 'bash gookie.sh instalar' primeiro)."; exit 1; }
-docker run -d --name gookie-restauro -p "127.0.0.1:$PORTA:8090" -e TURNKEY_DEV=0 \
+IMG="$(docker images --format '{{.Repository}}:{{.Tag}}' | grep '^gc_turnkey:' | head -n1)"
+[ -n "$IMG" ] || { echo "Não encontrei a imagem gc_turnkey (corre 'bash gc_turnkey.sh instalar' primeiro)."; exit 1; }
+docker run -d --name gc_turnkey-restauro -p "127.0.0.1:$PORTA:8090" -e GC_TURNKEY_DEV=0 \
   --user "$(id -u):$(id -g)" -v "$TMP/data:/pb/pb_data" "$IMG" >/dev/null
 
 OK=0
@@ -54,4 +54,4 @@ DUR=$(( $(date +%s) - INICIO ))
 if [ "$OK" = 1 ]; then
   echo "RESTAURO OK em ${DUR} s. Regista a data e o tempo."; exit 0
 fi
-echo "RESTAURO FALHOU: o servidor não arrancou com o backup."; docker logs --tail 30 gookie-restauro; exit 1
+echo "RESTAURO FALHOU: o servidor não arrancou com o backup."; docker logs --tail 30 gc_turnkey-restauro; exit 1

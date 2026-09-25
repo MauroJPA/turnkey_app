@@ -1002,7 +1002,7 @@ function aplicarMovimento(app, item, delta, motivo, opts) {
 // massa + recheio + formato. Devolve o id da ficha ou '' se não houver.
 //
 // As fichas ligam a massa/recheio quer por `receita` quer pelo `ingrediente`
-// espelho (o "ingrediente Gookie" cujo `receita_espelho` aponta para a
+// espelho (o "ingrediente de fabrico próprio" cujo `receita_espelho` aponta para a
 // receita) — os dois casos são aceites.
 //
 // O `formato` é usado como desempate: se houver fichas com o formato exato

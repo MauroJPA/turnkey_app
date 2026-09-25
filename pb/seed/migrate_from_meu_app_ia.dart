@@ -1,4 +1,4 @@
-// Migra os dados do PocketBase do `meu_app_ia` para o schema do turnkey_app.
+// Migra os dados do PocketBase do `meu_app_ia` para o schema do gc_turnkey.
 //
 // Uso:
 //   dart run pb/seed/migrate_from_meu_app_ia.dart \
@@ -9,15 +9,15 @@
 // Lê SÓ da origem. Cria uma empresa no destino e importa:
 //   ingredientes, receitas_base, itens_receita, produtos_finais,
 //   configuracoes_custo, historico_*.
-// No fim (com --recompute) chama /api/turnkey/admin/recompute para recalcular
+// No fim (com --recompute) chama /api/gc_turnkey/admin/recompute para recalcular
 // custos em cascata e imprime um relatório de diferenças vs. os valores antigos.
 //
 // Nada de credenciais no repo — passa tudo por argumentos.
 
 import 'dart:io';
 
+import 'package:gc_turnkey/src/features/recipes/domain/recipe.dart';
 import 'package:pocketbase/pocketbase.dart';
-import 'package:turnkey_app/src/features/recipes/domain/recipe.dart';
 
 Map<String, String> _args(List<String> argv) {
   final m = <String, String>{};
@@ -271,15 +271,15 @@ Future<void> main(List<String> argv) async {
       for (final r in await all(dst, 'receitas'))
         '${r.data['nome']}': _num(r.data['custo_receita']),
     };
-    // liga os ingredientes "Gookie" às respetivas receitas (por nome)
+    // liga os ingredientes de fabrico próprio às respetivas receitas (por nome)
     final relink = await dst.send(
-      '/api/turnkey/admin/relink-espelhos',
+      '/api/gc_turnkey/admin/relink-espelhos',
       method: 'POST',
       body: {'empresa': empresaId},
     );
     stdout.writeln('relink-espelhos: $relink');
     final res = await dst.send(
-      '/api/turnkey/admin/recompute',
+      '/api/gc_turnkey/admin/recompute',
       method: 'POST',
       body: {'empresa': empresaId},
     );

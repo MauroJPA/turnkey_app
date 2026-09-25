@@ -32,7 +32,7 @@ class TeamRepository {
     required Papel papel,
   }) {
     return _pb.send(
-      '/api/turnkey/team/members',
+      '/api/gc_turnkey/team/members',
       method: 'POST',
       body: {
         'nome': nome,
@@ -45,7 +45,7 @@ class TeamRepository {
 
   Future<void> changeRole(String memberId, Papel papel) {
     return _pb.send(
-      '/api/turnkey/team/members/$memberId',
+      '/api/gc_turnkey/team/members/$memberId',
       method: 'PATCH',
       body: {'papel': papel.name},
     );

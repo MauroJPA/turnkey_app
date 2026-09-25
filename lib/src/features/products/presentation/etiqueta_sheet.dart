@@ -385,7 +385,7 @@ class _SheetState extends ConsumerState<_Sheet> {
             decoration: const InputDecoration(
               labelText: 'Produtor (nome e morada)',
               helperText:
-                  'Obrigatório na etiqueta. Ex.: Gookie Cookies, Lda — Rua …',
+                  'Obrigatório na etiqueta. Ex.: A Minha Empresa, Lda — Rua …',
             ),
           ),
           if (ehOwner)

@@ -27,7 +27,7 @@ enum HelpTopic {
   painelFinanceiro,
   dre,
   embalagens,
-  produtosGookie,
+  produtos,
   formatos,
   configuracoes,
   navegacao,
@@ -61,7 +61,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Ao criar um ingrediente pode já preencher a informação nutricional e os alergénios (opcional): à mão, escolhendo da tabela INSA, ou com a foto do rótulo (a IA lê e preenche — confira sempre). Deslize um ingrediente para a esquerda para o mover para a lixeira.',
       'O ícone de nutrição em cada linha abre "Nutrição e alergénios": preenche à mão, escolhe da tabela INSA, ou envia uma foto do rótulo para a IA preencher. Depois a informação nutricional das receitas e fichas é calculada sozinha.',
       'Esse ícone diz logo o estado da nutrição (legenda em cima da lista): prato aberto/cinzento = sem nutrição; ⚖ (por rever) = a INSA automática ficou em dúvida; livro = valores da tabela INSA; lápis = preenchido à mão; máquina fotográfica = à mão com a foto da tabela nutricional anexada. Na folha de nutrição podes "Anexar foto (sem IA)" a qualquer momento como prova/referência.',
-      'Nos produtos feitos pela Gookie, esse ícone abre a lista de ingredientes/subprodutos da receita — não se preenche à mão. Vais tocando em cada um até estar tudo com nutrição: os ingredientes comprados por INSA/foto/manual; os subprodutos Gookie abrem os seus próprios ingredientes, em cascata. O total do produto é calculado no fim.',
+      'Nos produtos de fabrico próprio, esse ícone abre a lista de ingredientes/subprodutos da receita — não se preenche à mão. Vais tocando em cada um até estar tudo com nutrição: os ingredientes comprados por INSA/foto/manual; os subprodutos Gookie abrem os seus próprios ingredientes, em cascata. O total do produto é calculado no fim.',
       'O botão ✨ no topo ("Preencher nutrição pela tabela INSA") percorre os ingredientes SEM nutrição e, quando encontra na tabela INSA um alimento claramente igual, preenche os valores e os alergénios. Os que ficam em dúvida ficam marcados "por rever" (ícone diferente) — abre cada um e escolhe da lista de alimentos parecidos. Confirma sempre: os alergénios da INSA são uma sugestão pelo nome.',
       'Quando muda o preço de um ingrediente, o custo das receitas e das fichas é recalculado sozinho.',
     ],
@@ -286,10 +286,10 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Se houver vendas sem produto identificado, o custo delas não entra no cálculo e aparece um aviso — o resultado fica sobrestimado nessa medida.',
     ],
   ),
-  HelpTopic.produtosGookie: (
-    titulo: 'Produtos Gookie',
+  HelpTopic.produtos: (
+    titulo: 'Produtos',
     paragrafos: [
-      'Aqui está tudo o que a Gookie produz (os produtos finais das fichas técnicas), com a informação pronta para o cliente: declaração nutricional, lista de ingredientes e alergénios.',
+      'Aqui está tudo o que a tua empresa produz (os produtos finais das fichas técnicas), com a informação pronta para o cliente: declaração nutricional, lista de ingredientes e alergénios.',
       'O ícone à esquerda diz se a nutrição está completa (visto) ou se falta alguma coisa (aviso). Toque num produto para ver os pormenores.',
       'A lista de ingredientes segue as regras da UE: por ordem decrescente de peso e com os alergénios a negrito. É calculada sozinha a partir da ficha técnica, das receitas e dos ingredientes.',
       '"Falta completar" mostra o que ainda não está preenchido: nutrição de algum ingrediente, descrição, prazo de validade e modo de conservação. "Corrigir a nutrição" leva-o ao ingrediente em falta; "Preencher os dados" abre a ficha.',

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/features/finance/domain/periodo.dart';
-import 'package:turnkey_app/src/features/finance/domain/resumo_financeiro.dart';
+import 'package:gc_turnkey/src/features/finance/domain/periodo.dart';
+import 'package:gc_turnkey/src/features/finance/domain/resumo_financeiro.dart';
 
 ResumoFinanceiro _resumo({
   double receita = 0,

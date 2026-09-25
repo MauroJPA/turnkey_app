@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/features/orders/domain/configuracao_encomendas.dart';
+import 'package:gc_turnkey/src/features/orders/domain/configuracao_encomendas.dart';
 
 void main() {
   group('TalaoTamanho', () {

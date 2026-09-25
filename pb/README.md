@@ -1,6 +1,6 @@
-# PocketBase — schema e hooks do `turnkey_app`
+# PocketBase — schema e hooks do `gc_turnkey`
 
-Servidor alvo: **PocketBase v0.35.0** (Mini PC da Gookie, acedido via Tailscale).
+Servidor alvo: **PocketBase v0.35.0** (Mini PC Linux, acedido via Tailscale).
 
 ```
 pb/
@@ -65,7 +65,7 @@ pb/
 | `1706400000_historico_faturas.js` | adiciona `faturas_apagadas` aos valores de `historico.entidade_tipo` (rasto das faturas apagadas, `entidade_id = <empresaId>`). |
 | `1706486400_embalagem_kits.js` | coleções `embalagem_kits` (nome, descrição, `custo_unitario` cache) + `embalagem_kit_itens` (`kit`, `embalagem`, `quantidade`) + relação opcional `itens_ficha.kit`. Um kit junta várias embalagens numa combinação com nome; na ficha técnica escolhe-se o kit para precificar de uma vez. |
 | `1706572800_ref_alergenios.js` | campo `alergenios` em `ingredientes_referencia`, preenchido por inferência de palavras-chave sobre nome/grupo (match por token com plurais; expressões multi-palavra por substring; guardas p/ "chocolate"≠"choco", "compota"≠"pota", farinha de milho/arroz sem glúten). Sugestão, não oficial. |
-| `1706659200_inventario_uso.js` | `inventario`: `favorito` (bool), `usos` (number), `ultimo_uso` (date). `usos`+`ultimo_uso` são incrementados por `cascade.js aplicarMovimento` (motivos `consumo_producao`/`saida_producao`) e por `inventario_uso.pb.js` (`onRecordAfterCreateSuccess` em `lista_compras`). `favorito` grava-se via `/api/turnkey/inventario/ajustar`. Vistas "Favoritos" e "Mais usados" no ecrã de Inventário. |
+| `1706659200_inventario_uso.js` | `inventario`: `favorito` (bool), `usos` (number), `ultimo_uso` (date). `usos`+`ultimo_uso` são incrementados por `cascade.js aplicarMovimento` (motivos `consumo_producao`/`saida_producao`) e por `inventario_uso.pb.js` (`onRecordAfterCreateSuccess` em `lista_compras`). `favorito` grava-se via `/api/gc_turnkey/inventario/ajustar`. Vistas "Favoritos" e "Mais usados" no ecrã de Inventário. |
 | `1706745600_users_authalert_off.js` | desliga o email "Login from a new location" da coleção `users` (ERP interno; SMTP muitas vezes ausente). |
 | `1706832000_ingrediente_nutri_foto.js` | campo `nutri_foto` (file, thumb 0x240) em `ingredientes` — foto da tabela nutricional do rótulo. A lista de ingredientes distingue visualmente `Ingrediente.fonteNutri`: vazia / por rever (INSA) / INSA / à mão / à mão+foto. |
 | `1706918400_empresas_personalizacao.js` | `empresas`: `cor_secundaria`/`cor_fundo`/`cor_texto` (hex, opcionais — vazio = derivado automaticamente da cor de marca); `logo_oculto`/`logo_alinhamento`/`logo_tamanho` e `nome_oculto`/`nome_alinhamento`/`nome_tamanho` (posição/tamanho/visibilidade do logótipo e do nome na barra superior — bool guarda o "oculto", não o "visível", porque o valor por omissão de um campo bool é `false`); `fonte_familia` (text) + `fonte_ficheiro` (file, .ttf/.otf) para tipo de letra personalizado. |
@@ -75,7 +75,7 @@ pb/
 | `1707264000_equipamentos.js` | Coleção `equipamentos` (Financeiro, F-FIN-7) — equipamento da loja (`nome`, `custo`, `vida_util_anos`, `arquivado`); a depreciação mensal (`custo / (vida_util_anos * 12)`) é calculada no cliente, não guardada, para nunca ficar desatualizada. `custos_fixos.dia_pagamento` (number, opcional, 1-31) — só para o lembrete "Pagamentos por vir" no Início, não entra em nenhum cálculo. |
 | `1707350400_encomendas.js` | Coleções `encomendas` (cliente, `data_hora`, `estado` nova/em_producao/pronta/entregue/cancelada, `valor_total`/`valor_pago` — 0 = sem valor informado, o estado do pagamento é derivado no cliente, nunca guardado) e `encomendas_itens` (ficha técnica + quantidade). `configuracoes_encomendas` (1 linha por empresa, opcional): tamanho do talão (térmico 80mm/A4), impressão automática ao criar, horas de antecedência do lembrete "Encomendas por vir" no Início. `historico.entidade_tipo` ganha o valor `encomenda`. Talão impresso reutiliza `core/printing/print_html.dart` (Blob + `window.open`) e mostra também o estado do pagamento, pois segue a encomenda até ao cliente. |
 | `1707436800_navegacao.js` | `configuracoes_navegacao` (1 linha por empresa, opcional): `rodape` (chaves das páginas da barra inferior, por ordem) e `acesso` (matriz papel → página → `oculto`/`ver`/`editar`); todos leem, owner/admin escrevem o `rodape`, **só o owner** escreve `acesso` (regra `@request.body.acesso:isset = false` para o admin). `preferencias_utilizador` (1 linha por pessoa): `oculto` (atalhos escondidos na grelha do Início) e `cores` (cor de cada botão) — cada pessoa só vê/edita a sua. As permissões por página são aplicadas na app (esconder/bloquear); o PocketBase continua a aplicar as regras por papel. |
-| `1707523200_producao_item_ficha.js` | `producao_itens.ficha` (relação para `fichas_tecnicas`): o produto final escolhido em Produzir / Mise en place. Quando preenchida manda sobre a resolução automática massa + recheio + formato e as unidades vêm da massa por unidade da própria ficha (`cascade.infoFicha`). Endpoint novo `GET /api/turnkey/fichas/{id}/plano?unidades=N` (massa + recheios + coberturas a produzir primeiro e ingredientes). `/producoes/{id}/plano`, `/lista-compras` e `/concluir` respeitam a ficha explícita. |
+| `1707523200_producao_item_ficha.js` | `producao_itens.ficha` (relação para `fichas_tecnicas`): o produto final escolhido em Produzir / Mise en place. Quando preenchida manda sobre a resolução automática massa + recheio + formato e as unidades vêm da massa por unidade da própria ficha (`cascade.infoFicha`). Endpoint novo `GET /api/gc_turnkey/fichas/{id}/plano?unidades=N` (massa + recheios + coberturas a produzir primeiro e ingredientes). `/producoes/{id}/plano`, `/lista-compras` e `/concluir` respeitam a ficha explícita. |
 
 Aparência (tema, distribuição de cores, logótipo, nome da marca — posição/
 tamanho/visibilidade — e tipo de letra) é **por empresa** — editada em
@@ -117,9 +117,9 @@ de alergénios —, `explodeCompras`, `explodeProducao`, `explodeComprasDe`,
 `aplicarMovimento`, `carregarProducao`, `resolverFicha`; + `ai.js`, que exporta
 `analisarImagemIA({ tarefa: 'fatura' | 'rotulo' })`).
 
-`dev_autoverify.pb.js`: **só em dev** — com `TURNKEY_DEV=1` no ambiente, as
+`dev_autoverify.pb.js`: **só em dev** — com `GC_TURNKEY_DEV=1` no ambiente, as
 contas `users` novas ficam logo `verified` (não é preciso email/SMTP para
-entrar). O `pb/serve.ps1` local já põe `TURNKEY_DEV=1`; em produção não
+entrar). O `pb/serve.ps1` local já põe `GC_TURNKEY_DEV=1`; em produção não
 defina esta variável. (O login em si nunca depende de `verified` — o
 `authRule` da coleção `users` é vazio — mas isto evita o estado
 "não verificado" enquanto se desenvolve.)
@@ -131,10 +131,10 @@ selecionável por variável de ambiente**, sem tocar no código.
 
 | Variável | Para quê |
 |---|---|
-| `TURNKEY_AI_PROVIDER` | `gemini` (por omissão) ou `anthropic`. |
+| `GC_TURNKEY_AI_PROVIDER` | `gemini` (por omissão) ou `anthropic`. |
 | `GEMINI_API_KEY` (ou `GOOGLE_API_KEY`) | chave do Google AI Studio — usada quando o provider é `gemini`. De <https://aistudio.google.com/app/apikey>. Tem plano **gratuito**. |
 | `ANTHROPIC_API_KEY` | chave da Anthropic — usada quando o provider é `anthropic`. De <https://console.anthropic.com/>. |
-| `TURNKEY_AI_MODEL` | opcional; modelo a usar. Por omissão `gemini-3.6-flash` (gemini) ou `claude-sonnet-5` (anthropic). A Google descontinua modelos periodicamente — se `/analisar` devolver `502 "model ... is no longer available"`, põe aqui o modelo novo (ex.: `gemini-3.8-flash`). |
+| `GC_TURNKEY_AI_MODEL` | opcional; modelo a usar. Por omissão `gemini-3.6-flash` (gemini) ou `claude-sonnet-5` (anthropic). A Google descontinua modelos periodicamente — se `/analisar` devolver `502 "model ... is no longer available"`, põe aqui o modelo novo (ex.: `gemini-3.8-flash`). |
 
 Sem a chave do provider ativo, `/analisar` devolve `503` com mensagem clara e a
 app mostra "IA não configurada". As chaves vivem **só no servidor** — a app
@@ -146,8 +146,8 @@ Em dev, o `pb/serve.ps1` carrega estas variáveis de um ficheiro `pb/.env`
 (NSSM `AppEnvironmentExtra` no Windows, `Environment=`/`EnvironmentFile=` no
 systemd). Detalhe em [`DEPLOY.md`](DEPLOY.md).
 
-**Scanner de faturas** (`faturas_scan.pb.js`): com `TURNKEY_SCAN_DIR` (pasta
-que o scanner alimenta por *scan-to-folder*) + `TURNKEY_SCAN_EMPRESA` (id da
+**Scanner de faturas** (`faturas_scan.pb.js`): com `GC_TURNKEY_SCAN_DIR` (pasta
+que o scanner alimenta por *scan-to-folder*) + `GC_TURNKEY_SCAN_EMPRESA` (id da
 empresa), um cron a cada 5 min cria uma `faturas` (`estado='nova'`,
 `notas='Scanner: <ficheiro>'`) por cada JPG/PNG/WebP/PDF, chama
 `faturas_core.js analisarFatura` e move o original para `<pasta>/processadas/`.
@@ -155,7 +155,7 @@ Sem chave de IA a fatura fica em `nova` para revisão manual. O painel inicial
 mostra "Faturas por rever" quando há faturas `nova`/`analisada`.
 
 **Envio mensal ao contabilista** (`faturas_contab.pb.js`): cron `0 8 1 * *` —
-se `TURNKEY_CONTAB_EMAIL` estiver definido (e SMTP configurado no Admin UI),
+se `GC_TURNKEY_CONTAB_EMAIL` estiver definido (e SMTP configurado no Admin UI),
 junta as faturas `confirmada` do mês anterior, gera `resumo-AAAA-MM.csv` e
 envia por email com os ficheiros em anexo (`FT-FORNECEDOR-DDMMAAAA.ext`). A app
 tem um resumo do mês em Faturas → ícone de pasta (com "Copiar resumo (CSV)").
@@ -165,7 +165,7 @@ tem um resumo do mês em Faturas → ícone de pasta (com "Copiar resumo (CSV)")
 | Variável | Para quê |
 |---|---|
 | `VENDUS_API_KEY` | API KEY gerada em Apps → API na conta Vendus. Sem ela, `/sincronizar` devolve `503` e o cron horário não faz nada (só regista no log). |
-| `VENDUS_SYNC_EMPRESA` | id da empresa para o **cron horário** (`vendus_sync`, `0 * * * *`) — o cron não tem sessão de utilizador, por isso precisa de saber a que empresa pertence (mesmo papel de `TURNKEY_SCAN_EMPRESA` no scan de faturas). O botão manual "Sincronizar com o Vendus" na app usa a empresa de quem está autenticado, não precisa desta variável. |
+| `VENDUS_SYNC_EMPRESA` | id da empresa para o **cron horário** (`vendus_sync`, `0 * * * *`) — o cron não tem sessão de utilizador, por isso precisa de saber a que empresa pertence (mesmo papel de `GC_TURNKEY_SCAN_EMPRESA` no scan de faturas). O botão manual "Sincronizar com o Vendus" na app usa a empresa de quem está autenticado, não precisa desta variável. |
 
 A chave nunca chega à app — só o servidor fala com `https://www.vendus.pt/ws/v1.1/`.
 Documentos já importados (`vendus_id`) nunca se repetem; correr o botão manual
@@ -178,11 +178,11 @@ sobre a sua empresa.
 
 | Método | Rota | Efeito |
 |---|---|---|
-| `POST` | `/api/turnkey/inventario/ajustar` | `{ ingrediente?\|ficha?\|descricao?(item livre) + unidade? + categoria?, delta, motivo, notas?, producao?, minimo?, localizacao? }` → upsert da linha `inventario` (`quantidade = max(0, q+delta)`) + `movimentos_inventario`. `categoria` é o "material da loja" (ver `kCategoriasMaterial`). `delta` 0 é aceite se vier `minimo`/`localizacao`/`unidade`/`categoria`. |
-| `GET` | `/api/turnkey/fichas/resolver` | `?massa=&formato=&recheio=` → ficha técnica correspondente + `componentes:[{slot,nome,gPorUnidade}]` (recheios/coberturas/extra) ou `{fichaId:''}`. |
-| `GET` | `/api/turnkey/producoes/{id}/plano` | explosão agregada (sub-receitas + espelhos de fabrico próprio + **recheio do formato**: `N = round(kg·1000/massa_g)`, `N·recheio_g` do recheio) → `{ necessarios:[{ingredienteId,nome,fornecedor,gramas,custo,emStock,aComprar,embalagemG,aComprarSacos}], produzir:[{receitaId,nome,kg,unidades,formato,recheio,prioridade,horaLimite}], custoTotal }`. |
-| `POST` | `/api/turnkey/producoes/{id}/lista-compras` | mesma agregação → upsert em `lista_compras`; `quantidade_necessaria_g` = necessidade exata, `quantidade_comprar_g` = `ceil(falta/embalagem)·embalagem` (sacos inteiros), grava `embalagem_g` → `{ linhas }`. |
-| `POST` | `/api/turnkey/producoes/{id}/concluir` | por `producao_item`: consome a massa (`kg`, escalada por %) e — se `resolverFicha` encontrar a ficha do (massa+formato) — todos os slots não-massa da ficha (recheio_base/top, cobertura_base/top, extra) a `N·quantidade_g`, creditando `+N` unidades no `inventario` da ficha. Sem ficha: usa o `recheio` indicado à mão (se houver) e entra em `faltas`. Itens sem `formato` mantêm o crédito do ingrediente-espelho. Grava `unidades_previstas`, `estado=concluida`, `concluida_em`, `custo_snapshot` → `{ consumos, saidas, faltas, custoTotal }`. |
+| `POST` | `/api/gc_turnkey/inventario/ajustar` | `{ ingrediente?\|ficha?\|descricao?(item livre) + unidade? + categoria?, delta, motivo, notas?, producao?, minimo?, localizacao? }` → upsert da linha `inventario` (`quantidade = max(0, q+delta)`) + `movimentos_inventario`. `categoria` é o "material da loja" (ver `kCategoriasMaterial`). `delta` 0 é aceite se vier `minimo`/`localizacao`/`unidade`/`categoria`. |
+| `GET` | `/api/gc_turnkey/fichas/resolver` | `?massa=&formato=&recheio=` → ficha técnica correspondente + `componentes:[{slot,nome,gPorUnidade}]` (recheios/coberturas/extra) ou `{fichaId:''}`. |
+| `GET` | `/api/gc_turnkey/producoes/{id}/plano` | explosão agregada (sub-receitas + espelhos de fabrico próprio + **recheio do formato**: `N = round(kg·1000/massa_g)`, `N·recheio_g` do recheio) → `{ necessarios:[{ingredienteId,nome,fornecedor,gramas,custo,emStock,aComprar,embalagemG,aComprarSacos}], produzir:[{receitaId,nome,kg,unidades,formato,recheio,prioridade,horaLimite}], custoTotal }`. |
+| `POST` | `/api/gc_turnkey/producoes/{id}/lista-compras` | mesma agregação → upsert em `lista_compras`; `quantidade_necessaria_g` = necessidade exata, `quantidade_comprar_g` = `ceil(falta/embalagem)·embalagem` (sacos inteiros), grava `embalagem_g` → `{ linhas }`. |
+| `POST` | `/api/gc_turnkey/producoes/{id}/concluir` | por `producao_item`: consome a massa (`kg`, escalada por %) e — se `resolverFicha` encontrar a ficha do (massa+formato) — todos os slots não-massa da ficha (recheio_base/top, cobertura_base/top, extra) a `N·quantidade_g`, creditando `+N` unidades no `inventario` da ficha. Sem ficha: usa o `recheio` indicado à mão (se houver) e entra em `faltas`. Itens sem `formato` mantêm o crédito do ingrediente-espelho. Grava `unidades_previstas`, `estado=concluida`, `concluida_em`, `custo_snapshot` → `{ consumos, saidas, faltas, custoTotal }`. |
 
 ### Endpoints (Fase 5 — `faturas.pb.js`)
 
@@ -190,9 +190,9 @@ Auth `users` não-viewer (ou superuser); só agem sobre a empresa do autor.
 
 | Método | Rota | Efeito |
 |---|---|---|
-| `POST` | `/api/turnkey/faturas/{id}/analisar` | body `{ imagem: <base64>, mime }`. Via `ai.js` (`TURNKEY_AI_PROVIDER`: `gemini` por omissão, ou `anthropic`) envia a imagem/PDF ao modelo de visão com um prompt que extrai `{ fornecedor, data, numero, total, iva, moeda, linhas:[{descricao, quantidade, unidade, preco_unitario, total, embalagem_g}] }`. Grava em `faturas.dados_ia`, `estado='analisada'`, pré-preenche `fornecedor/numero/total/iva/data_fatura` se vazios. Devolve `{ estado, provider, dados }`. Sem a chave do provider ativo → `503` (não mexe na fatura). Erro de rede/IA/JSON → `estado='erro'`, `dados_ia.erro`, `502`. **Dedup**: se já existir outra `faturas` (`tipo='fatura'`, `estado!='erro'`) da mesma empresa com o mesmo fornecedor + número (ou, sem número, mesmo fornecedor + data + total), marca `estado='erro'`, `dados_ia.duplicada_de=<id>` e devolve `409`. |
-| `POST` | `/api/turnkey/faturas/{id}/aplicar` | body `{ linhas:[{ ingredienteId?, descricaoFatura, quantidadeG, precoUnitario, totalLinha, embalagemG, acao }] }` (`acao` ∈ `preco\|stock\|ambos\|ignorar`). Numa transação: apaga `faturas_itens` anteriores; por linha com ingrediente e `acao≠ignorar` — `preco/ambos` → **só** atualiza `ingredientes.preco` (+`gramas_embalagem`) quando `data_fatura` (ou `created`) ≥ `ingredientes.preco_atualizado_em` (uma fatura antiga não estraga um preço mais recente); ao atualizar, carimba `preco_atualizado_em` com a **data da fatura**; dispara a cascata de custos. `stock/ambos` → `cascade.aplicarMovimento(+quantidadeG, 'compra', notas:'Fatura <nº>')` (sempre, mesmo com fatura antiga). Recria `faturas_itens`, `faturas.estado='confirmada'` → `{ precos, precosIgnorados, movimentos }`. |
-| `GET` | `/api/turnkey/faturas/export?de=&ate=` | faturas `confirmada` no intervalo → `{ faturas:[{ id, fornecedor, dataFatura, numero, total, iva, nomeFicheiro, ficheiroUrl, linhas:[...] }] }`. `nomeFicheiro` = `FT-NOMEFORNECEDOR-DDMMAAAA.ext` (nome canónico p/ contabilidade, derivado da data da fatura). Base para a exportação para contabilidade (SAF-T / zip de PDFs fica para fase seguinte — o modelo já guarda tudo). |
+| `POST` | `/api/gc_turnkey/faturas/{id}/analisar` | body `{ imagem: <base64>, mime }`. Via `ai.js` (`GC_TURNKEY_AI_PROVIDER`: `gemini` por omissão, ou `anthropic`) envia a imagem/PDF ao modelo de visão com um prompt que extrai `{ fornecedor, data, numero, total, iva, moeda, linhas:[{descricao, quantidade, unidade, preco_unitario, total, embalagem_g}] }`. Grava em `faturas.dados_ia`, `estado='analisada'`, pré-preenche `fornecedor/numero/total/iva/data_fatura` se vazios. Devolve `{ estado, provider, dados }`. Sem a chave do provider ativo → `503` (não mexe na fatura). Erro de rede/IA/JSON → `estado='erro'`, `dados_ia.erro`, `502`. **Dedup**: se já existir outra `faturas` (`tipo='fatura'`, `estado!='erro'`) da mesma empresa com o mesmo fornecedor + número (ou, sem número, mesmo fornecedor + data + total), marca `estado='erro'`, `dados_ia.duplicada_de=<id>` e devolve `409`. |
+| `POST` | `/api/gc_turnkey/faturas/{id}/aplicar` | body `{ linhas:[{ ingredienteId?, descricaoFatura, quantidadeG, precoUnitario, totalLinha, embalagemG, acao }] }` (`acao` ∈ `preco\|stock\|ambos\|ignorar`). Numa transação: apaga `faturas_itens` anteriores; por linha com ingrediente e `acao≠ignorar` — `preco/ambos` → **só** atualiza `ingredientes.preco` (+`gramas_embalagem`) quando `data_fatura` (ou `created`) ≥ `ingredientes.preco_atualizado_em` (uma fatura antiga não estraga um preço mais recente); ao atualizar, carimba `preco_atualizado_em` com a **data da fatura**; dispara a cascata de custos. `stock/ambos` → `cascade.aplicarMovimento(+quantidadeG, 'compra', notas:'Fatura <nº>')` (sempre, mesmo com fatura antiga). Recria `faturas_itens`, `faturas.estado='confirmada'` → `{ precos, precosIgnorados, movimentos }`. |
+| `GET` | `/api/gc_turnkey/faturas/export?de=&ate=` | faturas `confirmada` no intervalo → `{ faturas:[{ id, fornecedor, dataFatura, numero, total, iva, nomeFicheiro, ficheiroUrl, linhas:[...] }] }`. `nomeFicheiro` = `FT-NOMEFORNECEDOR-DDMMAAAA.ext` (nome canónico p/ contabilidade, derivado da data da fatura). Base para a exportação para contabilidade (SAF-T / zip de PDFs fica para fase seguinte — o modelo já guarda tudo). |
 
 O ficheiro carregado é guardado com um nome no formato **`FT-NOMEFORNECEDOR-DDMMAAAA`** (data da fatura). O PocketBase normaliza (minúsculas, `_`, sufixo aleatório) ao gravar; o nome canónico exacto para a contabilidade vem no campo `nomeFicheiro` do `/export`.
 
@@ -200,14 +200,14 @@ O ficheiro carregado é guardado com um nome no formato **`FT-NOMEFORNECEDOR-DDM
 
 | Método | Rota | Efeito |
 |---|---|---|
-| `POST` | `/api/turnkey/vendus/sincronizar` | Auth `users` não-viewer. Busca documentos de venda novos no Vendus (desde `empresas.vendus_ultima_sincronizacao`), emparelha cada linha à ficha técnica pelo nome e grava `vendas`/`vendas_itens` (`origem='vendus'`). Devolve `{ vendasCriadas, duplicadasIgnoradas, itensCriados, itensSemFicha }`. `503` sem `VENDUS_API_KEY`. |
+| `POST` | `/api/gc_turnkey/vendus/sincronizar` | Auth `users` não-viewer. Busca documentos de venda novos no Vendus (desde `empresas.vendus_ultima_sincronizacao`), emparelha cada linha à ficha técnica pelo nome e grava `vendas`/`vendas_itens` (`origem='vendus'`). Devolve `{ vendasCriadas, duplicadasIgnoradas, itensCriados, itensSemFicha }`. `503` sem `VENDUS_API_KEY`. |
 
 ### Endpoint (Nutrição — `nutricao.pb.js`)
 
 | Método | Rota | Efeito |
 |---|---|---|
-| `POST` | `/api/turnkey/ingredientes/{id}/rotulo` | body `{ imagem: <base64>, mime }`. Via `ai.js` lê o rótulo (foto/PDF) → preenche `nutri_*` + `nutri_base`/`nutri_densidade` + `nutri_origem='rotulo'` + os 14 alergénios (canonizados) no ingrediente e grava (a cascata nutricional dispara sozinha). `503` sem chave, `400` sem imagem, `502` erro da IA. |
-| `POST` | `/api/turnkey/ingredientes/auto-insa` | body `{ ids?: string[], dryRun?: bool }`. Emparelha cada ingrediente (sem `ids`: os da empresa **sem** nutrição) com `ingredientes_referencia` por semelhança de nome (recall+precision de tokens + bónus de palavra-cabeça/prefixo/nome exato). Vencedor destacado (`best≥0.8` e margem `≥0.2`) → grava `nutri_*` + `alergenios` + `nutri_origem='insa'`. Caso contrário → `nutri_origem='insa_revisao'` (não estraga `manual`/`rotulo`/`insa`) e devolve os 6 candidatos mais próximos. `dryRun` não escreve. Resposta `{ aplicados, total, resultados:[{ ingredienteId, nome, estado:'preenchido'|'revisao'|'sem_candidato', referencia?, candidatos:[{id,nome,grupo,score,nutri,alergenios}] }] }`. |
+| `POST` | `/api/gc_turnkey/ingredientes/{id}/rotulo` | body `{ imagem: <base64>, mime }`. Via `ai.js` lê o rótulo (foto/PDF) → preenche `nutri_*` + `nutri_base`/`nutri_densidade` + `nutri_origem='rotulo'` + os 14 alergénios (canonizados) no ingrediente e grava (a cascata nutricional dispara sozinha). `503` sem chave, `400` sem imagem, `502` erro da IA. |
+| `POST` | `/api/gc_turnkey/ingredientes/auto-insa` | body `{ ids?: string[], dryRun?: bool }`. Emparelha cada ingrediente (sem `ids`: os da empresa **sem** nutrição) com `ingredientes_referencia` por semelhança de nome (recall+precision de tokens + bónus de palavra-cabeça/prefixo/nome exato). Vencedor destacado (`best≥0.8` e margem `≥0.2`) → grava `nutri_*` + `alergenios` + `nutri_origem='insa'`. Caso contrário → `nutri_origem='insa_revisao'` (não estraga `manual`/`rotulo`/`insa`) e devolve os 6 candidatos mais próximos. `dryRun` não escreve. Resposta `{ aplicados, total, resultados:[{ ingredienteId, nome, estado:'preenchido'|'revisao'|'sem_candidato', referencia?, candidatos:[{id,nome,grupo,score,nutri,alergenios}] }] }`. |
 
 A **nutrição de receitas e fichas é calculada em cascata** (`cascade.js`), como o custo: `receitas.nutri` = valores por 100 g de mistura crua (+ `por100g_cozido` com a perda); `fichas_tecnicas.nutri` = por 100 g de **produto acabado** (a água que sai a cozer não tem calorias — muda o peso) + `por_unidade`, e a **união dos alergénios** de toda a árvore.
 

@@ -3,16 +3,16 @@
 // Segredos por empresa, cifrados em repouso (AES-256-GCM via $security).
 // Módulo partilhado: `const seg = require(`${__hooks}/segredos.js`)`.
 //
-//   TURNKEY_ENC_KEY   exatamente 32 caracteres, só no ambiente do servidor.
+//   GC_TURNKEY_ENC_KEY   exatamente 32 caracteres, só no ambiente do servidor.
 //                     Guardar uma cópia num gestor de palavras-passe, FORA dos
 //                     backups da base de dados: sem ela os segredos guardados
 //                     não se recuperam.
 
 function chaveMestra() {
-  var k = $os.getenv('TURNKEY_ENC_KEY') || '';
+  var k = $os.getenv('GC_TURNKEY_ENC_KEY') || '';
   if (k.length !== 32) {
     throw new Error(
-      'Cifra não configurada no servidor (TURNKEY_ENC_KEY com 32 caracteres).',
+      'Cifra não configurada no servidor (GC_TURNKEY_ENC_KEY com 32 caracteres).',
     );
   }
   return k;
@@ -20,7 +20,7 @@ function chaveMestra() {
 
 // true se o servidor tem a chave-mestra (32 caracteres) para cifrar/decifrar.
 function cifraDisponivel() {
-  return ($os.getenv('TURNKEY_ENC_KEY') || '').length === 32;
+  return ($os.getenv('GC_TURNKEY_ENC_KEY') || '').length === 32;
 }
 
 function procurar(app, empresaId, servico) {

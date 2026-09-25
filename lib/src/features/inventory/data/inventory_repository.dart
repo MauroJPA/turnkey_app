@@ -118,7 +118,7 @@ class InventoryRepository {
     bool? favorito,
   }) async {
     final res = await _pb.send(
-      '/api/turnkey/inventario/ajustar',
+      '/api/gc_turnkey/inventario/ajustar',
       method: 'POST',
       body: {
         if (ingredienteId != null) 'ingrediente': ingredienteId,

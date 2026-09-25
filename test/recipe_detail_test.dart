@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/features/recipes/application/recipes_providers.dart';
-import 'package:turnkey_app/src/features/recipes/domain/recipe.dart';
-import 'package:turnkey_app/src/features/recipes/domain/recipe_item.dart';
+import 'package:gc_turnkey/src/features/recipes/application/recipes_providers.dart';
+import 'package:gc_turnkey/src/features/recipes/domain/recipe.dart';
+import 'package:gc_turnkey/src/features/recipes/domain/recipe_item.dart';
 
 Receita _r({bool manual = false, double rendimento = 0}) => Receita(
       id: 'r1',

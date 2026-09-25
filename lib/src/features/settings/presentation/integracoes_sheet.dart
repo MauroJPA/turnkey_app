@@ -13,7 +13,7 @@ final integracaoVendusProvider = FutureProvider.autoDispose<EstadoIntegracao>((
 ) async {
   final r = await ref
       .watch(pbProvider)
-      .send('/api/turnkey/integracoes/vendus', method: 'GET');
+      .send('/api/gc_turnkey/integracoes/vendus', method: 'GET');
   final m = r as Map;
   return (
     configurada: m['configurada'] == true,
@@ -74,7 +74,7 @@ class _SheetState extends ConsumerState<_Sheet> {
       await ref
           .read(pbProvider)
           .send(
-            '/api/turnkey/integracoes/vendus',
+            '/api/gc_turnkey/integracoes/vendus',
             method: 'PUT',
             body: {'valor': valor},
           );
@@ -100,7 +100,7 @@ class _SheetState extends ConsumerState<_Sheet> {
     try {
       await ref
           .read(pbProvider)
-          .send('/api/turnkey/integracoes/vendus', method: 'DELETE');
+          .send('/api/gc_turnkey/integracoes/vendus', method: 'DELETE');
       ref.invalidate(integracaoVendusProvider);
     } on Object catch (e) {
       if (mounted) setState(() => _erro = _mensagem(e));
@@ -164,7 +164,7 @@ class _SheetState extends ConsumerState<_Sheet> {
                 child: Text(
                   'O servidor ainda não tem a chave de cifra, por isso não pode '
                   'guardar tokens. Quem administra o servidor tem de a gerar '
-                  '(bash gookie.sh instalar) e reiniciar.',
+                  '(bash gc_turnkey.sh instalar) e reiniciar.',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onErrorContainer,
                   ),

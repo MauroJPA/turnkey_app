@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/features/recipes/domain/recipe_item.dart';
+import 'package:gc_turnkey/src/features/recipes/domain/recipe_item.dart';
 
 void main() {
   ItemReceita linha({

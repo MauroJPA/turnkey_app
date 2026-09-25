@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/features/pricing/domain/cost_config.dart';
-import 'package:turnkey_app/src/features/tech_sheets/domain/tech_sheet.dart';
+import 'package:gc_turnkey/src/features/pricing/domain/cost_config.dart';
+import 'package:gc_turnkey/src/features/tech_sheets/domain/tech_sheet.dart';
 
 void main() {
   // 30+15+30 = 75% em outras rubricas → CMV esperado 25%.

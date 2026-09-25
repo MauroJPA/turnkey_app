@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/features/mise_en_place/domain/mep_plano.dart';
+import 'package:gc_turnkey/src/features/mise_en_place/domain/mep_plano.dart';
 
 void main() {
   test('MepPlano de um produto final: massa primeiro e recheios listados', () {

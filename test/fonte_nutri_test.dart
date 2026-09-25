@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/core/nutrition/nutrition.dart';
-import 'package:turnkey_app/src/features/ingredients/domain/ingredient.dart';
+import 'package:gc_turnkey/src/core/nutrition/nutrition.dart';
+import 'package:gc_turnkey/src/features/ingredients/domain/ingredient.dart';
 
 const _valores = Nutrientes(kcal: 340, proteina: 11, hidratos: 72);
 

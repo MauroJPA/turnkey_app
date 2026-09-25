@@ -84,9 +84,9 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
   }
 
   Future<void> _nutricao(Ingrediente i) async {
-    // Produto Gookie: a nutrição vem da receita — abre a folha da receita
+    // Produto de fabrico próprio: a nutrição vem da receita — abre a folha da receita
     // (que lista os ingredientes/subprodutos a preencher, em cascata).
-    if (i.eProdutoGookie) {
+    if (i.eProdutoProprio) {
       final recs = ref.read(recipesListProvider(false)).valueOrNull;
       final rec =
           recs?.where((r) => r.id == i.receitaEspelhoId).firstOrNull;
@@ -238,7 +238,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
   Widget build(BuildContext context) {
     final listAsync = ref.watch(ingredientsListProvider(_trash));
     // mantém as receitas carregadas para o redireccionamento dos produtos
-    // Gookie (_nutricao).
+    // de fabrico próprio (_nutricao).
     ref.watch(recipesListProvider(false));
 
     return Scaffold(

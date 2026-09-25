@@ -2,7 +2,7 @@
 # Cópia semanal para um disco/pen USB CIFRADO (LUKS): o backup mais recente do
 # PocketBase + o .env (segredos). Mantém as últimas 12 cópias.
 #
-#   bash backup/copia-usb.sh /mnt/gookie-usb
+#   bash backup/copia-usb.sh /mnt/gc_turnkey-usb
 #
 # O destino TEM de ser um ponto de montagem (nunca escreve no disco do servidor
 # por engano) e deve estar cifrado com LUKS (ver LEIA-ME.md, passo 8). Depois da
@@ -16,13 +16,13 @@ MANTER="${MANTER:-12}"
 LOGS="$AQUI/logs"; mkdir -p "$LOGS"; LOG="$LOGS/copia-usb.log"
 log() { echo "$(date '+%F %T') [${2:-INFO}] $1" | tee -a "$LOG"; }
 
-[ -n "$DESTINO_RAIZ" ] || { echo "Uso: bash backup/copia-usb.sh /mnt/gookie-usb"; exit 1; }
+[ -n "$DESTINO_RAIZ" ] || { echo "Uso: bash backup/copia-usb.sh /mnt/gc_turnkey-usb"; exit 1; }
 mountpoint -q "$DESTINO_RAIZ" || { log "$DESTINO_RAIZ não é um disco montado. Liga o USB, desbloqueia (LUKS) e monta." ERRO; exit 1; }
 
 ULTIMO="$(ls -t "$RAIZ"/data/backups/*.zip 2>/dev/null | head -n1 || true)"
 [ -n "$ULTIMO" ] || { log "Não há backups em $RAIZ/data/backups." ERRO; exit 1; }
 
-DEST="$DESTINO_RAIZ/GookieBackups"; mkdir -p "$DEST"
+DEST="$DESTINO_RAIZ/gc_turnkey_backups"; mkdir -p "$DEST"
 LIVRE=$(df --output=avail -B1 "$DEST" | tail -n1)
 TAM=$(stat -c %s "$ULTIMO")
 [ "$LIVRE" -gt $((TAM * 3)) ] || { log "Pouco espaço livre no USB." ERRO; exit 1; }
