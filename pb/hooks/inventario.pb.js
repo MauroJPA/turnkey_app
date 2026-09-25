@@ -1125,6 +1125,8 @@ routerAdd(
         nome: ing.getString('nome'),
         gramas: plano.comprar[k],
         emStock: emStockDe(k),
+        // produtos de compra fixados nas receitas deste produto (para os alergénios)
+        produtoIds: Object.keys(plano.produtosFixados[k] || {}).filter((x) => x !== ''),
       });
     }
     comprar.sort((a, b) => a.nome.localeCompare(b.nome));
