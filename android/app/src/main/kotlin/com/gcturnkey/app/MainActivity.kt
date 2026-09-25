@@ -1,4 +1,4 @@
-package com.gookie.turnkey_app
+package com.gcturnkey.app
 
 import io.flutter.embedding.android.FlutterActivity
 

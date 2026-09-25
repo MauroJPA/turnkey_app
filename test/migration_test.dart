@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/core/formatting/money.dart';
-import 'package:turnkey_app/src/features/recipes/domain/recipe.dart';
+import 'package:gc_turnkey/src/core/formatting/money.dart';
+import 'package:gc_turnkey/src/features/recipes/domain/recipe.dart';
 
 void main() {
   test('normalização de categorias do meu_app_ia', () {

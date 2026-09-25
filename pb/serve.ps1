@@ -1,10 +1,10 @@
-# Arranca o PocketBase local do turnkey_app.
+# Arranca o PocketBase local do gc_turnkey.
 #   cd pb ; .\serve.ps1
 # Admin UI: http://127.0.0.1:8090/_/   (superuser dev@turnkey.local / devdevdev12345)
 #
 # Chaves/segredos: cria um ficheiro pb\.env (fora do git) com linhas KEY=VALUE,
 # por exemplo:
-#   TURNKEY_AI_PROVIDER=gemini
+#   GC_TURNKEY_AI_PROVIDER=gemini
 #   GEMINI_API_KEY=AIza...
 # Este script carrega-as para o ambiente antes de arrancar o PocketBase.
 # Ver pb\.env.example.
@@ -28,9 +28,9 @@ if (Test-Path $envFile) {
 
 # Conveniencia de dev: contas novas ficam logo verificadas
 # (ver hooks\dev_autoverify.pb.js). Nunca usar em producao.
-if (-not $env:TURNKEY_DEV) { $env:TURNKEY_DEV = "1" }
+if (-not $env:GC_TURNKEY_DEV) { $env:GC_TURNKEY_DEV = "1" }
 
-$aiProvider = $env:TURNKEY_AI_PROVIDER
+$aiProvider = $env:GC_TURNKEY_AI_PROVIDER
 if (-not $aiProvider) { $aiProvider = "gemini" }
 if ($aiProvider -match "anthropic|claude") {
   $aiKey = $env:ANTHROPIC_API_KEY

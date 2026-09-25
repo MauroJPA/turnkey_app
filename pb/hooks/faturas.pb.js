@@ -2,16 +2,16 @@
 
 // Fase 5 — análise de faturas por IA (Anthropic) e aplicação aos ingredientes.
 //
-//   POST /api/turnkey/faturas/{id}/analisar   { imagem(base64), mime }
-//   POST /api/turnkey/faturas/{id}/aplicar    { linhas: [...] }
-//   GET  /api/turnkey/faturas/export?de=&ate=
+//   POST /api/gc_turnkey/faturas/{id}/analisar   { imagem(base64), mime }
+//   POST /api/gc_turnkey/faturas/{id}/aplicar    { linhas: [...] }
+//   GET  /api/gc_turnkey/faturas/export?de=&ate=
 //
 // A chave da IA vem de ANTHROPIC_API_KEY no ambiente do servidor. Nunca no app.
 
-// --- POST /api/turnkey/faturas/{id}/analisar --------------------------
+// --- POST /api/gc_turnkey/faturas/{id}/analisar --------------------------
 routerAdd(
   'POST',
-  '/api/turnkey/faturas/{id}/analisar',
+  '/api/gc_turnkey/faturas/{id}/analisar',
   (e) => {
     const auth = e.auth;
     const isSuper =
@@ -48,10 +48,10 @@ routerAdd(
   $apis.requireAuth('users', '_superusers'),
 );
 
-// --- POST /api/turnkey/faturas/{id}/aplicar --------------------------
+// --- POST /api/gc_turnkey/faturas/{id}/aplicar --------------------------
 routerAdd(
   'POST',
-  '/api/turnkey/faturas/{id}/aplicar',
+  '/api/gc_turnkey/faturas/{id}/aplicar',
   (e) => {
     const cascade = require(`${__hooks}/cascade.js`);
     const auth = e.auth;
@@ -179,10 +179,10 @@ routerAdd(
   $apis.requireAuth('users', '_superusers'),
 );
 
-// --- GET /api/turnkey/faturas/export?de=&ate= ------------------------
+// --- GET /api/gc_turnkey/faturas/export?de=&ate= ------------------------
 routerAdd(
   'GET',
-  '/api/turnkey/faturas/export',
+  '/api/gc_turnkey/faturas/export',
   (e) => {
     const auth = e.auth;
     const isSuper =

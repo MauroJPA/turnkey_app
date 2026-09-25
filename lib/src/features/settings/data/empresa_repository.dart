@@ -154,7 +154,7 @@ class EmpresaRepository {
     required RegraArredondamento regra,
   }) async {
     final res = await _pb.send(
-      '/api/turnkey/onboarding',
+      '/api/gc_turnkey/onboarding',
       method: 'POST',
       body: {
         'nome': nome,

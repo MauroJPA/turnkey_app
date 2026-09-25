@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/core/formatting/money.dart';
+import 'package:gc_turnkey/src/core/formatting/money.dart';
 
 void main() {
   test('roundMoney arredonda sempre para cima a 2 casas', () {

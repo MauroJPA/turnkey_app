@@ -1,6 +1,6 @@
 # Login com Google / Apple
 
-O `turnkey_app` usa o **fluxo OAuth2 do PocketBase**: o servidor guarda o
+O `gc_turnkey` usa o **fluxo OAuth2 do PocketBase**: o servidor guarda o
 `client id` + `secret`, a app só abre o browser. Os botões na tela de login
 **ativam-se sozinhos** quando o provedor estiver configurado (a app pergunta ao
 servidor quais estão ativos).
@@ -34,15 +34,15 @@ ativar, **Add provider → Google**, colar o Client ID e o Client secret → Sav
 Requer conta **Apple Developer paga** (99 USD/ano).
 
 1. https://developer.apple.com/account → **Certificates, Identifiers & Profiles**
-   - **Identifiers → App ID** (`com.gookie.turnkey`) com "Sign In with Apple".
-   - **Identifiers → Services ID** (ex. `com.gookie.turnkey.web`) com "Sign In
+   - **Identifiers → App ID** (`com.gcturnkey.app`) com "Sign In with Apple".
+   - **Identifiers → Services ID** (ex. `com.gcturnkey.web`) com "Sign In
      with Apple" configurado:
      - Domains: `<dominio-do-mini-pc>`
      - Return URLs: `https://<dominio-do-mini-pc>/api/oauth2-redirect`
    - **Keys → +** → "Sign In with Apple" → descarrega o `.p8` e anota o **Key ID**.
    - Anota o **Team ID** (canto superior direito).
 2. No PocketBase, provider **Apple**:
-   - Client ID = o **Services ID** (`com.gookie.turnkey.web`)
+   - Client ID = o **Services ID** (`com.gcturnkey.web`)
    - Team ID, Key ID
    - Private key = conteúdo do ficheiro `.p8`
 

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/features/inventory/domain/stock_item.dart';
+import 'package:gc_turnkey/src/features/inventory/domain/stock_item.dart';
 
 StockItem _item({
   StockTipo tipo = StockTipo.ingrediente,

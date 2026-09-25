@@ -3,13 +3,13 @@
 // Recalcula em cascata TODAS as receitas e fichas de uma empresa.
 // Útil depois de uma importação em massa, ou como botão "Recalcular tudo".
 //
-//   POST /api/turnkey/admin/recompute   { empresa? }
+//   POST /api/gc_turnkey/admin/recompute   { empresa? }
 //
 // Regras: superuser, OU owner/admin (e nesse caso só a própria empresa).
 
 routerAdd(
   'POST',
-  '/api/turnkey/admin/recompute',
+  '/api/gc_turnkey/admin/recompute',
   (e) => {
     const auth = e.auth;
     const isSuper =
@@ -86,12 +86,12 @@ routerAdd(
 
 // Religa ingredientes-espelho órfãos à respetiva receita (por nome), define
 // `publicar_como_ingrediente` e recalcula. Necessário após a migração do
-// meu_app_ia, onde a receita e o "ingrediente Gookie" vieram desligados.
+// meu_app_ia, onde a receita e o "ingrediente de fabrico próprio" vieram desligados.
 //
-//   POST /api/turnkey/admin/relink-espelhos   { empresa? }
+//   POST /api/gc_turnkey/admin/relink-espelhos   { empresa? }
 routerAdd(
   'POST',
-  '/api/turnkey/admin/relink-espelhos',
+  '/api/gc_turnkey/admin/relink-espelhos',
   (e) => {
     const auth = e.auth;
     const isSuper =
@@ -113,11 +113,11 @@ routerAdd(
     let ligados = 0;
 
     e.app.runInTransaction((tx) => {
-      // ingredientes de fabrico próprio / marca Gookie sem receita_espelho
+      // ingredientes de fabrico próprio sem receita_espelho
       const orfaos = tx.findRecordsByFilter(
         'ingredientes',
         "empresa = {:e} && receita_espelho = '' && " +
-          "(origem = 'fabrico_proprio' || marca ~ 'Gookie')",
+          "(origem = 'fabrico_proprio' )",
         '',
         0,
         0,

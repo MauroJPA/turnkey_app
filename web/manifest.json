@@ -1,11 +1,11 @@
 {
-    "name": "turnkey_app",
-    "short_name": "turnkey_app",
+    "name": "gc_turnkey",
+    "short_name": "gc_turnkey",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "Turnkey ERP para gestão de custos e fichas técnicas (Gookie)",
+    "description": "gc_turnkey — ERP para gestão de custos, produção e fichas técnicas",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

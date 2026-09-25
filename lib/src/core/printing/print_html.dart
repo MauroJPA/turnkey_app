@@ -8,7 +8,7 @@ import 'html_escape.dart';
 
 /// Abre uma nova janela/separador com [corpoHtml] e chama logo o diálogo de
 /// impressão do navegador — usado para imprimir a tabela nutricional de um
-/// produto Gookie sem depender de pacotes extra (`printing`/`pdf`).
+/// produto de fabrico próprio sem depender de pacotes extra (`printing`/`pdf`).
 ///
 /// O visual é propositadamente simples por agora; será substituído por um
 /// template a fornecer.

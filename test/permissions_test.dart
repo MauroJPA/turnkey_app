@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/core/auth/permissions.dart';
+import 'package:gc_turnkey/src/core/auth/permissions.dart';
 
 void main() {
   test('fromName é tolerante e cai em viewer', () {

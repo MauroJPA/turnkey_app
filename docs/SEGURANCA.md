@@ -27,7 +27,7 @@ do servidor), **OK**.
 
 Confirmado **sem falhas**: isolamento entre empresas em todas as coleções (listar, ler, alterar,
 apagar, criar, filtros); o papel Leitura não escreve em lado nenhum; configuração de custos só
-para admin/owner e a matriz de acesso só para o owner; todos os `/api/turnkey/*` exigem sessão e
+para admin/owner e a matriz de acesso só para o owner; todos os `/api/gc_turnkey/*` exigem sessão e
 recusam ids de outra empresa; dados inválidos/enormes não dão erro 500 nem revelam caminhos
 internos; uploads (tamanho, tipo, nome malicioso); nada de segredos no repositório nem no histórico.
 
@@ -55,13 +55,13 @@ Qualquer pessoa pode criar conta, mas **só entra depois de tu a aprovares**.
 - Cada empresa introduz o **seu** token em **Configurações → Integrações** (proprietário/admin).
   Fica em `segredos_empresa`, cifrado com **AES-256-GCM**; a coleção não tem acesso por REST,
   a resposta da app só diz "guardado (termina em …)" — o token **nunca volta a sair** do servidor.
-- A chave que cifra é a `TURNKEY_ENC_KEY` (32 caracteres, só no `.env` do servidor), **fora da base de
+- A chave que cifra é a `GC_TURNKEY_ENC_KEY` (32 caracteres, só no `.env` do servidor), **fora da base de
   dados e dos backups**: quem roubar um backup só leva texto cifrado. Gerar:
-  `bash gookie.sh instalar` (no servidor Linux; gera-a sem a mostrar) ou `pb\gerar-chave-cifra.ps1 -Gravar` (PC de desenvolvimento). **Guarda uma cópia no gestor de palavras-passe** e
+  `bash gc_turnkey.sh instalar` (no servidor Linux; gera-a sem a mostrar) ou `pb\gerar-chave-cifra.ps1 -Gravar` (PC de desenvolvimento). **Guarda uma cópia no gestor de palavras-passe** e
   nunca a mudes depois de haver tokens (ficam ilegíveis; teria de os reintroduzir).
 - A sincronização do Vendus usa o token da própria empresa. A variável `VENDUS_API_KEY` do
   ambiente passa a ser só um recurso para a empresa de `VENDUS_SYNC_EMPRESA` e **já não serve a
-  outras empresas** (antes, qualquer empresa podia importar vendas com a chave da Gookie).
+  outras empresas** (antes, qualquer empresa podia importar vendas com a chave de outra empresa).
 - Para juntar outro serviço no futuro (ex.: outro software de vendas): acrescentar o nome em
   `pb/hooks/integracoes.pb.js` e usar `segredos.ler(app, empresaId, 'servico')`.
 - Testes: `test/security/seguranca.py`, secção 7b (o ficheiro da BD e os logs não contêm o token).
@@ -91,7 +91,7 @@ Um servidor já a correr só passa à nova versão quando o reiniciares.
    - **Proxy fiável:** se houver proxy/túnel à frente, configurar em *Definições → Trusted proxy
      headers* (ex.: `X-Forwarded-For`), senão o limite de pedidos trata todos os utilizadores
      como um só IP.
-   - **`TURNKEY_DEV` não pode estar ligado** (o `pb/serve.ps1` liga-o só no PC de desenvolvimento; o contentor força `TURNKEY_DEV=0`).
+   - **`GC_TURNKEY_DEV` não pode estar ligado** (o `pb/serve.ps1` liga-o só no PC de desenvolvimento; o contentor força `GC_TURNKEY_DEV=0`).
    - Manter o Debian atualizado (`unattended-upgrades`) e o PocketBase na versão mais recente segura.
 4. ~~Registo público~~ **Decidido:** fica aberto, mas cada conta nova tem de ser aprovada por ti.
 5. **Novas coleções/relações** têm de levar a cláusula "mesma empresa" (o teste avisa se faltar).

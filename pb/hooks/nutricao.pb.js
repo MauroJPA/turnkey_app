@@ -2,10 +2,10 @@
 
 // Nutrição — endpoints:
 //
-//   POST /api/turnkey/ingredientes/{id}/rotulo   { imagem(base64), mime }
+//   POST /api/gc_turnkey/ingredientes/{id}/rotulo   { imagem(base64), mime }
 //   -> preenche os campos nutri_* + alergénios do ingrediente e devolve-os.
 //
-//   POST /api/turnkey/ingredientes/auto-insa   { ids?: string[], dryRun?: bool }
+//   POST /api/gc_turnkey/ingredientes/auto-insa   { ids?: string[], dryRun?: bool }
 //   -> emparelha cada ingrediente (por omissão: os sem nutrição) com a tabela
 //      INSA por semelhança de nome. Se houver um candidato claro, preenche
 //      nutri_* + alergénios (origem 'insa'); se houver dúvida, marca
@@ -17,7 +17,7 @@
 
 routerAdd(
   'POST',
-  '/api/turnkey/ingredientes/{id}/rotulo',
+  '/api/gc_turnkey/ingredientes/{id}/rotulo',
   (e) => {
     const auth = e.auth;
     const isSuper =
@@ -96,12 +96,12 @@ routerAdd(
   $apis.requireAuth('users', '_superusers'),
 );
 
-// --- POST /api/turnkey/nutricao/ler-rotulo -------------------------------
+// --- POST /api/gc_turnkey/nutricao/ler-rotulo -------------------------------
 // Lê um rótulo por IA SEM gravar nada (usado ao criar um ingrediente, que
 // ainda não existe). Body { imagem(base64), mime } -> valores por 100 g/ml.
 routerAdd(
   'POST',
-  '/api/turnkey/nutricao/ler-rotulo',
+  '/api/gc_turnkey/nutricao/ler-rotulo',
   (e) => {
     const auth = e.auth;
     const isSuper =
@@ -144,7 +144,7 @@ routerAdd(
 
 routerAdd(
   'POST',
-  '/api/turnkey/ingredientes/auto-insa',
+  '/api/gc_turnkey/ingredientes/auto-insa',
   (e) => {
     const auth = e.auth;
     const isSuper =

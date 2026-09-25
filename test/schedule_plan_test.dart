@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/features/schedule/domain/production_plan.dart';
+import 'package:gc_turnkey/src/features/schedule/domain/production_plan.dart';
 
 void main() {
   test('PlanoResposta.fromJson lê necessarios, produzir e custoTotal', () {

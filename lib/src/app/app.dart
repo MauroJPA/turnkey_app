@@ -6,8 +6,8 @@ import '../features/settings/application/font_providers.dart';
 import 'router.dart';
 import 'theme/app_theme.dart';
 
-class TurnkeyApp extends ConsumerWidget {
-  const TurnkeyApp({super.key});
+class GcTurnkeyApp extends ConsumerWidget {
+  const GcTurnkeyApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -30,7 +30,7 @@ class TurnkeyApp extends ConsumerWidget {
     final modo = empresa?.tema.modo ?? ThemeMode.system;
 
     return MaterialApp.router(
-      title: 'Turnkey',
+      title: 'gc_turnkey',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(
         brand,

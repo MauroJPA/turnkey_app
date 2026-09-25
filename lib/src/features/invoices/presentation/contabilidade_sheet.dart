@@ -192,7 +192,7 @@ class _SheetState extends ConsumerState<_Sheet> {
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           'Envio mensal automático por email: configura '
-                          'TURNKEY_CONTAB_EMAIL no servidor (ver DEPLOY).',
+                          'GC_TURNKEY_CONTAB_EMAIL no servidor (ver DEPLOY).',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ),

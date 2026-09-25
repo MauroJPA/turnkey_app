@@ -5,7 +5,7 @@ import '../../../core/widgets/async_value_view.dart';
 import '../application/tech_sheets_providers.dart';
 import '../domain/tech_sheet.dart';
 
-/// Abre uma folha para escolher uma ficha técnica (produto Gookie).
+/// Abre uma folha para escolher uma ficha técnica (produto de fabrico próprio).
 Future<FichaTecnica?> showFichaPickerSheet(BuildContext context) {
   return showModalBottomSheet<FichaTecnica>(
     context: context,

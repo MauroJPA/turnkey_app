@@ -1,4 +1,4 @@
-# Imagem do servidor Gookie: PocketBase + hooks + migrations + app web.
+# Imagem do servidor gc_turnkey: PocketBase + hooks + migrations + app web.
 # Funciona em amd64 e arm64 (o binario certo e descarregado e o SHA-256
 # conferido com o publicado na release).
 FROM alpine:3.20
@@ -27,7 +27,7 @@ COPY migrations /pb/pb_migrations
 COPY web /pb/pb_public
 
 WORKDIR /pb
-ENV TURNKEY_DEV=0 \
+ENV GC_TURNKEY_DEV=0 \
     TZ=Europe/Lisbon
 EXPOSE 8090
 

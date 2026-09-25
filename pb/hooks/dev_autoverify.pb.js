@@ -2,15 +2,15 @@
 
 // Conveniência de DESENVOLVIMENTO.
 //
-// Com a variável de ambiente TURNKEY_DEV=1, qualquer conta `users` criada
+// Com a variável de ambiente GC_TURNKEY_DEV=1, qualquer conta `users` criada
 // fica logo marcada como `verified` — não é preciso email/SMTP para entrar
-// enquanto se desenvolve. O `serve.ps1` local já põe TURNKEY_DEV=1.
+// enquanto se desenvolve. O `serve.ps1` local já põe GC_TURNKEY_DEV=1.
 //
 // Em produção (sem a variável) este hook não faz nada.
 
 onRecordCreate((e) => {
   try {
-    if ($os.getenv('TURNKEY_DEV') === '1') {
+    if ($os.getenv('GC_TURNKEY_DEV') === '1') {
       e.record.set('verified', true);
     }
   } catch (err) {

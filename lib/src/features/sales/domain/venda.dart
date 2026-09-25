@@ -57,7 +57,7 @@ class Venda {
 }
 
 /// Uma linha de venda — opcionalmente ligada a uma ficha técnica (produto
-/// Gookie); sem correspondência fica só com [descricao] (texto livre).
+/// de fabrico próprio); sem correspondência fica só com [descricao] (texto livre).
 class VendaItem {
   const VendaItem({
     required this.id,

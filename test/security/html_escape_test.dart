@@ -1,14 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/core/nutrition/nutri_widgets.dart';
-import 'package:turnkey_app/src/core/nutrition/nutrition.dart';
-import 'package:turnkey_app/src/core/printing/html_escape.dart';
-import 'package:turnkey_app/src/features/orders/domain/configuracao_encomendas.dart';
-import 'package:turnkey_app/src/features/orders/domain/encomenda.dart';
-import 'package:turnkey_app/src/features/orders/presentation/encomenda_talao.dart';
-import 'package:turnkey_app/src/features/products/domain/etiqueta.dart';
-import 'package:turnkey_app/src/features/tech_sheets/domain/tech_sheet.dart';
+import 'package:gc_turnkey/src/core/nutrition/nutri_widgets.dart';
+import 'package:gc_turnkey/src/core/nutrition/nutrition.dart';
+import 'package:gc_turnkey/src/core/printing/html_escape.dart';
+import 'package:gc_turnkey/src/features/orders/domain/configuracao_encomendas.dart';
+import 'package:gc_turnkey/src/features/orders/domain/encomenda.dart';
+import 'package:gc_turnkey/src/features/orders/presentation/encomenda_talao.dart';
+import 'package:gc_turnkey/src/features/products/domain/etiqueta.dart';
+import 'package:gc_turnkey/src/features/tech_sheets/domain/tech_sheet.dart';
 
 const _ataque = '</title><script>alert(1)</script><img src=x onerror=alert(2)>"\'';
 

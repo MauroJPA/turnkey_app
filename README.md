@@ -1,4 +1,4 @@
-# turnkey_app
+# gc_turnkey
 
 ERP modular para uma loja de cookies (e, no futuro, para outras empresas):
 gestão de **ingredientes**, **receitas** (massas, recheios, coberturas, outras) e
@@ -62,7 +62,7 @@ CSV de exemplo para o import de ingredientes:
 dart run pb/seed/migrate_from_meu_app_ia.dart \
   --src-url=http://<mini-pc>:8090 --src-email=<admin> --src-pass=<...> \
   --dst-url=http://127.0.0.1:8090 --dst-email=dev@turnkey.local --dst-pass=<...> \
-  --empresa="Gookie" --recompute
+  --empresa="Nome da empresa" --recompute
 ```
 
 Lê só da origem; cria uma empresa no destino e importa ingredientes, receitas,

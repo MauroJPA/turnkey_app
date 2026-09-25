@@ -10,7 +10,7 @@ novos depois de fechar os testes de Ingredientes, Receitas e Fichas técnicas
 1. **Fechar os testes** de Ingredientes, Receitas e Fichas (bloco 0).
 2. **Branches e fluxo de trabalho** (bloco 1) — rápido, faz-se antes de mexer em mais código.
 3. **Backups automáticos** (bloco 2) e **segurança** (bloco 3) — obrigatórios antes de haver dados reais.
-4. **Produtos Gookie + etiqueta** (blocos 4 e 5) — o que falta de funcionalidade.
+4. **Produtos + etiqueta** (blocos 4 e 5) — o que falta de funcionalidade.
 5. **Go-live** (bloco 6).
 
 Se o tempo apertar: o bloco 4 e a etiqueta *resumida* do bloco 5 são o mínimo
@@ -64,7 +64,7 @@ Relatório completo e lista para a produção: **`docs/SEGURANCA.md`**. Testes r
 - [x] **Uploads**: tipos e tamanhos restringidos; faturas protegidas (token de ficheiro).
 - [x] **HTML de impressão**: XSS no título do talão corrigido; testes com texto malicioso.
 - [x] **Segredos**: nada no repositório nem no histórico; `.env` fora do git.
-- [x] Tokens de integrações **cifrados por empresa** (Vendus) — Configurações → Integrações; chave-mestra `TURNKEY_ENC_KEY` (gerar com `pb\gerar-chave-cifra.ps1 -Gravar`).
+- [x] Tokens de integrações **cifrados por empresa** (Vendus) — Configurações → Integrações; chave-mestra `GC_TURNKEY_ENC_KEY` (gerar com `pb\gerar-chave-cifra.ps1 -Gravar`).
 - [ ] **Rodar a chave do Vendus** (foi exposta antes): guardar a nova na app e apagar `VENDUS_API_KEY` do `pb\.env`.
 - [x] **PocketBase atualizado** para a 0.40.4 (binário trocado; reiniciar o servidor para o usar) e testes repetidos.
 - [ ] **Painel `/_/`**, **HTTPS**, cabeçalhos de segurança, CORS e *trusted proxy* no servidor definitivo (lista em `docs/SEGURANCA.md`).
@@ -74,13 +74,13 @@ Relatório completo e lista para a produção: **`docs/SEGURANCA.md`**. Testes r
 - [x] Testes guardados em `test/security/` e ligados ao `scripts/verificar.sh`.
 - [x] Relatório curto: `docs/SEGURANCA.md`.
 
-## 4. Página "Produtos Gookie" (nova)
+## 4. Página "Produtos" (nova)
 
-Uma página com **tudo o que a Gookie produz** (produtos finais das fichas técnicas
+Uma página com **tudo o que a empresa produz** (produtos finais das fichas técnicas
 e, se fizer sentido, intermédios), para ver de forma simples e clara a
 **declaração nutricional** e a **lista de ingredientes** e imprimir etiquetas.
 
-- [x] Nova página no menu (`paginasApp`, permissões por nível e cor na grelha) — branch `feature/produtos-gookie`.
+- [x] Nova página no menu (`paginasApp`, permissões por nível e cor na grelha) — branch `feature/produtos`.
 - [x] Lista com pesquisa e estado de cada produto: nutrição **completa / incompleta** e alergénios (+ filtro "só os que faltam completar").
 - [x] Detalhe do produto: nome, descrição, formato/peso, **declaração nutricional** (por 100 g e por unidade), **lista de ingredientes**, alergénios, conservação.
 - [x] **Lista de ingredientes** conforme o Regulamento (UE) 1169/2011: por ordem decrescente de peso, alergénios destacados (negrito), ingredientes compostos com o seu detalhe; gerada a partir da ficha → receitas → ingredientes (a nutrição por 100 g já existe).
@@ -143,14 +143,14 @@ Caminhos: (a) **aumentar a parte de baixo** (campo "Altura", ex. 75 mm → etiqu
 
 Servidor: **Mini PC Debian** (partilhado com Immich, Portainer e outro PocketBase) com **Docker Compose**;
 acesso por **Tailscale**; **dados limpos**. Mais tarde, migração para uma máquina Linux na nuvem.
-Guia passo a passo: **`docs/SERVIDOR_LINUX.md`**. Pacote: `scripts\empacotar-producao.ps1` → `dist\gookie-servidor-<versão>.tar.gz`.
+Guia passo a passo: **`docs/SERVIDOR_LINUX.md`**. Pacote: `scripts\empacotar-producao.ps1` → `dist\gc_turnkey-servidor-<versão>.tar.gz`.
 
-- [x] Pacote Docker (Dockerfile, compose, `gookie.sh`), porta local livre escolhida sozinha (não choca com o PocketBase existente).
+- [x] Pacote Docker (Dockerfile, compose, `gc_turnkey.sh`), porta local livre escolhida sozinha (não choca com o PocketBase existente).
 - [x] Backups em Linux (`deploy/backup/*.sh`, timer do systemd, USB com LUKS).
 - [x] Código congelado em `main` (`v1.6.0`; a `v1.6.1` traz o pacote Linux).
 - [ ] Levar o pacote para o Mini PC e instalar (`docs/SERVIDOR_LINUX.md`, passos 0–3).
 - [ ] Tailscale: `tailscale serve` numa porta HTTPS livre + *Application URL* e *Trusted proxy headers* (`X-Forwarded-For`) + ACL.
-- [ ] `.env`: `GEMINI_API_KEY` e guardar a `TURNKEY_ENC_KEY` fora do servidor.
+- [ ] `.env`: `GEMINI_API_KEY` e guardar a `GC_TURNKEY_ENC_KEY` fora do servidor.
 - [ ] Superutilizador, aprovar o registo, criar a empresa real, utilizadores e papéis; carregar os dados iniciais.
 - [ ] Definir a navegação e as permissões por nível.
 - [ ] Backups a sério (`deploy/backup/LEIA-ME.md`) e primeiro restauro de teste.

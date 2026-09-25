@@ -1,7 +1,7 @@
 /// <reference path="../pb_data/types.d.ts" />
 
 // Núcleo da análise de uma fatura por IA — partilhado pelo endpoint
-// POST /api/turnkey/faturas/{id}/analisar e pelo cron de ingestão do scanner.
+// POST /api/gc_turnkey/faturas/{id}/analisar e pelo cron de ingestão do scanner.
 //
 //   analisarFatura(app, faturaId, { imagemBase64, mime })
 //     -> { ok:true, provider, dados }

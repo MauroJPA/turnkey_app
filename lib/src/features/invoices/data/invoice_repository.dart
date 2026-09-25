@@ -138,7 +138,7 @@ class InvoiceRepository {
     required String nome,
   }) async {
     await _pb.send(
-      '/api/turnkey/faturas/$id/analisar',
+      '/api/gc_turnkey/faturas/$id/analisar',
       method: 'POST',
       body: {
         'imagem': base64Encode(bytes),
@@ -153,7 +153,7 @@ class InvoiceRepository {
     List<LinhaAAplicar> linhas,
   ) async {
     final res = await _pb.send(
-      '/api/turnkey/faturas/$id/aplicar',
+      '/api/gc_turnkey/faturas/$id/aplicar',
       method: 'POST',
       body: {
         'linhas': [
@@ -209,7 +209,7 @@ class InvoiceRepository {
     required String ate,
   }) async {
     final res = await _pb.send(
-      '/api/turnkey/faturas/export?de=$de&ate=$ate',
+      '/api/gc_turnkey/faturas/export?de=$de&ate=$ate',
       method: 'GET',
     );
     final list = (res as Map)['faturas'];

@@ -6,14 +6,14 @@
 // gera um resumo CSV e envia-o por email com os ficheiros em anexo (nomeados
 // FT-FORNECEDOR-DDMMAAAA.ext).
 //
-//   TURNKEY_CONTAB_EMAIL    email do contabilista (sem isto o cron não envia)
-//   TURNKEY_SCAN_EMPRESA    id da empresa (reutilizado do scanner)
+//   GC_TURNKEY_CONTAB_EMAIL    email do contabilista (sem isto o cron não envia)
+//   GC_TURNKEY_SCAN_EMPRESA    id da empresa (reutilizado do scanner)
 //
 // Requer SMTP configurado nas definições do PocketBase (Admin UI → Mail).
 
 cronAdd('faturas_contabilidade', '0 8 1 * *', () => {
-  const email = $os.getenv('TURNKEY_CONTAB_EMAIL');
-  const empId = $os.getenv('TURNKEY_SCAN_EMPRESA');
+  const email = $os.getenv('GC_TURNKEY_CONTAB_EMAIL');
+  const empId = $os.getenv('GC_TURNKEY_SCAN_EMPRESA');
   if (!email || !empId) return;
 
   let emp;

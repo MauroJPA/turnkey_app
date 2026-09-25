@@ -10,19 +10,19 @@ import '../../../core/widgets/help_actions.dart';
 import '../../cookie_formats/application/cookie_format_providers.dart';
 import '../../tech_sheets/application/tech_sheets_providers.dart';
 import '../../tech_sheets/domain/tech_sheet.dart';
-import '../domain/produto_gookie.dart';
+import '../domain/produto_rotulo.dart';
 
-/// Tudo o que a Gookie produz (os produtos finais das fichas técnicas), com o
+/// Tudo o que a empresa produz (os produtos finais das fichas técnicas), com o
 /// estado da informação nutricional de cada um.
-class ProdutosGookieScreen extends ConsumerStatefulWidget {
-  const ProdutosGookieScreen({super.key});
+class ProdutosScreen extends ConsumerStatefulWidget {
+  const ProdutosScreen({super.key});
 
   @override
-  ConsumerState<ProdutosGookieScreen> createState() =>
-      _ProdutosGookieScreenState();
+  ConsumerState<ProdutosScreen> createState() =>
+      _ProdutosScreenState();
 }
 
-class _ProdutosGookieScreenState extends ConsumerState<ProdutosGookieScreen> {
+class _ProdutosScreenState extends ConsumerState<ProdutosScreen> {
   String _q = '';
   bool _soPorCompletar = false;
 
@@ -43,8 +43,8 @@ class _ProdutosGookieScreenState extends ConsumerState<ProdutosGookieScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go(Routes.home),
         ),
-        title: const Text('Produtos Gookie'),
-        actions: const [HelpActions(topic: HelpTopic.produtosGookie)],
+        title: const Text('Produtos'),
+        actions: const [HelpActions(topic: HelpTopic.produtos)],
       ),
       body: Column(
         children: [
@@ -134,7 +134,7 @@ class _ProdutosGookieScreenState extends ConsumerState<ProdutosGookieScreen> {
         overflow: TextOverflow.ellipsis,
       ),
       trailing: const Icon(Icons.chevron_right),
-      onTap: () => context.go('${Routes.produtosGookie}/${f.id}'),
+      onTap: () => context.go('${Routes.produtos}/${f.id}'),
     );
   }
 }

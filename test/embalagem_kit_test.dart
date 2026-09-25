@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:turnkey_app/src/features/packaging/application/embalagem_kit_providers.dart';
-import 'package:turnkey_app/src/features/packaging/domain/embalagem_kit.dart';
+import 'package:gc_turnkey/src/features/packaging/application/embalagem_kit_providers.dart';
+import 'package:gc_turnkey/src/features/packaging/domain/embalagem_kit.dart';
 
 void main() {
   test('custoLinha = custo/un da embalagem × quantidade', () {

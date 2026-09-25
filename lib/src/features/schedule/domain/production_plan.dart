@@ -281,7 +281,7 @@ class PlanoPorReceita {
       );
 }
 
-/// Resposta agregada de `GET /api/turnkey/producoes/{id}/plano`.
+/// Resposta agregada de `GET /api/gc_turnkey/producoes/{id}/plano`.
 class PlanoResposta {
   const PlanoResposta({
     required this.necessarios,
@@ -359,7 +359,7 @@ class FichaComponente {
       );
 }
 
-/// Resposta de `GET /api/turnkey/fichas/resolver`.
+/// Resposta de `GET /api/gc_turnkey/fichas/resolver`.
 class FichaResolvida {
   const FichaResolvida({
     required this.fichaId,
@@ -384,7 +384,7 @@ class FichaResolvida {
       );
 }
 
-/// Resposta de `POST /api/turnkey/producoes/{id}/concluir`.
+/// Resposta de `POST /api/gc_turnkey/producoes/{id}/concluir`.
 class ConclusaoResumo {
   const ConclusaoResumo({
     required this.consumos,

@@ -177,7 +177,7 @@ class _SheetState extends ConsumerState<_Sheet> {
           children: [
             Text('Informação nutricional',
                 style: Theme.of(context).textTheme.titleLarge),
-            Text('${widget.receita.nome} · produto Gookie',
+            Text('${widget.receita.nome} · produto de fabrico próprio',
                 style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 4),
             Text(
@@ -292,7 +292,7 @@ class _ItemTile extends StatelessWidget {
                 children: [
                   Text(it.nome),
                   Text(
-                    '${ehSub ? 'Subproduto Gookie' : 'Ingrediente'} · '
+                    '${ehSub ? 'Subproduto próprio' : 'Ingrediente'} · '
                     '${it.quantidadeG.toStringAsFixed(0)} g · $txt',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),

@@ -366,7 +366,7 @@ Widget _marcaAppBar(BuildContext context, Empresa? empresa, String logoUrl) {
   final texto = !mostrarNome
       ? null
       : Text(
-          empresa?.nome ?? 'Turnkey',
+          empresa?.nome ?? 'gc_turnkey',
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontSize: empresa?.nomeTamanho ?? 18,

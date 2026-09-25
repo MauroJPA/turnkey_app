@@ -138,7 +138,7 @@ class ScheduleRepository {
     String? recheioId,
   }) async {
     final res = await _pb.send(
-      '/api/turnkey/fichas/resolver',
+      '/api/gc_turnkey/fichas/resolver',
       method: 'GET',
       query: {
         'massa': massaId,
@@ -161,7 +161,7 @@ class ScheduleRepository {
 
   Future<PlanoResposta> plano(String planId) async {
     final res = await _pb.send(
-      '/api/turnkey/producoes/$planId/plano',
+      '/api/gc_turnkey/producoes/$planId/plano',
       method: 'GET',
     );
     return PlanoResposta.fromJson(Map<String, dynamic>.from(res as Map));
@@ -171,7 +171,7 @@ class ScheduleRepository {
   /// Devolve o nº de linhas escritas.
   Future<int> gerarListaCompras(String planId) async {
     final res = await _pb.send(
-      '/api/turnkey/producoes/$planId/lista-compras',
+      '/api/gc_turnkey/producoes/$planId/lista-compras',
       method: 'POST',
     );
     return ((res as Map)['linhas'] as num?)?.toInt() ?? 0;
@@ -179,7 +179,7 @@ class ScheduleRepository {
 
   Future<ConclusaoResumo> concluir(String planId) async {
     final res = await _pb.send(
-      '/api/turnkey/producoes/$planId/concluir',
+      '/api/gc_turnkey/producoes/$planId/concluir',
       method: 'POST',
     );
     return ConclusaoResumo.fromJson(Map<String, dynamic>.from(res as Map));

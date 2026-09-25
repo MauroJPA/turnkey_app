@@ -35,8 +35,8 @@ O Mini PC corre **PocketBase v0.40.4** (mínimo seguro: 0.39.7). Confirma:
 2. **Copiar as migrations e os hooks** para as pastas que o PocketBase lê
    (por omissão `pb_migrations/` e `pb_hooks/` ao lado do binário):
    ```bash
-   cp turnkey_app/pb/migrations/*.js  <pasta-do-pocketbase>/pb_migrations/
-   cp -r turnkey_app/pb/hooks/*       <pasta-do-pocketbase>/pb_hooks/
+   cp gc_turnkey/pb/migrations/*.js  <pasta-do-pocketbase>/pb_migrations/
+   cp -r gc_turnkey/pb/hooks/*       <pasta-do-pocketbase>/pb_hooks/
    ```
    (inclui `pb_hooks/cascade.js` — é um módulo `require()`d pelos hooks, não um
    hook autónomo, mas tem de estar na mesma pasta.)
@@ -48,38 +48,38 @@ O Mini PC corre **PocketBase v0.40.4** (mínimo seguro: 0.39.7). Confirma:
    ```
 
    **Análise de faturas por IA** (`faturas.pb.js` → `ai.js`): o fornecedor de IA
-   escolhe-se por `TURNKEY_AI_PROVIDER` — **`gemini`** (por omissão, tem plano
+   escolhe-se por `GC_TURNKEY_AI_PROVIDER` — **`gemini`** (por omissão, tem plano
    gratuito) ou `anthropic`. Só é preciso a chave do provider ativo.
    - **Gemini** (agora): chave em <https://aistudio.google.com/app/apikey>
-     (começa por `AIza`). Variáveis: `TURNKEY_AI_PROVIDER=gemini`,
+     (começa por `AIza`). Variáveis: `GC_TURNKEY_AI_PROVIDER=gemini`,
      `GEMINI_API_KEY=AIza...`. Saída de internet para
      `generativelanguage.googleapis.com`.
    - **Anthropic** (futuro): chave em <https://console.anthropic.com/> →
-     Settings → API keys (`sk-ant-...`). Variáveis: `TURNKEY_AI_PROVIDER=anthropic`,
+     Settings → API keys (`sk-ant-...`). Variáveis: `GC_TURNKEY_AI_PROVIDER=anthropic`,
      `ANTHROPIC_API_KEY=sk-ant-...`. Saída para `api.anthropic.com`. Custo
      ~€0,01–0,03 por fatura.
-   - Opcional `TURNKEY_AI_MODEL` (por omissão `gemini-3.6-flash` /
+   - Opcional `GC_TURNKEY_AI_MODEL` (por omissão `gemini-3.6-flash` /
      `claude-sonnet-5`; se a Google descontinuar o modelo, o `/analisar` dá
      `502 "no longer available"` e basta pôr aqui o novo, ex.: `gemini-3.8-flash`).
    - **Dev (Windows, `serve.ps1`)**: copia `pb/.env.example` para `pb/.env`
      (fora do git) e preenche. O `serve.ps1` carrega o `.env` para o ambiente
      antes de arrancar e escreve `provider=… chave definida`.
    - **Mini PC — Windows service (NSSM)**:
-     `nssm set pocketbase AppEnvironmentExtra TURNKEY_AI_PROVIDER=gemini GEMINI_API_KEY=AIza...`
+     `nssm set pocketbase AppEnvironmentExtra GC_TURNKEY_AI_PROVIDER=gemini GEMINI_API_KEY=AIza...`
      e reiniciar o serviço. Ou correr o PocketBase pelo mesmo `serve.ps1` com um
      `pb\.env` ao lado.
-   - **Mini PC — Linux systemd**: `Environment=TURNKEY_AI_PROVIDER=gemini` e
+   - **Mini PC — Linux systemd**: `Environment=GC_TURNKEY_AI_PROVIDER=gemini` e
      `Environment=GEMINI_API_KEY=AIza...` na unit (ou
      `EnvironmentFile=/etc/pocketbase.env`), depois
      `systemctl daemon-reload && systemctl restart pocketbase`.
    - Sem a chave do provider ativo, tudo o resto funciona; só
-     `/api/turnkey/faturas/{id}/analisar` devolve `503` e a app mostra
+     `/api/gc_turnkey/faturas/{id}/analisar` devolve `503` e a app mostra
      "IA não configurada".
    - Confirmar depois de arrancar:
-     `curl -X POST http://127.0.0.1:8090/api/turnkey/faturas/x/analisar` →
+     `curl -X POST http://127.0.0.1:8090/api/gc_turnkey/faturas/x/analisar` →
      deve dar `401` (falta auth), **não** `503`. Um `503` = chave não carregada.
 
-   **Segredos por empresa (token do Vendus):** exigem `TURNKEY_ENC_KEY` (32 caracteres,
+   **Segredos por empresa (token do Vendus):** exigem `GC_TURNKEY_ENC_KEY` (32 caracteres,
    `pb\gerar-chave-cifra.ps1 -Gravar`) — ver `docs/SEGURANCA.md`. O token de cada empresa
    guarda-se na app (Configurações → Integrações), cifrado; `VENDUS_API_KEY` só serve de recurso
    para a empresa de `VENDUS_SYNC_EMPRESA`.
@@ -108,9 +108,9 @@ O Mini PC corre **PocketBase v0.40.4** (mínimo seguro: 0.39.7). Confirma:
    `1705104000_formatos_cookie.js` **semeia** Mini/Recheado/Simples em cada
    empresa existente (e o onboarding fá-lo para novas).
    Endpoints (`pb_hooks/inventario.pb.js`): `POST
-   /api/turnkey/inventario/ajustar`, `GET /api/turnkey/producoes/{id}/plano`,
-   `POST /api/turnkey/producoes/{id}/lista-compras`, `POST
-   /api/turnkey/producoes/{id}/concluir` — ver [`README.md`](README.md).
+   /api/gc_turnkey/inventario/ajustar`, `GET /api/gc_turnkey/producoes/{id}/plano`,
+   `POST /api/gc_turnkey/producoes/{id}/lista-compras`, `POST
+   /api/gc_turnkey/producoes/{id}/concluir` — ver [`README.md`](README.md).
 
 5. **Primeiro utilizador**: cria uma conta na app (ecrã de registo) e faz o
    onboarding — fica `owner` da nova empresa.
@@ -123,10 +123,10 @@ Depois do schema aplicado, do lado de uma máquina que veja os dois servidores:
 dart run pb/seed/migrate_from_meu_app_ia.dart \
   --src-url=http://<meu_app_ia>:8090 \
   --dst-url=http://<mini-pc>:8090 --dst-email=<superuser> --dst-pass=<...> \
-  --empresa="Gookie" --attach-user=<o-teu-email> --recompute
+  --empresa="Nome da empresa" --attach-user=<o-teu-email> --recompute
 ```
 
-`--recompute` liga os ingredientes-espelho (os "ingredientes Gookie" que na
+`--recompute` liga os ingredientes-espelho (os "ingredientes de fabrico próprio" que na
 verdade são receitas), recalcula tudo em cascata e imprime as diferenças vs. os
 valores antigos. `--dry-run` conta sem escrever.
 
