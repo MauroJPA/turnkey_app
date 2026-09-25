@@ -43,6 +43,9 @@ routerAdd(
       estado: 'analisada',
       provider: r.provider,
       dados: r.dados,
+      faturas: r.faturas || [id],
+      dividido: !!r.dividido,
+      duplicadas: r.duplicadas || 0,
     });
   },
   $apis.requireAuth('users', '_superusers'),
