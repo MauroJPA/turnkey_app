@@ -44,6 +44,16 @@ function analisarFatura(app, faturaId, opts) {
   }
 
   const lista = r.lista && r.lista.length ? r.lista : [r.dados];
+  return aplicarLista(app, fatura, lista, r.provider);
+}
+
+// Grava a lista de documentos lida pela IA: uma só fatura, ou (vários documentos no
+// mesmo PDF) uma fatura por documento, cada uma com o seu ficheiro cortado.
+// `lista` = [{ fornecedor, numero, data, total, iva, paginas, linhas }, ...]
+function aplicarLista(app, fatura, lista, provider) {
+  const empresaId = fatura.getString('empresa');
+  const tipo = fatura.getString('tipo') || 'fatura';
+  const isLista = tipo === 'lista_precos';
   const norm = (x) =>
     String(x || '').toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
 
@@ -118,7 +128,7 @@ function analisarFatura(app, faturaId, opts) {
     if (dup) {
       return { ok: false, code: 409, message: dup.message, duplicadaDe: dup.dup.id };
     }
-    return { ok: true, provider: r.provider, dados: lista[0], faturas: [faturaId], dividido: false };
+    return { ok: true, provider: provider, dados: lista[0], faturas: [fatura.id], dividido: false };
   }
 
   // --- vários documentos no mesmo ficheiro ---------------------------------
@@ -231,7 +241,7 @@ function analisarFatura(app, faturaId, opts) {
 
   return {
     ok: true,
-    provider: r.provider,
+    provider: provider,
     dados: lista[0],
     faturas: ids,
     dividido: !!partes,
@@ -239,4 +249,5 @@ function analisarFatura(app, faturaId, opts) {
   };
 }
 
-module.exports = { analisarFatura };
+
+module.exports = { analisarFatura, aplicarLista };

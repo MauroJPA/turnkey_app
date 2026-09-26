@@ -744,6 +744,20 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Stock, lista de compras, mise en place e plano de produção mostram ml e un nos ingredientes que os usam.
 - [ ] A lista de ingredientes do rótulo continua por ordem decrescente de peso (ovos em un contam pelo peso em g).
 
+## 38. Faturas grandes e progresso
+
+- [ ] Nova fatura → escolher o PDF digitalizado grande (dezenas de páginas, 80 MB): **não** dá "Request entity too large".
+- [ ] Aparece um cartão nas Faturas com "A enviar o ficheiro… (79,7 MB)" e depois "A IA está a ler as páginas: N de 93…"
+      com a barra a avançar.
+- [ ] Mudar para outro ecrã (ex.: Compras): aparece a **faixa** por cima da barra de navegação com o progresso; tocar leva às Faturas.
+- [ ] No fim: "Pronto: N faturas". Cada fatura tem o seu ficheiro só com as suas páginas; as guias de remessa e
+      talões sem preços ficam sem linhas (podes ignorá-las ou apagá-las).
+- [ ] Faturas do mesmo fornecedor com datas diferentes ficam separadas; um documento de 2 páginas seguidas fica **uma só**.
+- [ ] Fechar a app a meio: ao reabrir, a fatura aparece com **Continuar (N/93)** e retoma sem repetir o que já foi lido.
+- [ ] Se a IA estiver sobrecarregada: aparece um erro em português e "Continuar / tentar de novo" (sem `ClientException`).
+- [ ] Confere as quantidades de um grossista: Makro/Recheio "Qt.Total" (2 vol. × 6 = 12) e produtos vendidos ao kg (1,150 kg).
+- [ ] Uma fatura pequena (foto/PDF de 1 página) continua a funcionar e abre a revisão pelo botão "Rever a fatura".
+
 ---
 
 ## Notas / ajustes pedidos

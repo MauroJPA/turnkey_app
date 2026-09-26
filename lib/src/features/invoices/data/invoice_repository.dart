@@ -187,6 +187,58 @@ class InvoiceRepository {
     );
   }
 
+  /// Ficheiros grandes: o servidor lê o ficheiro já guardado e analisa-o por
+  /// janelas de páginas (uma por pedido), para se ver o progresso e retomar.
+  Future<({int paginas, int proxima, bool retomado})> preparar(String id) async {
+    final res = await _pb.send(
+      '/api/gc_turnkey/faturas/$id/preparar',
+      method: 'POST',
+      body: const {},
+    );
+    final m = res is Map ? res : const <String, dynamic>{};
+    return (
+      paginas: (m['paginas'] as num?)?.toInt() ?? 1,
+      proxima: (m['proxima'] as num?)?.toInt() ?? 1,
+      retomado: m['retomado'] == true,
+    );
+  }
+
+  /// Lê a próxima janela de páginas. `feito` quando já não há mais.
+  Future<({bool feito, int proxima, int paginas})> analisarParte(
+    String id,
+  ) async {
+    final res = await _pb.send(
+      '/api/gc_turnkey/faturas/$id/analisar-parte',
+      method: 'POST',
+      body: const {},
+    );
+    final m = res is Map ? res : const <String, dynamic>{};
+    return (
+      feito: m['feito'] == true,
+      proxima: (m['proxima'] as num?)?.toInt() ?? 1,
+      paginas: (m['paginas'] as num?)?.toInt() ?? 1,
+    );
+  }
+
+  /// Junta as janelas, separa as faturas (uma por documento) e grava.
+  Future<AnaliseFaturas> concluirAnalise(String id) async {
+    final res = await _pb.send(
+      '/api/gc_turnkey/faturas/$id/concluir-analise',
+      method: 'POST',
+      body: const {},
+    );
+    final m = res is Map ? res : const <String, dynamic>{};
+    final ids = [
+      for (final v in (m['faturas'] as List? ?? const [])) v.toString(),
+    ];
+    return (
+      fatura: await getById(id),
+      ids: ids.isEmpty ? [id] : ids,
+      dividido: m['dividido'] == true,
+      duplicadas: (m['duplicadas'] as num?)?.toInt() ?? 0,
+    );
+  }
+
   /// Volta a descarregar o ficheiro guardado (para tentar a análise de novo).
   Future<List<int>> descarregarFicheiro(Fatura f) async {
     final url = await ficheiroUrlSeguro(f);

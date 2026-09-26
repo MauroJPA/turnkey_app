@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/auth/permissions.dart';
+import '../../invoices/presentation/analise_faturas_widgets.dart';
 import '../../navigation/application/navigation_providers.dart';
 import '../../navigation/domain/nav_config.dart';
 import '../../navigation/domain/pagina_app.dart';
@@ -58,9 +59,14 @@ class MainShell extends ConsumerWidget {
 
     return Scaffold(
       body: corpo,
-      bottomNavigationBar: abas.length < 2
-          ? null
-          : NavigationBar(
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ficheiro de faturas a ser enviado/analisado (fora do ecrã das Faturas)
+          if (!location.startsWith(Routes.invoices))
+            const AnaliseFaturasFaixa(),
+          if (abas.length >= 2)
+            NavigationBar(
               selectedIndex: selecionada,
               labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
               onDestinationSelected: (i) => context.go(abas[i].rota),
@@ -69,6 +75,8 @@ class MainShell extends ConsumerWidget {
                   NavigationDestination(icon: Icon(a.icon), label: a.label),
               ],
             ),
+        ],
+      ),
     );
   }
 }

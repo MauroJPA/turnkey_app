@@ -155,6 +155,26 @@ class Fatura {
 
   String get erroIa => (dadosIa['erro'] ?? '').toString();
 
+  Map<String, dynamic>? get _lote {
+    final l = dadosIa['lote'];
+    return l is Map ? Map<String, dynamic>.from(l) : null;
+  }
+
+  /// Análise por janelas de páginas (ficheiros grandes) já começada.
+  bool get temLote => _lote != null;
+
+  /// Páginas do ficheiro (se a análise por janelas foi preparada).
+  int get lotePaginas => (_lote?['paginas'] as num?)?.toInt() ?? 0;
+
+  /// Páginas já lidas pela IA.
+  int get loteFeitas {
+    final p = (_lote?['proxima'] as num?)?.toInt() ?? 1;
+    return (p - 1).clamp(0, lotePaginas);
+  }
+
+  /// Carregada mas a análise não chegou ao fim (a app fechou ou houve um erro).
+  bool get analiseAMeio => estado == FaturaEstado.nova;
+
   /// Se esta fatura foi marcada como duplicada, o id da original.
   String get duplicadaDe => (dadosIa['duplicada_de'] ?? '').toString();
 
