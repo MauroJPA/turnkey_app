@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router.dart';
 import '../../../core/auth/auth_controller.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/env/app_version.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/help_actions.dart';
@@ -117,6 +118,16 @@ class HomeShell extends ConsumerWidget {
               ),
               const PopupMenuDivider(),
               const PopupMenuItem(value: 'sair', child: Text('Terminar sessão')),
+              const PopupMenuDivider(),
+              // versão da app, discreta (útil para saber se o telemóvel já atualizou)
+              PopupMenuItem(
+                enabled: false,
+                height: 32,
+                child: Text(
+                  'gc_turnkey · $versaoAppTexto',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
             ],
           ),
         ],
