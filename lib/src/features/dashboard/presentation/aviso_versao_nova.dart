@@ -10,9 +10,10 @@ import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-/// Versão desta compilação (`--dart-define=APP_VERSION=1.17.1`, posta pelo script
-/// de empacotamento). Vazia em desenvolvimento: o aviso não aparece.
-const versaoCompilada = String.fromEnvironment('APP_VERSION');
+import '../../../core/env/app_version.dart';
+
+/// Versão desta compilação (vazia em desenvolvimento: o aviso não aparece).
+const versaoCompilada = versaoApp;
 
 /// Aviso "Há uma versão nova": compara a versão desta app com a do servidor
 /// (`version.json`, lido sem cache) ao abrir, a cada 10 minutos e quando a
