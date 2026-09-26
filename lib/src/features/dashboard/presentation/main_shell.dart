@@ -9,6 +9,7 @@ import '../../invoices/presentation/analise_faturas_widgets.dart';
 import '../../navigation/application/navigation_providers.dart';
 import '../../navigation/domain/nav_config.dart';
 import '../../navigation/domain/pagina_app.dart';
+import 'aviso_versao_nova.dart';
 
 /// Casca das secções principais: mostra a barra de navegação inferior (as
 /// páginas e a ordem escolhidas em Configurações → Navegação) e aplica as
@@ -62,6 +63,7 @@ class MainShell extends ConsumerWidget {
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          const AvisoVersaoNova(),
           // ficheiro de faturas a ser enviado/analisado (fora do ecrã das Faturas)
           if (!location.startsWith(Routes.invoices))
             const AnaliseFaturasFaixa(),

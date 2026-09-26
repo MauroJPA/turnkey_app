@@ -756,6 +756,8 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Fechar a app a meio: ao reabrir, a fatura aparece com **Continuar (N/93)** e retoma sem repetir o que já foi lido.
 - [ ] Se a IA estiver sobrecarregada: aparece um erro em português e "Continuar / tentar de novo" (sem `ClientException`).
 - [ ] Confere as quantidades de um grossista: Makro/Recheio "Qt.Total" (2 vol. × 6 = 12) e produtos vendidos ao kg (1,150 kg).
+- [ ] Depois de atualizar o servidor, abrir a app (que ainda tem a versão antiga): aparece "Há uma versão nova da
+      app" e **Atualizar** recarrega já com a versão nova (o número aparece no aviso).
 - [ ] Uma fatura pequena (foto/PDF de 1 página) continua a funcionar e abre a revisão pelo botão "Rever a fatura".
 
 ---
