@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.17.1 — 2026-09-26 — Aviso de versão nova da app
+
+- **Aviso "Há uma versão nova da app" com botão Atualizar.** Depois de o servidor ser atualizado, o telemóvel/browser
+  podia continuar com a versão antiga em cache (por exemplo, a fatura grande ficava "Nova", sem análise). A app
+  passa a comparar a sua versão com a do servidor (`version.json`, sem cache) ao abrir, de 10 em 10 minutos e ao
+  voltar a ser vista; se houver uma versão mais nova mostra o aviso por cima da barra de navegação. **Atualizar**
+  limpa a cache da app e recarrega.
+- O script `empacotar-producao.ps1` grava a versão na app (`--dart-define=APP_VERSION`).
+- A primeira vez precisa de um refresh manual (Ctrl+Shift+R, ou limpar os dados do site no telemóvel); a partir
+  daí o aviso trata disto.
+
 ## 1.17.0 — 2026-09-26 — Faturas: ficheiros grandes e progresso à vista
 
 - **Corrigido "Request entity too large" (413):** o limite do ficheiro de uma fatura era de 8 MB. Passa a **200 MB**,
