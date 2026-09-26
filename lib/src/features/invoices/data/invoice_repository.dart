@@ -6,6 +6,7 @@ import 'package:pocketbase/pocketbase.dart';
 
 import '../../../core/auth/current_user.dart';
 import '../../../core/pocketbase/pb_client.dart';
+import '../domain/analise_resumo.dart';
 import '../domain/fatura.dart';
 
 /// Resultado de analisar um ficheiro: a fatura original, os ids de todas as
@@ -15,6 +16,7 @@ typedef AnaliseFaturas = ({
   List<String> ids,
   bool dividido,
   int duplicadas,
+  ResumoAnalise resumo,
 });
 
 final invoiceRepositoryProvider = Provider<InvoiceRepository>((ref) {
@@ -46,10 +48,41 @@ class InvoiceRepository {
 
   Future<List<Fatura>> list() async {
     final recs = await _c.getFullList(
-      filter: 'empresa = "$_empresaId"',
+      filter: 'empresa = "$_empresaId" && apagada != true',
       sort: '-created',
     );
     return recs.map(Fatura.fromRecord).toList();
+  }
+
+  /// Faturas apagadas pelo proprietário (continuam na base de dados).
+  Future<List<Fatura>> listApagadas() async {
+    final recs = await _c.getFullList(
+      filter: 'empresa = "$_empresaId" && apagada = true',
+      sort: '-apagada_em',
+    );
+    return recs.map(Fatura.fromRecord).toList();
+  }
+
+  /// Corrige fornecedor, número, data e total (só o proprietário; fica no histórico).
+  Future<Fatura> editar(
+    String id, {
+    required String fornecedor,
+    required String numero,
+    DateTime? data,
+    double? total,
+  }) async {
+    String dia(DateTime d) =>
+        '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')} 00:00:00.000Z';
+    final rec = await _c.update(
+      id,
+      body: {
+        'fornecedor': fornecedor.trim(),
+        'numero': numero.trim(),
+        'data_fatura': data == null ? '' : dia(data),
+        if (total != null) 'total': total,
+      },
+    );
+    return Fatura.fromRecord(rec);
   }
 
   Future<Fatura> getById(String id) async =>
@@ -184,6 +217,7 @@ class InvoiceRepository {
       ids: ids.isEmpty ? [id] : ids,
       dividido: m['dividido'] == true,
       duplicadas: (m['duplicadas'] as num?)?.toInt() ?? 0,
+      resumo: const ResumoAnalise(),
     );
   }
 
@@ -236,6 +270,7 @@ class InvoiceRepository {
       ids: ids.isEmpty ? [id] : ids,
       dividido: m['dividido'] == true,
       duplicadas: (m['duplicadas'] as num?)?.toInt() ?? 0,
+      resumo: ResumoAnalise.fromJson(m['resumo']),
     );
   }
 
@@ -283,7 +318,10 @@ class InvoiceRepository {
     );
   }
 
-  Future<void> apagar(String id) => _c.delete(id);
+  /// Só o proprietário: a fatura fica escondida (não se perde nada) e pode ser restaurada.
+  Future<void> apagar(String id) => _c.update(id, body: {'apagada': true});
+
+  Future<void> restaurar(String id) => _c.update(id, body: {'apagada': false});
 
   /// Apaga as faturas que não dão para usar: estado `nova` (por analisar),
   /// `erro`, e `analisada` em que a IA não conseguiu devolver nenhuma linha.
@@ -301,7 +339,7 @@ class InvoiceRepository {
       if (f.estado == FaturaEstado.analisada && f.linhasIa.isNotEmpty) {
         continue;
       }
-      await _c.delete(r.id);
+      await _c.update(r.id, body: {'apagada': true});
       n++;
     }
     return n;

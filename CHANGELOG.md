@@ -2,6 +2,32 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.18.0 — 2026-09-26 — Faturas: repetição automática, resumo do que entrou, corrigir e apagar (proprietário)
+
+- **A análise repete sozinha.** Quando a IA falha numa janela de páginas (sobrecarga, rede), a app espera e volta a
+  tentar, até 5 vezes (5, 10, 20, 30 e 45 s), e mostra o motivo e a contagem na barra: "Páginas 25–30: … Nova
+  tentativa em 10 s (2 de 6)…". Só se falhar de vez pede "Continuar" (o que já foi lido fica guardado). O erro diz
+  **em que páginas** falhou.
+- **Resumo do que entrou.** No fim, o cartão diz quantas faturas são novas, quantas são **duplicadas** (já existiam),
+  quantas ficaram sem linhas e as **páginas em que a IA não reconheceu nenhuma fatura**. "Ver o que entrou" lista cada
+  documento (fornecedor, nº, data, páginas do PDF e estado). "Duplicada" (já estava na app) passou a ter chip próprio,
+  diferente de "Erro" (a IA não conseguiu ler).
+- **Corrigir dados de uma fatura** (fornecedor, número, data, total): só o **proprietário**, no lápis do ecrã de
+  revisão ou no toque longo da lista. A alteração não refaz o que já foi aplicado aos preços/stock.
+- **Apagar fatura: só o proprietário, e nada se perde.** Apagar passa a "esconder": a fatura e o ficheiro continuam na
+  base de dados (entram nos backups) e o proprietário restaura-as em Faturas → ⋮ → **Faturas apagadas**. Uma fatura
+  apagada não conta como duplicada nem vai para a contabilidade. "Limpar vazias, com erro…" também só esconde e só o
+  proprietário o vê.
+- **Histórico de alterações** por fatura (ícone do relógio): cada correção, apagar e restaurar ficam registados com
+  quem fez e os valores **antes e depois** (`historico`, `entidade_tipo = fatura`). Fica na base de dados, por isso
+  também nos backups.
+- Os editores continuam a carregar e a analisar faturas e a aplicar preços/stock; já não alteram nem apagam faturas
+  (regras da API: `update`/`delete` só para o proprietário).
+- Migration `1707955213_faturas_edicao` (campos `apagada`, `apagada_em`, `apagada_por`; regras; tipo `fatura` no
+  histórico) e hook `faturas_edicao.pb.js`.
+- Testes: secção 8c do `test/security/seguranca.py` (edição, histórico, apagar/restaurar, permissões) e resumo do
+  lote (346 verificações, 0 falhas); `test/analise_faturas_test.dart`.
+
 ## 1.17.2 — 2026-09-26 — Versão no menu do Início
 
 - O menu dos três pontos (canto superior direito do **Início**) mostra, em letra pequena e discreta, a versão da

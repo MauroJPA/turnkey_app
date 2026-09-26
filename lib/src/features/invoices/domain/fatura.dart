@@ -135,6 +135,9 @@ class Fatura {
     this.ficheiro = '',
     this.dadosIa = const {},
     this.created = '',
+    this.apagada = false,
+    this.apagadaEm = '',
+    this.apagadaPor = '',
   });
 
   final String id;
@@ -148,6 +151,11 @@ class Fatura {
   final String ficheiro;
   final Map<String, dynamic> dadosIa;
   final String created;
+
+  /// Apagada pelo proprietário: fica escondida (e na base de dados) e pode ser restaurada.
+  final bool apagada;
+  final String apagadaEm;
+  final String apagadaPor;
 
   bool get temFicheiro => ficheiro.isNotEmpty;
 
@@ -206,6 +214,9 @@ class Fatura {
       ficheiro: r.getStringValue('ficheiro'),
       dadosIa: di,
       created: r.getStringValue('created'),
+      apagada: r.getBoolValue('apagada'),
+      apagadaEm: r.getStringValue('apagada_em'),
+      apagadaPor: r.getStringValue('apagada_por'),
     );
   }
 }
