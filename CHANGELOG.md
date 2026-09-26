@@ -2,6 +2,11 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.17.2 — 2026-09-26 — Versão no menu do Início
+
+- O menu dos três pontos (canto superior direito do **Início**) mostra, em letra pequena e discreta, a versão da
+  app ("gc_turnkey · v1.17.2") por baixo de "Terminar sessão". Serve para confirmar se o telemóvel já atualizou.
+
 ## 1.17.1 — 2026-09-26 — Aviso de versão nova da app
 
 - **Aviso "Há uma versão nova da app" com botão Atualizar.** Depois de o servidor ser atualizado, o telemóvel/browser
