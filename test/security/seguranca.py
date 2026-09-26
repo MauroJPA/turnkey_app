@@ -621,10 +621,14 @@ def teste_uploads():
         if s == 200:
             nome = r.get('ficheiro', '')
             check('/' not in nome and '..' not in nome, 'nome de ficheiro malicioso é normalizado', nome)
-        grande = b'\x89PNG\r\n\x1a\n' + b'0' * (9 * 1024 * 1024)
-        corpo, ct = multipart({}, {'ficheiro': ('grande.png', grande, 'image/png')})
-        s, r, _ = call('PATCH', f'/api/collections/faturas/records/{fat[0]}', raw=corpo, ctype=ct, tok=tok['editorA'])
-        check(s != 200, 'ficheiro acima do tamanho máximo é recusado', f'status {s}')
+        # o limite das faturas é alto (PDFs de dezenas de páginas): confere-se no esquema e
+        # testa-se a recusa num campo com limite pequeno (o logótipo, 3 MB)
+        limite = [f for f in cols['faturas']['fields'] if f['name'] == 'ficheiro'][0].get('maxSize')
+        check(limite == 200 * 1024 * 1024, 'faturas: ficheiro até 200 MB (PDFs grandes)', str(limite))
+        grande = bytes([0x89]) + b'PNG' + bytes([13, 10, 26, 10]) + b'0' * (4 * 1024 * 1024)
+        corpo, ct = multipart({}, {'logo': ('grande.png', grande, 'image/png')})
+        s, r, _ = call('PATCH', f'/api/collections/empresas/records/{empresas["A"]}', raw=corpo, ctype=ct, tok=tok['ownerA'])
+        check(s != 200, 'ficheiro acima do tamanho máximo é recusado (logótipo > 3 MB)', f'status {s}')
         # um utilizador de B não descarrega o ficheiro de A sem token de ficheiro
         s, r, _ = call('GET', f'/api/collections/faturas/records/{fat[0]}', tok=su)
         nome = r.get('ficheiro') if isinstance(r, dict) else ''
@@ -830,7 +834,7 @@ class _GeminiFalso(BaseHTTPRequestHandler):
     def do_POST(self):
         modelo = self.path.split('/models/')[-1].split(':')[0]
         ia_modo['chamadas'][modelo] = ia_modo['chamadas'].get(modelo, 0) + 1
-        self.rfile.read(int(self.headers.get('Content-Length', 0)))
+        corpo_pedido = self.rfile.read(int(self.headers.get('Content-Length', 0)))
 
         def enviar(codigo, corpo):
             b = json.dumps(corpo).encode()
@@ -851,6 +855,21 @@ class _GeminiFalso(BaseHTTPRequestHandler):
             return {'fornecedor': f, 'numero': n + suf, 'data': data, 'total': 10.0, 'paginas': pag, 'linhas': [linha]}
 
         m = ia_modo['modo']
+        if m == 'janelas':
+            # a janela vem no PDF falso ("%PDF-fake 5-8"): responde com os documentos dessas páginas
+            achado = re.search(rb'"data"\s*:\s*"([A-Za-z0-9+/=]+)"', corpo_pedido)
+            texto = base64.b64decode(achado.group(1)).decode('latin-1') if achado else ''
+            j = re.search(r'fake (\d+)-(\d+)', texto)
+            a, b = (int(j.group(1)), int(j.group(2))) if j else (1, 1)
+            docs = [('Fornecedor Z', 'Z-1', 1, 3), ('Fornecedor Z', 'Z-2', 4, 8), ('Fornecedor Y', 'Y-1', 9, 10)]
+            if ia_modo.get('falhar_janela') == a:
+                return enviar(503, {'error': {'status': 'UNAVAILABLE', 'message': 'high demand'}})
+            lista = []
+            for forn, num, de, ate in docs:
+                pags = [p - a + 1 for p in range(max(de, a), min(ate, b) + 1)]
+                if pags:
+                    lista.append(fat(forn, num, pags))
+            return enviar(200, {'candidates': [{'content': {'parts': [{'text': json.dumps({'faturas': lista})}]}}]})
         if m == 'tres':
             dados = {'faturas': [fat('Fornecedor A', 'A-1', [1, 2]), fat('Fornecedor B', 'B-1', [3, 4]), fat('Fornecedor C', 'C-1', [5, 6, 7, 8])]}
         elif m == 'datas':  # mesmo fornecedor, datas e números diferentes no mesmo PDF
@@ -874,9 +893,16 @@ def ambiente_ia_falsa():
         "    print(len(re.findall(rb'/Type /Page\\b', open(a[1], 'rb').read())))\n"
         "elif a[0] == '--empty':\n"
         "    open(a[5], 'wb').write(b'%PDF-fake ' + a[3].encode())\n")
+    open(os.path.join(pasta, 'fake_base64.py'), 'w').write(
+        "import base64, sys\n"
+        "sys.stdout.write(base64.b64encode(open(sys.argv[-1], 'rb').read()).decode())\n")
     if os.name == 'nt':
         open(os.path.join(pasta, 'qpdf.cmd'), 'w').write('@"%s" "%%~dp0fake_qpdf.py" %%*\r\n' % sys.executable)
+        open(os.path.join(pasta, 'base64.cmd'), 'w').write('@"%s" "%%~dp0fake_base64.py" %%*\r\n' % sys.executable)
     else:
+        g = os.path.join(pasta, 'base64')
+        open(g, 'w').write('#!/bin/sh\nexec "%s" "$(dirname "$0")/fake_base64.py" "$@"\n' % sys.executable)
+        os.chmod(g, 0o755)
         f = os.path.join(pasta, 'qpdf')
         open(f, 'w').write('#!/bin/sh\nexec "%s" "$(dirname "$0")/fake_qpdf.py" "$@"\n' % sys.executable)
         os.chmod(f, 0o755)
@@ -886,7 +912,7 @@ def ambiente_ia_falsa():
         'GEMINI_API_KEY': 'chave-falsa', 'GC_TURNKEY_AI_PROVIDER': 'gemini',
         'GC_TURNKEY_GEMINI_URL': f'http://127.0.0.1:{PORTA_IA}/v1beta/models/',
         'GC_TURNKEY_AI_MODEL': 'modelo-a', 'GC_TURNKEY_AI_MODEL_FALLBACK': 'modelo-b,modelo-c',
-        'GC_TURNKEY_AI_ESPERAS': '0,0',
+        'GC_TURNKEY_AI_ESPERAS': '0,0', 'GC_TURNKEY_JANELA_PAGINAS': '4',
         'PATH': pasta + os.pathsep + os.environ.get('PATH', ''),
     }
 
@@ -990,6 +1016,55 @@ def teste_faturas_ia():
         s2, r, _ = call('POST', f'/api/gc_turnkey/faturas/{rec["id"]}/analisar',
                         {'imagem': base64.b64encode(pdf).decode(), 'mime': 'application/pdf'}, tok['editorA'])
         check(s2 == 200 and r.get('faturas') == [rec['id']] and r.get('dividido') is False, 'uma só fatura: continua igual', str(r)[:140])
+
+        # --- ficheiro grande: análise por janelas de páginas (o ficheiro já está no servidor)
+        ia_modo.update(modo='janelas', sufixo='', chamadas={}, falhar_janela=None)
+        st, rec, pdf = criar_fatura_pdf('editorA', 10)
+        rid = rec['id']
+        base = f'/api/gc_turnkey/faturas/{rid}'
+        s6, _, _ = call('POST', base + '/preparar', {}, tok['viewerA'])
+        check(s6 == 403, 'lote: o papel Leitura não prepara', f'status {s6}')
+        s6, _, _ = call('POST', base + '/preparar', {}, tok['editorB'])
+        check(s6 in (403, 404), 'lote: outra empresa não prepara', f'status {s6}')
+        s6, prep, _ = call('POST', base + '/preparar', {}, tok['editorA'])
+        check(s6 == 200 and prep.get('paginas') == 10 and prep.get('proxima') == 1 and prep.get('retomado') is False,
+              'lote: preparar conta as 10 páginas', f'{s6} {str(prep)[:120]}')
+        s6, _, _ = call('POST', base + '/concluir-analise', {}, tok['editorA'])
+        check(s6 == 409, 'lote: não conclui antes de analisar tudo', f'status {s6}')
+        # a primeira janela falha (IA sobrecarregada): não perde nada e volta a tentar
+        ia_modo['falhar_janela'] = 1
+        s6, falha, _ = call('POST', base + '/analisar-parte', {}, tok['editorA'])
+        check(s6 in (502, 503), 'lote: IA sobrecarregada devolve erro sem estragar o estado', f'status {s6}')
+        ia_modo['falhar_janela'] = None
+        passos = []
+        for _ in range(6):
+            s6, r, _ = call('POST', base + '/analisar-parte', {}, tok['editorA'])
+            passos.append((s6, r.get('proxima') if isinstance(r, dict) else None))
+            if s6 != 200 or r.get('feito'):
+                break
+        check(passos == [(200, 5), (200, 9), (200, 11)], 'lote: 3 janelas (1-4, 5-8, 9-10) até acabar', str(passos))
+        s6, fim, _ = call('POST', base + '/concluir-analise', {}, tok['editorA'])
+        ids = fim.get('faturas', []) if isinstance(fim, dict) else []
+        check(s6 == 200 and len(ids) == 3 and fim.get('dividido') is True,
+              'lote: 3 faturas (o documento Z-2 atravessa duas janelas e fica junto)', f'{s6} {str(fim)[:160]}')
+        esperado = [('Fornecedor Z', 'Z-1', b'%PDF-fake 1-3'), ('Fornecedor Z', 'Z-2', b'%PDF-fake 4-8'), ('Fornecedor Y', 'Y-1', b'%PDF-fake 9-10')]
+        s3, ft, _ = call('POST', '/api/files/token', {}, tok['editorA'])
+        for i, fid in enumerate(ids):
+            s4, f, _ = call('GET', f'/api/collections/faturas/records/{fid}', tok=su)
+            forn, num, conteudo = esperado[i]
+            check(f.get('fornecedor') == forn and f.get('numero') == num and f.get('estado') == 'analisada',
+                  f'lote {i + 1}: {forn} {num}, analisada', str(f)[:140])
+            s5, cf, _ = call('GET', f'/api/files/faturas/{fid}/{f.get("ficheiro", "")}?token={ft.get("token")}')
+            check(cf == conteudo, f'lote {i + 1}: ficheiro com as páginas certas', str(cf)[:50])
+
+        # retoma: prepara outra vez a meio e continua de onde ficou
+        st, rec2, pdf2 = criar_fatura_pdf('editorA', 10)
+        base2 = f'/api/gc_turnkey/faturas/{rec2["id"]}'
+        call('POST', base2 + '/preparar', {}, tok['editorA'])
+        call('POST', base2 + '/analisar-parte', {}, tok['editorA'])
+        s6, prep2, _ = call('POST', base2 + '/preparar', {}, tok['editorA'])
+        check(s6 == 200 and prep2.get('retomado') is True and prep2.get('proxima') == 5,
+              'lote: voltar a preparar retoma a partir da janela seguinte (5)', str(prep2)[:120])
     finally:
         srv.shutdown()
 

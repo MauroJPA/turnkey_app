@@ -22,6 +22,7 @@ import '../../ingredients/data/ingredient_product_repository.dart';
 import '../../ingredients/data/ingredient_repository.dart';
 import '../../ingredients/domain/ingredient.dart';
 import '../../ingredients/domain/produto_ingrediente.dart';
+import '../application/analise_faturas_controller.dart';
 import '../application/invoice_providers.dart';
 import '../data/invoice_repository.dart';
 import '../domain/fatura.dart';
@@ -109,32 +110,16 @@ class _ErroState extends ConsumerState<_Erro> {
 
   Future<void> _tentarDeNovo() async {
     setState(() => _busy = true);
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      final r = await ref
-          .read(invoiceActionsProvider)
-          .tentarDeNovo(widget.fatura);
-      if (r.ids.length > 1) {
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(
-              '${r.ids.length} faturas detetadas neste ficheiro. Revê-as na lista.',
-            ),
-          ),
-        );
-        if (mounted && context.canPop()) context.pop();
-      }
-    } on Object {
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Ainda não foi possível analisar. Tenta daqui a uns minutos.',
-          ),
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
+    // volta a analisar no servidor (retoma o que já foi lido) e mostra o progresso na lista
+    ref
+        .read(analiseFaturasProvider.notifier)
+        .retomar(widget.fatura.id, titulo: widget.fatura.ficheiro);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('A analisar de novo. Acompanha o progresso na lista de faturas.'),
+      ),
+    );
+    if (mounted && context.canPop()) context.pop();
   }
 
   @override

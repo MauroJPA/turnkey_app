@@ -16,8 +16,11 @@ import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../../core/widgets/history_sheet.dart';
 import '../../settings/application/empresa_providers.dart';
+import '../application/analise_faturas_controller.dart';
 import '../application/invoice_providers.dart';
 import '../domain/fatura.dart';
+import '../domain/invoice_erros.dart';
+import 'analise_faturas_widgets.dart';
 import 'contabilidade_sheet.dart';
 
 class InvoicesScreen extends ConsumerWidget {
@@ -99,41 +102,23 @@ class InvoicesScreen extends ConsumerWidget {
     final f = picked?.files.single;
     if (f?.bytes == null || !context.mounted) return;
 
-    final messenger = ScaffoldMessenger.of(context)
-      ..showSnackBar(
-        const SnackBar(
-          content: Text('A analisar a fatura…'),
-          duration: Duration(seconds: 8),
-        ),
-      );
-    try {
-      final r = await ref
-          .read(invoiceActionsProvider)
-          .criarEAnalisar(
-            tipo: tipo,
-            fornecedor: forn.text.trim(),
-            bytes: f!.bytes!.toList(),
-            nome: f.name,
-          );
-      messenger.hideCurrentSnackBar();
-      if (r.total > 1) {
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(
-              '${r.total} faturas detetadas neste ficheiro: cada uma ficou com '
-              'as suas páginas. Revê-as na lista.'
-              '${r.duplicadas > 0 ? ' (${r.duplicadas} já existia/m.)' : ''}',
-            ),
-            duration: const Duration(seconds: 8),
-          ),
+    // O envio e a análise correm em segundo plano (mesmo que mudes de ecrã); o
+    // progresso aparece aqui e numa faixa por cima da barra de navegação.
+    ref
+        .read(analiseFaturasProvider.notifier)
+        .iniciar(
+          tipo: tipo,
+          fornecedor: forn.text.trim(),
+          bytes: f!.bytes!, // sem copiar (PDFs de dezenas de MB)
+          nome: f.name,
         );
-      } else if (context.mounted) {
-        unawaited(context.push('${Routes.invoices}/${r.fatura.id}'));
-      }
-    } on Object catch (e) {
-      messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(SnackBar(content: Text('$e')));
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'A enviar e analisar o ficheiro. Acompanha o progresso aqui.',
+        ),
+      ),
+    );
   }
 
   Future<void> _apagar(BuildContext context, WidgetRef ref, Fatura f) async {
@@ -153,7 +138,7 @@ class InvoicesScreen extends ConsumerWidget {
       await ref.read(invoiceActionsProvider).apagar(f.id);
       messenger.showSnackBar(const SnackBar(content: Text('Fatura apagada.')));
     } on Object catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('$e')));
+      messenger.showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
     }
   }
 
@@ -176,7 +161,7 @@ class InvoicesScreen extends ConsumerWidget {
         SnackBar(content: Text('$n fatura(s) apagada(s).')),
       );
     } on Object catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('$e')));
+      messenger.showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
     }
   }
 
@@ -249,6 +234,9 @@ class InvoicesScreen extends ConsumerWidget {
         onRetry: () => ref.invalidate(faturasListProvider),
         data: (faturas) {
           if (faturas.isEmpty) {
+            if (ref.watch(analiseFaturasProvider).isNotEmpty) {
+              return const SingleChildScrollView(child: AnaliseFaturasPainel());
+            }
             return const EmptyState(
               icon: Icons.receipt_long_outlined,
               titulo: 'Sem faturas',
@@ -264,9 +252,11 @@ class InvoicesScreen extends ConsumerWidget {
                 : (f.created.isNotEmpty ? f.created.substring(0, 7) : '—');
             grupos.putIfAbsent(mes, () => []).add(f);
           }
+          final trabalhos = ref.watch(analiseFaturasProvider);
           return ListView(
             padding: const EdgeInsets.only(bottom: 88),
             children: [
+              const AnaliseFaturasPainel(),
               for (final entry in grupos.entries) ...[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
@@ -296,7 +286,25 @@ class InvoicesScreen extends ConsumerWidget {
                           if (f.total > 0) fmt(f.total),
                         ].join(' · '),
                       ),
-                      trailing: _EstadoChip(estado: f.estado),
+                      trailing: f.analiseAMeio && podeEditar
+                          ? (trabalhos[f.id]?.ativo ?? false)
+                                ? const _EstadoChip.texto('A analisar…')
+                                : TextButton(
+                                    onPressed: () => ref
+                                        .read(analiseFaturasProvider.notifier)
+                                        .retomar(
+                                          f.id,
+                                          titulo: f.ficheiro.isNotEmpty
+                                              ? f.ficheiro
+                                              : 'Fatura',
+                                        ),
+                                    child: Text(
+                                      f.temLote && f.loteFeitas > 0
+                                          ? 'Continuar (${f.loteFeitas}/${f.lotePaginas})'
+                                          : 'Analisar',
+                                    ),
+                                  )
+                          : _EstadoChip(estado: f.estado),
                       onTap: () => context.push('${Routes.invoices}/${f.id}'),
                       onLongPress: podeEditar
                           ? () => _apagar(context, ref, f)
@@ -313,8 +321,13 @@ class InvoicesScreen extends ConsumerWidget {
 }
 
 class _EstadoChip extends StatelessWidget {
-  const _EstadoChip({required this.estado});
+  const _EstadoChip({required this.estado}) : textoLivre = null;
+
+  /// Chip com um texto próprio (ex.: "A analisar…").
+  const _EstadoChip.texto(this.textoLivre) : estado = FaturaEstado.nova;
+
   final FaturaEstado estado;
+  final String? textoLivre;
 
   @override
   Widget build(BuildContext context) {
@@ -334,7 +347,10 @@ class _EstadoChip extends StatelessWidget {
         color: bg,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(estado.label, style: TextStyle(color: fg, fontSize: 12)),
+      child: Text(
+        textoLivre ?? estado.label,
+        style: TextStyle(color: fg, fontSize: 12),
+      ),
     );
   }
 }

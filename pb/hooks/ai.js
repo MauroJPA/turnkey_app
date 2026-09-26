@@ -106,6 +106,13 @@ function analisarImagemIA(opts) {
       '"Noz moscada 15g" -> quantidade 2, unidade "un", embalagem_g 15; ' +
       '"1 un" de "Cravinho 14g" -> quantidade 1, unidade "un", embalagem_g 14. ' +
       'Se a coluna estiver em kg/g/L, usa essa unidade. ' +
+      'Nas faturas de grossistas (Makro, Recheio…) com colunas "Vol.", "Qt./Vol." ' +
+      'e "Qt.Total", a quantidade é a Qt.Total (ex.: 2 volumes de 6 = 12 un) e ' +
+      'preco_unitario é o "Preço Uni." (por unidade ou por kg, sem IVA). Se a ' +
+      'quantidade tem decimais (ex.: 1,150) ou a descrição termina em KG e o ' +
+      'preço é por kg, usa unidade "kg", quantidade = o peso (1,15) e ' +
+      'preco_unitario = preço por kg, embalagem_g = 1000 (o preço é de 1 kg). Ignora guias de remessa sem preços: ' +
+      'devolve-as só com fornecedor/data/número e "linhas": []. ' +
       'Regras: preco_unitario é o preço por unidade/embalagem, NÃO o total da ' +
       'linha. Não incluas descontos, portes ou totais como linhas de produto. ' +
       'embalagem_g só quando o tamanho da embalagem aparecer (converte kg->g, ' +

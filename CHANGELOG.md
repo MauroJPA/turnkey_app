@@ -2,6 +2,31 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.17.0 — 2026-09-26 — Faturas: ficheiros grandes e progresso à vista
+
+- **Corrigido "Request entity too large" (413):** o limite do ficheiro de uma fatura era de 8 MB. Passa a **200 MB**,
+  por isso um PDF de dezenas de páginas digitalizado no telemóvel (ex.: 93 páginas, 80 MB) já entra.
+- **Análise por janelas de páginas, no servidor.** A app só envia o ficheiro; o servidor lê-o do armazenamento,
+  corta-o em janelas de 6 páginas (`GC_TURNKEY_JANELA_PAGINAS`), manda cada uma à IA (o limite da Google é ~20 MB
+  por pedido), **junta os documentos que atravessam duas janelas** e separa as faturas como antes (um ficheiro por
+  documento). Se a IA falhar numa janela, o que já foi lido **fica guardado** e "Continuar" retoma de onde parou.
+  Novas rotas: `/faturas/{id}/preparar`, `/analisar-parte` e `/concluir-analise`.
+- **Progresso sempre visível:** ao enviar, aparece um cartão nas Faturas ("A enviar…", "A IA está a ler as
+  páginas: 12 de 93…", "A separar as faturas…", "Pronto: N faturas") e uma **faixa por cima da barra de navegação**
+  em qualquer ecrã. Corre em segundo plano enquanto a app estiver aberta. Se a app fechar a meio, a fatura aparece
+  na lista com **Continuar (12/93)**.
+- **Erros sem texto técnico:** já não aparece o `ClientException` com o endereço do servidor; mensagens em
+  português ("O ficheiro é grande demais…", "Sem ligação ao servidor…").
+- O envio deixou de copiar o ficheiro em memória (`toList()`) e a "análise de novo" já não descarrega o ficheiro.
+- **IA:** instruções para faturas de grossistas (Makro, Recheio): a quantidade é a "Qt.Total"; preços por kg
+  (quantidade com decimais / descrição em KG) leem-se em kg com embalagem de 1 kg; guias de remessa sem preços
+  ficam sem linhas.
+- Migration `1707955212_faturas_grandes` (ficheiro 200 MB, `dados_ia` até 5 MB).
+- Testes: secção 8 do `test/security/seguranca.py` (janelas, retoma, falha da IA, documento que atravessa
+  janelas; 332 verificações, 0 falhas) e `test/analise_faturas_test.dart`.
+- Não testado: o `qpdf`/Gemini reais com o teu PDF de 93 páginas (aqui só há simulados). O `base64` usado é o da
+  imagem Alpine.
+
 ## 1.16.0 — 2026-09-25 — Unidades (g, ml, un) e características dos ingredientes
 
 - **Unidade de medida por ingrediente: gramas (por omissão), mililitros ou unidades.** Serve para bebidas e
