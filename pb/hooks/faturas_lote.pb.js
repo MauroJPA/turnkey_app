@@ -44,6 +44,7 @@ routerAdd(
       faturas: r.faturas || [fatura.id],
       dividido: !!r.dividido,
       duplicadas: r.duplicadas || 0,
+      resumo: r.resumo || { itens: [], paginasSemFatura: '' },
     });
   },
   $apis.requireAuth('users', '_superusers'),

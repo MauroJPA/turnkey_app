@@ -617,7 +617,7 @@ def teste_uploads():
     if fat:
         png = b'\x89PNG\r\n\x1a\n' + b'0' * 32
         corpo, ct = multipart({}, {'ficheiro': ('../../../etc/x.png', png, 'image/png')})
-        s, r, _ = call('PATCH', f'/api/collections/faturas/records/{fat[0]}', raw=corpo, ctype=ct, tok=tok['editorA'])
+        s, r, _ = call('PATCH', f'/api/collections/faturas/records/{fat[0]}', raw=corpo, ctype=ct, tok=tok['ownerA'])
         if s == 200:
             nome = r.get('ficheiro', '')
             check('/' not in nome and '..' not in nome, 'nome de ficheiro malicioso é normalizado', nome)
@@ -861,7 +861,7 @@ class _GeminiFalso(BaseHTTPRequestHandler):
             texto = base64.b64decode(achado.group(1)).decode('latin-1') if achado else ''
             j = re.search(r'fake (\d+)-(\d+)', texto)
             a, b = (int(j.group(1)), int(j.group(2))) if j else (1, 1)
-            docs = [('Fornecedor Z', 'Z-1', 1, 3), ('Fornecedor Z', 'Z-2', 4, 8), ('Fornecedor Y', 'Y-1', 9, 10)]
+            docs = ia_modo.get('docs') or [('Fornecedor Z', 'Z-1', 1, 3), ('Fornecedor Z', 'Z-2', 4, 8), ('Fornecedor Y', 'Y-1', 9, 10)]
             if ia_modo.get('falhar_janela') == a:
                 return enviar(503, {'error': {'status': 'UNAVAILABLE', 'message': 'high demand'}})
             lista = []
@@ -1057,6 +1057,25 @@ def teste_faturas_ia():
             s5, cf, _ = call('GET', f'/api/files/faturas/{fid}/{f.get("ficheiro", "")}?token={ft.get("token")}')
             check(cf == conteudo, f'lote {i + 1}: ficheiro com as páginas certas', str(cf)[:50])
 
+        resumo = fim.get('resumo', {}) if isinstance(fim, dict) else {}
+        it = resumo.get('itens', [])
+        check(len(it) == 3 and [i.get('paginas') for i in it] == ['1-3', '4-8', '9-10'] and resumo.get('paginasSemFatura') == '',
+              'lote: resumo com as 3 faturas e as suas páginas', str(resumo)[:200])
+
+        # páginas em que a IA não reconheceu nenhuma fatura: aparecem no resumo
+        ia_modo['docs'] = [('Fornecedor Z', 'Z-1', 1, 3), ('Fornecedor Y', 'Y-1', 6, 10)]
+        st, recb, pdfb = criar_fatura_pdf('editorA', 10)
+        baseb = f'/api/gc_turnkey/faturas/{recb["id"]}'
+        call('POST', baseb + '/preparar', {}, tok['editorA'])
+        for _ in range(6):
+            s6, r, _ = call('POST', baseb + '/analisar-parte', {}, tok['editorA'])
+            if s6 != 200 or r.get('feito'):
+                break
+        s6, fimb, _ = call('POST', baseb + '/concluir-analise', {}, tok['editorA'])
+        check(s6 == 200 and fimb.get('resumo', {}).get('paginasSemFatura') == '4-5',
+              'lote: o resumo diz que as páginas 4-5 ficaram sem fatura', str(fimb)[:200])
+        ia_modo['docs'] = None
+
         # retoma: prepara outra vez a meio e continua de onde ficou
         st, rec2, pdf2 = criar_fatura_pdf('editorA', 10)
         base2 = f'/api/gc_turnkey/faturas/{rec2["id"]}'
@@ -1067,6 +1086,46 @@ def teste_faturas_ia():
               'lote: voltar a preparar retoma a partir da janela seguinte (5)', str(prep2)[:120])
     finally:
         srv.shutdown()
+
+
+def teste_faturas_edicao():
+    """8c. Faturas: só o proprietário edita e apaga; tudo fica no histórico e nada se perde."""
+    sec('8c. Editar e apagar faturas (proprietário)')
+    st, f, _ = call('POST', '/api/collections/faturas/records',
+                    {'empresa': empresas['A'], 'autor': users['editorA'], 'tipo': 'fatura', 'estado': 'analisada',
+                     'fornecedor': 'Forn Errado', 'numero': 'X-1', 'data_fatura': '2026-01-01 00:00:00.000Z', 'total': 10}, su)
+    fid = f['id']
+    url = f'/api/collections/faturas/records/{fid}'
+    s1, _, _ = call('PATCH', url, {'fornecedor': 'Outro'}, tok['editorA'])
+    check(s1 in (403, 404), 'o editor não corrige o fornecedor de uma fatura', f'status {s1}')
+    s1, _, _ = call('PATCH', url, {'apagada': True}, tok['editorA'])
+    check(s1 in (403, 404), 'o editor não apaga uma fatura', f'status {s1}')
+    s1, _, _ = call('DELETE', url, tok=tok['editorA'])
+    check(s1 in (403, 404), 'o editor não elimina definitivamente uma fatura', f'status {s1}')
+    s1, _, _ = call('PATCH', url, {'fornecedor': 'Outro'}, tok['viewerA'])
+    check(s1 in (403, 404), 'o papel Leitura não edita faturas', f'status {s1}')
+    s1, _, _ = call('PATCH', url, {'fornecedor': 'Outro'}, tok['ownerB'])
+    check(s1 in (403, 404), 'o proprietário de outra empresa não edita', f'status {s1}')
+
+    s1, r, _ = call('PATCH', url, {'fornecedor': 'Fornecedor Certo', 'data_fatura': '2026-02-02 00:00:00.000Z', 'numero': 'C-9'}, tok['ownerA'])
+    check(s1 == 200 and r.get('fornecedor') == 'Fornecedor Certo', 'o proprietário corrige fornecedor, data e número', f'{s1} {str(r)[:100]}')
+    hist = call('GET', f"/api/collections/historico/records?filter=entidade_tipo='fatura'%26%26entidade_id='{fid}'&perPage=20&sort=-created", tok=tok['editorA'])[1].get('items', [])
+    check(len(hist) == 1 and hist[0].get('valor_antes', {}).get('fornecedor') == 'Forn Errado'
+          and hist[0].get('valor_depois', {}).get('numero') == 'C-9', 'a correção fica no histórico com os valores antes e depois', str(hist)[:240])
+
+    s1, r, _ = call('PATCH', url, {'apagada': True}, tok['ownerA'])
+    check(s1 == 200 and r.get('apagada') is True and r.get('apagada_em') and r.get('apagada_por'), 'o proprietário apaga (fica escondida, com quem e quando)', str(r)[:160])
+    ainda = call('GET', url, tok=tok['ownerA'])[1]
+    check(ainda.get('id') == fid, 'a fatura apagada continua na base de dados (backups)', str(ainda)[:80])
+    s1, r, _ = call('PATCH', url, {'apagada': False}, tok['ownerA'])
+    check(s1 == 200 and r.get('apagada') is False and not r.get('apagada_em'), 'o proprietário restaura a fatura', str(r)[:120])
+    hist = call('GET', f"/api/collections/historico/records?filter=entidade_tipo='fatura'%26%26entidade_id='{fid}'&perPage=20", tok=tok['editorA'])[1].get('items', [])
+    check(len(hist) == 3, 'apagar e restaurar também ficam no histórico (3 registos)', str(len(hist)))
+
+    # uma apagada não conta como duplicada nem sai no export da contabilidade
+    call('PATCH', url, {'apagada': True, 'estado': 'confirmada'}, tok['ownerA'])
+    ex = call('GET', '/api/gc_turnkey/faturas/export?de=2026-01-01&ate=2026-12-31', tok=tok['ownerA'])[1]
+    check(fid not in [x.get('id') for x in ex.get('faturas', [])], 'a fatura apagada não vai para a contabilidade', str(ex)[:120])
 
 
 def teste_produtos():
@@ -1612,6 +1671,7 @@ def main():
         teste_segredos()
         teste_sem_chave()
         teste_faturas_ia()
+        teste_faturas_edicao()
         teste_produtos()
         teste_produto_na_receita()
         teste_juntar()

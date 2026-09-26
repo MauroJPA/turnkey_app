@@ -12,6 +12,7 @@ import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../../core/widgets/history_sheet.dart';
 import '../../consumables/application/consumivel_providers.dart';
 import '../../consumables/domain/consumivel.dart';
 import '../../consumables/presentation/consumiveis_screen.dart'
@@ -27,6 +28,7 @@ import '../application/invoice_providers.dart';
 import '../data/invoice_repository.dart';
 import '../domain/fatura.dart';
 import '../domain/match_ingrediente.dart';
+import 'invoice_owner_widgets.dart';
 
 class InvoiceReviewScreen extends ConsumerWidget {
   const InvoiceReviewScreen({super.key, required this.faturaId});
@@ -45,7 +47,40 @@ class InvoiceReviewScreen extends ConsumerWidget {
               context.canPop() ? context.pop() : context.go(Routes.invoices),
         ),
         title: const Text('Rever fatura'),
-        actions: const [HelpActions(topic: HelpTopic.faturaRevisao)],
+        actions: [
+          IconButton(
+            tooltip: 'Histórico desta fatura',
+            icon: const Icon(Icons.history),
+            onPressed: () => showHistorySheet(
+              context,
+              tipo: 'fatura',
+              id: faturaId,
+              titulo: faturaAsync.valueOrNull?.fornecedor.isNotEmpty ?? false
+                  ? faturaAsync.value!.fornecedor
+                  : 'Fatura',
+            ),
+          ),
+          if (ehProprietario(ref) && faturaAsync.hasValue)
+            IconButton(
+              tooltip: 'Corrigir fornecedor, data, número…',
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                if (await mostrarEditarFatura(
+                  context,
+                  ref,
+                  faturaAsync.requireValue,
+                )) {
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Guardado. Fica no histórico.'),
+                    ),
+                  );
+                }
+              },
+            ),
+          const HelpActions(topic: HelpTopic.faturaRevisao),
+        ],
       ),
       body: AsyncValueView<Fatura>(
         value: faturaAsync,
@@ -116,7 +151,9 @@ class _ErroState extends ConsumerState<_Erro> {
         .retomar(widget.fatura.id, titulo: widget.fatura.ficheiro);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('A analisar de novo. Acompanha o progresso na lista de faturas.'),
+        content: Text(
+          'A analisar de novo. Acompanha o progresso na lista de faturas.',
+        ),
       ),
     );
     if (mounted && context.canPop()) context.pop();
@@ -175,22 +212,22 @@ class _ErroState extends ConsumerState<_Erro> {
                       : const Icon(Icons.refresh),
                   label: const Text('Tentar de novo'),
                 ),
-              OutlinedButton.icon(
-                onPressed: () async {
-                  final ok = await confirmDialog(
-                    context,
-                    titulo: 'Apagar esta fatura?',
-                    mensagem: 'Remove o registo e o ficheiro carregado.',
-                    confirmar: 'Apagar',
-                    destrutivo: true,
-                  );
-                  if (!ok) return;
-                  await ref.read(invoiceActionsProvider).apagar(fatura.id);
-                  if (context.mounted && context.canPop()) context.pop();
-                },
-                icon: const Icon(Icons.delete_outline),
-                label: const Text('Apagar fatura'),
-              ),
+              if (ehProprietario(ref))
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    if (await apagarFaturaComConfirmacao(
+                          context,
+                          ref,
+                          fatura,
+                        ) &&
+                        context.mounted &&
+                        context.canPop()) {
+                      context.pop();
+                    }
+                  },
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Apagar fatura'),
+                ),
             ],
           ),
         ],
@@ -219,28 +256,22 @@ class _SemLinhas extends ConsumerWidget {
           const Text(
             'A IA não devolveu nenhuma linha desta fatura. Se acabaste de a '
             'criar, aguarda uns segundos e recarrega; se a foto está tremida '
-            'ou cortada, apaga e volta a carregar uma melhor.',
+            'ou cortada, pede ao proprietário para a apagar e carrega uma melhor.',
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
-          FilledButton.icon(
-            onPressed: () async {
-              final ok = await confirmDialog(
-                context,
-                titulo: 'Apagar esta fatura?',
-                mensagem:
-                    'Remove o registo e o ficheiro carregado. '
-                    'Fica registo em "Faturas apagadas".',
-                confirmar: 'Apagar',
-                destrutivo: true,
-              );
-              if (!ok) return;
-              await ref.read(invoiceActionsProvider).apagar(fatura.id);
-              if (context.mounted && context.canPop()) context.pop();
-            },
-            icon: const Icon(Icons.delete_outline),
-            label: const Text('Apagar fatura'),
-          ),
+          if (ehProprietario(ref))
+            FilledButton.icon(
+              onPressed: () async {
+                if (await apagarFaturaComConfirmacao(context, ref, fatura) &&
+                    context.mounted &&
+                    context.canPop()) {
+                  context.pop();
+                }
+              },
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Apagar fatura'),
+            ),
         ],
       ),
     );

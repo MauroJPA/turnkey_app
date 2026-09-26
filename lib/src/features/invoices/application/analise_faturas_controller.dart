@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 import '../data/invoice_repository.dart';
+import '../domain/analise_resumo.dart';
 import '../domain/fatura.dart';
 import '../domain/invoice_erros.dart';
 import 'invoice_providers.dart';
@@ -23,6 +25,7 @@ class TrabalhoAnalise {
     this.totalFaturas = 0,
     this.duplicadas = 0,
     this.tamanhoBytes = 0,
+    this.resumo = const ResumoAnalise(),
   });
 
   /// Id local até o ficheiro estar no servidor; depois, o id da fatura.
@@ -32,10 +35,15 @@ class TrabalhoAnalise {
   final String? faturaId;
   final int paginas;
   final int feitas;
+
+  /// Erro (fase `erro`) ou aviso de nova tentativa (fase `aLer`).
   final String mensagem;
   final int totalFaturas;
   final int duplicadas;
   final int tamanhoBytes;
+
+  /// O que ficou de cada documento (só na fase `feita`).
+  final ResumoAnalise resumo;
 
   bool get ativo => fase != FaseAnalise.feita && fase != FaseAnalise.erro;
 
@@ -51,6 +59,7 @@ class TrabalhoAnalise {
     String? mensagem,
     int? totalFaturas,
     int? duplicadas,
+    ResumoAnalise? resumo,
   }) => TrabalhoAnalise(
     chave: chave ?? this.chave,
     titulo: titulo,
@@ -62,6 +71,7 @@ class TrabalhoAnalise {
     totalFaturas: totalFaturas ?? this.totalFaturas,
     duplicadas: duplicadas ?? this.duplicadas,
     tamanhoBytes: tamanhoBytes,
+    resumo: resumo ?? this.resumo,
   );
 
   /// Texto curto do que está a acontecer (para a barra de progresso).
@@ -75,16 +85,26 @@ class TrabalhoAnalise {
       case FaseAnalise.aPreparar:
         return 'A preparar o ficheiro…';
       case FaseAnalise.aLer:
-        return paginas > 0
+        final base = paginas > 0
             ? 'A IA está a ler as páginas: $feitas de $paginas…'
             : 'A IA está a ler o ficheiro…';
+        return mensagem.isEmpty ? base : '$base\n$mensagem';
       case FaseAnalise.aSeparar:
         return 'A separar as faturas…';
       case FaseAnalise.feita:
-        return totalFaturas > 1
-            ? 'Pronto: $totalFaturas faturas'
-                  '${duplicadas > 0 ? ' ($duplicadas já existia/m)' : ''}.'
-            : 'Pronto: fatura analisada.';
+        final partes = <String>[
+          if (resumo.itens.isNotEmpty)
+            '${resumo.novas} nova${resumo.novas == 1 ? '' : 's'} para rever'
+          else
+            'fatura analisada',
+          if (resumo.duplicadas > 0)
+            '${resumo.duplicadas} duplicada${resumo.duplicadas == 1 ? '' : 's'} (já existia)',
+          if (resumo.comErro + resumo.semLinhas > 0)
+            '${resumo.comErro + resumo.semLinhas} sem linhas lidas',
+          if (resumo.paginasSemFatura.isNotEmpty)
+            'págs. sem fatura: ${resumo.paginasSemFatura}',
+        ];
+        return 'Pronto: ${partes.join(' · ')}.';
       case FaseAnalise.erro:
         return mensagem;
     }
@@ -96,10 +116,23 @@ final analiseFaturasProvider =
       AnaliseFaturasController.new,
     );
 
+/// Esperas (segundos) entre tentativas quando a IA/servidor falha de forma passageira
+/// (sobrecarga, rede): 1 tentativa + 5 repetições.
+const _esperas = [5, 10, 20, 30, 45];
+
+/// Erros que costumam passar sozinhos: rede caída, servidor ocupado, IA sobrecarregada.
+bool _passageiro(Object e) {
+  if (e is ClientException) {
+    return const {0, 429, 500, 502, 503, 504}.contains(e.statusCode);
+  }
+  return false;
+}
+
 /// Corre o envio e a análise dos ficheiros de faturas **em segundo plano**
 /// (continua se a pessoa mudar de ecrã, enquanto a app estiver aberta) e guarda o
-/// progresso para o mostrar. O servidor guarda o que já foi lido: se falhar ou a app
-/// fechar, "Continuar" retoma de onde ficou.
+/// progresso para o mostrar. Repete sozinho as janelas que falham por sobrecarga da IA
+/// (até 5 vezes, com pausas). O servidor guarda o que já foi lido: se falhar de vez ou
+/// a app fechar, "Continuar" retoma de onde ficou.
 class AnaliseFaturasController extends Notifier<Map<String, TrabalhoAnalise>> {
   @override
   Map<String, TrabalhoAnalise> build() => const {};
@@ -183,15 +216,10 @@ class AnaliseFaturasController extends Notifier<Map<String, TrabalhoAnalise>> {
         tamanhoBytes: bytes.length,
       ),
     );
-    await _correr(f.id, nome, bytes: bytes, fornecedor: fornecedor);
+    await _correr(f.id, nome);
   }
 
-  Future<void> _correr(
-    String id,
-    String titulo, {
-    List<int>? bytes,
-    String fornecedor = '',
-  }) async {
+  Future<void> _correr(String id, String titulo) async {
     TrabalhoAnalise atual() =>
         state[id] ??
         TrabalhoAnalise(
@@ -201,54 +229,32 @@ class AnaliseFaturasController extends Notifier<Map<String, TrabalhoAnalise>> {
           fase: FaseAnalise.aPreparar,
         );
     try {
-      _set(atual().copyWith(fase: FaseAnalise.aPreparar));
-      final prep = await _repo.preparar(id);
+      _set(atual().copyWith(fase: FaseAnalise.aPreparar, mensagem: ''));
+      final prep = await _comTentativas(id, atual, _repo.preparar);
       _set(
         atual().copyWith(
           fase: FaseAnalise.aLer,
           paginas: prep.paginas,
           feitas: (prep.proxima - 1).clamp(0, prep.paginas),
+          mensagem: '',
         ),
       );
       var feito = prep.proxima > prep.paginas;
       var guarda = 0;
       while (!feito && guarda++ < 5000) {
-        final r = await _repo.analisarParte(id);
+        final r = await _comTentativas(id, atual, _repo.analisarParte);
         feito = r.feito;
         _set(
           atual().copyWith(
             fase: FaseAnalise.aLer,
             paginas: r.paginas,
             feitas: (r.proxima - 1).clamp(0, r.paginas),
+            mensagem: '',
           ),
         );
       }
-      _set(atual().copyWith(fase: FaseAnalise.aSeparar));
-      final res = await _repo.concluirAnalise(id);
-
-      // Fatura única e ficheiro pequeno: renomeia para FT-FORNECEDOR-DDMMAAAA.
-      if (res.ids.length == 1 &&
-          bytes != null &&
-          bytes.length <= 10 * 1048576 &&
-          res.fatura.estado != FaturaEstado.erro &&
-          res.fatura.dataFatura.isNotEmpty) {
-        final data = DateTime.tryParse(res.fatura.dataFatura);
-        if (data != null) {
-          try {
-            await _repo.renomearFicheiro(
-              id,
-              bytes: bytes,
-              nomeOriginal: titulo,
-              fornecedor: res.fatura.fornecedor.isNotEmpty
-                  ? res.fatura.fornecedor
-                  : fornecedor,
-              dataFatura: data,
-            );
-          } on Object {
-            // fica com o nome provisório
-          }
-        }
-      }
+      _set(atual().copyWith(fase: FaseAnalise.aSeparar, mensagem: ''));
+      final res = await _comTentativas(id, atual, _repo.concluirAnalise);
       ref.invalidate(faturasListProvider);
       ref.invalidate(faturaProvider(id));
       _set(
@@ -256,15 +262,52 @@ class AnaliseFaturasController extends Notifier<Map<String, TrabalhoAnalise>> {
           fase: FaseAnalise.feita,
           totalFaturas: res.ids.length,
           duplicadas: res.duplicadas,
-          paginas: atual().paginas,
+          resumo: res.resumo,
+          mensagem: '',
         ),
       );
     } on Object catch (e) {
       ref.invalidate(faturasListProvider);
       ref.invalidate(faturaProvider(id));
       _set(
-        atual().copyWith(fase: FaseAnalise.erro, mensagem: mensagemAmigavel(e)),
+        atual().copyWith(
+          fase: FaseAnalise.erro,
+          mensagem:
+              '${mensagemAmigavel(e)} O que já foi lido fica guardado: '
+              'toca em "Continuar" para retomar.',
+        ),
       );
+    }
+  }
+
+  /// Corre [passo]; se falhar por um motivo passageiro (IA sobrecarregada, rede…)
+  /// espera e repete, mostrando o motivo e a contagem na barra de progresso.
+  Future<T> _comTentativas<T>(
+    String id,
+    TrabalhoAnalise Function() atual,
+    Future<T> Function(String id) passo,
+  ) async {
+    var falhas = 0;
+    while (true) {
+      try {
+        return await passo(id);
+      } on Object catch (e) {
+        if (!_passageiro(e) || falhas >= _esperas.length) rethrow;
+        final espera = _esperas[falhas];
+        falhas++;
+        final motivo = mensagemAmigavel(e);
+        for (var s = espera; s > 0; s--) {
+          _set(
+            atual().copyWith(
+              mensagem:
+                  '$motivo\nNova tentativa em ${s}s (${falhas + 1} de '
+                  '${_esperas.length + 1})…',
+            ),
+          );
+          await Future<void>.delayed(const Duration(seconds: 1));
+        }
+        _set(atual().copyWith(mensagem: 'A tentar de novo…'));
+      }
     }
   }
 }

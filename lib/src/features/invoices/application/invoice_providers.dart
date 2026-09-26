@@ -15,6 +15,11 @@ final faturaProvider = FutureProvider.autoDispose.family<Fatura, String>((
   return ref.watch(invoiceRepositoryProvider).getById(id);
 });
 
+/// Faturas apagadas (só o proprietário as vê e restaura).
+final faturasApagadasProvider = FutureProvider.autoDispose<List<Fatura>>((ref) {
+  return ref.watch(invoiceRepositoryProvider).listApagadas();
+});
+
 final invoiceActionsProvider = Provider<InvoiceActions>(InvoiceActions.new);
 
 class InvoiceActions {
@@ -37,11 +42,37 @@ class InvoiceActions {
   Future<void> apagar(String id) async {
     await _repo.apagar(id);
     _ref.invalidate(faturasListProvider);
+    _ref.invalidate(faturasApagadasProvider);
+  }
+
+  Future<void> restaurar(String id) async {
+    await _repo.restaurar(id);
+    _ref.invalidate(faturasListProvider);
+    _ref.invalidate(faturasApagadasProvider);
+  }
+
+  Future<void> editar(
+    String id, {
+    required String fornecedor,
+    required String numero,
+    DateTime? data,
+    double? total,
+  }) async {
+    await _repo.editar(
+      id,
+      fornecedor: fornecedor,
+      numero: numero,
+      data: data,
+      total: total,
+    );
+    _ref.invalidate(faturaProvider(id));
+    _ref.invalidate(faturasListProvider);
   }
 
   Future<int> limparInvalidas() async {
     final n = await _repo.limparInvalidas();
     _ref.invalidate(faturasListProvider);
+    _ref.invalidate(faturasApagadasProvider);
     return n;
   }
 }
