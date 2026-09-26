@@ -15,13 +15,13 @@ import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../../core/widgets/history_sheet.dart';
-import '../../settings/application/empresa_providers.dart';
 import '../application/analise_faturas_controller.dart';
 import '../application/invoice_providers.dart';
 import '../domain/fatura.dart';
 import '../domain/invoice_erros.dart';
 import 'analise_faturas_widgets.dart';
 import 'contabilidade_sheet.dart';
+import 'invoice_owner_widgets.dart';
 
 class InvoicesScreen extends ConsumerWidget {
   const InvoicesScreen({super.key});
@@ -121,22 +121,64 @@ class InvoicesScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _apagar(BuildContext context, WidgetRef ref, Fatura f) async {
+  /// Toque longo numa fatura (só o proprietário): corrigir os dados ou apagar.
+  Future<void> _opcoesFatura(
+    BuildContext context,
+    WidgetRef ref,
+    Fatura f,
+  ) async {
     final messenger = ScaffoldMessenger.of(context);
-    final ok = await confirmDialog(
-      context,
-      titulo: 'Apagar fatura?',
-      mensagem:
-          '${f.fornecedor.isEmpty ? 'Fatura' : f.fornecedor}'
-          '${f.numero.isEmpty ? '' : ' nº ${f.numero}'} — '
-          'remove o registo e o ficheiro.',
-      confirmar: 'Apagar',
-      destrutivo: true,
+    final escolha = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: const Text('Corrigir fornecedor, data, número…'),
+              onTap: () => Navigator.pop(ctx, 'editar'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.history),
+              title: const Text('Ver o histórico desta fatura'),
+              onTap: () => Navigator.pop(ctx, 'historico'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline),
+              title: const Text('Apagar'),
+              onTap: () => Navigator.pop(ctx, 'apagar'),
+            ),
+          ],
+        ),
+      ),
     );
-    if (!ok) return;
+    if (escolha == null || !context.mounted) return;
     try {
-      await ref.read(invoiceActionsProvider).apagar(f.id);
-      messenger.showSnackBar(const SnackBar(content: Text('Fatura apagada.')));
+      switch (escolha) {
+        case 'editar':
+          if (await mostrarEditarFatura(context, ref, f)) {
+            messenger.showSnackBar(
+              const SnackBar(content: Text('Guardado. Fica no histórico.')),
+            );
+          }
+        case 'historico':
+          showHistorySheet(
+            context,
+            tipo: 'fatura',
+            id: f.id,
+            titulo: f.fornecedor.isEmpty ? 'Fatura' : f.fornecedor,
+          );
+        case 'apagar':
+          if (await apagarFaturaComConfirmacao(context, ref, f)) {
+            messenger.showSnackBar(
+              const SnackBar(
+                content: Text('Fatura apagada (podes restaurá-la).'),
+              ),
+            );
+          }
+      }
     } on Object catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
     }
@@ -148,7 +190,7 @@ class InvoicesScreen extends ConsumerWidget {
       context,
       titulo: 'Limpar faturas?',
       mensagem:
-          'Apaga as faturas por analisar ("Nova"), as que ficaram com '
+          'Apaga (podes restaurar) as faturas por analisar ("Nova"), as que ficaram com '
           '"Erro" e as analisadas em que a IA não encontrou nenhuma linha. '
           'Fica registo em "Faturas apagadas".',
       confirmar: 'Limpar',
@@ -170,6 +212,7 @@ class InvoicesScreen extends ConsumerWidget {
     final async = ref.watch(faturasListProvider);
     final fmt = ref.watch(moneyFormatProvider);
     final podeEditar = _podeEditar(ref);
+    final dono = ehProprietario(ref);
 
     return Scaffold(
       appBar: AppBar(
@@ -184,21 +227,11 @@ class InvoicesScreen extends ConsumerWidget {
             icon: const Icon(Icons.folder_shared_outlined),
             onPressed: () => showContabilidadeSheet(context, ref),
           ),
-          if (podeEditar)
+          if (dono)
             PopupMenuButton<String>(
               onSelected: (v) {
                 if (v == 'limpar') _limparInvalidas(context, ref);
-                if (v == 'historico') {
-                  final emp = ref.read(currentEmpresaProvider).valueOrNull;
-                  if (emp != null) {
-                    showHistorySheet(
-                      context,
-                      tipo: 'faturas_apagadas',
-                      id: emp.id,
-                      titulo: 'Faturas apagadas',
-                    );
-                  }
-                }
+                if (v == 'historico') mostrarFaturasApagadas(context);
               },
               itemBuilder: (_) => const [
                 PopupMenuItem(
@@ -304,10 +337,13 @@ class InvoicesScreen extends ConsumerWidget {
                                           : 'Analisar',
                                     ),
                                   )
-                          : _EstadoChip(estado: f.estado),
+                          : (f.estado == FaturaEstado.erro &&
+                                    f.duplicadaDe.isNotEmpty
+                                ? const _EstadoChip.texto('Duplicada')
+                                : _EstadoChip(estado: f.estado)),
                       onTap: () => context.push('${Routes.invoices}/${f.id}'),
-                      onLongPress: podeEditar
-                          ? () => _apagar(context, ref, f)
+                      onLongPress: dono
+                          ? () => _opcoesFatura(context, ref, f)
                           : null,
                     ),
                   ),

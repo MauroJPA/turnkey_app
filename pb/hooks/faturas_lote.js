@@ -131,7 +131,11 @@ function analisarProximaParte(app, fatura) {
   });
   if (!r.ok) {
     // não marca a fatura como erro: o lote fica como está e a app pode tentar de novo
-    return { ok: false, code: r.code === 503 ? 503 : 502, message: r.message };
+    return {
+      ok: false,
+      code: r.code === 503 ? 503 : 502,
+      message: 'Páginas ' + inicio + '–' + fim + ': ' + r.message,
+    };
   }
 
   var lista = r.lista && r.lista.length ? r.lista : [r.dados];
@@ -228,7 +232,63 @@ function concluirLote(app, fatura) {
     for (var m = 0; m < docs.length; m++) todas = todas.concat(docs[m].linhas || []);
     docs = [{ fornecedor: docs[0].fornecedor, data: docs[0].data, linhas: todas }];
   }
-  return require(__hooks + '/faturas_core.js').aplicarLista(app, fatura, docs, lote.provider || '');
+  var r = require(__hooks + '/faturas_core.js').aplicarLista(app, fatura, docs, lote.provider || '');
+  if (r && r.ok) r.resumo = montarResumo(app, r.faturas || [fatura.id], docs, lote.paginas);
+  return r;
+}
+
+// "1,2,3,5" -> "1-3, 5"
+function intervalosTexto(pags) {
+  var p = pags.slice().sort(function (x, y) {
+    return x - y;
+  });
+  var out = [];
+  var i = 0;
+  while (i < p.length) {
+    var j = i;
+    while (j + 1 < p.length && p[j + 1] === p[j] + 1) j++;
+    out.push(i === j ? String(p[i]) : p[i] + '-' + p[j]);
+    i = j + 1;
+  }
+  return out.join(', ');
+}
+
+// O que ficou de um ficheiro analisado: uma linha por fatura (nova, duplicada ou sem
+// linhas) e as páginas em que a IA não reconheceu nenhuma fatura.
+function montarResumo(app, ids, docs, paginas) {
+  var itens = [];
+  for (var i = 0; i < ids.length; i++) {
+    var rec;
+    try {
+      rec = app.findRecordById('faturas', ids[i]);
+    } catch (_) {
+      continue;
+    }
+    var di = {};
+    try {
+      di = JSON.parse(rec.getString('dados_ia') || '{}') || {};
+    } catch (_) {}
+    var d = docs[i] || {};
+    itens.push({
+      id: rec.id,
+      fornecedor: rec.getString('fornecedor'),
+      numero: rec.getString('numero'),
+      data: String(rec.getString('data_fatura') || '').substring(0, 10),
+      estado: rec.getString('estado'),
+      duplicada: !!di.duplicada_de,
+      erro: di.erro || '',
+      paginas: Array.isArray(d.paginas) ? intervalosTexto(d.paginas) : '',
+      linhas: Array.isArray(di.linhas) ? di.linhas.length : Array.isArray(d.linhas) ? d.linhas.length : 0,
+    });
+  }
+  var usadas = {};
+  for (var k = 0; k < docs.length; k++) {
+    var pp = docs[k].paginas || [];
+    for (var m = 0; m < pp.length; m++) usadas[pp[m]] = true;
+  }
+  var soltas = [];
+  for (var n = 1; n <= paginas; n++) if (!usadas[n]) soltas.push(n);
+  return { itens: itens, paginasSemFatura: intervalosTexto(soltas) };
 }
 
 // Carrega a fatura do pedido e valida sessão/empresa/papel.

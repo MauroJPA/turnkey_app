@@ -69,7 +69,7 @@ function aplicarLista(app, fatura, lista, provider) {
       if (fN && (norm(num) || dataF)) {
         const candidatos = app.findRecordsByFilter(
           'faturas',
-          "empresa = {:e} && id != {:id} && tipo = 'fatura' && estado != 'erro'",
+          "empresa = {:e} && id != {:id} && tipo = 'fatura' && estado != 'erro' && apagada != true",
           '',
           200,
           0,

@@ -760,6 +760,20 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       app" e **Atualizar** recarrega já com a versão nova (o número aparece no aviso).
 - [ ] Uma fatura pequena (foto/PDF de 1 página) continua a funcionar e abre a revisão pelo botão "Rever a fatura".
 
+## 39. Faturas: repetição, resumo, corrigir e apagar
+
+- [ ] Enviar o PDF grande: se a IA falhar numa janela, a barra mostra "Páginas X–Y: … Nova tentativa em Ns (2 de 6)…"
+      e continua sozinha, sem carregares em nada.
+- [ ] No fim, o cartão mostra "Pronto: N novas · N duplicadas · págs. sem fatura: …" e **Ver o que entrou** lista cada
+      documento com fornecedor, nº, data, páginas e estado (duplicada / sem linhas / com linhas).
+- [ ] Na lista de faturas, uma duplicada mostra o chip **Duplicada** (não "Erro").
+- [ ] Como **proprietário**: no ecrã de revisão, o lápis corrige fornecedor, número, data e total; o relógio mostra o
+      histórico com a alteração (antes → depois, por quem).
+- [ ] Toque longo numa fatura da lista: Corrigir / Ver histórico / Apagar (só o proprietário vê estas opções).
+- [ ] Apagar uma fatura: desaparece da lista; em ⋮ → **Faturas apagadas** aparece com quem/quando e **Restaurar** traz-a de volta.
+- [ ] Como **editor**: não aparecem o lápis nem "Apagar"; consegue carregar e analisar faturas e aplicar preços.
+- [ ] Uma fatura apagada não aparece na contabilidade e não bloqueia carregar outra vez a mesma fatura.
+
 ---
 
 ## Notas / ajustes pedidos

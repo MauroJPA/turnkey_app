@@ -309,7 +309,7 @@ routerAdd(
 
     const recs = app.findRecordsByFilter(
       'faturas',
-      "empresa = {:e} && estado = 'confirmada' && data_fatura >= {:de} && data_fatura <= {:ate}",
+      "empresa = {:e} && estado = 'confirmada' && apagada != true && data_fatura >= {:de} && data_fatura <= {:ate}",
       '-data_fatura',
       0,
       0,

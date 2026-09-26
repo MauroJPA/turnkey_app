@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
 import '../application/analise_faturas_controller.dart';
+import 'invoice_owner_widgets.dart';
 
 /// Cartões com o progresso do envio e da análise dos ficheiros de faturas
 /// (ecrã "Faturas"). Continuam a correr se a pessoa mudar de ecrã.
@@ -73,6 +74,16 @@ class AnaliseFaturasPainel extends ConsumerWidget {
                     Wrap(
                       spacing: 8,
                       children: [
+                        if (t.fase == FaseAnalise.feita &&
+                            t.resumo.itens.length > 1)
+                          TextButton(
+                            onPressed: () => mostrarResumoAnalise(
+                              context,
+                              t.titulo,
+                              t.resumo,
+                            ),
+                            child: const Text('Ver o que entrou'),
+                          ),
                         if (t.fase == FaseAnalise.feita &&
                             t.totalFaturas == 1 &&
                             t.faturaId != null)
