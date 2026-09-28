@@ -131,6 +131,14 @@ routerAdd(
         const pu = Number(l.precoUnitario || 0);
         const emb = Number(l.embalagemG || 0);
 
+        // O que ficou realmente gravado nesta linha (marca/fornecedor e, para
+        // ingredientes, QUAL produto de compra) — guarda-se em `faturas_itens`
+        // para dar para corrigir depois (endpoint /corrigir-item), mesmo
+        // reabrindo a fatura muito depois de aplicada.
+        let produtoTocadoId = '';
+        let marcaFinal = '';
+        let fornecedorFinal = '';
+
         // Embalagens (caixas, sacos, adesivos…): preço por peça (sem stock).
         if (acao !== 'ignorar' && acao !== 'pendente' && embId && !ingId && !consId) {
           let embReg = null;
@@ -162,6 +170,7 @@ routerAdd(
               precos++;
             }
             tx.save(embReg);
+            fornecedorFinal = embReg.getString('fornecedor');
           }
         }
 
@@ -208,6 +217,8 @@ routerAdd(
               }
             }
             tx.save(cons);
+            marcaFinal = cons.getString('marca');
+            fornecedorFinal = cons.getString('fornecedor');
           }
         }
 
@@ -265,10 +276,16 @@ routerAdd(
                   'nome',
                   String(l.produtoNome || l.descricaoFatura || ing.getString('nome')).substring(0, 250),
                 );
-                prod.set('fornecedor', fatura.getString('fornecedor'));
               }
+              // Preenche marca/fornecedor sempre que ainda estão em branco —
+              // quer o produto seja novo, quer já exista (emparelhado por nome
+              // de fatura) mas ainda sem essa informação. Nunca substitui um
+              // valor já certo — para isso há o endpoint /corrigir-item.
               if (l.marca && !prod.getString('marca')) {
                 prod.set('marca', String(l.marca).substring(0, 200));
+              }
+              if (!prod.getString('fornecedor') && fatura.getString('fornecedor')) {
+                prod.set('fornecedor', fatura.getString('fornecedor'));
               }
               // aprende o nome desta fatura para emparelhar sozinho da próxima vez
               const nomes = lerNomes(prod);
@@ -295,6 +312,9 @@ routerAdd(
                 precosIgnorados++;
               }
               tx.save(prod);
+              produtoTocadoId = prod.id;
+              marcaFinal = prod.getString('marca');
+              fornecedorFinal = prod.getString('fornecedor');
             }
           }
           if ((acao === 'stock' || acao === 'ambos') && q > 0) {
@@ -326,6 +346,11 @@ routerAdd(
         row.set('embalagem_g', emb);
         row.set('acao', acao);
         row.set('aplicado', aplicadaAgora);
+        // Mantém o que já estava gravado se esta ronda não tocou no destino
+        // (ex.: reaplicar uma linha "só stock", que não passa pelo produto).
+        row.set('produto', produtoTocadoId || row.getString('produto') || '');
+        row.set('marca', marcaFinal || row.getString('marca') || '');
+        row.set('fornecedor', fornecedorFinal || row.getString('fornecedor') || '');
         tx.save(row);
       }
 
@@ -359,6 +384,135 @@ routerAdd(
       puladas: puladas,
       pendentes: pendentes,
     });
+  },
+  $apis.requireAuth('users', '_superusers'),
+);
+
+// --- POST /api/gc_turnkey/faturas/{id}/corrigir-item ---------------------
+// Corrige a marca/fornecedor que ficaram gravados numa linha já aplicada
+// (mesmo com a fatura confirmada) — só para o proprietário e o administrador,
+// para o caso de algo passar despercebido e só se notar depois, olhando de
+// novo para a fatura em PDF/imagem. Ao contrário de /aplicar, esta escrita
+// nunca fica bloqueada por `aplicado = true` nem por já haver marca/fornecedor
+// (é uma correção explícita: substitui sempre o que estava).
+routerAdd(
+  'POST',
+  '/api/gc_turnkey/faturas/{id}/corrigir-item',
+  (e) => {
+    const auth = e.auth;
+    const isSuper =
+      auth && auth.collection() && auth.collection().name === '_superusers';
+    const id = e.request.pathValue('id');
+    const fatura = e.app.findRecordById('faturas', id);
+    const empresaId = fatura.getString('empresa');
+    if (!isSuper) {
+      if (!auth || auth.collection().name !== 'users') {
+        throw new ForbiddenError('Autenticação necessária.');
+      }
+      if (auth.getString('empresa') !== empresaId) {
+        throw new ForbiddenError('Fatura de outra empresa.');
+      }
+      const papel = auth.getString('papel');
+      if (papel !== 'owner' && papel !== 'admin') {
+        throw new ForbiddenError('Só o proprietário ou o administrador corrigem uma fatura já aplicada.');
+      }
+    }
+
+    const body = e.requestInfo().body || {};
+    const indice = Number(body.index);
+    if (!Number.isFinite(indice)) throw new BadRequestError('Falta o índice da linha.');
+    const temMarca = Object.prototype.hasOwnProperty.call(body, 'marca');
+    const temFornecedor = Object.prototype.hasOwnProperty.call(body, 'fornecedor');
+    if (!temMarca && !temFornecedor) throw new BadRequestError('Nada para corrigir.');
+    const novaMarca = temMarca ? String(body.marca || '').substring(0, 200) : null;
+    const novoFornecedor = temFornecedor ? String(body.fornecedor || '').substring(0, 200) : null;
+
+    let resultado = null;
+    e.app.runInTransaction((tx) => {
+      const itens = tx.findRecordsByFilter(
+        'faturas_itens',
+        'fatura = {:f} && linha_index = {:i}',
+        '',
+        1,
+        0,
+        { f: id, i: indice },
+      );
+      const item = itens[0];
+      if (!item) throw new BadRequestError('Essa linha ainda não foi aplicada.');
+
+      const produtoId = item.getString('produto');
+      const consId = item.getString('consumivel');
+      const embId = item.getString('embalagem');
+      let alvo = null;
+      let colecao = '';
+      if (produtoId) {
+        colecao = 'ingrediente_produtos';
+      } else if (consId) {
+        colecao = 'consumiveis';
+      } else if (embId) {
+        colecao = 'embalagens';
+      } else {
+        throw new BadRequestError('Esta linha não ficou ligada a nenhum registo para corrigir.');
+      }
+      const alvoId = produtoId || consId || embId;
+      try {
+        alvo = tx.findRecordById(colecao, alvoId);
+      } catch (_) {
+        alvo = null;
+      }
+      if (!alvo || alvo.getString('empresa') !== empresaId) {
+        throw new BadRequestError('O registo ligado a esta linha já não existe.');
+      }
+
+      // `embalagens` não tem campo `marca` (tem `caracteristica`) — só
+      // ingrediente_produtos e consumiveis guardam marca.
+      const temCampoMarca = colecao !== 'embalagens';
+      const antesMarca = temCampoMarca ? alvo.getString('marca') : '';
+      const antesFornecedor = alvo.getString('fornecedor');
+      if (temMarca && temCampoMarca) alvo.set('marca', novaMarca);
+      if (temFornecedor) alvo.set('fornecedor', novoFornecedor);
+      tx.save(alvo);
+
+      item.set('marca', temMarca ? novaMarca : item.getString('marca'));
+      item.set('fornecedor', temFornecedor ? novoFornecedor : item.getString('fornecedor'));
+      tx.save(item);
+
+      try {
+        const quem = auth
+          ? auth.getString('nome') || auth.getString('email') || auth.id
+          : '';
+        const partes = [];
+        if (temMarca) partes.push('marca: "' + antesMarca + '" → "' + novaMarca + '"');
+        if (temFornecedor) partes.push('fornecedor: "' + antesFornecedor + '" → "' + novoFornecedor + '"');
+        const h = new Record(e.app.findCollectionByNameOrId('historico'));
+        h.set('empresa', empresaId);
+        h.set('entidade_tipo', 'fatura');
+        h.set('entidade_id', id);
+        h.set(
+          'descricao',
+          (
+            'Fatura — linha "' + item.getString('descricao_fatura') + '" corrigida: ' +
+            partes.join('; ') + (quem ? ' (por ' + quem + ')' : '')
+          ).substring(0, 500),
+        );
+        h.set('valor_antes', { marca: antesMarca, fornecedor: antesFornecedor });
+        h.set('valor_depois', {
+          marca: temMarca ? novaMarca : antesMarca,
+          fornecedor: temFornecedor ? novoFornecedor : antesFornecedor,
+        });
+        if (auth && auth.collection().name === 'users') h.set('autor', auth.id);
+        tx.save(h);
+      } catch (err) {
+        console.log('[faturas.corrigir-item] historico: ' + err);
+      }
+
+      resultado = {
+        marca: item.getString('marca'),
+        fornecedor: item.getString('fornecedor'),
+      };
+    });
+
+    return e.json(200, { ok: true, marca: resultado.marca, fornecedor: resultado.fornecedor });
   },
   $apis.requireAuth('users', '_superusers'),
 );

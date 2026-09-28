@@ -817,6 +817,25 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 
 ---
 
+## 42. Faturas: corrigir marca/fornecedor de linhas já aplicadas
+
+- [ ] Aplicar uma linha de ingrediente com marca (ex.: "Sidul") indicada e o ingrediente **reconhecido
+      automaticamente** (já existia, emparelhado pela IA): reabrir Ingredientes → produto de compra mostra a
+      marca e o **fornecedor** da fatura — antes deste arranjo, o fornecedor ficava em branco quando o produto
+      já existia.
+- [ ] Na revisão de uma fatura, abrir o resumo "N linha(s) já aplicada(s) antes": expande e mostra cada linha,
+      com a marca/fornecedor gravados (quando os há).
+- [ ] Com sessão de **editor**: as linhas já aplicadas não têm lápis de corrigir.
+- [ ] Com sessão de **proprietário** ou **administrador**: cada linha já aplicada (ligada a um ingrediente,
+      consumível ou embalagem) tem um lápis. Tocar abre "Corrigir marca/fornecedor" com os valores atuais;
+      mudar e guardar substitui mesmo o que já lá estava (ao contrário de aplicar de novo a fatura, que só
+      preenche o que estiver em branco).
+- [ ] Corrigir uma linha ligada a uma **embalagem**: o campo Marca não aparece (embalagens não têm marca), só
+      Fornecedor.
+- [ ] A correção fica no histórico da fatura (ícone de relógio/histórico no ecrã), com os valores antes/depois.
+
+---
+
 ## Notas / ajustes pedidos
 
 _(escreve aqui, por número, o que queres mudar)_

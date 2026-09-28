@@ -2,6 +2,28 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.21.0 — 2026-09-28 — Faturas: corrigir marca/fornecedor de linhas já aplicadas
+
+- **Bug corrigido: o fornecedor não ficava gravado quando o produto já existia.** Ao aplicar uma fatura, se a
+  descrição já batia certo com um produto de compra (marca) que já tinha sido criado antes, o **fornecedor**
+  da fatura nunca era gravado nesse produto — só acontecia ao criar o produto pela primeira vez. A marca já
+  funcionava bem (preenchia sempre que estava em branco); o fornecedor agora segue a mesma regra.
+- **Corrigir marca/fornecedor mesmo com a fatura já aplicada/confirmada** — só o **proprietário** e o
+  **administrador**, para o caso de algo passar despercebido e só se notar depois, olhando de novo para a
+  fatura em PDF/imagem. As linhas já aplicadas deixam de aparecer só como um número resumido: abrem numa
+  lista, cada uma com a marca/fornecedor gravados e um lápis para corrigir (endpoint novo
+  `/api/gc_turnkey/faturas/{id}/corrigir-item`). Ao contrário de aplicar a fatura normalmente, esta correção
+  **substitui sempre** o que já lá estava — é uma correção explícita, não um preenchimento automático.
+- `faturas_itens` passa a guardar a que **produto de compra** (marca) uma linha de ingrediente ficou ligada, e
+  a marca/fornecedor que ficaram gravados — para a correção saber onde mexer mesmo muito depois de aplicada
+  (migration `1707955216_faturas_itens_produto_marca`).
+- Cada correção fica no histórico da fatura, com os valores antes e depois e quem a fez.
+- Testes: `test/faturas_pendente_embalagem_test.dart` (`ItemFaturaAnterior.fromRecord` com produto/marca/
+  fornecedor) e uma secção nova em `test/security/seguranca.py` — reproduz o bug antigo (fatura sem
+  fornecedor, depois outra com fornecedor sobre o mesmo produto), confirma que fica corrigido, e testa o
+  endpoint `/corrigir-item`: editor e viewer recusados, fatura de outra empresa recusada, proprietário e
+  administrador conseguem corrigir e a correção substitui o valor antigo.
+
 ## 1.20.1 — 2026-09-28 — Embalagens: quantidade do múltiplo
 
 - Quando o **uso** é **Múltiplo**, aparece agora uma escolha rápida da quantidade (2, 3, 4, 5, 6, 8, 10, 12 —
