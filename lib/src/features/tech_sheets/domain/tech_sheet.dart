@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pocketbase/pocketbase.dart';
 
+import '../../../core/formatting/capitalizar.dart';
 import '../../../core/nutrition/nutrition.dart';
 
 part 'tech_sheet.freezed.dart';
@@ -16,34 +17,34 @@ enum SlotFicha {
   embalagem;
 
   static SlotFicha fromApi(String? v) => switch (v) {
-        'massa' => SlotFicha.massa,
-        'recheio_base' => SlotFicha.recheioBase,
-        'recheio_top' => SlotFicha.recheioTop,
-        'cobertura_base' => SlotFicha.coberturaBase,
-        'cobertura_top' => SlotFicha.coberturaTop,
-        'embalagem' => SlotFicha.embalagem,
-        _ => SlotFicha.extra,
-      };
+    'massa' => SlotFicha.massa,
+    'recheio_base' => SlotFicha.recheioBase,
+    'recheio_top' => SlotFicha.recheioTop,
+    'cobertura_base' => SlotFicha.coberturaBase,
+    'cobertura_top' => SlotFicha.coberturaTop,
+    'embalagem' => SlotFicha.embalagem,
+    _ => SlotFicha.extra,
+  };
 
   String get api => switch (this) {
-        SlotFicha.massa => 'massa',
-        SlotFicha.recheioBase => 'recheio_base',
-        SlotFicha.recheioTop => 'recheio_top',
-        SlotFicha.coberturaBase => 'cobertura_base',
-        SlotFicha.coberturaTop => 'cobertura_top',
-        SlotFicha.extra => 'extra',
-        SlotFicha.embalagem => 'embalagem',
-      };
+    SlotFicha.massa => 'massa',
+    SlotFicha.recheioBase => 'recheio_base',
+    SlotFicha.recheioTop => 'recheio_top',
+    SlotFicha.coberturaBase => 'cobertura_base',
+    SlotFicha.coberturaTop => 'cobertura_top',
+    SlotFicha.extra => 'extra',
+    SlotFicha.embalagem => 'embalagem',
+  };
 
   String get label => switch (this) {
-        SlotFicha.massa => 'Massa',
-        SlotFicha.recheioBase => 'Recheio (base)',
-        SlotFicha.recheioTop => 'Recheio (topo)',
-        SlotFicha.coberturaBase => 'Cobertura (base)',
-        SlotFicha.coberturaTop => 'Cobertura (topo)',
-        SlotFicha.extra => 'Extra',
-        SlotFicha.embalagem => 'Embalagem',
-      };
+    SlotFicha.massa => 'Massa',
+    SlotFicha.recheioBase => 'Recheio (base)',
+    SlotFicha.recheioTop => 'Recheio (topo)',
+    SlotFicha.coberturaBase => 'Cobertura (base)',
+    SlotFicha.coberturaTop => 'Cobertura (topo)',
+    SlotFicha.extra => 'Extra',
+    SlotFicha.embalagem => 'Embalagem',
+  };
 }
 
 @freezed
@@ -127,11 +128,11 @@ class FichaInput {
   final String conservacao;
 
   Map<String, dynamic> toBody() => {
-        'nome': nome.trim(),
-        'categoria': categoria.trim(),
-        'formato': formatoId,
-        'descricao': descricao.trim(),
-        'validade_dias': validadeDias,
-        'conservacao': conservacao.trim(),
-      };
+    'nome': capitalizarInicial(nome.trim()),
+    'categoria': categoria.trim(),
+    'formato': formatoId,
+    'descricao': descricao.trim(),
+    'validade_dias': validadeDias,
+    'conservacao': conservacao.trim(),
+  };
 }

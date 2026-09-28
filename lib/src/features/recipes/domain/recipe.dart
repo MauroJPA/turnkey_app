@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pocketbase/pocketbase.dart';
 
+import '../../../core/formatting/capitalizar.dart';
 import '../../../core/nutrition/nutrition.dart';
 
 part 'recipe.freezed.dart';
@@ -38,11 +39,11 @@ enum CategoriaReceita {
   String get api => name;
 
   String get label => switch (this) {
-        CategoriaReceita.massa => 'Massa',
-        CategoriaReceita.recheio => 'Recheio',
-        CategoriaReceita.cobertura => 'Cobertura',
-        CategoriaReceita.outra => 'Outra',
-      };
+    CategoriaReceita.massa => 'Massa',
+    CategoriaReceita.recheio => 'Recheio',
+    CategoriaReceita.cobertura => 'Cobertura',
+    CategoriaReceita.outra => 'Outra',
+  };
 }
 
 @freezed
@@ -118,22 +119,22 @@ class RecipeInput {
   final double perdaCozeduraPct;
 
   factory RecipeInput.fromModel(Receita r, {String? nome}) => RecipeInput(
-        nome: nome ?? r.nome,
-        categoria: r.categoria,
-        rendimentoEsperado: r.rendimentoEsperado,
-        rendimentoManual: r.rendimentoManual,
-        publicarComoIngrediente: r.publicarComoIngrediente,
-        procedimento: r.procedimento,
-        perdaCozeduraPct: r.perdaCozeduraPct,
-      );
+    nome: nome ?? r.nome,
+    categoria: r.categoria,
+    rendimentoEsperado: r.rendimentoEsperado,
+    rendimentoManual: r.rendimentoManual,
+    publicarComoIngrediente: r.publicarComoIngrediente,
+    procedimento: r.procedimento,
+    perdaCozeduraPct: r.perdaCozeduraPct,
+  );
 
   Map<String, dynamic> toBody() => {
-        'nome': nome.trim(),
-        'categoria': categoria.api,
-        'rendimento_manual': rendimentoManual,
-        if (rendimentoManual) 'rendimento_esperado': rendimentoEsperado,
-        'publicar_como_ingrediente': publicarComoIngrediente,
-        'procedimento': procedimento.trim(),
-        'perda_cozedura_pct': perdaCozeduraPct,
-      };
+    'nome': capitalizarInicial(nome.trim()),
+    'categoria': categoria.api,
+    'rendimento_manual': rendimentoManual,
+    if (rendimentoManual) 'rendimento_esperado': rendimentoEsperado,
+    'publicar_como_ingrediente': publicarComoIngrediente,
+    'procedimento': procedimento.trim(),
+    'perda_cozedura_pct': perdaCozeduraPct,
+  };
 }

@@ -2,7 +2,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/data/marcas_fornecedores_providers.dart';
 import '../../../core/nutrition/nutrition.dart' show Nutrientes, kAlergenios;
+import '../../../core/widgets/autocomplete_text_field.dart';
 import '../application/ingredients_providers.dart';
 import '../data/ingredient_product_repository.dart';
 import '../data/ingredient_repository.dart';
@@ -355,14 +357,16 @@ class _ProdutoDialogState extends ConsumerState<_ProdutoDialog> {
               decoration: const InputDecoration(labelText: 'Nome do produto'),
             ),
             const SizedBox(height: 8),
-            TextField(
+            AutocompleteTextField(
               controller: _marca,
-              decoration: const InputDecoration(labelText: 'Marca'),
+              options: ref.watch(marcasConhecidasProvider),
+              labelText: 'Marca',
             ),
             const SizedBox(height: 8),
-            TextField(
+            AutocompleteTextField(
               controller: _fornecedor,
-              decoration: const InputDecoration(labelText: 'Fornecedor'),
+              options: ref.watch(fornecedoresConhecidosProvider),
+              labelText: 'Fornecedor',
             ),
             const SizedBox(height: 8),
             Row(

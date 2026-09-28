@@ -4,10 +4,13 @@
 // 1707955205_ingrediente_produtos.js).
 //
 //   recalcularGenerico(app, ingredienteId)
-//     O custo do genérico (preco, gramas_embalagem, preco_atualizado_em) passa a ser
-//     o do produto com a COMPRA MAIS RECENTE (data do preço; em caso de empate, o
-//     último a ser gravado). Só grava se algo mudou (a gravação dispara a
-//     cascata de custos das receitas). Sem produtos válidos, não mexe.
+//     O custo do genérico (preco, gramas_embalagem, preco_atualizado_em) E a
+//     marca/fornecedor mostrados na lista de ingredientes passam a ser os do
+//     produto com a COMPRA MAIS RECENTE (data do preço; em caso de empate, o
+//     último a ser gravado) — há sempre vários produtos/fornecedores por
+//     ingrediente (ver "Produtos de compra"); este é só o que manda no custo
+//     e no que aparece resumido na lista. Só grava se algo mudou (a gravação
+//     dispara a cascata de custos das receitas). Sem produtos válidos, não mexe.
 //
 //   normalizarDescricao(texto)
 //     minúsculas, sem acentos, espaços simples: para comparar descrições de fatura.
@@ -43,14 +46,22 @@ function recalcularGenerico(app, ingredienteId) {
   var preco = melhor.getFloat('preco');
   var emb = melhor.getFloat('embalagem_g');
   var data = melhor.getString('preco_atualizado_em');
+  var marca = melhor.getString('marca');
+  var fornecedor = melhor.getString('fornecedor');
   var mudou =
     Math.abs(ing.getFloat('preco') - preco) > 1e-9 ||
     Math.abs(ing.getFloat('gramas_embalagem') - emb) > 1e-9 ||
-    String(ing.getString('preco_atualizado_em')).substring(0, 10) !== String(data).substring(0, 10);
+    String(ing.getString('preco_atualizado_em')).substring(0, 10) !== String(data).substring(0, 10) ||
+    (marca && ing.getString('marca') !== marca) ||
+    (fornecedor && ing.getString('fornecedor') !== fornecedor);
   if (!mudou) return;
   ing.set('preco', preco);
   ing.set('gramas_embalagem', emb);
   if (data) ing.set('preco_atualizado_em', data);
+  // só substitui marca/fornecedor do genérico quando o produto mais recente
+  // TEM esse dado — nunca apaga o que já lá estava por o produto vir em branco.
+  if (marca) ing.set('marca', marca);
+  if (fornecedor) ing.set('fornecedor', fornecedor);
   app.save(ing);
 }
 

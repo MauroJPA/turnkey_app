@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/auth/current_user.dart';
+import '../../../core/data/marcas_fornecedores_providers.dart';
+import '../../../core/widgets/autocomplete_text_field.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../application/consumivel_providers.dart';
 import '../domain/consumivel.dart';
@@ -281,16 +283,18 @@ class _ConsumivelSheetState extends ConsumerState<ConsumivelSheet> {
               value: _exigeFds,
               onChanged: ler ? null : (v) => setState(() => _exigeFds = v),
             ),
-            TextField(
+            AutocompleteTextField(
               controller: _marca,
+              options: ref.watch(marcasConhecidasProvider),
               readOnly: ler,
-              decoration: const InputDecoration(labelText: 'Marca'),
+              labelText: 'Marca',
             ),
             const SizedBox(height: 8),
-            TextField(
+            AutocompleteTextField(
               controller: _fornecedor,
+              options: ref.watch(fornecedoresConhecidosProvider),
               readOnly: ler,
-              decoration: const InputDecoration(labelText: 'Fornecedor'),
+              labelText: 'Fornecedor',
             ),
             const SizedBox(height: 8),
             Row(

@@ -817,7 +817,7 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 
 ---
 
-## 42. Faturas: corrigir marca/fornecedor de linhas já aplicadas
+## 42. Faturas: corrigir marca de linhas já aplicadas; fornecedor no cabeçalho
 
 - [ ] Aplicar uma linha de ingrediente com marca (ex.: "Sidul") indicada e o ingrediente **reconhecido
       automaticamente** (já existia, emparelhado pela IA): reabrir Ingredientes → produto de compra mostra a
@@ -826,13 +826,35 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Na revisão de uma fatura, abrir o resumo "N linha(s) já aplicada(s) antes": expande e mostra cada linha,
       com a marca/fornecedor gravados (quando os há).
 - [ ] Com sessão de **editor**: as linhas já aplicadas não têm lápis de corrigir.
-- [ ] Com sessão de **proprietário** ou **administrador**: cada linha já aplicada (ligada a um ingrediente,
-      consumível ou embalagem) tem um lápis. Tocar abre "Corrigir marca/fornecedor" com os valores atuais;
-      mudar e guardar substitui mesmo o que já lá estava (ao contrário de aplicar de novo a fatura, que só
-      preenche o que estiver em branco).
-- [ ] Corrigir uma linha ligada a uma **embalagem**: o campo Marca não aparece (embalagens não têm marca), só
-      Fornecedor.
-- [ ] A correção fica no histórico da fatura (ícone de relógio/histórico no ecrã), com os valores antes/depois.
+- [ ] Com sessão de **proprietário** ou **administrador**: cada linha ligada a um **ingrediente** ou
+      **consumível** (não a uma embalagem — essa não tem marca) tem um lápis "Corrigir marca". Mudar e guardar
+      substitui mesmo o que já lá estava (ao contrário de aplicar de novo a fatura, que só preenche o que
+      estiver em branco).
+- [ ] O **fornecedor não se corrige linha a linha**: corrige-se uma vez no lápis do cabeçalho da fatura (só
+      proprietário). Ao guardar, o fornecedor novo aparece logo nos produtos/consumíveis/embalagens que essa
+      fatura já tinha tocado — sem precisar de corrigir cada linha.
+- [ ] A correção (marca por linha ou fornecedor no cabeçalho) fica no histórico da fatura (ícone de
+      relógio/histórico no ecrã), com os valores antes/depois.
+
+---
+
+## 43. Sincronização de marca/fornecedor, sugestões e maiúscula inicial
+
+- [ ] Aplicar uma fatura para um ingrediente **já existente** (reconhecido automaticamente), com marca e a
+      fatura com fornecedor preenchido: abrir a lista de **Ingredientes** — a marca e o fornecedor aparecem
+      no subtítulo/pesquisa/filtro por fornecedor (antes ficavam em branco mesmo com o produto de compra
+      certo).
+- [ ] Um ingrediente com **vários produtos de compra** (marcas/fornecedores diferentes): dentro do ingrediente,
+      "Produtos de compra" lista todos, cada um com marca/fornecedor/preço/data; o mais recente tem o chip
+      "custo atual" — é esse que aparece resumido na lista de Ingredientes.
+- [ ] Editar a marca de um produto de compra mais antigo (não o mais recente): a lista de Ingredientes **não**
+      muda (continua a mostrar o mais recente). Editar a marca do produto **mais recente**: a lista atualiza.
+- [ ] Nos campos de **Marca** e **Fornecedor** (Ingredientes, Produtos de compra, Embalagens, Consumíveis,
+      revisão de faturas, cabeçalho da fatura): ao tocar/escrever aparecem sugestões dos valores já usados na
+      empresa; tocar numa sugestão preenche o campo; continua a dar para escrever um nome novo à vontade.
+- [ ] Criar um ingrediente/produto/consumível/embalagem/receita/ficha técnica com o **nome em minúsculas**
+      (ex.: "farinha de trigo"): ao guardar, fica com a primeira letra maiúscula ("Farinha de trigo"), sem
+      mexer no resto do texto.
 
 ---
 

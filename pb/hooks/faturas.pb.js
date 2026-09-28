@@ -389,12 +389,17 @@ routerAdd(
 );
 
 // --- POST /api/gc_turnkey/faturas/{id}/corrigir-item ---------------------
-// Corrige a marca/fornecedor que ficaram gravados numa linha já aplicada
-// (mesmo com a fatura confirmada) — só para o proprietário e o administrador,
-// para o caso de algo passar despercebido e só se notar depois, olhando de
-// novo para a fatura em PDF/imagem. Ao contrário de /aplicar, esta escrita
-// nunca fica bloqueada por `aplicado = true` nem por já haver marca/fornecedor
-// (é uma correção explícita: substitui sempre o que estava).
+// Corrige a MARCA que ficou gravada numa linha já aplicada (mesmo com a
+// fatura confirmada) — só para o proprietário e o administrador, para o caso
+// de algo passar despercebido e só se notar depois, olhando de novo para a
+// fatura em PDF/imagem. Ao contrário de /aplicar, esta escrita nunca fica
+// bloqueada por `aplicado = true` nem por já haver marca (é uma correção
+// explícita: substitui sempre o que estava).
+//
+// O FORNECEDOR não se corrige aqui: é um só por fatura (todas as linhas são
+// do mesmo fornecedor), por isso corrige-se uma única vez no cabeçalho da
+// fatura (editar fornecedor) — e essa correção propaga-se sozinha a todos os
+// produtos/consumíveis/embalagens já tocados (ver faturas_edicao.pb.js).
 routerAdd(
   'POST',
   '/api/gc_turnkey/faturas/{id}/corrigir-item',
@@ -421,11 +426,10 @@ routerAdd(
     const body = e.requestInfo().body || {};
     const indice = Number(body.index);
     if (!Number.isFinite(indice)) throw new BadRequestError('Falta o índice da linha.');
-    const temMarca = Object.prototype.hasOwnProperty.call(body, 'marca');
-    const temFornecedor = Object.prototype.hasOwnProperty.call(body, 'fornecedor');
-    if (!temMarca && !temFornecedor) throw new BadRequestError('Nada para corrigir.');
-    const novaMarca = temMarca ? String(body.marca || '').substring(0, 200) : null;
-    const novoFornecedor = temFornecedor ? String(body.fornecedor || '').substring(0, 200) : null;
+    if (!Object.prototype.hasOwnProperty.call(body, 'marca')) {
+      throw new BadRequestError('Nada para corrigir.');
+    }
+    const novaMarca = String(body.marca || '').substring(0, 200);
 
     let resultado = null;
     e.app.runInTransaction((tx) => {
@@ -442,19 +446,18 @@ routerAdd(
 
       const produtoId = item.getString('produto');
       const consId = item.getString('consumivel');
-      const embId = item.getString('embalagem');
       let alvo = null;
       let colecao = '';
       if (produtoId) {
         colecao = 'ingrediente_produtos';
       } else if (consId) {
         colecao = 'consumiveis';
-      } else if (embId) {
-        colecao = 'embalagens';
       } else {
-        throw new BadRequestError('Esta linha não ficou ligada a nenhum registo para corrigir.');
+        // embalagens não têm campo `marca` (têm `caracteristica`) — nada a
+        // corrigir aqui para uma linha ligada só a uma embalagem.
+        throw new BadRequestError('Esta linha não tem marca para corrigir.');
       }
-      const alvoId = produtoId || consId || embId;
+      const alvoId = produtoId || consId;
       try {
         alvo = tx.findRecordById(colecao, alvoId);
       } catch (_) {
@@ -464,26 +467,17 @@ routerAdd(
         throw new BadRequestError('O registo ligado a esta linha já não existe.');
       }
 
-      // `embalagens` não tem campo `marca` (tem `caracteristica`) — só
-      // ingrediente_produtos e consumiveis guardam marca.
-      const temCampoMarca = colecao !== 'embalagens';
-      const antesMarca = temCampoMarca ? alvo.getString('marca') : '';
-      const antesFornecedor = alvo.getString('fornecedor');
-      if (temMarca && temCampoMarca) alvo.set('marca', novaMarca);
-      if (temFornecedor) alvo.set('fornecedor', novoFornecedor);
+      const antesMarca = alvo.getString('marca');
+      alvo.set('marca', novaMarca);
       tx.save(alvo);
 
-      item.set('marca', temMarca ? novaMarca : item.getString('marca'));
-      item.set('fornecedor', temFornecedor ? novoFornecedor : item.getString('fornecedor'));
+      item.set('marca', novaMarca);
       tx.save(item);
 
       try {
         const quem = auth
           ? auth.getString('nome') || auth.getString('email') || auth.id
           : '';
-        const partes = [];
-        if (temMarca) partes.push('marca: "' + antesMarca + '" → "' + novaMarca + '"');
-        if (temFornecedor) partes.push('fornecedor: "' + antesFornecedor + '" → "' + novoFornecedor + '"');
         const h = new Record(e.app.findCollectionByNameOrId('historico'));
         h.set('empresa', empresaId);
         h.set('entidade_tipo', 'fatura');
@@ -492,27 +486,21 @@ routerAdd(
           'descricao',
           (
             'Fatura — linha "' + item.getString('descricao_fatura') + '" corrigida: ' +
-            partes.join('; ') + (quem ? ' (por ' + quem + ')' : '')
+            'marca: "' + antesMarca + '" → "' + novaMarca + '"' + (quem ? ' (por ' + quem + ')' : '')
           ).substring(0, 500),
         );
-        h.set('valor_antes', { marca: antesMarca, fornecedor: antesFornecedor });
-        h.set('valor_depois', {
-          marca: temMarca ? novaMarca : antesMarca,
-          fornecedor: temFornecedor ? novoFornecedor : antesFornecedor,
-        });
+        h.set('valor_antes', { marca: antesMarca });
+        h.set('valor_depois', { marca: novaMarca });
         if (auth && auth.collection().name === 'users') h.set('autor', auth.id);
         tx.save(h);
       } catch (err) {
         console.log('[faturas.corrigir-item] historico: ' + err);
       }
 
-      resultado = {
-        marca: item.getString('marca'),
-        fornecedor: item.getString('fornecedor'),
-      };
+      resultado = { marca: item.getString('marca') };
     });
 
-    return e.json(200, { ok: true, marca: resultado.marca, fornecedor: resultado.fornecedor });
+    return e.json(200, { ok: true, marca: resultado.marca });
   },
   $apis.requireAuth('users', '_superusers'),
 );

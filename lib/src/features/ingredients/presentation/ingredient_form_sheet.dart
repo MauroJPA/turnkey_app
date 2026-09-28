@@ -2,7 +2,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/data/marcas_fornecedores_providers.dart';
 import '../../../core/nutrition/nutrition.dart';
+import '../../../core/widgets/autocomplete_text_field.dart';
 import '../application/ingredients_providers.dart';
 import '../data/ingredient_product_repository.dart';
 import '../data/ingredient_repository.dart';
@@ -397,18 +399,18 @@ class _IngredientFormSheetState extends ConsumerState<_IngredientFormSheet> {
               Row(
                 children: [
                   Expanded(
-                    child: TextFormField(
+                    child: AutocompleteTextField(
                       controller: _marca,
-                      decoration: const InputDecoration(labelText: 'Marca'),
+                      options: ref.watch(marcasConhecidasProvider),
+                      labelText: 'Marca',
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: TextFormField(
+                    child: AutocompleteTextField(
                       controller: _fornecedor,
-                      decoration: const InputDecoration(
-                        labelText: 'Fornecedor',
-                      ),
+                      options: ref.watch(fornecedoresConhecidosProvider),
+                      labelText: 'Fornecedor',
                     ),
                   ),
                 ],
@@ -431,18 +433,15 @@ class _IngredientFormSheetState extends ConsumerState<_IngredientFormSheet> {
               ),
               Padding(
                 padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  switch (_unidade) {
-                    'ml' =>
-                      'Bebidas e líquidos: a embalagem, as receitas e o stock '
-                          'ficam em ml. O peso usa a densidade da nutrição (1 g/ml se vazia).',
-                    'un' =>
-                      'Ovos, garrafas, sacos…: a embalagem, as receitas e o stock '
-                          'ficam em unidades.',
-                    _ => 'Por omissão: tudo em gramas.',
-                  },
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+                child: Text(switch (_unidade) {
+                  'ml' =>
+                    'Bebidas e líquidos: a embalagem, as receitas e o stock '
+                        'ficam em ml. O peso usa a densidade da nutrição (1 g/ml se vazia).',
+                  'un' =>
+                    'Ovos, garrafas, sacos…: a embalagem, as receitas e o stock '
+                        'ficam em unidades.',
+                  _ => 'Por omissão: tudo em gramas.',
+                }, style: Theme.of(context).textTheme.bodySmall),
               ),
               if (editar && _unidade != widget.existente!.un)
                 Padding(
@@ -450,7 +449,9 @@ class _IngredientFormSheetState extends ConsumerState<_IngredientFormSheet> {
                   child: Text(
                     'Atenção: as quantidades já guardadas (receitas, embalagem, '
                     'stock) não são convertidas — confere-as.',
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
                 ),
               if (_unidade == 'un') ...[

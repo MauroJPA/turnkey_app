@@ -1,5 +1,7 @@
 import 'package:pocketbase/pocketbase.dart';
 
+import '../../../core/formatting/capitalizar.dart';
+
 const kTiposEmbalagem = <String>[
   'Caixa',
   'Saco',
@@ -150,7 +152,7 @@ class EmbalagemInput {
   );
 
   Map<String, dynamic> toBody() => {
-    'nome': nome.trim(),
+    'nome': capitalizarInicial(nome.trim()),
     'tipo': tipo,
     'caracteristica': caracteristica.trim(),
     'uso': uso?.api ?? '',

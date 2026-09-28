@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/data/marcas_fornecedores_providers.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
+import '../../../core/widgets/autocomplete_text_field.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_actions.dart';
@@ -554,9 +556,10 @@ class _EmbalagemFormState extends ConsumerState<_EmbalagemForm> {
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 12),
-            TextField(
+            AutocompleteTextField(
               controller: _forn,
-              decoration: const InputDecoration(labelText: 'Fornecedor'),
+              options: ref.watch(fornecedoresConhecidosProvider),
+              labelText: 'Fornecedor',
             ),
             const SizedBox(height: 12),
             Card(

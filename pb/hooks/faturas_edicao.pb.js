@@ -7,6 +7,12 @@
 // dados e nos backups). As alterações do servidor (análise da IA, aplicar) não
 // passam por aqui.
 //
+// O fornecedor só se confirma UMA VEZ por fatura (todas as linhas são do
+// mesmo fornecedor) — por isso, ao corrigir o fornecedor aqui, a alteração
+// propaga-se a todos os produtos/consumíveis/embalagens que esta fatura já
+// tocou (via `faturas_itens`), substituindo sempre o valor antigo (é uma
+// correção explícita do proprietário).
+//
 // NOTA: cada handler é autocontido (os handlers correm isolados).
 
 onRecordUpdateRequest((e) => {
@@ -55,6 +61,53 @@ onRecordUpdateRequest((e) => {
   e.next();
 
   if (!Object.keys(depoisV).length) return;
+
+  let fornecedorPropagadoPara = 0;
+  if ('fornecedor' in depoisV) {
+    try {
+      const f = e.record;
+      const empresaId = f.getString('empresa');
+      const novoFornecedor = depoisV.fornecedor;
+      const itens = e.app.findRecordsByFilter('faturas_itens', 'fatura = {:f}', '', 0, 0, { f: f.id });
+      const vistos = {};
+      for (const it of itens) {
+        const produtoId = it.getString('produto');
+        const consId = it.getString('consumivel');
+        const embId = it.getString('embalagem');
+        let colecao = '';
+        let alvoId = '';
+        if (produtoId) {
+          colecao = 'ingrediente_produtos';
+          alvoId = produtoId;
+        } else if (consId) {
+          colecao = 'consumiveis';
+          alvoId = consId;
+        } else if (embId) {
+          colecao = 'embalagens';
+          alvoId = embId;
+        } else {
+          continue;
+        }
+        const chave = colecao + ':' + alvoId;
+        if (!vistos[chave]) {
+          vistos[chave] = true;
+          try {
+            const alvo = e.app.findRecordById(colecao, alvoId);
+            if (alvo.getString('empresa') === empresaId) {
+              alvo.set('fornecedor', novoFornecedor);
+              e.app.save(alvo);
+              fornecedorPropagadoPara++;
+            }
+          } catch (_) {}
+        }
+        it.set('fornecedor', novoFornecedor);
+        e.app.save(it);
+      }
+    } catch (err) {
+      console.log('[faturas_edicao] propagar fornecedor: ' + err);
+    }
+  }
+
   try {
     const f = e.record;
     const partes = [];
@@ -62,6 +115,9 @@ onRecordUpdateRequest((e) => {
     else if (depoisV.apagada === false) partes.push('restaurada');
     for (const c of Object.keys(NOMES)) {
       if (c in depoisV) partes.push(NOMES[c] + ': "' + antesV[c] + '" → "' + depoisV[c] + '"');
+    }
+    if (fornecedorPropagadoPara > 0) {
+      partes.push('fornecedor atualizado em ' + fornecedorPropagadoPara + ' registo(s) já ligados a esta fatura');
     }
     const ref = [
       f.getString('fornecedor') || 'Fornecedor?',

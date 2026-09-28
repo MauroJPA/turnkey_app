@@ -1,5 +1,7 @@
 import 'package:pocketbase/pocketbase.dart';
 
+import '../../../core/formatting/capitalizar.dart';
+
 /// Tipo de custo — para separar, no painel financeiro, o que é fixo
 /// (aluguel, salários) do que varia com o volume vendido.
 enum TipoCusto {
@@ -12,9 +14,9 @@ enum TipoCusto {
   String get api => name;
 
   String get label => switch (this) {
-        TipoCusto.fixo => 'Fixo',
-        TipoCusto.variavel => 'Variável',
-      };
+    TipoCusto.fixo => 'Fixo',
+    TipoCusto.variavel => 'Variável',
+  };
 }
 
 /// Um custo real e recorrente da empresa (aluguel, salários, seguros,
@@ -45,16 +47,16 @@ class CustoFixo {
   bool get ativo => !arquivado;
 
   factory CustoFixo.fromRecord(RecordModel r) => CustoFixo(
-        id: r.id,
-        nome: r.getStringValue('nome'),
-        tipo: TipoCusto.fromApi(r.getStringValue('tipo')),
-        valorMensal: r.getDoubleValue('valor_mensal'),
-        arquivado: r.getBoolValue('arquivado'),
-        notas: r.getStringValue('notas'),
-        diaPagamento: r.getIntValue('dia_pagamento') > 0
-            ? r.getIntValue('dia_pagamento')
-            : null,
-      );
+    id: r.id,
+    nome: r.getStringValue('nome'),
+    tipo: TipoCusto.fromApi(r.getStringValue('tipo')),
+    valorMensal: r.getDoubleValue('valor_mensal'),
+    arquivado: r.getBoolValue('arquivado'),
+    notas: r.getStringValue('notas'),
+    diaPagamento: r.getIntValue('dia_pagamento') > 0
+        ? r.getIntValue('dia_pagamento')
+        : null,
+  );
 }
 
 /// Dados de um custo fixo a criar/editar (formulário).
@@ -74,10 +76,10 @@ class CustoFixoInput {
   final int? diaPagamento;
 
   Map<String, dynamic> toBody() => {
-        'nome': nome.trim(),
-        'tipo': tipo.api,
-        'valor_mensal': valorMensal,
-        'notas': notas.trim(),
-        'dia_pagamento': diaPagamento,
-      };
+    'nome': capitalizarInicial(nome.trim()),
+    'tipo': tipo.api,
+    'valor_mensal': valorMensal,
+    'notas': notas.trim(),
+    'dia_pagamento': diaPagamento,
+  };
 }

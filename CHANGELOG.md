@@ -2,6 +2,32 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.22.0 — 2026-09-28 — Marca/fornecedor sincronizados, sugestões e maiúscula inicial
+
+- **Bug corrigido: a marca e o fornecedor não apareciam na lista de Ingredientes.** Ao aplicar uma fatura, a
+  marca/fornecedor ficavam gravados no **produto de compra** (a marca específica), mas o ingrediente genérico
+  — o que aparece na lista, na pesquisa e no filtro por fornecedor — nunca era atualizado. Agora, sempre que um
+  produto de compra muda (aplicar fatura, editar em "Produtos de compra", ou corrigir a marca), o ingrediente
+  genérico sincroniza a marca/fornecedor **do produto com a compra mais recente** — o mesmo produto que já
+  manda no custo. Nunca apaga marca/fornecedor já preenchidos só porque o produto mais recente vem em branco.
+- **Vários fornecedores por ingrediente**: já existia (ecrã "Produtos de compra", dentro de cada ingrediente) —
+  lista todas as marcas/embalagens compradas, cada uma com o seu fornecedor e data, e assinala com "custo
+  atual" a que manda no preço (a mais recente). Não havia bug aqui; ficou mais visível com a sincronização
+  acima.
+- **Fornecedor: um só por fatura.** Corrigir o fornecedor deixou de se pedir linha a linha — corrige-se **uma
+  vez no cabeçalho da fatura** (lápis, proprietário) e propaga-se sozinho a todos os produtos/consumíveis/
+  embalagens que essa fatura já tinha tocado. O endpoint `/corrigir-item` passa a corrigir só a **marca**
+  (continua disponível a proprietário e administrador, mesmo com a linha já aplicada).
+- **Marca e fornecedor com sugestões**: os campos de marca e de fornecedor (Ingredientes, Produtos de compra,
+  Embalagens, Consumíveis, revisão de faturas, cabeçalho da fatura) mostram agora os valores já usados na
+  empresa para escolher — sem nunca obrigar: continua a dar para escrever um valor novo à mão.
+- **Maiúscula inicial sempre.** Nomes de ingredientes, produtos de compra, consumíveis, embalagens, kits,
+  formatos de cookie, receitas, fichas técnicas, custos fixos e equipamento passam a começar sempre por
+  maiúscula ao gravar (`capitalizarInicial`), sem mexer no resto do texto escrito.
+- Testes: `test/capitalizar_test.dart` (regra da maiúscula inicial) e nova secção em
+  `test/security/seguranca.py` que confirma a sincronização do genérico (na 1ª e na 2ª fatura, e ao corrigir a
+  marca) e o novo comportamento do `/corrigir-item` (só marca) e da propagação do fornecedor pelo cabeçalho.
+
 ## 1.21.0 — 2026-09-28 — Faturas: corrigir marca/fornecedor de linhas já aplicadas
 
 - **Bug corrigido: o fornecedor não ficava gravado quando o produto já existia.** Ao aplicar uma fatura, se a

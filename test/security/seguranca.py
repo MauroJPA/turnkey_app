@@ -1250,7 +1250,7 @@ def teste_faturas_pendente_embalagem():
     fid_nf = fnf['id']
     st, rnf, _ = call('POST', f"/api/gc_turnkey/faturas/{fid_nf}/aplicar",
                        {'linhas': [{'index': 0, 'ingredienteId': ing_c, 'acao': 'preco', 'precoUnitario': 1.2,
-                                    'descricaoFatura': 'Manteiga Mimosa 250g', 'marca': 'Mimosa'}]}, t)
+                                    'descricaoFatura': 'Manteiga Mimosa 250g', 'marca': 'Mimosa', 'embalagemG': 250}]}, t)
     check(st == 200 and rnf.get('precos') == 1, 'cria o produto (1ª fatura, sem fornecedor)', f'{st} {str(rnf)[:160]}')
     prods_c = call('GET', f"/api/collections/ingrediente_produtos/records?filter=ingrediente='{ing_c}'", tok=t)[1].get('items', [])
     check(len(prods_c) == 1 and prods_c[0].get('fornecedor', '?') == '', 'o produto fica sem fornecedor (a 1ª fatura não tinha)', str(prods_c)[:160])
@@ -1268,33 +1268,58 @@ def teste_faturas_pendente_embalagem():
     check(len(prods_c2) == 1 and prods_c2[0].get('fornecedor') == 'Continente',
           'BUG CORRIGIDO: o fornecedor da 2ª fatura fica gravado no produto já existente', str(prods_c2)[:160])
 
-    # --- /corrigir-item: proprietário/administrador corrigem marca/fornecedor mesmo já aplicada ---
+    # --- o ingrediente GENÉRICO (o que aparece na lista de Ingredientes) também
+    # fica com a marca/fornecedor do produto mais recente — não só o produto ---
+    ing_c_final = call('GET', f'/api/collections/ingredientes/records/{ing_c}', tok=t)[1]
+    check(ing_c_final.get('marca') == 'Mimosa' and ing_c_final.get('fornecedor') == 'Continente',
+          'o ingrediente genérico sincroniza marca/fornecedor do produto com a compra mais recente',
+          str(ing_c_final)[:160])
+
+    # --- /corrigir-item: proprietário/administrador corrigem a MARCA mesmo já aplicada ---
+    # (fornecedor NÃO se corrige aqui: é um só por fatura — ver bloco seguinte)
     st, item_nf2, _ = call('GET', f"/api/collections/faturas_itens/records?filter=fatura='{fid_nf2}'", tok=t)
     item_nf2 = item_nf2.get('items', [{}])[0]
     check(item_nf2.get('produto') == prods_c2[0]['id'] and item_nf2.get('fornecedor') == 'Continente',
           'faturas_itens guarda o produto/marca/fornecedor tocados, para dar para corrigir depois', str(item_nf2)[:160])
 
     corrige_url = f'/api/gc_turnkey/faturas/{fid_nf2}/corrigir-item'
-    st, rc0, _ = call('POST', corrige_url, {'index': 0, 'marca': 'X', 'fornecedor': 'Y'}, tok['editorA'])
+    st, rc0, _ = call('POST', corrige_url, {'index': 0, 'marca': 'X'}, tok['editorA'])
     check(st != 200, 'corrigir-item: editor não pode (só proprietário/administrador)', f'status {st} {str(rc0)[:120]}')
-    st, rc0b, _ = call('POST', corrige_url, {'index': 0, 'marca': 'X', 'fornecedor': 'Y'}, tok['viewerA'])
+    st, rc0b, _ = call('POST', corrige_url, {'index': 0, 'marca': 'X'}, tok['viewerA'])
     check(st != 200, 'corrigir-item: viewer não pode', f'status {st}')
-    st, rcb, _ = call('POST', corrige_url, {'index': 0, 'marca': 'X', 'fornecedor': 'Y'}, tok['ownerB'])
+    st, rcb, _ = call('POST', corrige_url, {'index': 0, 'marca': 'X'}, tok['ownerB'])
     check(st != 200, 'corrigir-item: fatura de outra empresa é recusada', f'status {st}')
+    st, rcf, _ = call('POST', corrige_url, {'index': 0, 'fornecedor': 'Y'}, tok['ownerA'])
+    check(st != 200, 'corrigir-item: sem "marca" no corpo é recusado (fornecedor não se corrige aqui)', f'status {st} {str(rcf)[:120]}')
 
-    st, rc1, _ = call('POST', corrige_url, {'index': 0, 'marca': 'Marca Corrigida', 'fornecedor': 'Fornecedor Corrigido'}, tok['ownerA'])
-    check(st == 200 and rc1.get('marca') == 'Marca Corrigida' and rc1.get('fornecedor') == 'Fornecedor Corrigido',
-          'corrigir-item: o proprietário corrige, mesmo já aplicada/confirmada', f'{st} {str(rc1)[:160]}')
+    st, rc1, _ = call('POST', corrige_url, {'index': 0, 'marca': 'Marca Corrigida'}, tok['ownerA'])
+    check(st == 200 and rc1.get('marca') == 'Marca Corrigida',
+          'corrigir-item: o proprietário corrige a marca, mesmo já aplicada/confirmada', f'{st} {str(rc1)[:160]}')
     prod_final = call('GET', f"/api/collections/ingrediente_produtos/records/{prods_c2[0]['id']}", tok=t)[1]
-    check(prod_final.get('marca') == 'Marca Corrigida' and prod_final.get('fornecedor') == 'Fornecedor Corrigido',
-          'a correção SUBSTITUI o que já lá estava (ao contrário de /aplicar, que só preenche em branco)', str(prod_final)[:160])
+    check(prod_final.get('marca') == 'Marca Corrigida',
+          'a correção SUBSTITUI a marca que já lá estava (ao contrário de /aplicar, que só preenche em branco)', str(prod_final)[:160])
     item_final = call('GET', f"/api/collections/faturas_itens/records?filter=fatura='{fid_nf2}'", tok=t)[1].get('items', [{}])[0]
-    check(item_final.get('marca') == 'Marca Corrigida' and item_final.get('fornecedor') == 'Fornecedor Corrigido',
-          'faturas_itens também fica com o valor corrigido', str(item_final)[:160])
+    check(item_final.get('marca') == 'Marca Corrigida',
+          'faturas_itens também fica com a marca corrigida', str(item_final)[:160])
 
-    st, rc2, _ = call('POST', corrige_url, {'index': 0, 'fornecedor': 'Só o fornecedor'}, tok['adminA'])
-    check(st == 200 and rc2.get('marca') == 'Marca Corrigida' and rc2.get('fornecedor') == 'Só o fornecedor',
-          'corrigir-item: o administrador também pode; corrigir só o fornecedor não mexe na marca', f'{st} {str(rc2)[:160]}')
+    st, rc2, _ = call('POST', corrige_url, {'index': 0, 'marca': 'Marca do Admin'}, tok['adminA'])
+    check(st == 200 and rc2.get('marca') == 'Marca do Admin',
+          'corrigir-item: o administrador também pode corrigir a marca', f'{st} {str(rc2)[:160]}')
+    ing_c_marca = call('GET', f'/api/collections/ingredientes/records/{ing_c}', tok=t)[1]
+    check(ing_c_marca.get('marca') == 'Marca do Admin',
+          'corrigir a marca do produto também sincroniza o ingrediente genérico', str(ing_c_marca)[:160])
+
+    # --- corrigir o FORNECEDOR: só uma vez, no cabeçalho da fatura — propaga sozinho ---
+    st, redit, _ = call('PATCH', f'/api/collections/faturas/records/{fid_nf2}', {'fornecedor': 'Fornecedor Corrigido no Cabeçalho'}, tok['ownerA'])
+    check(st == 200, 'corrigir o fornecedor no cabeçalho da fatura (só o proprietário)', f'status {st} {str(redit)[:160]}')
+    prod_prop = call('GET', f"/api/collections/ingrediente_produtos/records/{prods_c2[0]['id']}", tok=t)[1]
+    check(prod_prop.get('fornecedor') == 'Fornecedor Corrigido no Cabeçalho',
+          'corrigir o fornecedor no cabeçalho PROPAGA ao produto que esta fatura já tinha tocado', str(prod_prop)[:160])
+    item_prop = call('GET', f"/api/collections/faturas_itens/records?filter=fatura='{fid_nf2}'", tok=t)[1].get('items', [{}])[0]
+    check(item_prop.get('fornecedor') == 'Fornecedor Corrigido no Cabeçalho',
+          'faturas_itens também fica com o fornecedor propagado', str(item_prop)[:160])
+    check(prod_prop.get('marca') == 'Marca do Admin',
+          'a propagação do fornecedor não mexe na marca', str(prod_prop)[:160])
 
 
 def teste_produtos():

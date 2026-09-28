@@ -7,10 +7,12 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/router.dart';
+import '../../../core/data/marcas_fornecedores_providers.dart';
 import '../../../core/formatting/dates.dart';
 import '../../../core/formatting/quantities.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
+import '../../../core/widgets/autocomplete_text_field.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../../core/widgets/history_sheet.dart';
@@ -1477,9 +1479,11 @@ class _RevisaoState extends ConsumerState<_Revisao> {
         ),
       ],
       const SizedBox(height: 8),
-      TextField(
+      AutocompleteTextField(
         controller: l.marca,
-        decoration: const InputDecoration(labelText: 'Marca', isDense: true),
+        options: ref.watch(marcasConhecidasProvider),
+        labelText: 'Marca',
+        isDense: true,
       ),
     ];
   }
@@ -1630,8 +1634,10 @@ class _RevisaoState extends ConsumerState<_Revisao> {
 
   Future<void> _corrigirLinha(_LinhaState l) async {
     final ant = l.anterior;
-    if (ant == null || !ant.temAlvoParaCorrigir) return;
-    final temMarca = ant.produtoId != null || ant.consumivelId != null;
+    // só produto/consumível têm marca; embalagens não (ver mostrarCorrigirItem)
+    if (ant == null || (ant.produtoId == null && ant.consumivelId == null)) {
+      return;
+    }
     final ok = await mostrarCorrigirItem(
       context,
       ref,
@@ -1641,8 +1647,6 @@ class _RevisaoState extends ConsumerState<_Revisao> {
           ? ant.descricaoFatura
           : l.ia.descricao,
       marcaAtual: ant.marca,
-      fornecedorAtual: ant.fornecedor,
-      temMarca: temMarca,
     );
     if (!ok || !mounted) return;
     final itens = await ref.read(itensFaturaProvider(widget.fatura.id).future);
@@ -1663,8 +1667,9 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       if ((ant?.marca ?? '').isNotEmpty) 'marca ${ant!.marca}',
       if ((ant?.fornecedor ?? '').isNotEmpty) ant!.fornecedor,
     ];
-    final podeCorrigir =
-        (ant?.temAlvoParaCorrigir ?? false) && ehProprietarioOuAdmin(ref);
+    final temMarcaParaCorrigir =
+        ant != null && (ant.produtoId != null || ant.consumivelId != null);
+    final podeCorrigir = temMarcaParaCorrigir && ehProprietarioOuAdmin(ref);
     return ListTile(
       dense: true,
       title: Text(l.ia.descricao, style: const TextStyle(fontSize: 13)),
@@ -1674,7 +1679,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       trailing: podeCorrigir
           ? IconButton(
               icon: const Icon(Icons.edit_outlined, size: 18),
-              tooltip: 'Corrigir marca/fornecedor',
+              tooltip: 'Corrigir marca',
               onPressed: () => _corrigirLinha(l),
             )
           : null,
@@ -1794,17 +1799,16 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                   if (l.tipo == TipoLinha.ingrediente &&
                       (l.ingrediente != null || l.criarNovo)) ...[
                     const SizedBox(height: 8),
-                    TextField(
+                    AutocompleteTextField(
                       controller: l.marca,
-                      decoration: InputDecoration(
-                        labelText: 'Marca',
-                        isDense: true,
-                        helperText: l.produto != null
-                            ? 'Produto já conhecido: ${l.produto!.resumo}'
-                            : 'Vai criar um produto novo (marca e embalagem) '
-                                  'neste ingrediente',
-                        helperMaxLines: 2,
-                      ),
+                      options: ref.watch(marcasConhecidasProvider),
+                      labelText: 'Marca',
+                      isDense: true,
+                      helperText: l.produto != null
+                          ? 'Produto já conhecido: ${l.produto!.resumo}'
+                          : 'Vai criar um produto novo (marca e embalagem) '
+                                'neste ingrediente',
+                      helperMaxLines: 2,
                       onChanged: (v) => setState(() {
                         if (l.ingrediente != null) {
                           l.produto = produtoDaMarca(

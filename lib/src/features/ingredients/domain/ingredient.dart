@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pocketbase/pocketbase.dart';
 
+import '../../../core/formatting/capitalizar.dart';
 import '../../../core/nutrition/nutrition.dart';
 
 part 'ingredient.freezed.dart';
@@ -24,27 +25,27 @@ enum FonteNutri {
   comFoto;
 
   String get label => switch (this) {
-        FonteNutri.vazia => 'sem nutrição',
-        FonteNutri.porRever => 'por rever (INSA)',
-        FonteNutri.insa => 'da tabela INSA',
-        FonteNutri.manual => 'preenchida à mão',
-        FonteNutri.comFoto => 'à mão + foto do rótulo',
-      };
+    FonteNutri.vazia => 'sem nutrição',
+    FonteNutri.porRever => 'por rever (INSA)',
+    FonteNutri.insa => 'da tabela INSA',
+    FonteNutri.manual => 'preenchida à mão',
+    FonteNutri.comFoto => 'à mão + foto do rótulo',
+  };
 }
 
 enum OrigemIngrediente {
   comprado,
   fabricoProprio;
 
-  static OrigemIngrediente fromApi(String? v) =>
-      v == 'fabrico_proprio' ? OrigemIngrediente.fabricoProprio : OrigemIngrediente.comprado;
+  static OrigemIngrediente fromApi(String? v) => v == 'fabrico_proprio'
+      ? OrigemIngrediente.fabricoProprio
+      : OrigemIngrediente.comprado;
 
   String get api =>
       this == OrigemIngrediente.fabricoProprio ? 'fabrico_proprio' : 'comprado';
 
-  String get label => this == OrigemIngrediente.fabricoProprio
-      ? 'Fabrico próprio'
-      : 'Comprado';
+  String get label =>
+      this == OrigemIngrediente.fabricoProprio ? 'Fabrico próprio' : 'Comprado';
 }
 
 @freezed
@@ -69,10 +70,13 @@ class Ingrediente with _$Ingrediente {
     DateTime? nutriAtualizadoEm,
     @Default(<String>[]) List<String> alergenios,
     @Default(<String>[]) List<String> alergeniosTracos,
+
     /// Nome do ficheiro da foto da tabela nutricional (rótulo), se houver.
     @Default('') String nutriFoto,
+
     /// Nome curto/genérico para a lista resumida da etiqueta (opcional).
     @Default('') String nomeRotulo,
+
     /// Se preenchido, este "ingrediente" é na verdade um produto de fabrico próprio — um
     /// espelho da receita com este id. A nutrição vem da receita, não se
     /// preenche aqui.
@@ -89,8 +93,7 @@ class Ingrediente with _$Ingrediente {
   const Ingrediente._();
 
   /// Preço por grama — base de todos os cálculos de custo.
-  double get custoPorGrama =>
-      gramasEmbalagem > 0 ? preco / gramasEmbalagem : 0;
+  double get custoPorGrama => gramasEmbalagem > 0 ? preco / gramasEmbalagem : 0;
 
   /// "Farinha de trigo T55": o nome seguido da característica (se houver).
   String get nomeComCaracteristica =>
@@ -149,8 +152,9 @@ class Ingrediente with _$Ingrediente {
       nutriBase: base.isEmpty ? '100g' : base,
       nutriDensidade: dens > 0 ? dens : 1,
       nutriOrigem: r.getStringValue('nutri_origem'),
-      nutriAtualizadoEm:
-          nutriData.isEmpty ? null : DateTime.tryParse(nutriData),
+      nutriAtualizadoEm: nutriData.isEmpty
+          ? null
+          : DateTime.tryParse(nutriData),
       alergenios: lista('alergenios'),
       alergeniosTracos: lista('alergenios_tracos'),
       nutriFoto: r.getStringValue('nutri_foto'),
@@ -216,17 +220,17 @@ class IngredienteInput {
       );
 
   Map<String, dynamic> toBody() => {
-        'nome': nome.trim(),
-        'caracteristica': caracteristica.trim(),
-        'marca': marca.trim(),
-        'nome_rotulo': nomeRotulo.trim(),
-        'fornecedor': fornecedor.trim(),
-        'preco': preco,
-        'gramas_embalagem': gramasEmbalagem,
-        'disponivel': disponivel,
-        'origem': origem.api,
-        'unidade': unidade,
-        'gramas_unidade': gramasUnidade,
-        'preco_atualizado_em': DateTime.now().toUtc().toIso8601String(),
-      };
+    'nome': capitalizarInicial(nome.trim()),
+    'caracteristica': caracteristica.trim(),
+    'marca': marca.trim(),
+    'nome_rotulo': nomeRotulo.trim(),
+    'fornecedor': fornecedor.trim(),
+    'preco': preco,
+    'gramas_embalagem': gramasEmbalagem,
+    'disponivel': disponivel,
+    'origem': origem.api,
+    'unidade': unidade,
+    'gramas_unidade': gramasUnidade,
+    'preco_atualizado_em': DateTime.now().toUtc().toIso8601String(),
+  };
 }

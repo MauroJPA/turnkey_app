@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 import '../../../core/auth/current_user.dart';
+import '../../../core/formatting/capitalizar.dart';
 import '../../../core/pocketbase/pb_client.dart';
 import '../application/ingredients_providers.dart' show ingredientsListProvider;
 import '../domain/produto_ingrediente.dart';
@@ -70,7 +71,7 @@ class IngredientProductRepository {
     List<String>? alergeniosTracos,
     NutriProduto? nutri,
   }) => {
-    'nome': nome.trim(),
+    'nome': capitalizarInicial(nome.trim()),
     'marca': marca.trim(),
     'fornecedor': fornecedor.trim(),
     'embalagem_g': embalagemG,

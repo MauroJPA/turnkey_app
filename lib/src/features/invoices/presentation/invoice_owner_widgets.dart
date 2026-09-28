@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/current_user.dart';
 import '../../../core/auth/permissions.dart';
+import '../../../core/data/marcas_fornecedores_providers.dart';
 import '../../../core/formatting/dates.dart';
 import '../../../core/widgets/async_value_view.dart';
+import '../../../core/widgets/autocomplete_text_field.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/history_sheet.dart';
 import '../../settings/application/empresa_providers.dart';
@@ -48,10 +50,10 @@ Future<bool> mostrarEditarFatura(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextField(
+              AutocompleteTextField(
                 controller: forn,
-                textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(labelText: 'Fornecedor'),
+                options: ref.read(fornecedoresConhecidosProvider),
+                labelText: 'Fornecedor',
               ),
               const SizedBox(height: 8),
               TextField(
@@ -160,11 +162,12 @@ Future<bool> mostrarEditarFatura(
   return ok == true;
 }
 
-/// Corrigir a marca e/ou o fornecedor que ficaram gravados numa linha já
-/// aplicada (mesmo com a fatura confirmada) — proprietário/administrador,
-/// para o caso de algo passar despercebido e só se notar depois, olhando de
-/// novo para a fatura em PDF/imagem. [temMarca] esconde o campo Marca quando
-/// a linha está ligada a uma embalagem (que não tem esse campo).
+/// Corrigir a MARCA que ficou gravada numa linha já aplicada (mesmo com a
+/// fatura confirmada) — proprietário/administrador, para o caso de algo
+/// passar despercebido e só se notar depois, olhando de novo para a fatura
+/// em PDF/imagem. O fornecedor não se corrige aqui: é um só por fatura —
+/// corrige-se uma vez no cabeçalho ([mostrarEditarFatura]) e propaga-se
+/// sozinho a tudo o que essa fatura já tocou.
 Future<bool> mostrarCorrigirItem(
   BuildContext context,
   WidgetRef ref, {
@@ -172,18 +175,16 @@ Future<bool> mostrarCorrigirItem(
   required int index,
   required String descricao,
   required String marcaAtual,
-  required String fornecedorAtual,
-  bool temMarca = true,
 }) async {
   final marca = TextEditingController(text: marcaAtual);
-  final forn = TextEditingController(text: fornecedorAtual);
+  final opcoes = ref.read(marcasConhecidasProvider);
   String? erro;
   var busy = false;
   final ok = await showDialog<bool>(
     context: context,
     builder: (ctx) => StatefulBuilder(
       builder: (ctx, setSt) => AlertDialog(
-        title: const Text('Corrigir marca / fornecedor'),
+        title: const Text('Corrigir marca'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -191,24 +192,17 @@ Future<bool> mostrarCorrigirItem(
             children: [
               Text(descricao, style: Theme.of(ctx).textTheme.bodyMedium),
               const SizedBox(height: 12),
-              if (temMarca) ...[
-                TextField(
-                  controller: marca,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(labelText: 'Marca'),
-                ),
-                const SizedBox(height: 8),
-              ],
-              TextField(
-                controller: forn,
-                textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(labelText: 'Fornecedor'),
+              AutocompleteTextField(
+                controller: marca,
+                options: opcoes,
+                labelText: 'Marca',
               ),
               const SizedBox(height: 8),
               Text(
-                'Corrige o que ficou gravado ao aplicar esta fatura — para '
-                'quando algo passou despercebido e só se nota depois, olhando '
-                'de novo para a fatura em PDF/imagem.',
+                'Corrige a marca que ficou gravada ao aplicar esta fatura — '
+                'para quando algo passou despercebido e só se nota depois, '
+                'olhando de novo para a fatura em PDF/imagem. O fornecedor '
+                'corrige-se no cabeçalho da fatura (é só um por fatura).',
                 style: Theme.of(ctx).textTheme.bodySmall,
               ),
               if (erro != null)
@@ -238,12 +232,7 @@ Future<bool> mostrarCorrigirItem(
                     try {
                       await ref
                           .read(invoiceActionsProvider)
-                          .corrigirItem(
-                            faturaId,
-                            index,
-                            marca: temMarca ? marca.text : null,
-                            fornecedor: forn.text,
-                          );
+                          .corrigirItem(faturaId, index, marca.text);
                       if (ctx.mounted) Navigator.pop(ctx, true);
                     } on Object catch (e) {
                       setSt(() {
@@ -259,7 +248,6 @@ Future<bool> mostrarCorrigirItem(
     ),
   );
   marca.dispose();
-  forn.dispose();
   return ok == true;
 }
 

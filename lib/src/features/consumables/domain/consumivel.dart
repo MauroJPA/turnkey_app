@@ -1,5 +1,7 @@
 import 'package:pocketbase/pocketbase.dart';
 
+import '../../../core/formatting/capitalizar.dart';
+
 enum CategoriaConsumivel {
   limpeza('limpeza', 'Limpeza'),
   desinfecao('desinfecao', 'Desinfeção'),
@@ -121,7 +123,7 @@ class ConsumivelInput {
   );
 
   Map<String, dynamic> toBody() => {
-    'nome': nome.trim(),
+    'nome': capitalizarInicial(nome.trim()),
     'categoria': categoria.api,
     'marca': marca.trim(),
     'fornecedor': fornecedor.trim(),

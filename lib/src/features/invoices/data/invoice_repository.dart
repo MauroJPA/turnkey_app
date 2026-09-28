@@ -346,31 +346,21 @@ class InvoiceRepository {
     return recs.map(ItemFaturaAnterior.fromRecord).toList();
   }
 
-  /// Corrige a marca e/ou o fornecedor de uma linha JÁ APLICADA (mesmo com a
-  /// fatura confirmada) — só o proprietário e o administrador, para o caso de
-  /// algo passar despercebido e só se notar depois, olhando de novo para a
-  /// fatura em PDF/imagem. Ao contrário de `aplicar`, isto substitui sempre o
-  /// valor gravado, mesmo que já não estivesse em branco.
-  Future<({String marca, String fornecedor})> corrigirItem(
-    String faturaId,
-    int index, {
-    String? marca,
-    String? fornecedor,
-  }) async {
+  /// Corrige a MARCA de uma linha JÁ APLICADA (mesmo com a fatura confirmada)
+  /// — só o proprietário e o administrador, para o caso de algo passar
+  /// despercebido e só se notar depois, olhando de novo para a fatura em
+  /// PDF/imagem. Ao contrário de `aplicar`, isto substitui sempre o valor
+  /// gravado, mesmo que já não estivesse em branco. O fornecedor não se
+  /// corrige aqui: é um só por fatura — corrige-se uma vez no cabeçalho
+  /// (`editar`) e propaga-se sozinho a tudo o que essa fatura já tocou.
+  Future<String> corrigirItem(String faturaId, int index, String marca) async {
     final res = await _pb.send(
       '/api/gc_turnkey/faturas/$faturaId/corrigir-item',
       method: 'POST',
-      body: {
-        'index': index,
-        if (marca != null) 'marca': marca,
-        if (fornecedor != null) 'fornecedor': fornecedor,
-      },
+      body: {'index': index, 'marca': marca},
     );
     final m = res as Map;
-    return (
-      marca: (m['marca'] ?? '').toString(),
-      fornecedor: (m['fornecedor'] ?? '').toString(),
-    );
+    return (m['marca'] ?? '').toString();
   }
 
   /// Só o proprietário: a fatura fica escondida (não se perde nada) e pode ser restaurada.

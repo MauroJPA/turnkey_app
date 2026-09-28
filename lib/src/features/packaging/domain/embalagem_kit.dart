@@ -1,5 +1,7 @@
 import 'package:pocketbase/pocketbase.dart';
 
+import '../../../core/formatting/capitalizar.dart';
+
 /// Um kit de embalagens: conjunto nomeado de embalagens + quantidades
 /// (ex.: "Take-away" = 1 saqueta + 1 caixa individual + 1 saco + 2 adesivos).
 /// O custo por unidade de produto = soma de (custo/un de cada embalagem ×
@@ -20,12 +22,12 @@ class EmbalagemKit {
   final bool deletado;
 
   factory EmbalagemKit.fromRecord(RecordModel r) => EmbalagemKit(
-        id: r.id,
-        nome: r.getStringValue('nome'),
-        descricao: r.getStringValue('descricao'),
-        custoUnitario: r.getDoubleValue('custo_unitario'),
-        deletado: r.getBoolValue('deletado'),
-      );
+    id: r.id,
+    nome: r.getStringValue('nome'),
+    descricao: r.getStringValue('descricao'),
+    custoUnitario: r.getDoubleValue('custo_unitario'),
+    deletado: r.getBoolValue('deletado'),
+  );
 }
 
 /// Uma linha de um kit: uma embalagem e quantas peças dela entram no kit.
@@ -84,8 +86,8 @@ class EmbalagemKitInput {
       EmbalagemKitInput(nome: k.nome, descricao: k.descricao);
 
   Map<String, dynamic> toBody() => {
-        'nome': nome.trim(),
-        'descricao': descricao.trim(),
-        'deletado': false,
-      };
+    'nome': capitalizarInicial(nome.trim()),
+    'descricao': descricao.trim(),
+    'deletado': false,
+  };
 }
