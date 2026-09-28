@@ -10,6 +10,7 @@ import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../cookie_formats/application/cookie_format_providers.dart';
 import '../application/embalagem_kit_providers.dart';
 import '../application/embalagem_providers.dart';
 import '../domain/embalagem.dart';
@@ -53,8 +54,9 @@ class _EmbalagensScreenState extends ConsumerState<EmbalagensScreen>
       }
     } on Object catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
@@ -95,8 +97,9 @@ class _EmbalagensScreenState extends ConsumerState<EmbalagensScreen>
       if (mounted) await showKitEditorSheet(context, kitId: kit.id);
     } on Object catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
@@ -163,7 +166,8 @@ class _PecasTab extends ConsumerWidget {
           return const EmptyState(
             icon: Icons.inventory_2_outlined,
             titulo: 'Sem embalagens',
-            mensagem: 'Caixas, sacos, saquetas, adesivos, fita… com o custo, '
+            mensagem:
+                'Caixas, sacos, saquetas, adesivos, fita… com o custo, '
                 'para entrar nas fichas técnicas.',
           );
         }
@@ -175,8 +179,10 @@ class _PecasTab extends ConsumerWidget {
             final e = itens[i];
             final sub = [
               if (e.tipo.isNotEmpty) e.tipo,
+              if (e.caracteristica.isNotEmpty) e.caracteristica,
               'compra ${fmt(e.precoCompra)} / ${_n(e.unidadesCompra)} pç',
               if (e.rendeUnidades > 1) 'rende ${_n(e.rendeUnidades)} un',
+              if (e.uso != null) e.uso!.label,
               if (e.fornecedor.isNotEmpty) e.fornecedor,
             ].join(' · ');
             return ListTile(
@@ -186,10 +192,14 @@ class _PecasTab extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(fmt(e.custoUnidade),
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text('por unidade',
-                      style: Theme.of(context).textTheme.bodySmall),
+                  Text(
+                    fmt(e.custoUnidade),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'por unidade',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 ],
               ),
               onTap: podeEditar ? () => onEdit(existente: e) : null,
@@ -205,9 +215,7 @@ class _PecasTab extends ConsumerWidget {
                         destrutivo: true,
                       );
                       if (ok) {
-                        await ref
-                            .read(embalagemActionsProvider)
-                            .apagar(e.id);
+                        await ref.read(embalagemActionsProvider).apagar(e.id);
                       }
                     }
                   : null,
@@ -235,7 +243,8 @@ class _KitsTab extends ConsumerWidget {
           return const EmptyState(
             icon: Icons.widgets_outlined,
             titulo: 'Sem kits',
-            mensagem: 'Um kit junta várias embalagens numa combinação com '
+            mensagem:
+                'Um kit junta várias embalagens numa combinação com '
                 'nome (ex.: "Take-away" = 1 saqueta + 1 caixa + 2 adesivos). '
                 'Na ficha técnica escolhes o kit para precificar de uma vez.',
           );
@@ -253,10 +262,14 @@ class _KitsTab extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(fmt(k.custoUnitario),
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text('por unidade',
-                      style: Theme.of(context).textTheme.bodySmall),
+                  Text(
+                    fmt(k.custoUnitario),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'por unidade',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 ],
               ),
               onTap: podeEditar
@@ -288,37 +301,36 @@ class _KitsTab extends ConsumerWidget {
   }
 }
 
-class _EmbalagemForm extends StatefulWidget {
+class _EmbalagemForm extends ConsumerStatefulWidget {
   const _EmbalagemForm({this.existente});
   final Embalagem? existente;
 
   @override
-  State<_EmbalagemForm> createState() => _EmbalagemFormState();
+  ConsumerState<_EmbalagemForm> createState() => _EmbalagemFormState();
 }
 
-class _EmbalagemFormState extends State<_EmbalagemForm> {
-  late final _nome =
-      TextEditingController(text: widget.existente?.nome ?? '');
-  late final _forn =
-      TextEditingController(text: widget.existente?.fornecedor ?? '');
+class _EmbalagemFormState extends ConsumerState<_EmbalagemForm> {
+  late final _nome = TextEditingController(text: widget.existente?.nome ?? '');
+  late final _caracteristica = TextEditingController(
+    text: widget.existente?.caracteristica ?? '',
+  );
+  late final _forn = TextEditingController(
+    text: widget.existente?.fornecedor ?? '',
+  );
   late final _preco = TextEditingController(
-    text: widget.existente == null
-        ? ''
-        : _s(widget.existente!.precoCompra),
+    text: widget.existente == null ? '' : _s(widget.existente!.precoCompra),
   );
   late final _pecas = TextEditingController(
-    text: widget.existente == null
-        ? '1'
-        : _s(widget.existente!.unidadesCompra),
+    text: widget.existente == null ? '1' : _s(widget.existente!.unidadesCompra),
   );
   late final _rende = TextEditingController(
-    text: widget.existente == null
-        ? '1'
-        : _s(widget.existente!.rendeUnidades),
+    text: widget.existente == null ? '1' : _s(widget.existente!.rendeUnidades),
   );
   late String _tipo = widget.existente?.tipo.isNotEmpty == true
       ? widget.existente!.tipo
       : 'Caixa';
+  late UsoEmbalagem? _uso = widget.existente?.uso;
+  late final Set<String> _formatos = {...?widget.existente?.formatosCookieIds};
 
   static String _s(double v) =>
       v == v.roundToDouble() ? v.toStringAsFixed(0) : '$v';
@@ -327,7 +339,7 @@ class _EmbalagemFormState extends State<_EmbalagemForm> {
 
   @override
   void dispose() {
-    for (final c in [_nome, _forn, _preco, _pecas, _rende]) {
+    for (final c in [_nome, _caracteristica, _forn, _preco, _pecas, _rende]) {
       c.dispose();
     }
     super.dispose();
@@ -340,6 +352,9 @@ class _EmbalagemFormState extends State<_EmbalagemForm> {
       EmbalagemInput(
         nome: _nome.text,
         tipo: _tipo,
+        caracteristica: _caracteristica.text,
+        uso: _uso,
+        formatosCookieIds: _formatos.toList(),
         precoCompra: _num(_preco),
         unidadesCompra: _num(_pecas),
         rendeUnidades: _num(_rende),
@@ -350,7 +365,8 @@ class _EmbalagemFormState extends State<_EmbalagemForm> {
 
   @override
   Widget build(BuildContext context) {
-    final custoUn = (_num(_preco) / (_num(_pecas) <= 0 ? 1 : _num(_pecas))) /
+    final custoUn =
+        (_num(_preco) / (_num(_pecas) <= 0 ? 1 : _num(_pecas))) /
         (_num(_rende) <= 0 ? 1 : _num(_rende));
     return Padding(
       padding: EdgeInsets.only(
@@ -390,13 +406,89 @@ class _EmbalagemFormState extends State<_EmbalagemForm> {
               onChanged: (v) => setState(() => _tipo = v ?? 'Caixa'),
             ),
             const SizedBox(height: 12),
+            TextField(
+              controller: _caracteristica,
+              decoration: const InputDecoration(
+                labelText: 'Característica (opcional)',
+                hintText: 'Kraft com janela, transparente, 250 ml…',
+              ),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<UsoEmbalagem?>(
+              initialValue: _uso,
+              decoration: const InputDecoration(labelText: 'Uso (opcional)'),
+              items: [
+                const DropdownMenuItem(
+                  value: null,
+                  child: Text('Não definido'),
+                ),
+                for (final u in UsoEmbalagem.values)
+                  DropdownMenuItem(value: u, child: Text(u.label)),
+              ],
+              onChanged: (v) => setState(() => _uso = v),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Formatos de cookie (opcional)',
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Para que formatos serve esta embalagem — em branco serve para '
+              'qualquer um.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 6),
+            Builder(
+              builder: (context) {
+                final async = ref.watch(formatosAtivosProvider);
+                return async.when(
+                  loading: () => const SizedBox(
+                    height: 24,
+                    child: Center(
+                      child: SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  ),
+                  error: (_, _) => const SizedBox.shrink(),
+                  data: (formatos) => formatos.isEmpty
+                      ? Text(
+                          'Sem formatos de cookie criados ainda.',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        )
+                      : Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            for (final f in formatos)
+                              FilterChip(
+                                label: Text(f.nome),
+                                selected: _formatos.contains(f.id),
+                                onSelected: (v) => setState(() {
+                                  if (v) {
+                                    _formatos.add(f.id);
+                                  } else {
+                                    _formatos.remove(f.id);
+                                  }
+                                }),
+                              ),
+                          ],
+                        ),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _preco,
                     keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true),
+                      decimal: true,
+                    ),
                     decoration: const InputDecoration(
                       labelText: 'Preço da compra',
                       prefixText: '€ ',
@@ -409,7 +501,8 @@ class _EmbalagemFormState extends State<_EmbalagemForm> {
                   child: TextField(
                     controller: _pecas,
                     keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true),
+                      decimal: true,
+                    ),
                     decoration: const InputDecoration(
                       labelText: 'Peças na compra',
                     ),
@@ -421,8 +514,9 @@ class _EmbalagemFormState extends State<_EmbalagemForm> {
             const SizedBox(height: 12),
             TextField(
               controller: _rende,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration: const InputDecoration(
                 labelText: 'Uma peça embala quantas unidades?',
                 hintText: '1 saco = 1 un; 1 caixa = 6 un',
