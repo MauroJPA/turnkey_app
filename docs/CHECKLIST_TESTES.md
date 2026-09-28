@@ -910,6 +910,21 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 
 ---
 
+## 47. Categorias de receitas editáveis
+
+- [ ] Confirmar que as receitas que já existiam continuam com a categoria certa (Massa/Recheio/Cobertura/
+      Outra) — nada deve ter mudado visualmente na lista de Receitas.
+- [ ] Ir a **Configurações → Categorias de receitas**: aparecem as 4 categorias por omissão. Criar uma nova
+      (ex.: "Decoração"), editar o nome de uma, e desativar outra.
+- [ ] Em **Receitas → Nova receita**: o seletor de categoria mostra as categorias ativas (incluindo a que
+      acabaste de criar); a que desativaste não aparece.
+- [ ] Criar uma receita com a categoria nova — grava e aparece corretamente na lista e no filtro de Receitas.
+- [ ] Apagar uma categoria que já tem receitas: as receitas mantêm o nome da categoria guardado (não desligam
+      nem ficam sem categoria); só deixa de aparecer para escolher numa receita nova.
+- [ ] Com sessão de **editor**: não consegue chegar a "Categorias de receitas" (só proprietário/administrador).
+
+---
+
 ## Notas / ajustes pedidos
 
 _(escreve aqui, por número, o que queres mudar)_

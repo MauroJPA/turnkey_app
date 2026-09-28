@@ -2,6 +2,27 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.26.0 — 2026-09-28 — Categorias de receitas editáveis
+
+- **As categorias de receitas deixam de ser uma lista fixa** (Massa/Recheio/Cobertura/Outra, presa no código) e
+  passam a ser geríveis por empresa — criar, renomear, desativar, apagar — tal como já acontece com os
+  Formatos de cookie. Novo ecrã **Configurações → Categorias de receitas**.
+- As 4 categorias que já existiam ficam automaticamente criadas (semeadas) em todas as empresas, com o mesmo
+  nome (só com maiúscula inicial) — as receitas que já tinhas continuam exatamente com a categoria que tinham,
+  nada muda visualmente.
+- Uma categoria "inativa" continua nas receitas que já a têm, mas deixa de aparecer para escolher numa receita
+  nova. Apagar uma categoria não apaga nem desliga as receitas que já a usavam (só deixam de a poder escolher
+  de novo).
+- O filtro de categorias no ecrã de Receitas passa a mostrar só as categorias que as tuas receitas realmente
+  usam (antes eram sempre as mesmas 4, mesmo sem nenhuma receita nelas).
+- Migration `1707955220_categorias_receita` (nova coleção + `receitas.categoria` passa de lista fixa para
+  texto livre, com os valores antigos convertidos).
+- Testes: `test/categoria_receita_test.dart`, `test/migration_test.dart`/`test/receita_csv_test.dart`/
+  `test/recipe_detail_test.dart` atualizados; a suite de segurança cobre `categorias_receita` automaticamente
+  (isolamento entre empresas, como já faz com todas as coleções por empresa).
+- A migração foi testada a sério contra os teus dados reais (confirmado: "Massa Base" → categoria "Massa",
+  "Bolo" → categoria "Outra", e as 4 categorias semeadas em cada uma das tuas empresas).
+
 ## 1.25.0 — 2026-09-28 — Notas por página
 
 - **Notas de equipa em qualquer página.** Novo ícone (nota adesiva) ao lado do botão de sugestão/erro, em toda

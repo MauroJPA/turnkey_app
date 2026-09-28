@@ -157,7 +157,7 @@ Future<void> main(List<String> argv) async {
       'empresa': empresaId,
       'nome': '${r.data['nome'] ?? ''}',
       'categoria':
-          CategoriaReceita.fromLegacy('${r.data['categoria'] ?? ''}').api,
+          categoriaReceitaDeTextoLegado('${r.data['categoria'] ?? ''}'),
       'rendimento_esperado': _num(r.data['rendimento_esperado']),
       'custo_receita': _num(r.data['custo_receita']),
       'procedimento': '${r.data['procedimento'] ?? ''}',

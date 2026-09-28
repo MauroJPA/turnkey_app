@@ -30,6 +30,7 @@ import '../features/production/presentation/cart_review_screen.dart';
 import '../features/production/presentation/production_screen.dart';
 import '../features/products/presentation/produto_detail_screen.dart';
 import '../features/products/presentation/produtos_screen.dart';
+import '../features/recipe_categories/presentation/recipe_categories_screen.dart';
 import '../features/recipes/presentation/recipe_detail_screen.dart';
 import '../features/recipes/presentation/recipes_screen.dart';
 import '../features/sales/presentation/sales_screen.dart';
@@ -256,6 +257,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'formatos',
                 builder: (_, __) => const CookieFormatsScreen(),
+              ),
+              GoRoute(
+                path: 'categorias-receita',
+                builder: (_, __) => const RecipeCategoriesScreen(),
               ),
               GoRoute(
                 path: 'navegacao',

@@ -11,14 +11,14 @@ class ReceitaCsvLinha {
 class ReceitaCsvGrupo {
   ReceitaCsvGrupo({required this.nome, required this.categoria});
   final String nome;
-  final CategoriaReceita categoria;
+  final String categoria;
   final List<ReceitaCsvLinha> linhas = [];
 }
 
 class ReceitaCsvParseResult {
   ReceitaCsvParseResult({List<ReceitaCsvGrupo>? receitas, List<String>? erros})
-      : receitas = receitas ?? [],
-        erros = erros ?? [];
+    : receitas = receitas ?? [],
+      erros = erros ?? [];
 
   final List<ReceitaCsvGrupo> receitas;
   final List<String> erros;
@@ -27,10 +27,7 @@ class ReceitaCsvParseResult {
 }
 
 double? _parseNum(String v) {
-  final s = v
-      .replaceAll(RegExp(r'[gG]\s*$'), '')
-      .replaceAll(',', '.')
-      .trim();
+  final s = v.replaceAll(RegExp(r'[gG]\s*$'), '').replaceAll(',', '.').trim();
   return s.isEmpty ? null : double.tryParse(s);
 }
 
@@ -48,7 +45,10 @@ String _delimitador(String primeiraLinha) {
 /// mesmo nome de receita juntam-se numa só receita (categoria da 1.ª linha).
 /// Cabeçalho opcional; `g` e vírgula decimal tolerados.
 ReceitaCsvParseResult parseReceitasCsv(String content) {
-  final normalized = content.replaceAll('\r\n', '\n').replaceAll('\r', '\n').trim();
+  final normalized = content
+      .replaceAll('\r\n', '\n')
+      .replaceAll('\r', '\n')
+      .trim();
   if (normalized.isEmpty) return ReceitaCsvParseResult();
 
   final primeiraLinha = normalized.split('\n').first;
@@ -88,10 +88,12 @@ ReceitaCsvParseResult parseReceitasCsv(String content) {
       chave,
       () => ReceitaCsvGrupo(
         nome: nome,
-        categoria: CategoriaReceita.fromLegacy(categoria),
+        categoria: categoriaReceitaDeTextoLegado(categoria),
       ),
     );
-    grupo.linhas.add(ReceitaCsvLinha(ingrediente: ingrediente, quantidadeG: qtd));
+    grupo.linhas.add(
+      ReceitaCsvLinha(ingrediente: ingrediente, quantidadeG: qtd),
+    );
   }
 
   return ReceitaCsvParseResult(receitas: grupos.values.toList(), erros: erros);

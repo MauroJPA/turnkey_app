@@ -24,7 +24,7 @@ class RecipesScreen extends ConsumerStatefulWidget {
 
 class _RecipesScreenState extends ConsumerState<RecipesScreen> {
   String _q = '';
-  CategoriaReceita? _categoria;
+  String? _categoria;
   bool _trash = false;
   bool _busy = false;
 
@@ -37,8 +37,9 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
       return true;
     } on Object catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
       return false;
     } finally {
@@ -62,6 +63,15 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
   @override
   Widget build(BuildContext context) {
     final listAsync = ref.watch(recipesListProvider(_trash));
+    // categorias que aparecem nas receitas carregadas — não uma lista fixa,
+    // já que agora são geríveis pela empresa (podem ser criadas/renomeadas).
+    final categoriasEmUso =
+        (listAsync.valueOrNull ?? const <Receita>[])
+            .map((r) => r.categoria)
+            .where((c) => c.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
 
     return Scaffold(
       appBar: AppBar(
@@ -83,7 +93,9 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
             IconButton(
               tooltip: 'Importar receitas (CSV / colar)',
               icon: const Icon(Icons.upload_file_outlined),
-              onPressed: _busy ? null : () => showImportarReceitasSheet(context),
+              onPressed: _busy
+                  ? null
+                  : () => showImportarReceitasSheet(context),
             ),
           if (_podeEditar && !_trash)
             IconButton(
@@ -121,11 +133,11 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
                     onSelected: (_) => setState(() => _categoria = null),
                   ),
                 ),
-                for (final c in CategoriaReceita.values)
+                for (final c in categoriasEmUso)
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: ChoiceChip(
-                      label: Text(c.label),
+                      label: Text(c),
                       selected: _categoria == c,
                       onSelected: (_) => setState(() => _categoria = c),
                     ),
@@ -139,7 +151,8 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
               onRetry: () => ref.invalidate(recipesListProvider(_trash)),
               data: (all) {
                 final items = all.where((r) {
-                  final mq = _q.isEmpty ||
+                  final mq =
+                      _q.isEmpty ||
                       r.nome.toLowerCase().contains(_q.toLowerCase());
                   final mc = _categoria == null || r.categoria == _categoria;
                   return mq && mc;
@@ -149,8 +162,8 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
                     child: Text(
                       all.isEmpty
                           ? (_trash
-                              ? 'Lixeira vazia'
-                              : 'Sem receitas. Usa + para criar.')
+                                ? 'Lixeira vazia'
+                                : 'Sem receitas. Usa + para criar.')
                           : 'Nada corresponde ao filtro.',
                     ),
                   );
@@ -158,7 +171,8 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
                 return ListView.separated(
                   itemCount: items.length,
                   separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (_, i) => _tile(items[i], ref.watch(moneyFormatProvider)),
+                  itemBuilder: (_, i) =>
+                      _tile(items[i], ref.watch(moneyFormatProvider)),
                 );
               },
             ),
@@ -172,7 +186,7 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
     if (_trash) {
       return ListTile(
         title: Text(r.nome),
-        subtitle: Text(r.categoria.label),
+        subtitle: Text(r.categoria),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -182,8 +196,8 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
               onPressed: _busy
                   ? null
                   : () => _run(
-                        () => ref.read(recipeActionsProvider).restore(r.id),
-                      ),
+                      () => ref.read(recipeActionsProvider).restore(r.id),
+                    ),
             ),
             IconButton(
               tooltip: 'Apagar definitivamente',
@@ -214,7 +228,7 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
     }
 
     final subtitle = [
-      r.categoria.label,
+      r.categoria,
       if (r.rendimentoEsperado > 0)
         '${r.rendimentoEsperado.toStringAsFixed(0)} g',
       if (r.custoReceita > 0) fmt(r.custoReceita),
@@ -228,8 +242,7 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
           : const Icon(Icons.chevron_right),
       onTap: () => context.go('${Routes.recipes}/${r.id}'),
       onLongPress: _podeEditar
-          ? () =>
-              _run(() => ref.read(recipeActionsProvider).duplicate(r.id))
+          ? () => _run(() => ref.read(recipeActionsProvider).duplicate(r.id))
           : null,
     );
 
@@ -243,7 +256,8 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
         mensagem: 'Mover "${r.nome}" para a lixeira?',
         confirmar: 'Mover',
       ),
-      apagar: () => _run(() => ref.read(recipeActionsProvider).moveToTrash(r.id)),
+      apagar: () =>
+          _run(() => ref.read(recipeActionsProvider).moveToTrash(r.id)),
       child: tile,
     );
   }

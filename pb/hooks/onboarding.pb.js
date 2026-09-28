@@ -95,6 +95,23 @@ routerAdd(
         fr.set('ativo', true);
         tx.save(fr);
       }
+
+      // Categorias de receitas por omissão (ver 1707955220_categorias_receita.js).
+      const categorias = tx.findCollectionByNameOrId('categorias_receita');
+      const seedCategorias = [
+        { nome: 'Massa', ordem: 1 },
+        { nome: 'Recheio', ordem: 2 },
+        { nome: 'Cobertura', ordem: 3 },
+        { nome: 'Outra', ordem: 4 },
+      ];
+      for (const cat of seedCategorias) {
+        const cr = new Record(categorias);
+        cr.set('empresa', empresaId);
+        cr.set('nome', cat.nome);
+        cr.set('ordem', cat.ordem);
+        cr.set('ativo', true);
+        tx.save(cr);
+      }
     });
 
     return e.json(200, { empresaId: empresaId });

@@ -13,7 +13,7 @@ import '../domain/recipe.dart';
 Future<Receita?> showRecipePickerSheet(
   BuildContext context, {
   bool soFabricoProprio = true,
-  CategoriaReceita? categoria,
+  String? categoria,
 }) {
   return showModalBottomSheet<Receita>(
     context: context,
@@ -30,7 +30,7 @@ class _RecipePicker extends ConsumerStatefulWidget {
   const _RecipePicker({required this.soFabricoProprio, this.categoria});
 
   final bool soFabricoProprio;
-  final CategoriaReceita? categoria;
+  final String? categoria;
 
   @override
   ConsumerState<_RecipePicker> createState() => _RecipePickerState();
@@ -82,7 +82,7 @@ class _RecipePickerState extends ConsumerState<_RecipePicker> {
                     itemBuilder: (_, i) => ListTile(
                       title: Text(items[i].nome),
                       subtitle: Text(
-                        '${items[i].categoria.label} · '
+                        '${items[i].categoria} · '
                         '${items[i].rendimentoEsperado.toStringAsFixed(0)} g',
                       ),
                       onTap: () => Navigator.pop(context, items[i]),

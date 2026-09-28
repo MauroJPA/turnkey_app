@@ -4,21 +4,21 @@ import 'package:gc_turnkey/src/features/recipes/domain/recipe.dart';
 import 'package:gc_turnkey/src/features/recipes/domain/recipe_item.dart';
 
 Receita _r({bool manual = false, double rendimento = 0}) => Receita(
-      id: 'r1',
-      nome: 'Massa',
-      categoria: CategoriaReceita.massa,
-      rendimentoManual: manual,
-      rendimentoEsperado: rendimento,
-    );
+  id: 'r1',
+  nome: 'Massa',
+  categoria: 'Massa',
+  rendimentoManual: manual,
+  rendimentoEsperado: rendimento,
+);
 
 ItemReceita _i(double qtd, double cpg, {bool pendente = false}) => ItemReceita(
-      id: 'i${qtd.toInt()}',
-      receitaId: 'r1',
-      ingredienteId: pendente ? null : 'ing',
-      quantidadeG: qtd,
-      custoPorGramaResolvido: cpg,
-      nomeResolvido: pendente ? '' : 'X',
-    );
+  id: 'i${qtd.toInt()}',
+  receitaId: 'r1',
+  ingredienteId: pendente ? null : 'ing',
+  quantidadeG: qtd,
+  custoPorGramaResolvido: cpg,
+  nomeResolvido: pendente ? '' : 'X',
+);
 
 void main() {
   test('peso e custo somam as linhas; % por linha', () {

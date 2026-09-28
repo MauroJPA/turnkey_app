@@ -152,7 +152,7 @@ class _ProductionScreenState extends ConsumerState<ProductionScreen> {
                   : _receita == null
                       ? const Text('Produto final ou receita')
                       : Text(
-                          '${_receita!.categoria.label} · rendimento base '
+                          '${_receita!.categoria} · rendimento base '
                           '${_receita!.rendimentoEsperado.toStringAsFixed(0)} g',
                         ),
               trailing: const Icon(Icons.expand_more),

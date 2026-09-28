@@ -302,7 +302,7 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
                             for (final r in items)
                               ListTile(
                                 title: Text(r.nome),
-                                subtitle: Text(r.categoria.label),
+                                subtitle: Text(r.categoria),
                                 onTap: () async {
                                   final res = await _askQty(
                                     PickedKind.subReceita,

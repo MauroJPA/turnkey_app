@@ -30,6 +30,7 @@ enum HelpTopic {
   consumiveis,
   produtos,
   formatos,
+  categoriasReceita,
   configuracoes,
   navegacao,
   equipa,
@@ -325,6 +326,14 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'São usados para calcular quantas unidades saem de X kg de massa e quanto recheio é preciso.',
       'Use "+" para criar. Toque para editar. O caixote do lixo remove (as produções antigas mantêm o valor guardado).',
       'Onde se usam: em cada Ficha Técnica escolhe-se o formato do produto (Mini, Recheado…); em Produzir escolhe-se o formato para calcular quantas unidades saem e quanto recheio é preciso; ao concluir a produção o stock do produto sobe em unidades.',
+    ],
+  ),
+  HelpTopic.categoriasReceita: (
+    titulo: 'Categorias de receitas',
+    paragrafos: [
+      'As categorias que agrupam as tuas receitas (ex.: Massa, Recheio, Cobertura) — servem para organizar e filtrar a lista de Receitas.',
+      'Use "+" para criar uma categoria nova, toque para renomear ou desativar, e o caixote do lixo remove (as receitas que já a usavam mantêm o nome guardado, só deixa de aparecer para escolher em receitas novas).',
+      'Uma categoria "Inativa" continua a aparecer nas receitas que já a têm, mas não entra na lista para escolher numa receita nova.',
     ],
   ),
   HelpTopic.configuracoes: (

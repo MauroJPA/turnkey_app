@@ -28,6 +28,7 @@ abstract class Routes {
   static const settings = '/opcoes';
   static const team = '/opcoes/equipa';
   static const cookieFormats = '/opcoes/formatos';
+  static const categoriasReceita = '/opcoes/categorias-receita';
   static const navegacao = '/opcoes/navegacao';
   static const produtos = '/produtos';
 }

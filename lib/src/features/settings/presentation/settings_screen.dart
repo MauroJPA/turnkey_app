@@ -410,6 +410,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onTap: () => context.go(Routes.cookieFormats),
               ),
 
+            // ---- Categorias de receitas ----
+            if (ref.read(currentPapelProvider).canEditConfig)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.label_outline),
+                title: const Text('Categorias de receitas'),
+                subtitle: const Text('Massa, recheio, cobertura — geríveis por ti'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.go(Routes.categoriasReceita),
+              ),
+
             // ---- Navegação e permissões ----
             if (ref.read(currentPapelProvider).canEditConfig)
               ListTile(

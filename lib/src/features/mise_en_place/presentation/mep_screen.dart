@@ -250,7 +250,7 @@ class _MiseEnPlaceScreenState extends ConsumerState<MiseEnPlaceScreen> {
                       ? const Text('Produto final (ficha técnica)')
                       : _receita == null
                       ? const Text('Produto final ou receita')
-                      : Text(_receita!.categoria.label),
+                      : Text(_receita!.categoria),
                   trailing: const Icon(Icons.expand_more),
                   onTap: _escolherReceita,
                 ),

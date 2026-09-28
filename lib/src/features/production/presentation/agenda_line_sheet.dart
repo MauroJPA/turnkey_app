@@ -71,7 +71,10 @@ class _AgendaLinhaSheetState extends ConsumerState<_AgendaLinhaSheet> {
     final r = await showRecipePickerSheet(
       context,
       soFabricoProprio: false,
-      categoria: CategoriaReceita.recheio,
+      // "Recheio" é uma das categorias semeadas por omissão em cada empresa
+      // (Configurações → Categorias de receitas) — continua a filtrar assim
+      // a não ser que a categoria tenha sido renomeada.
+      categoria: 'Recheio',
     );
     if (r != null) setState(() => _recheio = r);
   }

@@ -19,7 +19,7 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$Receita {
   String get id => throw _privateConstructorUsedError;
   String get nome => throw _privateConstructorUsedError;
-  CategoriaReceita get categoria => throw _privateConstructorUsedError;
+  String get categoria => throw _privateConstructorUsedError;
   double get rendimentoEsperado => throw _privateConstructorUsedError;
   bool get rendimentoManual => throw _privateConstructorUsedError;
   double get custoReceita => throw _privateConstructorUsedError;
@@ -45,7 +45,7 @@ abstract class $ReceitaCopyWith<$Res> {
   $Res call({
     String id,
     String nome,
-    CategoriaReceita categoria,
+    String categoria,
     double rendimentoEsperado,
     bool rendimentoManual,
     double custoReceita,
@@ -101,7 +101,7 @@ class _$ReceitaCopyWithImpl<$Res, $Val extends Receita>
             categoria: null == categoria
                 ? _value.categoria
                 : categoria // ignore: cast_nullable_to_non_nullable
-                      as CategoriaReceita,
+                      as String,
             rendimentoEsperado: null == rendimentoEsperado
                 ? _value.rendimentoEsperado
                 : rendimentoEsperado // ignore: cast_nullable_to_non_nullable
@@ -159,7 +159,7 @@ abstract class _$$ReceitaImplCopyWith<$Res> implements $ReceitaCopyWith<$Res> {
   $Res call({
     String id,
     String nome,
-    CategoriaReceita categoria,
+    String categoria,
     double rendimentoEsperado,
     bool rendimentoManual,
     double custoReceita,
@@ -214,7 +214,7 @@ class __$$ReceitaImplCopyWithImpl<$Res>
         categoria: null == categoria
             ? _value.categoria
             : categoria // ignore: cast_nullable_to_non_nullable
-                  as CategoriaReceita,
+                  as String,
         rendimentoEsperado: null == rendimentoEsperado
             ? _value.rendimentoEsperado
             : rendimentoEsperado // ignore: cast_nullable_to_non_nullable
@@ -286,7 +286,7 @@ class _$ReceitaImpl extends _Receita {
   @override
   final String nome;
   @override
-  final CategoriaReceita categoria;
+  final String categoria;
   @override
   @JsonKey()
   final double rendimentoEsperado;
@@ -397,7 +397,7 @@ abstract class _Receita extends Receita {
   const factory _Receita({
     required final String id,
     required final String nome,
-    required final CategoriaReceita categoria,
+    required final String categoria,
     final double rendimentoEsperado,
     final bool rendimentoManual,
     final double custoReceita,
@@ -416,7 +416,7 @@ abstract class _Receita extends Receita {
   @override
   String get nome;
   @override
-  CategoriaReceita get categoria;
+  String get categoria;
   @override
   double get rendimentoEsperado;
   @override

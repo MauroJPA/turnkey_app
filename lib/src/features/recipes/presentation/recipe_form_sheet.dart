@@ -2,7 +2,9 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../recipe_categories/application/categoria_receita_providers.dart';
 import '../domain/recipe.dart';
 
 /// Imagem escolhida no formulário (ainda não enviada).
@@ -28,15 +30,15 @@ Future<RecipeFormResultado?> showRecipeFormSheet(
   );
 }
 
-class _RecipeFormSheet extends StatefulWidget {
+class _RecipeFormSheet extends ConsumerStatefulWidget {
   const _RecipeFormSheet({this.existente});
   final Receita? existente;
 
   @override
-  State<_RecipeFormSheet> createState() => _RecipeFormSheetState();
+  ConsumerState<_RecipeFormSheet> createState() => _RecipeFormSheetState();
 }
 
-class _RecipeFormSheetState extends State<_RecipeFormSheet> {
+class _RecipeFormSheetState extends ConsumerState<_RecipeFormSheet> {
   final _formKey = GlobalKey<FormState>();
   late final _nome = TextEditingController(text: widget.existente?.nome ?? '');
   late final _rendimento = TextEditingController(
@@ -44,13 +46,14 @@ class _RecipeFormSheetState extends State<_RecipeFormSheet> {
         ? widget.existente!.rendimentoEsperado.toStringAsFixed(0)
         : '',
   );
-  late CategoriaReceita _categoria =
-      widget.existente?.categoria ?? CategoriaReceita.massa;
+  // null = ainda por escolher (nova receita, à espera da lista carregar).
+  late String? _categoria = widget.existente?.categoria;
   late bool _manual = widget.existente?.rendimentoManual ?? false;
   late bool _publicar = widget.existente?.publicarComoIngrediente ?? false;
   late final _procedimento = TextEditingController(
     text: widget.existente?.procedimento ?? '',
   );
+  String? _erroCategoria;
 
   final _imagens = <ImagemNova>[];
 
@@ -79,13 +82,20 @@ class _RecipeFormSheetState extends State<_RecipeFormSheet> {
   }
 
   void _submit() {
-    if (!_formKey.currentState!.validate()) return;
+    final ok = _formKey.currentState!.validate();
+    final categoria = _categoria;
+    setState(
+      () => _erroCategoria = (categoria == null || categoria.isEmpty)
+          ? 'Escolhe uma categoria.'
+          : null,
+    );
+    if (!ok || _erroCategoria != null) return;
     Navigator.pop(
       context,
       RecipeFormResultado(
         input: RecipeInput(
           nome: _nome.text,
-          categoria: _categoria,
+          categoria: categoria!,
           rendimentoManual: _manual,
           rendimentoEsperado:
               double.tryParse(_rendimento.text.replaceAll(',', '.')) ?? 0,
@@ -100,6 +110,7 @@ class _RecipeFormSheetState extends State<_RecipeFormSheet> {
   @override
   Widget build(BuildContext context) {
     final editar = widget.existente != null;
+    final categoriasAsync = ref.watch(categoriasReceitaAtivasProvider);
     return Padding(
       padding: EdgeInsets.only(
         left: 16,
@@ -127,17 +138,64 @@ class _RecipeFormSheetState extends State<_RecipeFormSheet> {
                     (v == null || v.trim().isEmpty) ? 'Obrigatório' : null,
               ),
               const SizedBox(height: 16),
-              Wrap(
-                spacing: 8,
-                children: [
-                  for (final c in CategoriaReceita.values)
-                    ChoiceChip(
-                      label: Text(c.label),
-                      selected: _categoria == c,
-                      onSelected: (_) => setState(() => _categoria = c),
-                    ),
-                ],
+              Text(
+                'Categoria *',
+                style: Theme.of(context).textTheme.labelLarge,
               ),
+              const SizedBox(height: 6),
+              categoriasAsync.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+                error: (_, _) =>
+                    const Text('Não foi possível carregar as categorias.'),
+                data: (categorias) {
+                  // nova receita, ainda sem categoria escolhida: pré-seleciona
+                  // a primeira ativa, para não obrigar sempre a tocar.
+                  if (_categoria == null && categorias.isNotEmpty) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted && _categoria == null) {
+                        setState(() => _categoria = categorias.first.nome);
+                      }
+                    });
+                  }
+                  if (categorias.isEmpty) {
+                    return const Text(
+                      'Sem categorias ativas. Cria uma em Configurações → '
+                      'Categorias de receitas.',
+                    );
+                  }
+                  return Wrap(
+                    spacing: 8,
+                    children: [
+                      for (final c in categorias)
+                        ChoiceChip(
+                          label: Text(c.nome),
+                          selected: _categoria == c.nome,
+                          onSelected: (_) => setState(() {
+                            _categoria = c.nome;
+                            _erroCategoria = null;
+                          }),
+                        ),
+                    ],
+                  );
+                },
+              ),
+              if (_erroCategoria != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    _erroCategoria!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
               const SizedBox(height: 8),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
@@ -151,8 +209,9 @@ class _RecipeFormSheetState extends State<_RecipeFormSheet> {
               if (_manual)
                 TextFormField(
                   controller: _rendimento,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: const InputDecoration(
                     labelText: 'Rendimento esperado (g)',
                   ),
@@ -215,9 +274,9 @@ class _RecipeFormSheetState extends State<_RecipeFormSheet> {
                                   errorBuilder: (_, __, ___) => Container(
                                     width: 72,
                                     height: 72,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .surfaceContainerHighest,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.surfaceContainerHighest,
                                     child: const Icon(Icons.image_outlined),
                                   ),
                                 ),

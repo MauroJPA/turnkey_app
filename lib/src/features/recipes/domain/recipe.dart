@@ -6,44 +6,32 @@ import '../../../core/nutrition/nutrition.dart';
 
 part 'recipe.freezed.dart';
 
-enum CategoriaReceita {
-  massa,
-  recheio,
-  cobertura,
-  outra;
-
-  static CategoriaReceita fromApi(String? v) => CategoriaReceita.values
-      .firstWhere((c) => c.name == v, orElse: () => CategoriaReceita.outra);
-
-  /// Normaliza uma categoria vinda do `meu_app_ia` (massas, brigadeiros,
-  /// ganaches, mousses, geleias, coberturas, …) para as 4 daqui.
-  static CategoriaReceita fromLegacy(String? v) {
-    final s = (v ?? '').toLowerCase();
-    if (s.contains('massa')) return CategoriaReceita.massa;
-    if (s.contains('cobertura')) return CategoriaReceita.cobertura;
-    const recheios = [
-      'recheio',
-      'brigadeiro',
-      'ganache',
-      'mousse',
-      'geleia',
-      'geléia',
-      'compota',
-      'pasta',
-      'creme',
-    ];
-    if (recheios.any(s.contains)) return CategoriaReceita.recheio;
-    return CategoriaReceita.outra;
-  }
-
-  String get api => name;
-
-  String get label => switch (this) {
-    CategoriaReceita.massa => 'Massa',
-    CategoriaReceita.recheio => 'Recheio',
-    CategoriaReceita.cobertura => 'Cobertura',
-    CategoriaReceita.outra => 'Outra',
-  };
+/// A categoria de uma receita (Massa, Recheio, Cobertura…) deixou de ser uma
+/// lista fixa: agora é o NOME de uma `categorias_receita` da empresa
+/// (gerível em Configurações → Categorias de receitas). Guarda-se aqui como
+/// texto livre — apagar/renomear uma categoria nunca quebra receitas
+/// antigas, só deixa de aparecer para escolher em receitas novas.
+///
+/// Normaliza uma categoria vinda do `meu_app_ia` (massas, brigadeiros,
+/// ganaches, mousses, geleias, coberturas, …) para uma das 4 categorias
+/// semeadas por omissão em cada empresa.
+String categoriaReceitaDeTextoLegado(String? v) {
+  final s = (v ?? '').toLowerCase();
+  if (s.contains('massa')) return 'Massa';
+  if (s.contains('cobertura')) return 'Cobertura';
+  const recheios = [
+    'recheio',
+    'brigadeiro',
+    'ganache',
+    'mousse',
+    'geleia',
+    'geléia',
+    'compota',
+    'pasta',
+    'creme',
+  ];
+  if (recheios.any(s.contains)) return 'Recheio';
+  return 'Outra';
 }
 
 @freezed
@@ -51,7 +39,7 @@ class Receita with _$Receita {
   const factory Receita({
     required String id,
     required String nome,
-    required CategoriaReceita categoria,
+    required String categoria,
     @Default(0) double rendimentoEsperado,
     @Default(false) bool rendimentoManual,
     @Default(0) double custoReceita,
@@ -81,7 +69,7 @@ class Receita with _$Receita {
     return Receita(
       id: r.id,
       nome: r.getStringValue('nome'),
-      categoria: CategoriaReceita.fromApi(r.getStringValue('categoria')),
+      categoria: r.getStringValue('categoria'),
       rendimentoEsperado: r.getDoubleValue('rendimento_esperado'),
       rendimentoManual: r.getBoolValue('rendimento_manual'),
       custoReceita: r.getDoubleValue('custo_receita'),
@@ -111,7 +99,7 @@ class RecipeInput {
   });
 
   final String nome;
-  final CategoriaReceita categoria;
+  final String categoria;
   final double rendimentoEsperado;
   final bool rendimentoManual;
   final bool publicarComoIngrediente;
@@ -130,7 +118,7 @@ class RecipeInput {
 
   Map<String, dynamic> toBody() => {
     'nome': capitalizarInicial(nome.trim()),
-    'categoria': categoria.api,
+    'categoria': categoria,
     'rendimento_manual': rendimentoManual,
     if (rendimentoManual) 'rendimento_esperado': rendimentoEsperado,
     'publicar_como_ingrediente': publicarComoIngrediente,
