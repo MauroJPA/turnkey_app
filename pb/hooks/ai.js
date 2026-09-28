@@ -92,7 +92,9 @@ function analisarImagemIA(opts) {
       'ingrediente e NÃO faz parte do nome_generico: "Farinha de trigo T55" -> ' +
       'nome_generico "Farinha de trigo", caracteristica "T55"; "Chocolate negro ' +
       '70%" -> "Chocolate negro", "70% cacau"; "Farinha integral" -> "Farinha de ' +
-      'trigo", "integral". null se não houver. ' +
+      'trigo", "integral". Serve também para embalagens: "Saco kraft com ' +
+      'janela" -> nome_generico "Saco", caracteristica "kraft com janela". ' +
+      'null se não houver. ' +
       'tipo_item: "ingrediente" para o que se come ou entra numa receita ' +
       '(farinha, açúcar, chocolate, ovos, especiarias); "consumivel" para ' +
       'produtos de limpeza, detergentes, desinfetantes, lixívia, esponjas, ' +

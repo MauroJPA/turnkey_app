@@ -792,6 +792,24 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 
 ---
 
+## 41. Embalagens: característica, uso e formatos de cookie
+
+- [ ] Em **Embalagens**, editar uma peça existente: adicionar uma **característica** (ex.: "kraft com janela"),
+      escolher um **uso** (Individual / Múltiplo / A granel / Outro) e marcar um ou mais **formatos de cookie**
+      (chips). Guardar e reabrir: os três valores voltam a aparecer certos.
+- [ ] Deixar formatos de cookie em branco: a embalagem grava sem nenhum (serve para qualquer formato) — não dá erro.
+- [ ] Na lista de Embalagens, a peça editada mostra a característica e o uso na segunda linha (subtítulo).
+- [ ] Numa fatura, uma linha de embalagem nova (**"criar nova embalagem"**): aparecem os mesmos três campos
+      (característica, uso, formatos de cookie) já na revisão da fatura, sem ter de ir a Embalagens depois.
+      Aplicar a linha cria a embalagem já com esses valores.
+- [ ] A IA continua a sugerir a **característica** quando o texto da fatura tem uma variante clara (ex.: "Saco
+      kraft com janela" → característica "kraft com janela"); uso e formatos ficam sempre por escolher à mão.
+- [ ] (Segurança, já cobertos pela suite automática — não repetir à mão salvo dúvida) uma embalagem não pode
+      ficar com uma lista de formatos de cookie que misture o próprio com o de outra empresa; a app nunca deixa
+      escolher formatos que não sejam os da empresa.
+
+---
+
 ## Notas / ajustes pedidos
 
 _(escreve aqui, por número, o que queres mudar)_
