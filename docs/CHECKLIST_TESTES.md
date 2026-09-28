@@ -895,6 +895,21 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 
 ---
 
+## 46. Notas por página
+
+- [ ] Em qualquer página com o ícone de ajuda (nota adesiva + balão de fala + "?"), tocar na **nota adesiva**:
+      abre "Notas desta página". Escrever uma nota e enviar — aparece na lista, com o teu nome e a data.
+- [ ] Com sessão de **Leitura (viewer)**: consegue escrever uma nota nova, mas não tem caixa de confirmação
+      (só um círculo) — não marca como resolvida.
+- [ ] Com sessão de **editor** ou superior: já tem caixa de confirmação — marcar como resolvida risca o texto e
+      mostra quem e quando resolveu; desmarcar volta ao normal.
+- [ ] O ícone mostra um **selo com o número de notas por resolver** desta página; sobe/desce ao criar/resolver.
+- [ ] Abrir a mesma página com **outra conta da mesma empresa**: vê a nota que a primeira conta escreveu (é
+      para a equipa toda, ao contrário do botão de sugestão/erro).
+- [ ] Só **proprietário/administrador** conseguem apagar uma nota (ícone de lixo).
+
+---
+
 ## Notas / ajustes pedidos
 
 _(escreve aqui, por número, o que queres mudar)_

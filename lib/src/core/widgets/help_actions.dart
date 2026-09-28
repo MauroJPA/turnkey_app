@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../features/feedback/application/nota_pagina_providers.dart';
 import '../../features/feedback/data/suggestion_repository.dart';
+import '../../features/feedback/presentation/notas_pagina_sheet.dart';
 import '../help/help_content.dart';
 import 'help_button.dart';
 
-/// Par de ações para o `AppBar` de qualquer página: enviar sugestão/erro e
-/// ajuda. Substitui o `HelpButton` sozinho.
+/// Ações para o `AppBar` de qualquer página: notas de equipa, enviar
+/// sugestão/erro e ajuda. Substitui o `HelpButton` sozinho.
 class HelpActions extends ConsumerWidget {
   const HelpActions({super.key, required this.topic});
 
@@ -14,9 +16,21 @@ class HelpActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final porResolver = ref
+        .watch(notasPorResolverProvider(topic.name))
+        .valueOrNull;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        IconButton(
+          icon: Badge(
+            label: Text('$porResolver'),
+            isLabelVisible: (porResolver ?? 0) > 0,
+            child: const Icon(Icons.sticky_note_2_outlined),
+          ),
+          tooltip: 'Notas desta página (para a equipa)',
+          onPressed: () => mostrarNotasPagina(context, pagina: topic.name),
+        ),
         IconButton(
           icon: const Icon(Icons.feedback_outlined),
           tooltip: 'Sugerir melhoria / reportar erro',

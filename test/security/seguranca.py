@@ -396,7 +396,7 @@ def teste_papeis():
     check(s not in (200, 204), 'um utilizador não apaga o de outro')
 
     # leitura não escreve
-    permitidas = {'preferencias_utilizador', 'sugestoes'}
+    permitidas = {'preferencias_utilizador', 'sugestoes', 'notas_pagina'}
     matriz = {}
     for col in colecoes_com_empresa():
         base = dados.get((col, 'A'))
@@ -1223,6 +1223,45 @@ def teste_faturas_linha_manual():
           'decidida a linha acrescentada à mão, a fatura fica confirmada', str(frec2)[:160])
 
 
+def teste_notas_pagina():
+    """8g. Notas de equipa por página (diferente de sugestões — a equipa toda vê)."""
+    sec('8g. Notas de página')
+    url = '/api/collections/notas_pagina/records'
+
+    # viewer pode criar e ler (é para avisar a equipa, mesmo quem só lê)
+    st, n, _ = call('POST', url, {'empresa': empresas['A'], 'pagina': 'faturas', 'texto': 'Falta a foto do rótulo.'}, tok['viewerA'])
+    check(st == 200, 'o papel Leitura cria uma nota', f'status {st} {str(n)[:120]}')
+    nid = n['id']
+    check(n.get('autor_nome') == 'viewerA' and n.get('resolvida') is False,
+          'o autor fica carimbado pelo servidor (não pelo corpo do pedido)', str(n)[:160])
+    st, lst, _ = call('GET', f"{url}?filter=pagina='faturas'", tok=tok['viewerA'])
+    check(st == 200 and nid in [x['id'] for x in lst.get('items', [])], 'o papel Leitura lê as notas da própria empresa', str(lst)[:160])
+
+    # isolamento entre empresas
+    st, lst_b, _ = call('GET', f"{url}?filter=pagina='faturas'", tok=tok['ownerB'])
+    check(nid not in [x['id'] for x in lst_b.get('items', [])], 'a empresa B não vê a nota da empresa A', str(lst_b)[:160])
+    st, r_b, _ = call('PATCH', f'{url}/{nid}', {'resolvida': True}, tok['ownerB'])
+    check(st != 200, 'a empresa B não resolve uma nota da empresa A', f'status {st} {str(r_b)[:100]}')
+
+    # viewer não marca como resolvida; editor sim
+    st, rv, _ = call('PATCH', f'{url}/{nid}', {'resolvida': True}, tok['viewerA'])
+    check(st != 200, 'o papel Leitura não marca uma nota como resolvida', f'status {st}')
+    st, re_, _ = call('PATCH', f'{url}/{nid}', {'resolvida': True}, tok['editorA'])
+    check(st == 200 and re_.get('resolvida') is True and re_.get('resolvida_por') == 'editorA' and re_.get('resolvida_em'),
+          'o editor marca como resolvida (fica carimbado quem e quando)', f'{st} {str(re_)[:160]}')
+
+    # o texto/página não mudam pela API depois de criada (só a "resolvida")
+    st, rtxt, _ = call('PATCH', f'{url}/{nid}', {'texto': 'texto trocado', 'pagina': 'outra'}, tok['editorA'])
+    check(st == 200 and rtxt.get('texto') == 'Falta a foto do rótulo.' and rtxt.get('pagina') == 'faturas',
+          'o texto e a página da nota não se alteram depois de criada', str(rtxt)[:160])
+
+    # apagar: só proprietário/administrador
+    st, r_ed, _ = call('DELETE', f'{url}/{nid}', tok=tok['editorA'])
+    check(st != 200, 'o editor não apaga uma nota', f'status {st}')
+    st, r_ad, _ = call('DELETE', f'{url}/{nid}', tok=tok['adminA'])
+    check(st in (200, 204), 'o administrador apaga uma nota', f'status {st}')
+
+
 def teste_faturas_pendente_embalagem():
     """8d. Aplicar por partes (linhas pendentes) e faturas com embalagens."""
     sec('8d. Aplicar por partes e embalagens nas faturas')
@@ -2044,6 +2083,7 @@ def main():
         teste_faturas_edicao()
         teste_faturas_ignorar_lote()
         teste_faturas_linha_manual()
+        teste_notas_pagina()
         teste_faturas_pendente_embalagem()
         teste_produtos()
         teste_juntar_marcas_fornecedores()

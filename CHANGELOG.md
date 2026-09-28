@@ -2,6 +2,19 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.25.0 — 2026-09-28 — Notas por página
+
+- **Notas de equipa em qualquer página.** Novo ícone (nota adesiva) ao lado do botão de sugestão/erro, em toda
+  a app: qualquer pessoa da empresa (mesmo quem só lê) escreve uma nota para avisar a equipa de algo nessa
+  página — um problema, uma decisão, o que falta — sem precisar de falar por fora da app. Fica visível a toda
+  a gente da empresa (diferente do botão de sugestão/erro, que só a equipa de desenvolvimento vê). Marca-se
+  como resolvida (fica registado quem e quando) e some do selo de contagem no ícone; o texto/página de uma
+  nota não se alteram depois de criada.
+- Nova coleção `notas_pagina` (migration `1707955219_notas_pagina`) e o hook `notas_pagina.pb.js` que carimba
+  autor/data no servidor (nunca confia no que o cliente manda para esses campos).
+- Testes: `test/nota_pagina_test.dart` e nova secção "8g. Notas de página" em `test/security/seguranca.py`
+  (isolamento entre empresas, quem cria/resolve/apaga, texto imutável depois de criada).
+
 ## 1.24.0 — 2026-09-28 — Ignorar faturas em lote, corrigir linhas e administrador nas faturas
 
 - **Bug corrigido: o botão "Enviar" da sugestão/erro ficava sempre desativado.** Escrever a nota não bastava —
