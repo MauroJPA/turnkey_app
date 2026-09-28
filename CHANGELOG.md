@@ -2,6 +2,28 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.24.0 — 2026-09-28 — Ignorar faturas em lote, corrigir linhas e administrador nas faturas
+
+- **Bug corrigido: o botão "Enviar" da sugestão/erro ficava sempre desativado.** Escrever a nota não bastava —
+  faltava o ecrã voltar a olhar para o texto escrito. Agora funciona: escreves e o botão liga-se.
+- **Selecionar várias faturas e marcar como "Ignorada".** Para faturas antigas que só interessa ter o ficheiro
+  digitalizado — ninguém vai decidir preço/stock com elas. Ícone "Selecionar" no topo de Faturas: marca as que
+  quiseres e "Marcar como ignorada". Não apaga nada; reabrir uma e decidir qualquer linha tira-a sozinha desse
+  estado.
+- **Na revisão de uma fatura**: já dá para **remover uma linha** (duplicada, lida a mais pela IA) — desaparece
+  da lista e nunca mexe em preço/stock — e para **acrescentar um item em falta** que a IA não leu, preenchido à
+  mão como qualquer linha normal.
+- **O administrador passa a poder corrigir e apagar faturas** (fornecedor, número, data, totais) — antes só o
+  proprietário conseguia, o que obrigava a reportar o problema por fora da app quando quem estava a usá-la era
+  um administrador. Continua tudo registado no histórico, com quem fez o quê.
+- Migrations `1707955217_faturas_ignorar_lote` (`faturas.estado` ganha o valor `ignorada`) e
+  `1707955218_faturas_editar_admin` (regras de `faturas` passam a aceitar `owner` ou `admin`).
+- Novo endpoint `POST /api/gc_turnkey/faturas/ignorar-lote`.
+- Testes: `test/invoice_ia_parse_test.dart` (estado "ignorada") e três secções novas em
+  `test/security/seguranca.py` — "8e. Ignorar faturas em lote" (papéis, isolamento, apagadas, reversão ao
+  decidir uma linha), "8f. Linha acrescentada à mão" (o total de linhas sobe com ela — não fica confirmada
+  antes de tempo), e o administrador acrescentado a "8c. Editar e apagar faturas".
+
 ## 1.23.0 — 2026-09-28 — Juntar marcas/fornecedores repetidos
 
 - **Corrigir nomes duplicados de marca/fornecedor.** A mesma marca/fornecedor real acaba às vezes com vários

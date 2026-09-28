@@ -34,24 +34,36 @@ void main() {
     });
 
     test('aceita "nome" como alternativa a "descricao"', () {
-      final l = FaturaLinhaIa.fromJson(const {'nome': 'Manteiga', 'quantidade': 1});
+      final l = FaturaLinhaIa.fromJson(const {
+        'nome': 'Manteiga',
+        'quantidade': 1,
+      });
       expect(l.descricao, 'Manteiga');
     });
 
     test('quantidadeG converte kg e L para gramas', () {
       expect(
-        FaturaLinhaIa.fromJson(const {'descricao': 'x', 'quantidade': 2, 'unidade': 'kg'})
-            .quantidadeG,
+        FaturaLinhaIa.fromJson(const {
+          'descricao': 'x',
+          'quantidade': 2,
+          'unidade': 'kg',
+        }).quantidadeG,
         2000,
       );
       expect(
-        FaturaLinhaIa.fromJson(const {'descricao': 'x', 'quantidade': 1.5, 'unidade': 'L'})
-            .quantidadeG,
+        FaturaLinhaIa.fromJson(const {
+          'descricao': 'x',
+          'quantidade': 1.5,
+          'unidade': 'L',
+        }).quantidadeG,
         1500,
       );
       expect(
-        FaturaLinhaIa.fromJson(const {'descricao': 'x', 'quantidade': 500, 'unidade': 'g'})
-            .quantidadeG,
+        FaturaLinhaIa.fromJson(const {
+          'descricao': 'x',
+          'quantidade': 500,
+          'unidade': 'g',
+        }).quantidadeG,
         500,
       );
     });
@@ -113,14 +125,15 @@ void main() {
 
   group('Fatura.linhasIa', () {
     Fatura comDados(Map<String, dynamic> dados) => Fatura(
-          id: 'f1',
-          tipo: FaturaTipo.fatura,
-          estado: FaturaEstado.analisada,
-          dadosIa: dados,
-        );
+      id: 'f1',
+      tipo: FaturaTipo.fatura,
+      estado: FaturaEstado.analisada,
+      dadosIa: dados,
+    );
 
     test('extrai as linhas do JSON da IA', () {
-      final dados = jsonDecode('''
+      final dados =
+          jsonDecode('''
         {
           "fornecedor": "Makro",
           "linhas": [
@@ -128,7 +141,8 @@ void main() {
             {"descricao": "Açúcar", "quantidade": 2, "unidade": "kg", "preco_unitario": 1.1}
           ]
         }
-      ''') as Map<String, dynamic>;
+      ''')
+              as Map<String, dynamic>;
       final linhas = comDados(dados).linhasIa;
       expect(linhas, hasLength(2));
       expect(linhas.first.descricao, 'Farinha T55');
@@ -172,6 +186,19 @@ void main() {
       expect(f.estado, FaturaEstado.nova);
     });
 
+    test('estado "ignorada" (marcada em lote) é lido e tem etiqueta', () {
+      final r = RecordModel({
+        'id': 'f-ign',
+        'tipo': 'fatura',
+        'estado': 'ignorada',
+        'pendentes_linhas': 0,
+      });
+      final f = Fatura.fromRecord(r);
+      expect(f.estado, FaturaEstado.ignorada);
+      expect(f.estado.label, 'Ignorada');
+      expect(f.temPendentes, isFalse);
+    });
+
     test('dados_ia com objeto é lido', () {
       final r = RecordModel({
         'id': 'f2',
@@ -195,12 +222,18 @@ void main() {
     test('segue FT-FORNECEDOR-DDMMAAAA.ext (data da fatura)', () {
       expect(
         InvoiceRepository.nomeFicheiro(
-            'Makro', DateTime(2026, 9, 8), 'IMG_0421.JPG'),
+          'Makro',
+          DateTime(2026, 9, 8),
+          'IMG_0421.JPG',
+        ),
         'FT-MAKRO-08092026.jpg',
       );
       expect(
         InvoiceRepository.nomeFicheiro(
-            'Nova Distribuição, Lda', DateTime(2025, 12, 1), 'fatura.pdf'),
+          'Nova Distribuição, Lda',
+          DateTime(2025, 12, 1),
+          'fatura.pdf',
+        ),
         'FT-NOVADISTRIBUICAOLDA-01122025.pdf',
       );
       expect(

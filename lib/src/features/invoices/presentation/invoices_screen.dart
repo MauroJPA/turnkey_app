@@ -23,11 +23,64 @@ import 'analise_faturas_widgets.dart';
 import 'contabilidade_sheet.dart';
 import 'invoice_owner_widgets.dart';
 
-class InvoicesScreen extends ConsumerWidget {
+class InvoicesScreen extends ConsumerStatefulWidget {
   const InvoicesScreen({super.key});
+
+  @override
+  ConsumerState<InvoicesScreen> createState() => _InvoicesScreenState();
+}
+
+class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
+  bool _selecionando = false;
+  final Set<String> _selecionadas = {};
 
   bool _podeEditar(WidgetRef ref) =>
       ref.read(currentPapelProvider).canEditBusiness;
+
+  void _alternarSelecao(String id) {
+    setState(() {
+      if (_selecionadas.contains(id)) {
+        _selecionadas.remove(id);
+      } else {
+        _selecionadas.add(id);
+      }
+    });
+  }
+
+  void _sairDaSelecao() {
+    setState(() {
+      _selecionando = false;
+      _selecionadas.clear();
+    });
+  }
+
+  Future<void> _marcarIgnoradas(BuildContext context, WidgetRef ref) async {
+    if (_selecionadas.isEmpty) return;
+    final n = _selecionadas.length;
+    final ok = await confirmDialog(
+      context,
+      titulo: 'Marcar $n fatura(s) como ignorada(s)?',
+      mensagem:
+          'Não apaga nada — os ficheiros ficam guardados. Só deixam de pedir '
+          'revisão (não atualizam preço nem stock). Reabrir uma delas e '
+          'decidir uma linha tira-a sozinha deste estado.',
+      confirmar: 'Ignorar',
+    );
+    if (!ok || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final ids = _selecionadas.toList();
+    _sairDaSelecao();
+    try {
+      final feitas = await ref.read(invoiceActionsProvider).ignorarLote(ids);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('$feitas fatura(s) marcada(s) como ignorada(s).'),
+        ),
+      );
+    } on Object catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
+    }
+  }
 
   Future<void> _nova(BuildContext context, WidgetRef ref) async {
     final tipo = await showDialog<FaturaTipo>(
@@ -208,54 +261,77 @@ class InvoicesScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final async = ref.watch(faturasListProvider);
     final fmt = ref.watch(moneyFormatProvider);
     final podeEditar = _podeEditar(ref);
-    final dono = ehProprietario(ref);
+    final podeGerir = ehProprietarioOuAdmin(ref);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(Routes.home),
-        ),
-        title: const Text('Faturas'),
-        actions: [
-          IconButton(
-            tooltip: 'Para a contabilidade',
-            icon: const Icon(Icons.folder_shared_outlined),
-            onPressed: () => showContabilidadeSheet(context, ref),
-          ),
-          if (dono)
-            PopupMenuButton<String>(
-              onSelected: (v) {
-                if (v == 'limpar') _limparInvalidas(context, ref);
-                if (v == 'historico') mostrarFaturasApagadas(context);
-              },
-              itemBuilder: (_) => const [
-                PopupMenuItem(
-                  value: 'limpar',
-                  child: ListTile(
-                    leading: Icon(Icons.delete_sweep_outlined),
-                    title: Text('Limpar vazias, com erro e sem linhas'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'historico',
-                  child: ListTile(
-                    leading: Icon(Icons.history),
-                    title: Text('Faturas apagadas'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
+      appBar: _selecionando
+          ? AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                tooltip: 'Cancelar seleção',
+                onPressed: _sairDaSelecao,
+              ),
+              title: Text('${_selecionadas.length} selecionada(s)'),
+              actions: [
+                TextButton(
+                  onPressed: _selecionadas.isEmpty
+                      ? null
+                      : () => _marcarIgnoradas(context, ref),
+                  child: const Text('Marcar como ignorada'),
                 ),
               ],
+            )
+          : AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.go(Routes.home),
+              ),
+              title: const Text('Faturas'),
+              actions: [
+                IconButton(
+                  tooltip: 'Para a contabilidade',
+                  icon: const Icon(Icons.folder_shared_outlined),
+                  onPressed: () => showContabilidadeSheet(context, ref),
+                ),
+                if (podeEditar)
+                  IconButton(
+                    tooltip: 'Selecionar várias para marcar como ignoradas',
+                    icon: const Icon(Icons.checklist_outlined),
+                    onPressed: () => setState(() => _selecionando = true),
+                  ),
+                if (podeGerir)
+                  PopupMenuButton<String>(
+                    onSelected: (v) {
+                      if (v == 'limpar') _limparInvalidas(context, ref);
+                      if (v == 'historico') mostrarFaturasApagadas(context);
+                    },
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(
+                        value: 'limpar',
+                        child: ListTile(
+                          leading: Icon(Icons.delete_sweep_outlined),
+                          title: Text('Limpar vazias, com erro e sem linhas'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'historico',
+                        child: ListTile(
+                          leading: Icon(Icons.history),
+                          title: Text('Faturas apagadas'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ],
+                  ),
+                const HelpActions(topic: HelpTopic.faturas),
+              ],
             ),
-          const HelpActions(topic: HelpTopic.faturas),
-        ],
-      ),
-      floatingActionButton: podeEditar
+      floatingActionButton: podeEditar && !_selecionando
           ? FloatingActionButton.extended(
               onPressed: () => _nova(context, ref),
               icon: const Icon(Icons.add_a_photo_outlined),
@@ -307,6 +383,12 @@ class InvoicesScreen extends ConsumerWidget {
                       vertical: 3,
                     ),
                     child: ListTile(
+                      leading: _selecionando
+                          ? Checkbox(
+                              value: _selecionadas.contains(f.id),
+                              onChanged: (_) => _alternarSelecao(f.id),
+                            )
+                          : null,
                       title: Text(
                         f.fornecedor.isEmpty ? 'Fornecedor?' : f.fornecedor,
                       ),
@@ -345,10 +427,12 @@ class InvoicesScreen extends ConsumerWidget {
                                           '${f.pendentesLinhas} por rever',
                                         )
                                       : _EstadoChip(estado: f.estado))),
-                      onTap: () => context.push('${Routes.invoices}/${f.id}'),
-                      onLongPress: dono
-                          ? () => _opcoesFatura(context, ref, f)
-                          : null,
+                      onTap: _selecionando
+                          ? () => _alternarSelecao(f.id)
+                          : () => context.push('${Routes.invoices}/${f.id}'),
+                      onLongPress: _selecionando || !podeGerir
+                          ? null
+                          : () => _opcoesFatura(context, ref, f),
                     ),
                   ),
               ],
@@ -380,6 +464,10 @@ class _EstadoChip extends StatelessWidget {
       ),
       FaturaEstado.confirmada => (cs.primaryContainer, cs.onPrimaryContainer),
       FaturaEstado.erro => (cs.errorContainer, cs.onErrorContainer),
+      FaturaEstado.ignorada => (
+        cs.surfaceContainerHighest,
+        cs.onSurfaceVariant,
+      ),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

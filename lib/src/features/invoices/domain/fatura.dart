@@ -15,7 +15,8 @@ enum FaturaEstado {
   nova,
   analisada,
   confirmada,
-  erro;
+  erro,
+  ignorada;
 
   static FaturaEstado fromApi(String? v) => FaturaEstado.values.firstWhere(
     (e) => e.name == v,
@@ -26,6 +27,9 @@ enum FaturaEstado {
     FaturaEstado.analisada => 'Analisada',
     FaturaEstado.confirmada => 'Confirmada',
     FaturaEstado.erro => 'Erro',
+    // faturas antigas que ninguém vai validar (preço/stock) — os ficheiros
+    // ficam guardados, só não pedem revisão (ver Faturas → Selecionar).
+    FaturaEstado.ignorada => 'Ignorada',
   };
 }
 

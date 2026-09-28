@@ -67,7 +67,7 @@ class InvoiceReviewScreen extends ConsumerWidget {
                   : 'Fatura',
             ),
           ),
-          if (ehProprietario(ref) && faturaAsync.hasValue)
+          if (ehProprietarioOuAdmin(ref) && faturaAsync.hasValue)
             IconButton(
               tooltip: 'Corrigir fornecedor, data, número…',
               icon: const Icon(Icons.edit_outlined),
@@ -255,7 +255,7 @@ class _ErroState extends ConsumerState<_Erro> {
                       : const Icon(Icons.refresh),
                   label: const Text('Tentar de novo'),
                 ),
-              if (ehProprietario(ref))
+              if (ehProprietarioOuAdmin(ref))
                 OutlinedButton.icon(
                   onPressed: () async {
                     if (await apagarFaturaComConfirmacao(
@@ -303,7 +303,7 @@ class _SemLinhas extends ConsumerWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
-          if (ehProprietario(ref))
+          if (ehProprietarioOuAdmin(ref))
             FilledButton.icon(
               onPressed: () async {
                 if (await apagarFaturaComConfirmacao(context, ref, fatura) &&
@@ -458,6 +458,11 @@ class _LinhaState {
   /// localmente depois de corrigir (sem recriar a linha toda).
   ItemFaturaAnterior? anterior;
 
+  /// Removida da revisão pela pessoa (duplicada, lida a mais pela IA…) — fica
+  /// fora da lista e é enviada como "Ignorar" ao aplicar (nunca mexe em
+  /// preço/stock), sem precisar de continuar visível.
+  bool removida = false;
+
   /// A que se liga esta linha: um ingrediente, um consumível (limpeza/insumo)
   /// ou uma embalagem (caixa, saco, adesivo…).
   TipoLinha tipo;
@@ -597,7 +602,9 @@ class _LinhaState {
     precoUnitario: _n(preco),
     totalLinha: ia.total ?? 0,
     embalagemG: embNaUnidade ?? 0,
-    acao: acao,
+    // removida pela pessoa (duplicada…): manda sempre como "Ignorar", nunca
+    // o que estivesse escolhido antes de a remover.
+    acao: removida ? AcaoFatura.ignorar : acao,
     produtoId: produto?.id,
     marca: marca.text.trim(),
     produtoNome: ia.descricao,
@@ -738,6 +745,32 @@ class _RevisaoState extends ConsumerState<_Revisao> {
           (l.acao == AcaoFatura.stock || l.acao == AcaoFatura.ambos)) {
         l.acao = AcaoFatura.preco;
       }
+    });
+  }
+
+  /// Remove uma linha da revisão (duplicada, lida a mais pela IA…): some da
+  /// lista e vai como "Ignorar" ao aplicar — nunca cria/atualiza nada com ela.
+  void _removerLinha(_LinhaState l) {
+    setState(() {
+      l.removida = true;
+      l.acao = AcaoFatura.ignorar;
+    });
+  }
+
+  /// Acrescenta uma linha em branco para um item que a IA não leu na fatura —
+  /// a pessoa preenche à mão (nome, quantidade, preço…), como uma linha normal.
+  void _adicionarLinhaManual() {
+    final proximo = _linhas.isEmpty
+        ? 0
+        : _linhas.map((l) => l.index).reduce((a, b) => a > b ? a : b) + 1;
+    setState(() {
+      _linhas.add(
+        _LinhaState(
+          const FaturaLinhaIa(descricao: ''),
+          proximo,
+          isLista: _isLista,
+        )..criarNovo = true,
+      );
     });
   }
 
@@ -1689,8 +1722,9 @@ class _RevisaoState extends ConsumerState<_Revisao> {
   @override
   Widget build(BuildContext context) {
     final f = widget.fatura;
-    final visiveis = _linhas.where((l) => !l.aplicadaAnterior).toList();
-    final aplicadasCount = _linhas.length - visiveis.length;
+    final naoAplicadas = _linhas.where((l) => !l.aplicadaAnterior).toList();
+    final visiveis = naoAplicadas.where((l) => !l.removida).toList();
+    final aplicadasCount = _linhas.length - naoAplicadas.length;
     final cs = Theme.of(context).colorScheme;
     final lista = ListView(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
@@ -1737,9 +1771,26 @@ class _RevisaoState extends ConsumerState<_Revisao> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    l.ia.descricao,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l.ia.descricao.isEmpty
+                              ? 'Item novo (não veio da fatura)'
+                              : l.ia.descricao,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 18),
+                        tooltip: 'Remover esta linha (duplicada, a mais…)',
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => _removerLinha(l),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 6),
                   SegmentedButton<TipoLinha>(
@@ -1953,6 +2004,14 @@ class _RevisaoState extends ConsumerState<_Revisao> {
               ),
             ),
           ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: _adicionarLinhaManual,
+            icon: const Icon(Icons.add),
+            label: const Text('Adicionar item em falta'),
+          ),
+        ),
         const SizedBox(height: 16),
         FilledButton.icon(
           onPressed: _busy ? null : _aplicar,

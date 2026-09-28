@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/current_user.dart';
-import '../../../core/auth/permissions.dart';
 import '../../../core/data/marcas_fornecedores_providers.dart';
 import '../../../core/formatting/dates.dart';
 import '../../../core/widgets/async_value_view.dart';
@@ -15,12 +14,10 @@ import '../domain/analise_resumo.dart';
 import '../domain/fatura.dart';
 import '../domain/invoice_erros.dart';
 
-/// Só o proprietário corrige e apaga faturas.
-bool ehProprietario(WidgetRef ref) =>
-    ref.read(currentPapelProvider) == Papel.owner;
-
-/// Proprietário ou administrador: corrigir marca/fornecedor de uma linha já
-/// aplicada, mesmo com a fatura confirmada (ver [mostrarCorrigirItem]).
+/// Proprietário ou administrador: corrigir (fornecedor, número, data,
+/// totais) e apagar/restaurar faturas, e corrigir a marca de uma linha já
+/// aplicada (ver [mostrarEditarFatura], [apagarFaturaComConfirmacao] e
+/// [mostrarCorrigirItem]).
 bool ehProprietarioOuAdmin(WidgetRef ref) =>
     ref.read(currentPapelProvider).canEditConfig;
 

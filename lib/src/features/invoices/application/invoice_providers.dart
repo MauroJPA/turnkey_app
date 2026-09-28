@@ -86,6 +86,14 @@ class InvoiceActions {
     return n;
   }
 
+  /// Marca várias faturas como "ignorada" de uma vez (faturas antigas que só
+  /// interessa ter o ficheiro — ninguém vai decidir preço/stock com elas).
+  Future<int> ignorarLote(List<String> ids) async {
+    final n = await _repo.ignorarLote(ids);
+    _ref.invalidate(faturasListProvider);
+    return n;
+  }
+
   /// Corrige a marca de uma linha já aplicada (proprietário/admin).
   Future<String> corrigirItem(String faturaId, int index, String marca) async {
     final r = await _repo.corrigirItem(faturaId, index, marca);

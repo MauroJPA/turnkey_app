@@ -1089,8 +1089,8 @@ def teste_faturas_ia():
 
 
 def teste_faturas_edicao():
-    """8c. Faturas: só o proprietário edita e apaga; tudo fica no histórico e nada se perde."""
-    sec('8c. Editar e apagar faturas (proprietário)')
+    """8c. Faturas: só proprietário/administrador editam e apagam; tudo fica no histórico e nada se perde."""
+    sec('8c. Editar e apagar faturas (proprietário/administrador)')
     st, f, _ = call('POST', '/api/collections/faturas/records',
                     {'empresa': empresas['A'], 'autor': users['editorA'], 'tipo': 'fatura', 'estado': 'analisada',
                      'fornecedor': 'Forn Errado', 'numero': 'X-1', 'data_fatura': '2026-01-01 00:00:00.000Z', 'total': 10}, su)
@@ -1113,6 +1113,14 @@ def teste_faturas_edicao():
     check(len(hist) == 1 and hist[0].get('valor_antes', {}).get('fornecedor') == 'Forn Errado'
           and hist[0].get('valor_depois', {}).get('numero') == 'C-9', 'a correção fica no histórico com os valores antes e depois', str(hist)[:240])
 
+    # o administrador também corrige e apaga/restaura (antes era só o proprietário)
+    s1, r, _ = call('PATCH', url, {'total': 42}, tok['adminA'])
+    check(s1 == 200 and r.get('total') == 42, 'o administrador também corrige uma fatura', f'{s1} {str(r)[:100]}')
+    s1, r, _ = call('PATCH', url, {'apagada': True}, tok['adminA'])
+    check(s1 == 200 and r.get('apagada') is True, 'o administrador apaga uma fatura', f'{s1} {str(r)[:100]}')
+    s1, r, _ = call('PATCH', url, {'apagada': False}, tok['adminA'])
+    check(s1 == 200 and r.get('apagada') is False, 'o administrador restaura a fatura', f'{s1} {str(r)[:100]}')
+
     s1, r, _ = call('PATCH', url, {'apagada': True}, tok['ownerA'])
     check(s1 == 200 and r.get('apagada') is True and r.get('apagada_em') and r.get('apagada_por'), 'o proprietário apaga (fica escondida, com quem e quando)', str(r)[:160])
     ainda = call('GET', url, tok=tok['ownerA'])[1]
@@ -1120,12 +1128,99 @@ def teste_faturas_edicao():
     s1, r, _ = call('PATCH', url, {'apagada': False}, tok['ownerA'])
     check(s1 == 200 and r.get('apagada') is False and not r.get('apagada_em'), 'o proprietário restaura a fatura', str(r)[:120])
     hist = call('GET', f"/api/collections/historico/records?filter=entidade_tipo='fatura'%26%26entidade_id='{fid}'&perPage=20", tok=tok['editorA'])[1].get('items', [])
-    check(len(hist) == 3, 'apagar e restaurar também ficam no histórico (3 registos)', str(len(hist)))
+    check(len(hist) == 6, 'todas as correções e apagar/restaurar (admin + proprietário) ficam no histórico (6 registos)', str(len(hist)))
 
     # uma apagada não conta como duplicada nem sai no export da contabilidade
     call('PATCH', url, {'apagada': True, 'estado': 'confirmada'}, tok['ownerA'])
     ex = call('GET', '/api/gc_turnkey/faturas/export?de=2026-01-01&ate=2026-12-31', tok=tok['ownerA'])[1]
     check(fid not in [x.get('id') for x in ex.get('faturas', [])], 'a fatura apagada não vai para a contabilidade', str(ex)[:120])
+
+
+def teste_faturas_ignorar_lote():
+    """8e. Marcar faturas antigas como ignoradas em lote (sem apagar nada)."""
+    sec('8e. Ignorar faturas em lote')
+    url = '/api/gc_turnkey/faturas/ignorar-lote'
+
+    def fatura(estado, empresa='A', dados_ia=None, pendentes=None):
+        body = {'empresa': empresas[empresa], 'autor': users[f'editor{empresa}'],
+                'tipo': 'fatura', 'estado': estado, 'fornecedor': 'Fornecedor Antigo'}
+        if dados_ia is not None:
+            body['dados_ia'] = dados_ia
+        if pendentes is not None:
+            body['pendentes_linhas'] = pendentes
+        st, r, _ = call('POST', '/api/collections/faturas/records', body, su)
+        assert st == 200, (st, r)
+        return r['id']
+
+    f1 = fatura('analisada', pendentes=2)
+    f2 = fatura('nova')
+    f3 = fatura('confirmada')  # já confirmada — também pode ser marcada (deixa de aparecer como "por rever")
+    f_apagada = fatura('analisada')
+    call('PATCH', f"/api/collections/faturas/records/{f_apagada}", {'apagada': True}, su)
+    f_outra_empresa = fatura('analisada', empresa='B')
+
+    st, rv, _ = call('POST', url, {'ids': [f1]}, tok['viewerA'])
+    check(st != 200, 'o papel Leitura não marca faturas como ignoradas', f'status {st}')
+    st, rvazio, _ = call('POST', url, {'ids': []}, tok['editorA'])
+    check(st != 200, 'sem ids é recusado', f'status {st}')
+
+    st, r, _ = call('POST', url, {'ids': [f1, f2, f3, f_apagada, f_outra_empresa]}, tok['editorA'])
+    check(st == 200 and r.get('atualizadas') == 3,
+          'editor marca em lote: só as 3 válidas da própria empresa (ignora apagada e doutra empresa)', f'{st} {str(r)[:160]}')
+
+    for fid in (f1, f2, f3):
+        rec = call('GET', f'/api/collections/faturas/records/{fid}', tok=tok['editorA'])[1]
+        check(rec.get('estado') == 'ignorada' and rec.get('pendentes_linhas') == 0,
+              f'{fid}: fica "ignorada" e sem pendentes', str(rec)[:120])
+
+    rec_apagada = call('GET', f'/api/collections/faturas/records/{f_apagada}', tok=tok['editorA'])[1]
+    check(rec_apagada.get('estado') != 'ignorada', 'uma fatura apagada não é marcada como ignorada', str(rec_apagada)[:120])
+    rec_b = call('GET', f'/api/collections/faturas/records/{f_outra_empresa}', tok=tok['ownerB'])[1]
+    check(rec_b.get('estado') != 'ignorada', 'a fatura da empresa B não foi tocada pelo editor da A', str(rec_b)[:120])
+
+    # reaplicar (decidir uma linha) tira a fatura sozinha do estado "ignorada"
+    st, f4, _ = call('POST', '/api/collections/faturas/records',
+                     {'empresa': empresas['A'], 'autor': users['editorA'], 'tipo': 'fatura', 'estado': 'analisada',
+                      'fornecedor': 'X', 'dados_ia': {'linhas': [{'descricao': 'Item', 'quantidade': 1}]}}, su)
+    f4 = f4['id']
+    call('POST', url, {'ids': [f4]}, tok['editorA'])
+    ing = dados[('ingredientes', 'A')][1]
+    st, ingr, _ = call('POST', '/api/collections/ingredientes/records', dict(ing, nome='Ingrediente ignorar-lote'), tok['editorA'])
+    st, r4, _ = call('POST', f'/api/gc_turnkey/faturas/{f4}/aplicar',
+                     {'linhas': [{'index': 0, 'ingredienteId': ingr['id'], 'acao': 'ignorar', 'descricaoFatura': 'Item'}]}, tok['editorA'])
+    f4rec = call('GET', f'/api/collections/faturas/records/{f4}', tok=tok['editorA'])[1]
+    check(f4rec.get('estado') != 'ignorada', 'decidir (mesmo "Ignorar") uma linha tira a fatura do estado "ignorada"', f'{str(r4)[:100]} {str(f4rec)[:120]}')
+
+
+def teste_faturas_linha_manual():
+    """8f. Acrescentar à mão uma linha que a IA não leu (total de linhas sobe com ela)."""
+    sec('8f. Linha acrescentada à mão na revisão')
+    t = tok['editorA']
+    # só 1 linha no dados_ia — a app vai enviar 2 (a original + 1 acrescentada à mão)
+    st, f, _ = call('POST', '/api/collections/faturas/records',
+                    {'empresa': empresas['A'], 'autor': users['editorA'], 'tipo': 'fatura', 'estado': 'analisada',
+                     'fornecedor': 'X', 'dados_ia': {'linhas': [{'descricao': 'Item lido pela IA'}]}}, su)
+    fid = f['id']
+    base = dict(dados[('ingredientes', 'A')][1])
+    base.update(origem='comprado', preco=0, gramas_embalagem=0)
+    ing = call('POST', '/api/collections/ingredientes/records', dict(base, nome='Ingrediente linha manual'), t)[1]['id']
+    # linha 0 (da IA) decidida; linha 1 (acrescentada à mão) ainda por decidir
+    st, r, _ = call('POST', f'/api/gc_turnkey/faturas/{fid}/aplicar',
+                    {'linhas': [
+                        {'index': 0, 'ingredienteId': ing, 'acao': 'preco', 'precoUnitario': 1.5, 'descricaoFatura': 'Item lido pela IA'},
+                        {'index': 1, 'acao': 'pendente', 'descricaoFatura': ''},
+                    ]}, t)
+    check(st == 200, 'aplicar com uma linha extra (acrescentada à mão) não rebenta', f'status {st} {str(r)[:160]}')
+    frec = call('GET', f'/api/collections/faturas/records/{fid}', tok=t)[1]
+    check(frec.get('estado') == 'analisada' and frec.get('pendentes_linhas') == 1,
+          'o total de linhas sobe com a acrescentada à mão: continua "1 por rever" (não fica logo confirmada)',
+          str(frec)[:160])
+    # decidir a linha acrescentada: agora sim fica tudo resolvido
+    st, r2, _ = call('POST', f'/api/gc_turnkey/faturas/{fid}/aplicar',
+                     {'linhas': [{'index': 1, 'acao': 'ignorar', 'descricaoFatura': ''}]}, t)
+    frec2 = call('GET', f'/api/collections/faturas/records/{fid}', tok=t)[1]
+    check(frec2.get('estado') == 'confirmada' and frec2.get('pendentes_linhas') == 0,
+          'decidida a linha acrescentada à mão, a fatura fica confirmada', str(frec2)[:160])
 
 
 def teste_faturas_pendente_embalagem():
@@ -1947,6 +2042,8 @@ def main():
         teste_sem_chave()
         teste_faturas_ia()
         teste_faturas_edicao()
+        teste_faturas_ignorar_lote()
+        teste_faturas_linha_manual()
         teste_faturas_pendente_embalagem()
         teste_produtos()
         teste_juntar_marcas_fornecedores()

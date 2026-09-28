@@ -390,6 +390,20 @@ class InvoiceRepository {
     return n;
   }
 
+  /// Marca várias faturas como `ignorada` de uma vez (faturas antigas que só
+  /// interessa ter o ficheiro digitalizado — ninguém vai decidir preço/stock
+  /// linha a linha). Não apaga nada; reabrir e aplicar uma linha tira-a
+  /// sozinha desse estado. Devolve quantas foram atualizadas.
+  Future<int> ignorarLote(List<String> ids) async {
+    final res = await _pb.send(
+      '/api/gc_turnkey/faturas/ignorar-lote',
+      method: 'POST',
+      body: {'ids': ids},
+    );
+    final m = res as Map;
+    return (m['atualizadas'] as num?)?.toInt() ?? 0;
+  }
+
   /// Faturas confirmadas no intervalo (para o contabilista). Cada item tem
   /// `fornecedor`, `dataFatura`, `numero`, `total`, `iva`, `nomeFicheiro`,
   /// `ficheiroUrl`, `linhas`.

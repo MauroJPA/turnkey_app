@@ -4,6 +4,7 @@
 //
 //   POST /api/gc_turnkey/faturas/{id}/analisar   { imagem(base64), mime }
 //   POST /api/gc_turnkey/faturas/{id}/aplicar    { linhas: [...] }
+//   POST /api/gc_turnkey/faturas/ignorar-lote    { ids: [...] }
 //   GET  /api/gc_turnkey/faturas/export?de=&ate=
 //
 // A chave da IA vem de ANTHROPIC_API_KEY no ambiente do servidor. Nunca no app.
@@ -364,7 +365,11 @@ routerAdd(
       let totalLinhas = linhas.length;
       try {
         const di = JSON.parse(fatura.getString('dados_ia') || '{}');
-        if (Array.isArray(di.linhas) && di.linhas.length > 0) totalLinhas = di.linhas.length;
+        // uma linha acrescentada à mão (item que a IA não leu) pode passar do
+        // total original — nesse caso o total sobe com ela.
+        if (Array.isArray(di.linhas) && di.linhas.length > 0) {
+          totalLinhas = Math.max(di.linhas.length, linhas.length);
+        }
       } catch (_) {}
       const todas = tx.findRecordsByFilter('faturas_itens', 'fatura = {:f}', '', 0, 0, { f: id });
       const vistos = {};
@@ -388,6 +393,58 @@ routerAdd(
       puladas: puladas,
       pendentes: pendentes,
     });
+  },
+  $apis.requireAuth('users', '_superusers'),
+);
+
+// --- POST /api/gc_turnkey/faturas/ignorar-lote ----------------------------
+// Marca várias faturas como `ignorada` de uma vez — para faturas antigas que
+// só interessa ter o ficheiro digitalizado, sem ninguém precisar de decidir
+// preço/stock linha a linha. Não apaga nada (o ficheiro fica); reabrir a
+// fatura e aplicar qualquer linha tira-a sozinha do estado `ignorada` (o
+// /aplicar recalcula sempre o estado a partir do que falta decidir).
+routerAdd(
+  'POST',
+  '/api/gc_turnkey/faturas/ignorar-lote',
+  (e) => {
+    const auth = e.auth;
+    const isSuper =
+      auth && auth.collection() && auth.collection().name === '_superusers';
+    let empresaId = null;
+    if (!isSuper) {
+      if (!auth || auth.collection().name !== 'users') {
+        throw new ForbiddenError('Autenticação necessária.');
+      }
+      if (auth.getString('papel') === 'viewer') {
+        throw new ForbiddenError('Sem permissão.');
+      }
+      empresaId = auth.getString('empresa');
+    }
+
+    const body = e.requestInfo().body || {};
+    const ids = Array.isArray(body.ids) ? body.ids : [];
+    if (!ids.length) throw new BadRequestError('Escolhe pelo menos uma fatura.');
+
+    let atualizadas = 0;
+    e.app.runInTransaction((tx) => {
+      for (const id of ids) {
+        let f;
+        try {
+          f = tx.findRecordById('faturas', String(id));
+        } catch (_) {
+          continue;
+        }
+        if (!isSuper && f.getString('empresa') !== empresaId) continue;
+        if (f.getBool('apagada')) continue;
+        if (f.getString('estado') === 'ignorada') continue;
+        f.set('estado', 'ignorada');
+        f.set('pendentes_linhas', 0);
+        tx.save(f);
+        atualizadas++;
+      }
+    });
+
+    return e.json(200, { atualizadas: atualizadas });
   },
   $apis.requireAuth('users', '_superusers'),
 );

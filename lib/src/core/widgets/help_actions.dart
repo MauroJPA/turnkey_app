@@ -60,6 +60,10 @@ Future<void> _abrir(
                 hintText: 'A tua nota…',
                 border: OutlineInputBorder(),
               ),
+              // sem isto, "Enviar" ficava sempre desativado: o diálogo só
+              // volta a construir (e a reler ctrl.text) quando algo chama
+              // setState — escrever no campo, por si só, não chamava.
+              onChanged: (_) => setState(() {}),
             ),
           ],
         ),
@@ -74,17 +78,16 @@ Future<void> _abrir(
                 : () async {
                     setState(() => enviando = true);
                     try {
-                      await ref.read(suggestionRepositoryProvider).enviar(
-                            pagina: topic.name,
-                            texto: ctrl.text,
-                          );
+                      await ref
+                          .read(suggestionRepositoryProvider)
+                          .enviar(pagina: topic.name, texto: ctrl.text);
                       if (ctx.mounted) Navigator.pop(ctx, true);
                     } on Object catch (e) {
                       if (ctx.mounted) {
                         setState(() => enviando = false);
-                        ScaffoldMessenger.of(ctx).showSnackBar(
-                          SnackBar(content: Text('$e')),
-                        );
+                        ScaffoldMessenger.of(
+                          ctx,
+                        ).showSnackBar(SnackBar(content: Text('$e')));
                       }
                     }
                   },

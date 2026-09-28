@@ -876,6 +876,25 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 
 ---
 
+## 45. Ignorar faturas em lote, corrigir linhas e administrador nas faturas
+
+- [ ] Qualquer página com o ícone de sugestão (balão de fala no topo): escrever uma nota e confirmar que o
+      botão **Enviar** fica ativo (antes ficava sempre cinzento, mesmo com texto escrito).
+- [ ] Em **Faturas**, tocar no ícone "Selecionar" (lista com marcas): aparecem caixas de seleção. Marcar
+      várias (ex.: faturas antigas já "Confirmada" ou "Analisada") e tocar em **"Marcar como ignorada"**.
+      Confirmar: ficam com o chip "Ignorada", os ficheiros continuam acessíveis, e já não pedem revisão.
+- [ ] Reabrir uma fatura "Ignorada" e decidir qualquer linha (aplicar um preço, ou até só "Ignorar" essa
+      linha): a fatura sai sozinha do estado "Ignorada".
+- [ ] Na revisão de uma fatura, uma linha que a IA leu a mais (duplicada): tocar no **X** no canto da linha —
+      desaparece da lista. Aplicar: confirma que não mudou preço/stock por causa dela.
+- [ ] Na mesma revisão, tocar em **"Adicionar item em falta"**: aparece uma linha nova em branco para
+      preencher à mão (nome, quantidade, preço). Aplicar com ela por decidir: a fatura continua "1 por rever"
+      (não fica logo "Confirmada"). Decidir essa linha: passa a "Confirmada".
+- [ ] Com uma conta **administrador** (não proprietário): já consegue tocar no lápis de "Corrigir fornecedor,
+      data, número…" de uma fatura e em "Apagar fatura" — antes só o proprietário conseguia.
+
+---
+
 ## Notas / ajustes pedidos
 
 _(escreve aqui, por número, o que queres mudar)_
