@@ -9,6 +9,7 @@ import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../../core/widgets/sort_menu_button.dart';
 import '../../../core/widgets/swipe_to_delete.dart';
 import '../../cookie_formats/application/cookie_format_providers.dart';
 import '../../pricing/data/cost_config_repository.dart';
@@ -26,8 +27,26 @@ class TechSheetsScreen extends ConsumerStatefulWidget {
 
 class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
   String _q = '';
+  String? _categoria;
   bool _trash = false;
   bool _busy = false;
+
+  static final List<SortOption<FichaTecnica>> _sortOptions = [
+    SortOption<FichaTecnica>(
+      'Nome',
+      (a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()),
+    ),
+    SortOption<FichaTecnica>(
+      'Custo',
+      (a, b) => a.custoProduto.compareTo(b.custoProduto),
+    ),
+    SortOption<FichaTecnica>(
+      'Preço de venda',
+      (a, b) => a.precoVenda.compareTo(b.precoVenda),
+    ),
+  ];
+  int _sortIndex = 0;
+  bool _sortAsc = true;
 
   bool get _podeEditar => ref.read(currentPapelProvider).canEditBusiness;
 
@@ -38,8 +57,9 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
       return true;
     } on Object catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
       return false;
     } finally {
@@ -59,9 +79,14 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
           controller: ctrl,
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(labelText: 'Preço', prefixText: '€ '),
+          decoration: const InputDecoration(
+            labelText: 'Preço',
+            prefixText: '€ ',
+          ),
           onSubmitted: (_) => Navigator.pop(
-              ctx, double.tryParse(ctrl.text.replaceAll(',', '.'))),
+            ctx,
+            double.tryParse(ctrl.text.replaceAll(',', '.')),
+          ),
         ),
         actions: [
           TextButton(
@@ -70,7 +95,9 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(
-                ctx, double.tryParse(ctrl.text.replaceAll(',', '.'))),
+              ctx,
+              double.tryParse(ctrl.text.replaceAll(',', '.')),
+            ),
             child: const Text('Guardar'),
           ),
         ],
@@ -78,7 +105,9 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
     );
     if (novo == null || novo == f.precoVenda) return;
     await _run(
-      () => ref.read(fichaActionsProvider).setPrecoVenda(f.id, novo < 0 ? 0 : novo),
+      () => ref
+          .read(fichaActionsProvider)
+          .setPrecoVenda(f.id, novo < 0 ? 0 : novo),
     );
   }
 
@@ -95,6 +124,13 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
   Widget build(BuildContext context) {
     final listAsync = ref.watch(fichasListProvider(_trash));
     final configAsync = ref.watch(costConfigProvider);
+    final categoriasEmUso =
+        (listAsync.valueOrNull ?? const <FichaTecnica>[])
+            .map((f) => f.categoria)
+            .where((c) => c.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
 
     return Scaffold(
       appBar: AppBar(
@@ -105,6 +141,16 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
         title: Text(_trash ? 'Fichas · Lixeira' : 'Fichas Técnicas'),
         actions: [
           const HelpActions(topic: HelpTopic.fichas),
+          if (!_trash)
+            SortMenuButton<FichaTecnica>(
+              options: _sortOptions,
+              selectedIndex: _sortIndex,
+              ascending: _sortAsc,
+              onChanged: (i, asc) => setState(() {
+                _sortIndex = i;
+                _sortAsc = asc;
+              }),
+            ),
           IconButton(
             tooltip: _trash ? 'Ver ativas' : 'Lixeira',
             icon: Icon(
@@ -134,23 +180,59 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
               ),
             ),
           ),
+          if (!_trash && categoriasEmUso.length > 1)
+            SizedBox(
+              height: 44,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: const Text('Todas'),
+                      selected: _categoria == null,
+                      onSelected: (_) => setState(() => _categoria = null),
+                    ),
+                  ),
+                  for (final c in categoriasEmUso)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(c),
+                        selected: _categoria == c,
+                        onSelected: (_) => setState(() => _categoria = c),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           Expanded(
             child: AsyncValueView<List<FichaTecnica>>(
               value: listAsync,
               onRetry: () => ref.invalidate(fichasListProvider(_trash)),
               data: (all) {
-                final items = all
-                    .where((f) =>
-                        _q.isEmpty ||
-                        f.nome.toLowerCase().contains(_q.toLowerCase()))
-                    .toList();
+                final items = ordenarPor(
+                  all
+                      .where(
+                        (f) =>
+                            (_q.isEmpty ||
+                                f.nome.toLowerCase().contains(
+                                  _q.toLowerCase(),
+                                )) &&
+                            (_categoria == null || f.categoria == _categoria),
+                      )
+                      .toList(),
+                  _sortOptions[_sortIndex],
+                  _sortAsc,
+                );
                 if (items.isEmpty) {
                   return Center(
                     child: Text(
                       all.isEmpty
                           ? (_trash
-                              ? 'Lixeira vazia'
-                              : 'Sem fichas. Usa + para criar.')
+                                ? 'Lixeira vazia'
+                                : 'Sem fichas. Usa + para criar.')
                           : 'Nada corresponde ao filtro.',
                     ),
                   );
@@ -186,8 +268,8 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
               onPressed: _busy
                   ? null
                   : () => _run(
-                        () => ref.read(fichaActionsProvider).restore(f.id),
-                      ),
+                      () => ref.read(fichaActionsProvider).restore(f.id),
+                    ),
             ),
             IconButton(
               tooltip: 'Apagar definitivamente',
@@ -258,8 +340,10 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
                 children: [
                   Text(
                     'venda ${f.temPrecoVenda ? fmt(f.precoVenda) : '—'}',
-                    style: tt.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.bold, color: cs.primary),
+                    style: tt.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: cs.primary,
+                    ),
                   ),
                   if (_podeEditar) ...[
                     const SizedBox(width: 3),
@@ -287,7 +371,8 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
         mensagem: 'Mover "${f.nome}" para a lixeira?',
         confirmar: 'Mover',
       ),
-      apagar: () => _run(() => ref.read(fichaActionsProvider).moveToTrash(f.id)),
+      apagar: () =>
+          _run(() => ref.read(fichaActionsProvider).moveToTrash(f.id)),
       child: tile,
     );
   }

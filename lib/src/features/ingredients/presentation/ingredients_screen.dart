@@ -13,6 +13,7 @@ import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../../core/widgets/sort_menu_button.dart';
 import '../../../core/widgets/swipe_to_delete.dart';
 import '../../import_csv/application/ingredient_import_service.dart';
 import '../../import_csv/domain/import_result.dart';
@@ -40,6 +41,23 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
   bool _trash = false;
   bool _busy = false;
   bool _soRevisao = false;
+
+  static final List<SortOption<Ingrediente>> _sortOptions = [
+    SortOption<Ingrediente>(
+      'Nome',
+      (a, b) => a.nomeComCaracteristica.toLowerCase().compareTo(
+        b.nomeComCaracteristica.toLowerCase(),
+      ),
+    ),
+    SortOption<Ingrediente>('Preço', (a, b) => a.preco.compareTo(b.preco)),
+    SortOption<Ingrediente>(
+      'Fornecedor',
+      (a, b) =>
+          a.fornecedor.toLowerCase().compareTo(b.fornecedor.toLowerCase()),
+    ),
+  ];
+  int _sortIndex = 0;
+  bool _sortAsc = true;
 
   @override
   void dispose() {
@@ -326,6 +344,16 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
         title: Text(_trash ? 'Ingredientes · Lixeira' : 'Ingredientes'),
         actions: [
           const HelpActions(topic: HelpTopic.ingredientes),
+          if (!_trash)
+            SortMenuButton<Ingrediente>(
+              options: _sortOptions,
+              selectedIndex: _sortIndex,
+              ascending: _sortAsc,
+              onChanged: (i, asc) => setState(() {
+                _sortIndex = i;
+                _sortAsc = asc;
+              }),
+            ),
           if (ref.read(currentPapelProvider).canEditConfig && !_trash)
             IconButton(
               tooltip: 'Juntar marcas/fornecedores repetidos',
@@ -395,7 +423,11 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                 };
                 final nRever = all.where((i) => i.precisaRevisaoInsa).length;
                 if (_soRevisao && nRever == 0) _soRevisao = false;
-                final items = _filter(all);
+                final items = ordenarPor(
+                  _filter(all),
+                  _sortOptions[_sortIndex],
+                  _sortAsc,
+                );
                 return Column(
                   children: [
                     if (nRever > 0)

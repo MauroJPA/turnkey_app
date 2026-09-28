@@ -9,22 +9,38 @@ import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../../core/widgets/sort_menu_button.dart';
 import '../../import_csv/domain/import_result.dart';
 import '../application/sales_import_service.dart';
 import '../application/sales_providers.dart';
 import '../domain/venda.dart';
 import 'venda_form_sheet.dart';
 
-class SalesScreen extends ConsumerWidget {
+class SalesScreen extends ConsumerStatefulWidget {
   const SalesScreen({super.key});
+
+  @override
+  ConsumerState<SalesScreen> createState() => _SalesScreenState();
+}
+
+class _SalesScreenState extends ConsumerState<SalesScreen> {
+  OrigemVenda? _origem;
+
+  static final List<SortOption<Venda>> _sortOptions = [
+    SortOption<Venda>('Data', (a, b) => a.data.compareTo(b.data)),
+    SortOption<Venda>('Valor', (a, b) => a.total.compareTo(b.total)),
+  ];
+  int _sortIndex = 0;
+  bool _sortAsc = false;
 
   bool _podeEditar(WidgetRef ref) =>
       ref.read(currentPapelProvider).canEditBusiness;
 
   Future<void> _importarCsv(BuildContext context, WidgetRef ref) async {
     try {
-      final resultado =
-          await ref.read(salesImportServiceProvider).pickAndImport();
+      final resultado = await ref
+          .read(salesImportServiceProvider)
+          .pickAndImport();
       ref.invalidate(salesListProvider);
       if (!context.mounted) return;
       await showDialog<void>(
@@ -35,8 +51,8 @@ class SalesScreen extends ConsumerWidget {
             resultado.semErros
                 ? resultado.resumo
                 : '${resultado.resumo}\n\n'
-                    '${resultado.erros.take(10).join('\n')}'
-                    '${resultado.erros.length > 10 ? '\n…' : ''}',
+                      '${resultado.erros.take(10).join('\n')}'
+                      '${resultado.erros.length > 10 ? '\n…' : ''}',
           ),
           actions: [
             FilledButton(
@@ -50,8 +66,9 @@ class SalesScreen extends ConsumerWidget {
       // nada escolhido — ignora
     } on Object catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
@@ -138,7 +155,7 @@ class SalesScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final podeEditar = _podeEditar(ref);
     final async = ref.watch(salesListProvider(90));
     final fmt = ref.watch(moneyFormatProvider);
@@ -155,6 +172,15 @@ class SalesScreen extends ConsumerWidget {
             tooltip: 'Análise de vendas',
             icon: const Icon(Icons.bar_chart_outlined),
             onPressed: () => context.push(Routes.analiseVendas),
+          ),
+          SortMenuButton<Venda>(
+            options: _sortOptions,
+            selectedIndex: _sortIndex,
+            ascending: _sortAsc,
+            onChanged: (i, asc) => setState(() {
+              _sortIndex = i;
+              _sortAsc = asc;
+            }),
           ),
           const HelpActions(topic: HelpTopic.vendas),
           if (podeEditar) ...[
@@ -201,18 +227,62 @@ class SalesScreen extends ConsumerWidget {
             );
           }
           final totalPeriodo = vendas.fold<double>(0, (s, v) => s + v.total);
+          final origens = <OrigemVenda>{for (final v in vendas) v.origem};
+          final filtradas = _origem == null
+              ? vendas
+              : vendas.where((v) => v.origem == _origem).toList();
+          final ordenadas = ordenarPor(
+            filtradas,
+            _sortOptions[_sortIndex],
+            _sortAsc,
+          );
           return ListView(
             padding: const EdgeInsets.symmetric(vertical: 8),
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Text(
                   'Últimos 90 dias: ${fmt(totalPeriodo)} em ${vendas.length} '
                   '${vendas.length == 1 ? 'venda' : 'vendas'}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
-              for (final v in vendas)
+              if (origens.length > 1)
+                SizedBox(
+                  height: 44,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: const Text('Todas'),
+                          selected: _origem == null,
+                          onSelected: (_) => setState(() => _origem = null),
+                        ),
+                      ),
+                      for (final o in origens)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(o.label),
+                            selected: _origem == o,
+                            onSelected: (_) => setState(() => _origem = o),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              if (filtradas.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(child: Text('Nada corresponde ao filtro.')),
+                ),
+              for (final v in ordenadas)
                 ListTile(
                   leading: Icon(_origemIcon(v.origem)),
                   title: Text(_diaLabel(v.data)),
@@ -235,10 +305,10 @@ class SalesScreen extends ConsumerWidget {
   }
 
   IconData _origemIcon(OrigemVenda o) => switch (o) {
-        OrigemVenda.manual => Icons.edit_outlined,
-        OrigemVenda.csv => Icons.upload_file_outlined,
-        OrigemVenda.vendus => Icons.sync_outlined,
-      };
+    OrigemVenda.manual => Icons.edit_outlined,
+    OrigemVenda.csv => Icons.upload_file_outlined,
+    OrigemVenda.vendus => Icons.sync_outlined,
+  };
 
   String _diaLabel(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}/'

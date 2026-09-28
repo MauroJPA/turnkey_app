@@ -2,6 +2,21 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.27.0 — 2026-09-28 — Ordenar e filtrar nas listas
+
+- Novo botão de **ordenação** (ícone de seta, junto à ajuda) nos ecrãs de lista: Faturas, Ingredientes,
+  Receitas, Produtos, Fichas Técnicas, Vendas, Encomendas, Limpeza e insumos e Embalagens. Toca num critério
+  para ordenar por ele (nome, preço/custo, valor, data, categoria, fornecedor…); toca outra vez para inverter
+  a ordem (crescente/decrescente).
+- **Filtros novos** onde ainda não havia: Faturas ganha chips por estado (nova/analisada/confirmada/erro/
+  ignorada); Fichas Técnicas ganha chips por categoria; Vendas ganha chips por origem (manual/CSV/Vendus);
+  Encomendas ganha um chip "Urgentes". Os filtros já existentes (pesquisa, categorias de receitas, fornecedor
+  de ingredientes, etc.) mantêm-se tal como estavam.
+- Nas Faturas, a ordenação aplica-se dentro de cada grupo de mês (os meses continuam do mais recente para o
+  mais antigo).
+- Novo widget reutilizável `SortMenuButton` (`lib/src/core/widgets/sort_menu_button.dart`) para não repetir
+  esta lógica ecrã a ecrã.
+
 ## 1.26.0 — 2026-09-28 — Categorias de receitas editáveis
 
 - **As categorias de receitas deixam de ser uma lista fixa** (Massa/Recheio/Cobertura/Outra, presa no código) e

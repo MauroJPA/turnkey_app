@@ -12,6 +12,7 @@ import '../../../core/widgets/autocomplete_text_field.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../../core/widgets/sort_menu_button.dart';
 import '../../cookie_formats/application/cookie_format_providers.dart';
 import '../application/embalagem_kit_providers.dart';
 import '../application/embalagem_providers.dart';
@@ -30,6 +31,19 @@ class _EmbalagensScreenState extends ConsumerState<EmbalagensScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tab = TabController(length: 2, vsync: this)
     ..addListener(() => setState(() {}));
+
+  static final List<SortOption<Embalagem>> _sortOptions = [
+    SortOption<Embalagem>(
+      'Nome',
+      (a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()),
+    ),
+    SortOption<Embalagem>(
+      'Custo por unidade',
+      (a, b) => a.custoUnidade.compareTo(b.custoUnidade),
+    ),
+  ];
+  int _sortIndex = 0;
+  bool _sortAsc = true;
 
   @override
   void dispose() {
@@ -117,7 +131,19 @@ class _EmbalagensScreenState extends ConsumerState<EmbalagensScreen>
           onPressed: () => context.go(Routes.home),
         ),
         title: const Text('Embalagens'),
-        actions: const [HelpActions(topic: HelpTopic.embalagens)],
+        actions: [
+          if (_tab.index == 0)
+            SortMenuButton<Embalagem>(
+              options: _sortOptions,
+              selectedIndex: _sortIndex,
+              ascending: _sortAsc,
+              onChanged: (i, asc) => setState(() {
+                _sortIndex = i;
+                _sortAsc = asc;
+              }),
+            ),
+          const HelpActions(topic: HelpTopic.embalagens),
+        ],
         bottom: TabBar(
           controller: _tab,
           tabs: const [
@@ -136,7 +162,13 @@ class _EmbalagensScreenState extends ConsumerState<EmbalagensScreen>
       body: TabBarView(
         controller: _tab,
         children: [
-          _PecasTab(podeEditar: _podeEditar, fmt: fmt, onEdit: _formEmbalagem),
+          _PecasTab(
+            podeEditar: _podeEditar,
+            fmt: fmt,
+            onEdit: _formEmbalagem,
+            sortOption: _sortOptions[_sortIndex],
+            sortAscending: _sortAsc,
+          ),
           _KitsTab(podeEditar: _podeEditar, fmt: fmt),
         ],
       ),
@@ -149,10 +181,14 @@ class _PecasTab extends ConsumerWidget {
     required this.podeEditar,
     required this.fmt,
     required this.onEdit,
+    required this.sortOption,
+    required this.sortAscending,
   });
   final bool podeEditar;
   final MoneyFmt fmt;
   final Future<void> Function({Embalagem? existente}) onEdit;
+  final SortOption<Embalagem> sortOption;
+  final bool sortAscending;
 
   static String _n(double v) =>
       v == v.roundToDouble() ? v.toStringAsFixed(0) : '$v';
@@ -163,7 +199,8 @@ class _PecasTab extends ConsumerWidget {
     return AsyncValueView<List<Embalagem>>(
       value: async,
       onRetry: () => ref.invalidate(embalagensListProvider),
-      data: (itens) {
+      data: (todas) {
+        final itens = ordenarPor(todas, sortOption, sortAscending);
         if (itens.isEmpty) {
           return const EmptyState(
             icon: Icons.inventory_2_outlined,

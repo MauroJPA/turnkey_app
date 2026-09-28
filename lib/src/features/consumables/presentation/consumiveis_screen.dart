@@ -10,6 +10,7 @@ import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../../core/widgets/sort_menu_button.dart';
 import '../application/consumivel_providers.dart';
 import '../domain/consumivel.dart';
 import 'consumivel_sheet.dart';
@@ -52,6 +53,19 @@ class _ConsumiveisScreenState extends ConsumerState<ConsumiveisScreen> {
   String _pesquisa = '';
   CategoriaConsumivel? _categoria;
   bool _soPendentes = false;
+
+  static final List<SortOption<(Consumivel, EstadoFds)>> _sortOptions = [
+    SortOption<(Consumivel, EstadoFds)>(
+      'Nome',
+      (a, b) => a.$1.nome.toLowerCase().compareTo(b.$1.nome.toLowerCase()),
+    ),
+    SortOption<(Consumivel, EstadoFds)>(
+      'Estado FDS',
+      (a, b) => a.$2.index.compareTo(b.$2.index),
+    ),
+  ];
+  int _sortIndex = 0;
+  bool _sortAsc = true;
 
   bool get _podeEditar => ref.read(currentPapelProvider).canEditBusiness;
 
@@ -131,6 +145,15 @@ class _ConsumiveisScreenState extends ConsumerState<ConsumiveisScreen> {
         ),
         title: const Text('Limpeza e insumos'),
         actions: [
+          SortMenuButton<(Consumivel, EstadoFds)>(
+            options: _sortOptions,
+            selectedIndex: _sortIndex,
+            ascending: _sortAsc,
+            onChanged: (i, asc) => setState(() {
+              _sortIndex = i;
+              _sortAsc = asc;
+            }),
+          ),
           IconButton(
             tooltip: 'Copiar registo (CSV)',
             icon: const Icon(Icons.copy_all_outlined),
@@ -184,6 +207,11 @@ class _ConsumiveisScreenState extends ConsumerState<ConsumiveisScreen> {
             }
             linhas.add((x, e));
           }
+          final linhasOrdenadas = ordenarPor(
+            linhas,
+            _sortOptions[_sortIndex],
+            _sortAsc,
+          );
           return Column(
             children: [
               Padding(
@@ -218,14 +246,14 @@ class _ConsumiveisScreenState extends ConsumerState<ConsumiveisScreen> {
                 ),
               ),
               Expanded(
-                child: linhas.isEmpty
+                child: linhasOrdenadas.isEmpty
                     ? const Center(child: Text('Nada com estes filtros.'))
                     : ListView.separated(
                         padding: const EdgeInsets.only(bottom: 88),
-                        itemCount: linhas.length,
+                        itemCount: linhasOrdenadas.length,
                         separatorBuilder: (_, __) => const Divider(height: 1),
                         itemBuilder: (_, i) {
-                          final (x, e) = linhas[i];
+                          final (x, e) = linhasOrdenadas[i];
                           final ap = apresentaEstadoFds(e, cs);
                           final nDocs = docs
                               .where((d) => d.consumivelId == x.id)

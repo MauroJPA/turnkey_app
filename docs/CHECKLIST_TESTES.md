@@ -923,6 +923,26 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       nem ficam sem categoria); só deixa de aparecer para escolher numa receita nova.
 - [ ] Com sessão de **editor**: não consegue chegar a "Categorias de receitas" (só proprietário/administrador).
 
+## 48. Ordenar e filtrar nas listas
+
+- [ ] **Ingredientes**: botão de ordenar (seta) no topo — Nome, Preço, Fornecedor. Tocar troca o critério;
+      tocar outra vez no mesmo inverte a seta e a ordem.
+- [ ] **Receitas**: ordenar por Nome, Categoria, Custo — os chips de categoria continuam a filtrar como antes.
+- [ ] **Produtos**: ordenar por Nome, Categoria.
+- [ ] **Fichas Técnicas**: ordenar por Nome, Custo, Preço de venda; chips novos por **categoria** (só aparecem
+      se houver mais do que uma categoria em uso).
+- [ ] **Vendas**: ordenar por Data, Valor; chips novos por **origem** (Manual/CSV/Vendus, só aparecem se houver
+      mais do que uma origem nas vendas dos últimos 90 dias).
+- [ ] **Encomendas**: ordenar por Data/hora, Cliente; chip novo **Urgentes** (só aparece na vista "ativas",
+      quando há pelo menos uma urgente).
+- [ ] **Faturas**: ordenar por Data, Fornecedor, Valor — a ordenação aplica-se dentro de cada grupo de mês
+      (os meses continuam do mais recente); chips novos por **estado** (nova/analisada/confirmada/erro/
+      ignorada, só aparecem se houver mais do que um estado presente).
+- [ ] **Limpeza e insumos**: ordenar por Nome, Estado FDS.
+- [ ] **Embalagens** (separador Peças): ordenar por Nome, Custo por unidade.
+- [ ] Em todos os ecrãs acima: sair e voltar à página **mantém o critério e a ordem escolhidos** enquanto a
+      app não é reiniciada (é estado do ecrã, não é guardado no servidor).
+
 ---
 
 ## Notas / ajustes pedidos

@@ -7,6 +7,7 @@ import '../../../core/help/help_content.dart';
 import '../../../core/nutrition/nutri_widgets.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../../core/widgets/sort_menu_button.dart';
 import '../../cookie_formats/application/cookie_format_providers.dart';
 import '../../tech_sheets/application/tech_sheets_providers.dart';
 import '../../tech_sheets/domain/tech_sheet.dart';
@@ -18,13 +19,25 @@ class ProdutosScreen extends ConsumerStatefulWidget {
   const ProdutosScreen({super.key});
 
   @override
-  ConsumerState<ProdutosScreen> createState() =>
-      _ProdutosScreenState();
+  ConsumerState<ProdutosScreen> createState() => _ProdutosScreenState();
 }
 
 class _ProdutosScreenState extends ConsumerState<ProdutosScreen> {
   String _q = '';
   bool _soPorCompletar = false;
+
+  static final List<SortOption<FichaTecnica>> _sortOptions = [
+    SortOption<FichaTecnica>(
+      'Nome',
+      (a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()),
+    ),
+    SortOption<FichaTecnica>(
+      'Categoria',
+      (a, b) => a.categoria.toLowerCase().compareTo(b.categoria.toLowerCase()),
+    ),
+  ];
+  int _sortIndex = 0;
+  bool _sortAsc = true;
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +57,18 @@ class _ProdutosScreenState extends ConsumerState<ProdutosScreen> {
           onPressed: () => context.go(Routes.home),
         ),
         title: const Text('Produtos'),
-        actions: const [HelpActions(topic: HelpTopic.produtos)],
+        actions: [
+          SortMenuButton<FichaTecnica>(
+            options: _sortOptions,
+            selectedIndex: _sortIndex,
+            ascending: _sortAsc,
+            onChanged: (i, asc) => setState(() {
+              _sortIndex = i;
+              _sortAsc = asc;
+            }),
+          ),
+          const HelpActions(topic: HelpTopic.produtos),
+        ],
       ),
       body: Column(
         children: [
@@ -75,16 +99,20 @@ class _ProdutosScreenState extends ConsumerState<ProdutosScreen> {
               value: async,
               onRetry: () => ref.invalidate(fichasListProvider(false)),
               data: (todas) {
-                final itens = todas.where((f) {
-                  final q = _q.trim().toLowerCase();
-                  if (q.isNotEmpty && !f.nome.toLowerCase().contains(q)) {
-                    return false;
-                  }
-                  if (_soPorCompletar && pendenciasProduto(f).isEmpty) {
-                    return false;
-                  }
-                  return true;
-                }).toList();
+                final itens = ordenarPor(
+                  todas.where((f) {
+                    final q = _q.trim().toLowerCase();
+                    if (q.isNotEmpty && !f.nome.toLowerCase().contains(q)) {
+                      return false;
+                    }
+                    if (_soPorCompletar && pendenciasProduto(f).isEmpty) {
+                      return false;
+                    }
+                    return true;
+                  }).toList(),
+                  _sortOptions[_sortIndex],
+                  _sortAsc,
+                );
                 if (itens.isEmpty) {
                   return Center(
                     child: Text(

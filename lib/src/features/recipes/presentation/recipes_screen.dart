@@ -9,6 +9,7 @@ import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../../core/widgets/sort_menu_button.dart';
 import '../../../core/widgets/swipe_to_delete.dart';
 import '../application/recipes_providers.dart';
 import '../domain/recipe.dart';
@@ -27,6 +28,23 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
   String? _categoria;
   bool _trash = false;
   bool _busy = false;
+
+  static final List<SortOption<Receita>> _sortOptions = [
+    SortOption<Receita>(
+      'Nome',
+      (a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()),
+    ),
+    SortOption<Receita>(
+      'Categoria',
+      (a, b) => a.categoria.toLowerCase().compareTo(b.categoria.toLowerCase()),
+    ),
+    SortOption<Receita>(
+      'Custo',
+      (a, b) => a.custoReceita.compareTo(b.custoReceita),
+    ),
+  ];
+  int _sortIndex = 0;
+  bool _sortAsc = true;
 
   bool get _podeEditar => ref.read(currentPapelProvider).canEditBusiness;
 
@@ -82,6 +100,16 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
         title: Text(_trash ? 'Receitas · Lixeira' : 'Receitas'),
         actions: [
           const HelpActions(topic: HelpTopic.receitas),
+          if (!_trash)
+            SortMenuButton<Receita>(
+              options: _sortOptions,
+              selectedIndex: _sortIndex,
+              ascending: _sortAsc,
+              onChanged: (i, asc) => setState(() {
+                _sortIndex = i;
+                _sortAsc = asc;
+              }),
+            ),
           IconButton(
             tooltip: _trash ? 'Ver ativas' : 'Lixeira',
             icon: Icon(
@@ -150,13 +178,17 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
               value: listAsync,
               onRetry: () => ref.invalidate(recipesListProvider(_trash)),
               data: (all) {
-                final items = all.where((r) {
-                  final mq =
-                      _q.isEmpty ||
-                      r.nome.toLowerCase().contains(_q.toLowerCase());
-                  final mc = _categoria == null || r.categoria == _categoria;
-                  return mq && mc;
-                }).toList();
+                final items = ordenarPor(
+                  all.where((r) {
+                    final mq =
+                        _q.isEmpty ||
+                        r.nome.toLowerCase().contains(_q.toLowerCase());
+                    final mc = _categoria == null || r.categoria == _categoria;
+                    return mq && mc;
+                  }).toList(),
+                  _sortOptions[_sortIndex],
+                  _sortAsc,
+                );
                 if (items.isEmpty) {
                   return Center(
                     child: Text(

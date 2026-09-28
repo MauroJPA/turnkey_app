@@ -15,6 +15,7 @@ import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../../core/widgets/history_sheet.dart';
+import '../../../core/widgets/sort_menu_button.dart';
 import '../application/analise_faturas_controller.dart';
 import '../application/invoice_providers.dart';
 import '../domain/fatura.dart';
@@ -33,6 +34,24 @@ class InvoicesScreen extends ConsumerStatefulWidget {
 class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
   bool _selecionando = false;
   final Set<String> _selecionadas = {};
+  FaturaEstado? _estado;
+
+  static final List<SortOption<Fatura>> _sortOptions = [
+    SortOption<Fatura>(
+      'Data',
+      (a, b) => (a.dataFatura.isNotEmpty ? a.dataFatura : a.created).compareTo(
+        b.dataFatura.isNotEmpty ? b.dataFatura : b.created,
+      ),
+    ),
+    SortOption<Fatura>(
+      'Fornecedor',
+      (a, b) =>
+          a.fornecedor.toLowerCase().compareTo(b.fornecedor.toLowerCase()),
+    ),
+    SortOption<Fatura>('Valor', (a, b) => a.total.compareTo(b.total)),
+  ];
+  int _sortIndex = 0;
+  bool _sortAsc = false;
 
   bool _podeEditar(WidgetRef ref) =>
       ref.read(currentPapelProvider).canEditBusiness;
@@ -297,6 +316,15 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
                   icon: const Icon(Icons.folder_shared_outlined),
                   onPressed: () => showContabilidadeSheet(context, ref),
                 ),
+                SortMenuButton<Fatura>(
+                  options: _sortOptions,
+                  selectedIndex: _sortIndex,
+                  ascending: _sortAsc,
+                  onChanged: (i, asc) => setState(() {
+                    _sortIndex = i;
+                    _sortAsc = asc;
+                  }),
+                ),
                 if (podeEditar)
                   IconButton(
                     tooltip: 'Selecionar várias para marcar como ignoradas',
@@ -354,18 +382,61 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
                   'A IA lê as linhas e tu confirmas.',
             );
           }
+          final estados = <FaturaEstado>{for (final f in faturas) f.estado};
+          final filtradas = _estado == null
+              ? faturas
+              : faturas.where((f) => f.estado == _estado).toList();
           final grupos = <String, List<Fatura>>{};
-          for (final f in faturas) {
+          for (final f in filtradas) {
             final mes = f.dataFatura.isNotEmpty
                 ? f.dataFatura.substring(0, 7)
                 : (f.created.isNotEmpty ? f.created.substring(0, 7) : '—');
             grupos.putIfAbsent(mes, () => []).add(f);
+          }
+          for (final mes in grupos.keys) {
+            grupos[mes] = ordenarPor(
+              grupos[mes]!,
+              _sortOptions[_sortIndex],
+              _sortAsc,
+            );
           }
           final trabalhos = ref.watch(analiseFaturasProvider);
           return ListView(
             padding: const EdgeInsets.only(bottom: 88),
             children: [
               const AnaliseFaturasPainel(),
+              if (estados.length > 1)
+                SizedBox(
+                  height: 44,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: const Text('Todas'),
+                          selected: _estado == null,
+                          onSelected: (_) => setState(() => _estado = null),
+                        ),
+                      ),
+                      for (final e in estados)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(e.label),
+                            selected: _estado == e,
+                            onSelected: (_) => setState(() => _estado = e),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              if (filtradas.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(child: Text('Nada corresponde ao filtro.')),
+                ),
               for (final entry in grupos.entries) ...[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
