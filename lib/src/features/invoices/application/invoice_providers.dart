@@ -20,6 +20,13 @@ final faturasApagadasProvider = FutureProvider.autoDispose<List<Fatura>>((ref) {
   return ref.watch(invoiceRepositoryProvider).listApagadas();
 });
 
+/// O que já foi decidido nesta fatura (rondas anteriores de "Aplicar"), por
+/// índice de linha — para a revisão não repetir o que já está feito.
+final itensFaturaProvider = FutureProvider.autoDispose
+    .family<List<ItemFaturaAnterior>, String>((ref, faturaId) {
+      return ref.watch(invoiceRepositoryProvider).itensAnteriores(faturaId);
+    });
+
 final invoiceActionsProvider = Provider<InvoiceActions>(InvoiceActions.new);
 
 class InvoiceActions {
@@ -28,7 +35,7 @@ class InvoiceActions {
 
   InvoiceRepository get _repo => _ref.read(invoiceRepositoryProvider);
 
-  Future<({int precos, int precosIgnorados, int movimentos})> aplicar(
+  Future<ResultadoAplicar> aplicar(
     String id,
     List<LinhaAAplicar> linhas,
   ) async {
@@ -36,6 +43,7 @@ class InvoiceActions {
     _ref.invalidate(faturaProvider(id));
     _ref.invalidate(faturasListProvider);
     _ref.invalidate(ingredientsListProvider);
+    _ref.invalidate(itensFaturaProvider(id));
     return r;
   }
 

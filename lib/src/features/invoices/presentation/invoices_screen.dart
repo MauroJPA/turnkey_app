@@ -340,7 +340,11 @@ class InvoicesScreen extends ConsumerWidget {
                           : (f.estado == FaturaEstado.erro &&
                                     f.duplicadaDe.isNotEmpty
                                 ? const _EstadoChip.texto('Duplicada')
-                                : _EstadoChip(estado: f.estado)),
+                                : (f.temPendentes
+                                      ? _EstadoChip.texto(
+                                          '${f.pendentesLinhas} por rever',
+                                        )
+                                      : _EstadoChip(estado: f.estado))),
                       onTap: () => context.push('${Routes.invoices}/${f.id}'),
                       onLongPress: dono
                           ? () => _opcoesFatura(context, ref, f)

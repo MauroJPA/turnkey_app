@@ -23,11 +23,16 @@ class Embalagem {
     this.rendeUnidades = 1,
     this.fornecedor = '',
     this.deletado = false,
+    this.nomesFatura = const [],
   });
 
   final String id;
   final String nome;
   final String tipo;
+
+  /// Descrições de fatura (normalizadas) já associadas a esta embalagem, para
+  /// as faturas seguintes se ligarem sozinhas.
+  final List<String> nomesFatura;
 
   /// € do que se compra (um rolo, um pacote, uma peça).
   final double precoCompra;
@@ -59,6 +64,10 @@ class Embalagem {
         rendeUnidades: r.getDoubleValue('rende_unidades'),
         fornecedor: r.getStringValue('fornecedor'),
         deletado: r.getBoolValue('deletado'),
+        nomesFatura: switch (r.data['nomes_fatura']) {
+          final List v => [for (final n in v) '$n'],
+          _ => const [],
+        },
       );
 }
 

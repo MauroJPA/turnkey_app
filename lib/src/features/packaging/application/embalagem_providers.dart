@@ -19,9 +19,10 @@ class EmbalagemActions {
 
   void _refresh() => _ref.invalidate(embalagensListProvider);
 
-  Future<void> criar(EmbalagemInput input) async {
-    await _repo.create(input);
+  Future<Embalagem> criar(EmbalagemInput input) async {
+    final e = await _repo.create(input);
     _refresh();
+    return e;
   }
 
   Future<void> atualizar(String id, EmbalagemInput input) async {
