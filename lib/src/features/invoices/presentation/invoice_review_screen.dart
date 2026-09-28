@@ -382,7 +382,7 @@ class _LinhaState {
     Consumivel? consMatch,
     Embalagem? embMatch,
     required bool isLista,
-    ItemFaturaAnterior? anterior,
+    this.anterior,
   }) : aplicadaAnterior = anterior?.aplicado ?? false,
        tipo = _tipoInicial(ia, anterior),
        cons = consMatch,
@@ -449,6 +449,12 @@ class _LinhaState {
   /// Já foi aplicada numa ronda anterior (preço/stock já atualizados) — fica
   /// só para consulta, sem precisar de ser revista outra vez.
   final bool aplicadaAnterior;
+
+  /// O registo gravado (índice, marca/fornecedor, a que ficou ligada…) numa
+  /// ronda anterior — para mostrar e, sendo proprietário/administrador, dar
+  /// para corrigir marca/fornecedor mesmo com a linha já aplicada. Atualizado
+  /// localmente depois de corrigir (sem recriar a linha toda).
+  ItemFaturaAnterior? anterior;
 
   /// A que se liga esta linha: um ingrediente, um consumível (limpeza/insumo)
   /// ou uma embalagem (caixa, saco, adesivo…).
@@ -1614,6 +1620,67 @@ class _RevisaoState extends ConsumerState<_Revisao> {
     ];
   }
 
+  /// Nome do ingrediente/consumível/embalagem a que uma linha (já aplicada
+  /// ou não) ficou ligada, para mostrar no resumo.
+  String? _destinoNome(_LinhaState l) => switch (l.tipo) {
+    TipoLinha.ingrediente => l.ingrediente?.nome,
+    TipoLinha.consumivel => l.cons?.nome,
+    TipoLinha.embalagem => l.embalagemSel?.nome,
+  };
+
+  Future<void> _corrigirLinha(_LinhaState l) async {
+    final ant = l.anterior;
+    if (ant == null || !ant.temAlvoParaCorrigir) return;
+    final temMarca = ant.produtoId != null || ant.consumivelId != null;
+    final ok = await mostrarCorrigirItem(
+      context,
+      ref,
+      faturaId: widget.fatura.id,
+      index: l.index,
+      descricao: ant.descricaoFatura.isNotEmpty
+          ? ant.descricaoFatura
+          : l.ia.descricao,
+      marcaAtual: ant.marca,
+      fornecedorAtual: ant.fornecedor,
+      temMarca: temMarca,
+    );
+    if (!ok || !mounted) return;
+    final itens = await ref.read(itensFaturaProvider(widget.fatura.id).future);
+    final novo = itens.firstWhereOrNull((i) => i.index == l.index);
+    if (novo != null) setState(() => l.anterior = novo);
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Corrigido.')));
+    }
+  }
+
+  Widget _linhaAplicadaTile(_LinhaState l) {
+    final ant = l.anterior;
+    final destino = _destinoNome(l);
+    final subPartes = [
+      if (destino != null) destino,
+      if ((ant?.marca ?? '').isNotEmpty) 'marca ${ant!.marca}',
+      if ((ant?.fornecedor ?? '').isNotEmpty) ant!.fornecedor,
+    ];
+    final podeCorrigir =
+        (ant?.temAlvoParaCorrigir ?? false) && ehProprietarioOuAdmin(ref);
+    return ListTile(
+      dense: true,
+      title: Text(l.ia.descricao, style: const TextStyle(fontSize: 13)),
+      subtitle: subPartes.isEmpty
+          ? null
+          : Text(subPartes.join(' · '), style: const TextStyle(fontSize: 12)),
+      trailing: podeCorrigir
+          ? IconButton(
+              icon: const Icon(Icons.edit_outlined, size: 18),
+              tooltip: 'Corrigir marca/fornecedor',
+              onPressed: () => _corrigirLinha(l),
+            )
+          : null,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final f = widget.fatura;
@@ -1628,19 +1695,28 @@ class _RevisaoState extends ConsumerState<_Revisao> {
         if (aplicadasCount > 0)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.check_circle_outline, size: 16, color: cs.primary),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    '$aplicadasCount linha(s) já aplicada(s) antes — não '
-                    'precisas de as rever.',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+            child: Theme(
+              data: Theme.of(
+                context,
+              ).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                initiallyExpanded: false,
+                leading: Icon(
+                  Icons.check_circle_outline,
+                  size: 20,
+                  color: cs.primary,
                 ),
-              ],
+                title: Text(
+                  '$aplicadasCount linha(s) já aplicada(s) antes — não '
+                  'precisas de as rever.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                children: [
+                  for (final l in _linhas.where((l) => l.aplicadaAnterior))
+                    _linhaAplicadaTile(l),
+                ],
+              ),
             ),
           ),
         Text(

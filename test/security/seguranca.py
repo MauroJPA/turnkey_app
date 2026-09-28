@@ -1239,6 +1239,63 @@ def teste_faturas_pendente_embalagem():
     else:
         aviso('embalagens.formatos_cookie (lista mista): formatos_cookie não foi semeado em A/B — não testado')
 
+    # --- bug: fornecedor não ficava gravado quando o produto já EXISTIA (emparelhado) ---
+    # marca já funcionava (só preenchia se estivesse em branco, independente de o
+    # produto ser novo ou existente); fornecedor só era gravado ao CRIAR o produto.
+    ing_c = ingrediente('Ingrediente fornecedor bug')
+    st, fnf, _ = call('POST', '/api/collections/faturas/records',
+                       {'empresa': empresas['A'], 'autor': users['editorA'], 'tipo': 'fatura', 'estado': 'analisada',
+                        'fornecedor': '', 'data_fatura': '2026-09-10 00:00:00.000Z',
+                        'dados_ia': {'linhas': [{'descricao': 'Manteiga Mimosa 250g', 'quantidade': 1, 'unidade': 'un'}]}}, su)
+    fid_nf = fnf['id']
+    st, rnf, _ = call('POST', f"/api/gc_turnkey/faturas/{fid_nf}/aplicar",
+                       {'linhas': [{'index': 0, 'ingredienteId': ing_c, 'acao': 'preco', 'precoUnitario': 1.2,
+                                    'descricaoFatura': 'Manteiga Mimosa 250g', 'marca': 'Mimosa'}]}, t)
+    check(st == 200 and rnf.get('precos') == 1, 'cria o produto (1ª fatura, sem fornecedor)', f'{st} {str(rnf)[:160]}')
+    prods_c = call('GET', f"/api/collections/ingrediente_produtos/records?filter=ingrediente='{ing_c}'", tok=t)[1].get('items', [])
+    check(len(prods_c) == 1 and prods_c[0].get('fornecedor', '?') == '', 'o produto fica sem fornecedor (a 1ª fatura não tinha)', str(prods_c)[:160])
+
+    st, fnf2, _ = call('POST', '/api/collections/faturas/records',
+                        {'empresa': empresas['A'], 'autor': users['editorA'], 'tipo': 'fatura', 'estado': 'analisada',
+                         'fornecedor': 'Continente', 'data_fatura': '2026-09-15 00:00:00.000Z',
+                         'dados_ia': {'linhas': [{'descricao': 'Manteiga Mimosa 250g', 'quantidade': 1, 'unidade': 'un'}]}}, su)
+    fid_nf2 = fnf2['id']
+    st, rnf2, _ = call('POST', f"/api/gc_turnkey/faturas/{fid_nf2}/aplicar",
+                        {'linhas': [{'index': 0, 'ingredienteId': ing_c, 'acao': 'preco', 'precoUnitario': 1.3,
+                                     'descricaoFatura': 'Manteiga Mimosa 250g'}]}, t)
+    check(st == 200, '2ª fatura emparelha o MESMO produto (pelo nome já aprendido)', f'{st} {str(rnf2)[:160]}')
+    prods_c2 = call('GET', f"/api/collections/ingrediente_produtos/records?filter=ingrediente='{ing_c}'", tok=t)[1].get('items', [])
+    check(len(prods_c2) == 1 and prods_c2[0].get('fornecedor') == 'Continente',
+          'BUG CORRIGIDO: o fornecedor da 2ª fatura fica gravado no produto já existente', str(prods_c2)[:160])
+
+    # --- /corrigir-item: proprietário/administrador corrigem marca/fornecedor mesmo já aplicada ---
+    st, item_nf2, _ = call('GET', f"/api/collections/faturas_itens/records?filter=fatura='{fid_nf2}'", tok=t)
+    item_nf2 = item_nf2.get('items', [{}])[0]
+    check(item_nf2.get('produto') == prods_c2[0]['id'] and item_nf2.get('fornecedor') == 'Continente',
+          'faturas_itens guarda o produto/marca/fornecedor tocados, para dar para corrigir depois', str(item_nf2)[:160])
+
+    corrige_url = f'/api/gc_turnkey/faturas/{fid_nf2}/corrigir-item'
+    st, rc0, _ = call('POST', corrige_url, {'index': 0, 'marca': 'X', 'fornecedor': 'Y'}, tok['editorA'])
+    check(st != 200, 'corrigir-item: editor não pode (só proprietário/administrador)', f'status {st} {str(rc0)[:120]}')
+    st, rc0b, _ = call('POST', corrige_url, {'index': 0, 'marca': 'X', 'fornecedor': 'Y'}, tok['viewerA'])
+    check(st != 200, 'corrigir-item: viewer não pode', f'status {st}')
+    st, rcb, _ = call('POST', corrige_url, {'index': 0, 'marca': 'X', 'fornecedor': 'Y'}, tok['ownerB'])
+    check(st != 200, 'corrigir-item: fatura de outra empresa é recusada', f'status {st}')
+
+    st, rc1, _ = call('POST', corrige_url, {'index': 0, 'marca': 'Marca Corrigida', 'fornecedor': 'Fornecedor Corrigido'}, tok['ownerA'])
+    check(st == 200 and rc1.get('marca') == 'Marca Corrigida' and rc1.get('fornecedor') == 'Fornecedor Corrigido',
+          'corrigir-item: o proprietário corrige, mesmo já aplicada/confirmada', f'{st} {str(rc1)[:160]}')
+    prod_final = call('GET', f"/api/collections/ingrediente_produtos/records/{prods_c2[0]['id']}", tok=t)[1]
+    check(prod_final.get('marca') == 'Marca Corrigida' and prod_final.get('fornecedor') == 'Fornecedor Corrigido',
+          'a correção SUBSTITUI o que já lá estava (ao contrário de /aplicar, que só preenche em branco)', str(prod_final)[:160])
+    item_final = call('GET', f"/api/collections/faturas_itens/records?filter=fatura='{fid_nf2}'", tok=t)[1].get('items', [{}])[0]
+    check(item_final.get('marca') == 'Marca Corrigida' and item_final.get('fornecedor') == 'Fornecedor Corrigido',
+          'faturas_itens também fica com o valor corrigido', str(item_final)[:160])
+
+    st, rc2, _ = call('POST', corrige_url, {'index': 0, 'fornecedor': 'Só o fornecedor'}, tok['adminA'])
+    check(st == 200 and rc2.get('marca') == 'Marca Corrigida' and rc2.get('fornecedor') == 'Só o fornecedor',
+          'corrigir-item: o administrador também pode; corrigir só o fornecedor não mexe na marca', f'{st} {str(rc2)[:160]}')
+
 
 def teste_produtos():
     """9. Ingredientes genéricos e produtos de compra: custo pela compra mais recente."""

@@ -17,6 +17,11 @@ import '../domain/invoice_erros.dart';
 bool ehProprietario(WidgetRef ref) =>
     ref.read(currentPapelProvider) == Papel.owner;
 
+/// Proprietário ou administrador: corrigir marca/fornecedor de uma linha já
+/// aplicada, mesmo com a fatura confirmada (ver [mostrarCorrigirItem]).
+bool ehProprietarioOuAdmin(WidgetRef ref) =>
+    ref.read(currentPapelProvider).canEditConfig;
+
 /// Corrigir fornecedor, número, data e total de uma fatura. Devolve `true` se guardou.
 Future<bool> mostrarEditarFatura(
   BuildContext context,
@@ -152,6 +157,109 @@ Future<bool> mostrarEditarFatura(
   forn.dispose();
   num.dispose();
   total.dispose();
+  return ok == true;
+}
+
+/// Corrigir a marca e/ou o fornecedor que ficaram gravados numa linha já
+/// aplicada (mesmo com a fatura confirmada) — proprietário/administrador,
+/// para o caso de algo passar despercebido e só se notar depois, olhando de
+/// novo para a fatura em PDF/imagem. [temMarca] esconde o campo Marca quando
+/// a linha está ligada a uma embalagem (que não tem esse campo).
+Future<bool> mostrarCorrigirItem(
+  BuildContext context,
+  WidgetRef ref, {
+  required String faturaId,
+  required int index,
+  required String descricao,
+  required String marcaAtual,
+  required String fornecedorAtual,
+  bool temMarca = true,
+}) async {
+  final marca = TextEditingController(text: marcaAtual);
+  final forn = TextEditingController(text: fornecedorAtual);
+  String? erro;
+  var busy = false;
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setSt) => AlertDialog(
+        title: const Text('Corrigir marca / fornecedor'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(descricao, style: Theme.of(ctx).textTheme.bodyMedium),
+              const SizedBox(height: 12),
+              if (temMarca) ...[
+                TextField(
+                  controller: marca,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(labelText: 'Marca'),
+                ),
+                const SizedBox(height: 8),
+              ],
+              TextField(
+                controller: forn,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(labelText: 'Fornecedor'),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Corrige o que ficou gravado ao aplicar esta fatura — para '
+                'quando algo passou despercebido e só se nota depois, olhando '
+                'de novo para a fatura em PDF/imagem.',
+                style: Theme.of(ctx).textTheme.bodySmall,
+              ),
+              if (erro != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    erro!,
+                    style: TextStyle(color: Theme.of(ctx).colorScheme.error),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: busy ? null : () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: busy
+                ? null
+                : () async {
+                    setSt(() {
+                      busy = true;
+                      erro = null;
+                    });
+                    try {
+                      await ref
+                          .read(invoiceActionsProvider)
+                          .corrigirItem(
+                            faturaId,
+                            index,
+                            marca: temMarca ? marca.text : null,
+                            fornecedor: forn.text,
+                          );
+                      if (ctx.mounted) Navigator.pop(ctx, true);
+                    } on Object catch (e) {
+                      setSt(() {
+                        busy = false;
+                        erro = mensagemAmigavel(e);
+                      });
+                    }
+                  },
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    ),
+  );
+  marca.dispose();
+  forn.dispose();
   return ok == true;
 }
 
