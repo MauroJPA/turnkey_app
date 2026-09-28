@@ -131,6 +131,33 @@ docker stats --no-stream gc_turnkey
 
 ## 9. Atualizar a app (novo pacote)
 
+### Automático (recomendado) — `scripts/publicar-producao.sh`
+
+Corre **na tua máquina** (nunca no servidor), dentro da pasta do projeto. Envia o pacote por `scp`,
+confirma o SHA-256 já no servidor (aborta sem mexer em nada se não bater certo) e depois faz sozinho o
+backup, a extração e a atualização:
+
+```bash
+bash scripts/publicar-producao.sh <pacote.tar.gz> <utilizador@servidor> [pasta-no-servidor] [porta-ssh]
+```
+
+Exemplo real:
+
+```bash
+bash scripts/publicar-producao.sh dist/gc_turnkey-servidor-1.27.0.tar.gz virusserver@192.168.1.151 /opt/gc_turnkey 2022
+```
+
+`pasta-no-servidor` por omissão é `/opt/gc_turnkey`; `porta-ssh` por omissão é `22`.
+
+No **PowerShell do Windows** (onde `bash` não é reconhecido diretamente), chama o Git Bash pelo caminho
+completo:
+
+```powershell
+& "C:\Program Files\Git\bin\bash.exe" scripts/publicar-producao.sh <pacote.tar.gz> <utilizador@servidor> [pasta-no-servidor] [porta-ssh]
+```
+
+### Manual (passo a passo, para perceber o que o script faz por dentro)
+
 ```bash
 cd /opt/gc_turnkey
 bash gc_turnkey.sh backup-agora                                  # cópia antes de mexer
