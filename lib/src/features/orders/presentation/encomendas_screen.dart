@@ -77,7 +77,6 @@ class _EncomendasScreenState extends ConsumerState<EncomendasScreen> {
               _sortAsc = asc;
             }),
           ),
-          const HelpActions(topic: HelpTopic.encomendas),
           IconButton(
             tooltip: _concluidas
                 ? 'Ver só as ativas'
@@ -87,6 +86,7 @@ class _EncomendasScreenState extends ConsumerState<EncomendasScreen> {
             ),
             onPressed: () => setState(() => _concluidas = !_concluidas),
           ),
+          const HelpActions(topic: HelpTopic.encomendas),
         ],
       ),
       floatingActionButton: podeEditar

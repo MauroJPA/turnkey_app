@@ -11,7 +11,9 @@ import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../ingredients/application/ingredients_providers.dart';
+import '../../ingredients/data/ingredient_product_repository.dart';
 import '../../ingredients/domain/ingredient.dart';
+import '../../ingredients/domain/produto_ingrediente.dart';
 import '../../inventory/domain/stock_item.dart' show kCategoriasMaterial;
 import '../application/shopping_providers.dart';
 import '../domain/shopping_item.dart';
@@ -46,8 +48,9 @@ class ShoppingScreen extends ConsumerWidget {
       }
     } on Object catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
@@ -66,14 +69,15 @@ class ShoppingScreen extends ConsumerWidget {
     try {
       final n = await ref.read(shoppingActionsProvider).limparTudo();
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$n item(s) apagado(s).')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$n item(s) apagado(s).')));
       }
     } on Object catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
@@ -112,9 +116,7 @@ class ShoppingScreen extends ConsumerWidget {
     WidgetRef ref,
     ShoppingItem item,
   ) async {
-    final ctrl = TextEditingController(
-      text: item.comprarG.toStringAsFixed(0),
-    );
+    final ctrl = TextEditingController(text: item.comprarG.toStringAsFixed(0));
     final v = await showDialog<double>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -161,7 +163,6 @@ class ShoppingScreen extends ConsumerWidget {
         ),
         title: const Text('Lista de compras'),
         actions: [
-          const HelpActions(topic: HelpTopic.compras),
           if (podeEditar)
             PopupMenuButton<String>(
               onSelected: (v) {
@@ -189,6 +190,7 @@ class ShoppingScreen extends ConsumerWidget {
                 ),
               ],
             ),
+          const HelpActions(topic: HelpTopic.compras),
         ],
       ),
       floatingActionButton: podeEditar
@@ -206,15 +208,18 @@ class ShoppingScreen extends ConsumerWidget {
             return const EmptyState(
               icon: Icons.shopping_cart_outlined,
               titulo: 'Lista de compras vazia',
-              mensagem: 'Abra uma produção na Agenda e toque em "Adicionar à lista de compras".',
+              mensagem:
+                  'Abra uma produção na Agenda e toque em "Adicionar à lista de compras".',
             );
           }
           final grupos = <String, List<ShoppingItem>>{};
           for (final i in itens) {
             grupos.putIfAbsent(i.grupo, () => []).add(i);
           }
-          final totalEsperado =
-              itens.fold<double>(0, (s, i) => s + i.custoEstimado);
+          final totalEsperado = itens.fold<double>(
+            0,
+            (s, i) => s + i.custoEstimado,
+          );
           final totalComprado = itens
               .where((i) => i.comprado)
               .fold<double>(0, (s, i) => s + i.custoEstimado);
@@ -230,11 +235,18 @@ class ShoppingScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _linhaTotal(context, 'Total esperado', fmt(totalEsperado),
-                          forte: true),
+                      _linhaTotal(
+                        context,
+                        'Total esperado',
+                        fmt(totalEsperado),
+                        forte: true,
+                      ),
                       const SizedBox(height: 4),
-                      _linhaTotal(context, 'Já comprado (visto)',
-                          fmt(totalComprado)),
+                      _linhaTotal(
+                        context,
+                        'Já comprado (visto)',
+                        fmt(totalComprado),
+                      ),
                       const SizedBox(height: 4),
                       _linhaTotal(
                         context,
@@ -252,8 +264,8 @@ class ShoppingScreen extends ConsumerWidget {
                   child: Text(
                     entry.key,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
                 ),
                 for (final item in entry.value)
@@ -322,8 +334,8 @@ class _Linha extends StatelessWidget {
     final descricao = (sacos != null && sacos > 0)
         ? '$sacos  ${item.descricao}'
         : (!item.emGramas
-            ? '${item.quantidadeTexto()}  ${item.descricao}'
-            : item.descricao);
+              ? '${item.quantidadeTexto()}  ${item.descricao}'
+              : item.descricao);
 
     final String detalhe;
     if (!item.emGramas) {
@@ -331,10 +343,12 @@ class _Linha extends StatelessWidget {
     } else if (item.necessariaG <= 0) {
       detalhe = 'Comprar ${ShoppingItem.gramasLabel(item.comprarG)}';
     } else if (item.embalagemG > 0) {
-      detalhe = 'Embalagem de ${ShoppingItem.gramasLabel(item.embalagemG)} — '
+      detalhe =
+          'Embalagem de ${ShoppingItem.gramasLabel(item.embalagemG)} — '
           'Precisamos de ${ShoppingItem.gramasLabel(item.necessariaG)}';
     } else {
-      detalhe = 'Precisamos de ${ShoppingItem.gramasLabel(item.necessariaG)}'
+      detalhe =
+          'Precisamos de ${ShoppingItem.gramasLabel(item.necessariaG)}'
           ' · comprar ${ShoppingItem.gramasLabel(item.comprarG)}';
     }
 
@@ -351,9 +365,9 @@ class _Linha extends StatelessWidget {
           if (item.notas.isNotEmpty)
             Text(
               item.notas,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontStyle: FontStyle.italic,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
             ),
         ],
       ),
@@ -372,10 +386,7 @@ class _Linha extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 if (podeEditar)
-                  Text(
-                    'editar',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                  Text('editar', style: Theme.of(context).textTheme.bodySmall),
               ],
             ),
           ),
@@ -386,6 +397,122 @@ class _Linha extends StatelessWidget {
               onPressed: onRemover,
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Compara os produtos de compra (marcas/fornecedores) de um ingrediente e,
+/// se houver mais do que um com preço, sugere o mais barato e a poupança.
+class _ComparacaoFornecedores extends ConsumerWidget {
+  const _ComparacaoFornecedores({required this.ingrediente});
+
+  final Ingrediente ingrediente;
+
+  static String _fornecedor(ProdutoIngrediente p) => p.fornecedor.isNotEmpty
+      ? p.fornecedor
+      : (p.marca.isNotEmpty ? p.marca : p.nome);
+
+  (String unidade, double fator) _unidade() => switch (ingrediente.un) {
+    'ml' => ('L', 1000),
+    'un' => ('un', 1),
+    _ => ('kg', 1000),
+  };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final produtos =
+        ref
+            .watch(produtosDoIngredienteProvider(ingrediente.id))
+            .where((p) => p.temPreco)
+            .toList()
+          ..sort((a, b) => a.custoPorGrama.compareTo(b.custoPorGrama));
+    if (produtos.length < 2) return const SizedBox.shrink();
+
+    final barato = produtos.first;
+    final caro = produtos.last;
+    if (caro.custoPorGrama <= barato.custoPorGrama) {
+      return const SizedBox.shrink();
+    }
+    final (unidade, fator) = _unidade();
+    final poupancaPct = (1 - barato.custoPorGrama / caro.custoPorGrama) * 100;
+    final fmt = ref.watch(moneyFormatProvider);
+    final cs = Theme.of(context).colorScheme;
+
+    return Card(
+      margin: const EdgeInsets.only(top: 8),
+      color: cs.secondaryContainer,
+      child: ListTile(
+        dense: true,
+        leading: Icon(Icons.lightbulb_outline, color: cs.onSecondaryContainer),
+        title: Text(
+          '${_fornecedor(barato)} é o mais barato',
+          style: TextStyle(color: cs.onSecondaryContainer),
+        ),
+        subtitle: Text(
+          '${fmt(barato.custoPorGrama * fator)}/$unidade · poupas '
+          '${poupancaPct.toStringAsFixed(0)}% vs ${_fornecedor(caro)}',
+          style: TextStyle(color: cs.onSecondaryContainer),
+        ),
+        trailing: IconButton(
+          tooltip: 'Comparar todos os fornecedores',
+          icon: Icon(Icons.info_outline, color: cs.onSecondaryContainer),
+          onPressed: () => _mostrarComparacao(context, produtos, fmt),
+        ),
+      ),
+    );
+  }
+
+  void _mostrarComparacao(
+    BuildContext context,
+    List<ProdutoIngrediente> produtos,
+    MoneyFmt fmt,
+  ) {
+    final (unidade, fator) = _unidade();
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Fornecedores de ${ingrediente.nome}',
+                style: Theme.of(ctx).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Do mais barato para o mais caro, por $unidade.',
+                style: Theme.of(ctx).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 8),
+              for (var i = 0; i < produtos.length; i++)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: i == 0
+                      ? Icon(
+                          Icons.star,
+                          color: Theme.of(ctx).colorScheme.primary,
+                        )
+                      : const SizedBox(width: 24),
+                  title: Text(_fornecedor(produtos[i])),
+                  subtitle: produtos[i].resumo.isEmpty
+                      ? null
+                      : Text(produtos[i].resumo),
+                  trailing: Text(
+                    '${fmt(produtos[i].custoPorGrama * fator)}/$unidade',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: i == 0 ? Theme.of(ctx).colorScheme.primary : null,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -535,16 +662,17 @@ class _NovoItemSheetState extends ConsumerState<_NovoItemSheet> {
                 ],
               ),
             ),
+            _ComparacaoFornecedores(ingrediente: _ing!),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _qtd,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    decoration:
-                        const InputDecoration(labelText: 'Quantidade'),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: const InputDecoration(labelText: 'Quantidade'),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -556,8 +684,7 @@ class _NovoItemSheetState extends ConsumerState<_NovoItemSheet> {
                       DropdownMenuItem(value: 'g', child: Text('g')),
                       DropdownMenuItem(value: 'kg', child: Text('kg')),
                     ],
-                    onChanged: (v) =>
-                        setState(() => _unidadeIng = v ?? 'g'),
+                    onChanged: (v) => setState(() => _unidadeIng = v ?? 'g'),
                   ),
                 ),
               ],
@@ -594,14 +721,12 @@ class _NovoItemSheetState extends ConsumerState<_NovoItemSheet> {
         const SizedBox(height: 8),
         Expanded(
           child: async.when(
-            loading: () =>
-                const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('$e')),
             data: (todos) {
               final q = _busca.text.trim().toLowerCase();
               final itens = todos
-                  .where((i) =>
-                      q.isEmpty || i.nome.toLowerCase().contains(q))
+                  .where((i) => q.isEmpty || i.nome.toLowerCase().contains(q))
                   .toList();
               if (itens.isEmpty) {
                 return const Center(child: Text('Sem ingredientes.'));
@@ -611,10 +736,12 @@ class _NovoItemSheetState extends ConsumerState<_NovoItemSheet> {
                 itemBuilder: (_, i) => ListTile(
                   dense: true,
                   title: Text(itens[i].nome),
-                  subtitle: Text([
-                    if (itens[i].marca.isNotEmpty) itens[i].marca,
-                    if (itens[i].fornecedor.isNotEmpty) itens[i].fornecedor,
-                  ].join(' · ')),
+                  subtitle: Text(
+                    [
+                      if (itens[i].marca.isNotEmpty) itens[i].marca,
+                      if (itens[i].fornecedor.isNotEmpty) itens[i].fornecedor,
+                    ].join(' · '),
+                  ),
                   onTap: () => setState(() => _ing = itens[i]),
                 ),
               );
@@ -661,8 +788,9 @@ class _NovoItemSheetState extends ConsumerState<_NovoItemSheet> {
             Expanded(
               child: TextField(
                 controller: _qtd,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: const InputDecoration(labelText: 'Quantidade'),
               ),
             ),

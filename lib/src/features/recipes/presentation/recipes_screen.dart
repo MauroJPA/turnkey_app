@@ -99,7 +99,6 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
         ),
         title: Text(_trash ? 'Receitas · Lixeira' : 'Receitas'),
         actions: [
-          const HelpActions(topic: HelpTopic.receitas),
           if (!_trash)
             SortMenuButton<Receita>(
               options: _sortOptions,
@@ -131,6 +130,7 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
               icon: const Icon(Icons.add),
               onPressed: _busy ? null : _add,
             ),
+          const HelpActions(topic: HelpTopic.receitas),
         ],
       ),
       body: Column(

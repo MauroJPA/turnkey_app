@@ -182,7 +182,6 @@ class _SalesScreenState extends ConsumerState<SalesScreen> {
               _sortAsc = asc;
             }),
           ),
-          const HelpActions(topic: HelpTopic.vendas),
           if (podeEditar) ...[
             PopupMenuButton<void>(
               tooltip: 'Sincronizar com o Vendus',
@@ -204,6 +203,7 @@ class _SalesScreenState extends ConsumerState<SalesScreen> {
               onPressed: () => _importarCsv(context, ref),
             ),
           ],
+          const HelpActions(topic: HelpTopic.vendas),
         ],
       ),
       floatingActionButton: podeEditar

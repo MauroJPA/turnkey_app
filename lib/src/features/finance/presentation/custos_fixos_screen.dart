@@ -50,8 +50,9 @@ class _CustosFixosScreenState extends ConsumerState<CustosFixosScreen> {
 
   Future<void> _importarCsv() async {
     try {
-      final resultado =
-          await ref.read(custosFixosImportServiceProvider).pickAndImport();
+      final resultado = await ref
+          .read(custosFixosImportServiceProvider)
+          .pickAndImport();
       if (!mounted) return;
       await showDialog<void>(
         context: context,
@@ -61,8 +62,8 @@ class _CustosFixosScreenState extends ConsumerState<CustosFixosScreen> {
             resultado.semErros
                 ? resultado.resumo
                 : '${resultado.resumo}\n\n'
-                    '${resultado.erros.take(10).join('\n')}'
-                    '${resultado.erros.length > 10 ? '\n…' : ''}',
+                      '${resultado.erros.take(10).join('\n')}'
+                      '${resultado.erros.length > 10 ? '\n…' : ''}',
           ),
           actions: [
             FilledButton(
@@ -76,8 +77,9 @@ class _CustosFixosScreenState extends ConsumerState<CustosFixosScreen> {
       // nada escolhido — ignora
     } on Object catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
@@ -124,14 +126,16 @@ class _CustosFixosScreenState extends ConsumerState<CustosFixosScreen> {
               icon: const Icon(Icons.upload_file_outlined),
               onPressed: _importarCsv,
             ),
-          const HelpActions(topic: HelpTopic.custosFixos),
           IconButton(
             tooltip: _arquivados ? 'Ocultar arquivados' : 'Ver arquivados',
-            icon: Icon(_arquivados
-                ? Icons.visibility_off_outlined
-                : Icons.archive_outlined),
+            icon: Icon(
+              _arquivados
+                  ? Icons.visibility_off_outlined
+                  : Icons.archive_outlined,
+            ),
             onPressed: () => setState(() => _arquivados = !_arquivados),
           ),
+          const HelpActions(topic: HelpTopic.custosFixos),
         ],
       ),
       floatingActionButton: podeEditar
@@ -167,7 +171,10 @@ class _CustosFixosScreenState extends ConsumerState<CustosFixosScreen> {
             children: [
               if (!_arquivados)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -185,9 +192,11 @@ class _CustosFixosScreenState extends ConsumerState<CustosFixosScreen> {
               for (final c in custos)
                 ListTile(
                   leading: CircleAvatar(
-                    child: Icon(c.tipo == TipoCusto.fixo
-                        ? Icons.lock_clock_outlined
-                        : Icons.trending_up),
+                    child: Icon(
+                      c.tipo == TipoCusto.fixo
+                          ? Icons.lock_clock_outlined
+                          : Icons.trending_up,
+                    ),
                   ),
                   title: Text(c.nome),
                   subtitle: Text(
@@ -221,8 +230,7 @@ class _CustosFixosScreenState extends ConsumerState<CustosFixosScreen> {
                             ),
                             PopupMenuItem(
                               value: 'arquivar',
-                              child:
-                                  Text(c.ativo ? 'Arquivar' : 'Reativar'),
+                              child: Text(c.ativo ? 'Arquivar' : 'Reativar'),
                             ),
                             const PopupMenuItem(
                               value: 'apagar',

@@ -20,8 +20,7 @@ class EquipamentosScreen extends ConsumerStatefulWidget {
   const EquipamentosScreen({super.key});
 
   @override
-  ConsumerState<EquipamentosScreen> createState() =>
-      _EquipamentosScreenState();
+  ConsumerState<EquipamentosScreen> createState() => _EquipamentosScreenState();
 }
 
 class _EquipamentosScreenState extends ConsumerState<EquipamentosScreen> {
@@ -51,8 +50,9 @@ class _EquipamentosScreenState extends ConsumerState<EquipamentosScreen> {
 
   Future<void> _importarCsv() async {
     try {
-      final resultado =
-          await ref.read(equipamentosImportServiceProvider).pickAndImport();
+      final resultado = await ref
+          .read(equipamentosImportServiceProvider)
+          .pickAndImport();
       if (!mounted) return;
       await showDialog<void>(
         context: context,
@@ -62,8 +62,8 @@ class _EquipamentosScreenState extends ConsumerState<EquipamentosScreen> {
             resultado.semErros
                 ? resultado.resumo
                 : '${resultado.resumo}\n\n'
-                    '${resultado.erros.take(10).join('\n')}'
-                    '${resultado.erros.length > 10 ? '\n…' : ''}',
+                      '${resultado.erros.take(10).join('\n')}'
+                      '${resultado.erros.length > 10 ? '\n…' : ''}',
           ),
           actions: [
             FilledButton(
@@ -77,8 +77,9 @@ class _EquipamentosScreenState extends ConsumerState<EquipamentosScreen> {
       // nada escolhido — ignora
     } on Object catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
@@ -115,14 +116,16 @@ class _EquipamentosScreenState extends ConsumerState<EquipamentosScreen> {
               icon: const Icon(Icons.upload_file_outlined),
               onPressed: _importarCsv,
             ),
-          const HelpActions(topic: HelpTopic.equipamentos),
           IconButton(
             tooltip: _arquivados ? 'Ocultar arquivados' : 'Ver arquivados',
-            icon: Icon(_arquivados
-                ? Icons.visibility_off_outlined
-                : Icons.archive_outlined),
+            icon: Icon(
+              _arquivados
+                  ? Icons.visibility_off_outlined
+                  : Icons.archive_outlined,
+            ),
             onPressed: () => setState(() => _arquivados = !_arquivados),
           ),
+          const HelpActions(topic: HelpTopic.equipamentos),
         ],
       ),
       floatingActionButton: podeEditar
@@ -147,16 +150,23 @@ class _EquipamentosScreenState extends ConsumerState<EquipamentosScreen> {
                   : 'Pede a um administrador para registar o equipamento.',
             );
           }
-          final totalCusto =
-              equipamentos.fold<double>(0, (s, e) => s + e.custo);
-          final totalMensal =
-              equipamentos.fold<double>(0, (s, e) => s + e.custoMensal);
+          final totalCusto = equipamentos.fold<double>(
+            0,
+            (s, e) => s + e.custo,
+          );
+          final totalMensal = equipamentos.fold<double>(
+            0,
+            (s, e) => s + e.custoMensal,
+          );
           return ListView(
             padding: const EdgeInsets.symmetric(vertical: 8),
             children: [
               if (!_arquivados)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -173,7 +183,9 @@ class _EquipamentosScreenState extends ConsumerState<EquipamentosScreen> {
                 ),
               for (final e in equipamentos)
                 ListTile(
-                  leading: const CircleAvatar(child: Icon(Icons.kitchen_outlined)),
+                  leading: const CircleAvatar(
+                    child: Icon(Icons.kitchen_outlined),
+                  ),
                   title: Text(e.nome),
                   subtitle: Text(
                     '${fmt(e.custo)} · ${e.vidaUtilAnos.toStringAsFixed(0)} ano(s)'

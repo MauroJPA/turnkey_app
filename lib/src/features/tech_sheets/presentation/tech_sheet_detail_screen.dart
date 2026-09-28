@@ -176,7 +176,6 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
           ),
         ),
         actions: [
-          const HelpActions(topic: HelpTopic.fichaDetalhe),
           detailAsync.maybeWhen(
             data: (d) => IconButton(
               tooltip: 'Declaração nutricional',
@@ -221,6 +220,7 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
               ),
               orElse: () => const SizedBox.shrink(),
             ),
+          const HelpActions(topic: HelpTopic.fichaDetalhe),
         ],
       ),
       body: AsyncValueView<FichaDetail>(

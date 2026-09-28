@@ -114,7 +114,6 @@ class ProdutoDetailScreen extends ConsumerWidget {
         ),
         title: Text(ficha?.nome ?? 'Produto'),
         actions: [
-          const HelpActions(topic: HelpTopic.produtos),
           if (ficha != null)
             IconButton(
               tooltip: 'Copiar tudo',
@@ -146,6 +145,7 @@ class ProdutoDetailScreen extends ConsumerWidget {
               icon: const Icon(Icons.edit_outlined),
               onPressed: () => _editar(context, ref, ficha),
             ),
+          const HelpActions(topic: HelpTopic.produtos),
         ],
       ),
       body: AsyncValueView<FichaDetail>(

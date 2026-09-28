@@ -48,7 +48,6 @@ class PlanDetailScreen extends ConsumerWidget {
         ),
         title: const Text('Produção'),
         actions: [
-          const HelpActions(topic: HelpTopic.planoDetalhe),
           if (podeEditar)
             AsyncValueView<ProducaoPlan>(
               value: planoAsync,
@@ -67,22 +66,19 @@ class PlanDetailScreen extends ConsumerWidget {
                           destrutivo: true,
                         );
                         if (!ok) return;
-                        await ref
-                            .read(scheduleActionsProvider)
-                            .apagar(planId);
+                        await ref.read(scheduleActionsProvider).apagar(planId);
                         if (context.mounted) context.go(Routes.schedule);
                       },
                     ),
             ),
+          const HelpActions(topic: HelpTopic.planoDetalhe),
         ],
       ),
       body: AsyncValueView<ProducaoPlan>(
         value: planoAsync,
         onRetry: () => ref.invalidate(planProvider(planId)),
-        data: (plano) => _Body(
-          plano: plano,
-          podeEditar: podeEditar && !plano.concluida,
-        ),
+        data: (plano) =>
+            _Body(plano: plano, podeEditar: podeEditar && !plano.concluida),
       ),
     );
   }
@@ -102,9 +98,7 @@ class _Body extends ConsumerWidget {
       lastDate: DateTime(plano.data.year + 3),
     );
     if (d == null) return;
-    await ref
-        .read(scheduleActionsProvider)
-        .editarCabecalho(plano.id, data: d);
+    await ref.read(scheduleActionsProvider).editarCabecalho(plano.id, data: d);
   }
 
   Future<void> _editarTitulo(BuildContext context, WidgetRef ref) async {
@@ -142,15 +136,14 @@ class _Body extends ConsumerWidget {
     final kg = await _pedirKg(context, titulo: r.nome);
     if (kg == null || kg <= 0) return;
     try {
-      await ref.read(scheduleActionsProvider).adicionarReceita(
-            plano.id,
-            receitaId: r.id,
-            quantidadeKg: kg,
-          );
+      await ref
+          .read(scheduleActionsProvider)
+          .adicionarReceita(plano.id, receitaId: r.id, quantidadeKg: kg);
     } on Object catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
@@ -181,9 +174,7 @@ class _Body extends ConsumerWidget {
               const Divider(height: 1),
               ListTile(
                 leading: const Icon(Icons.title),
-                title: Text(
-                  plano.titulo.isEmpty ? 'Sem título' : plano.titulo,
-                ),
+                title: Text(plano.titulo.isEmpty ? 'Sem título' : plano.titulo),
                 trailing: podeEditar
                     ? TextButton(
                         onPressed: () => _editarTitulo(context, ref),
@@ -233,13 +224,13 @@ class _Body extends ConsumerWidget {
                       title: InkWell(
                         onTap: it.fichaId.isNotEmpty
                             ? () => context.push(
-                                  '${Routes.techSheets}/${it.fichaId}',
-                                )
+                                '${Routes.techSheets}/${it.fichaId}',
+                              )
                             : it.receitaId.isEmpty
-                                ? null
-                                : () => context.push(
-                                      '${Routes.recipes}/${it.receitaId}',
-                                    ),
+                            ? null
+                            : () => context.push(
+                                '${Routes.recipes}/${it.receitaId}',
+                              ),
                         child: Row(
                           children: [
                             Flexible(
@@ -336,7 +327,8 @@ class _Body extends ConsumerWidget {
                           Text(
                             [
                               if (pr.formato.isNotEmpty) pr.formato,
-                              if (pr.recheio.isNotEmpty) 'recheio ${pr.recheio}',
+                              if (pr.recheio.isNotEmpty)
+                                'recheio ${pr.recheio}',
                               '${pr.kg.toStringAsFixed(2)} kg',
                               if (pr.unidades > 0) '~${pr.unidades} un',
                             ].join(' · '),
@@ -344,19 +336,25 @@ class _Body extends ConsumerWidget {
                           ),
                           const SizedBox(height: 6),
                           if (pr.intermedios.isNotEmpty) ...[
-                            const Text('Produzir primeiro:',
-                                style: TextStyle(fontSize: 12)),
+                            const Text(
+                              'Produzir primeiro:',
+                              style: TextStyle(fontSize: 12),
+                            ),
                             for (final i in pr.intermedios)
                               Text('  • ${i.nome}: ${_gLabel(i.gramas)}'),
                             const SizedBox(height: 4),
                           ],
-                          const Text('Ingredientes:',
-                              style: TextStyle(fontSize: 12)),
+                          const Text(
+                            'Ingredientes:',
+                            style: TextStyle(fontSize: 12),
+                          ),
                           if (pr.comprar.isEmpty)
                             const Text('  • —')
                           else
                             for (final c in pr.comprar)
-                              Text('  • ${c.nome}: ${_qLabel(c.gramas, c.unidade)}'),
+                              Text(
+                                '  • ${c.nome}: ${_qLabel(c.gramas, c.unidade)}',
+                              ),
                         ],
                       ),
                     ),
@@ -403,9 +401,9 @@ class _Body extends ConsumerWidget {
                           n.aComprar <= 0
                               ? 'ok'
                               : n.aComprarSacos > 0
-                                  ? '${n.aComprarSacos} '
-                                      '${n.aComprarSacos == 1 ? 'saco' : 'sacos'}'
-                                  : 'comprar ${_qLabel(n.aComprar, n.unidade)}',
+                              ? '${n.aComprarSacos} '
+                                    '${n.aComprarSacos == 1 ? 'saco' : 'sacos'}'
+                              : 'comprar ${_qLabel(n.aComprar, n.unidade)}',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: n.aComprar > 0
@@ -513,14 +511,13 @@ class _Body extends ConsumerWidget {
     b.writeln();
     b.writeln('=== INGREDIENTES NO TOTAL (para comprar) ===');
     for (final n in resp.necessarios) {
-      final compra =
-          n.aComprar > 0 ? ' (comprar ${_qLabel(n.aComprar, n.unidade)})' : ' (em stock)';
+      final compra = n.aComprar > 0
+          ? ' (comprar ${_qLabel(n.aComprar, n.unidade)})'
+          : ' (em stock)';
       b.writeln('- ${n.nome}: ${_qLabel(n.gramas, n.unidade)}$compra');
     }
     b.writeln();
-    b.writeln(
-      'Custo estimado: ${resp.custoTotal.toStringAsFixed(2)}',
-    );
+    b.writeln('Custo estimado: ${resp.custoTotal.toStringAsFixed(2)}');
     return b.toString();
   }
 
@@ -530,9 +527,9 @@ class _Body extends ConsumerWidget {
   ) async {
     await Clipboard.setData(ClipboardData(text: _relatorio(resp)));
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Relatório copiado.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Relatório copiado.')));
     }
   }
 
@@ -554,16 +551,18 @@ class _Body extends ConsumerWidget {
         );
         if (!ok) return;
       }
-      final n =
-          await ref.read(scheduleActionsProvider).gerarListaCompras(plano.id);
+      final n = await ref
+          .read(scheduleActionsProvider)
+          .gerarListaCompras(plano.id);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('$n item(s) na lista de compras.')),
       );
     } on Object catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
@@ -574,9 +573,12 @@ class _Body extends ConsumerWidget {
     PlanoResposta resp,
   ) async {
     final produz = resp.produzir
-        .map((p) => '• ${p.nome}: ${p.kg.toStringAsFixed(2)} kg'
-            '${p.unidades > 0 ? ' → ~${p.unidades} un'
-                '${p.formato.isNotEmpty ? ' (${p.formato})' : ''}' : ''}')
+        .map(
+          (p) =>
+              '• ${p.nome}: ${p.kg.toStringAsFixed(2)} kg'
+              '${p.unidades > 0 ? ' → ~${p.unidades} un'
+                        '${p.formato.isNotEmpty ? ' (${p.formato})' : ''}' : ''}',
+        )
         .join('\n');
     final consome = resp.necessarios
         .take(12)
@@ -589,7 +591,8 @@ class _Body extends ConsumerWidget {
     final ok = await confirmDialog(
       context,
       titulo: 'Concluir produção?',
-      mensagem: 'Vai movimentar o stock:\n\n'
+      mensagem:
+          'Vai movimentar o stock:\n\n'
           'PRODUZIR (entra em stock):\n$produz\n\n'
           'CONSUMIR (sai do stock):\n$consome$maisLinhas\n\n'
           'Se faltar stock de um componente, a quantidade fica em 0 e '
@@ -599,8 +602,7 @@ class _Body extends ConsumerWidget {
     if (!ok) return;
 
     try {
-      final resumo =
-          await ref.read(scheduleActionsProvider).concluir(plano.id);
+      final resumo = await ref.read(scheduleActionsProvider).concluir(plano.id);
       if (!context.mounted) return;
       await showDialog<void>(
         context: context,
@@ -613,9 +615,7 @@ class _Body extends ConsumerWidget {
               children: [
                 Text('Consumos: ${resumo.consumos.length}'),
                 Text('Saídas p/ stock: ${resumo.saidas.length}'),
-                Text(
-                  'Custo: ${resumo.custoTotal.toStringAsFixed(2)}',
-                ),
+                Text('Custo: ${resumo.custoTotal.toStringAsFixed(2)}'),
                 if (resumo.faltas.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Text(
@@ -640,8 +640,9 @@ class _Body extends ConsumerWidget {
       );
     } on Object catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
@@ -705,10 +706,7 @@ class _PrioridadeChip extends StatelessWidget {
         color: bg,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Text(
-        prioridade.label,
-        style: TextStyle(color: fg, fontSize: 11),
-      ),
+      child: Text(prioridade.label, style: TextStyle(color: fg, fontSize: 11)),
     );
   }
 }
@@ -726,10 +724,7 @@ class _SectionTitle extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              texto,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            child: Text(texto, style: Theme.of(context).textTheme.titleMedium),
           ),
           if (trailing != null) trailing!,
         ],

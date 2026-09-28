@@ -2,6 +2,26 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.28.0 — 2026-09-28 — Barra de topo redesenhada + comparação de fornecedores nas compras
+
+- **Barra de topo mais limpa e consistente em toda a app**: o botão de ajuda (?), as notas da página e a
+  sugestão/erro deixam de ser 3 ícones separados e passam a viver atrás de **um só botão** (o "?", com a
+  bolinha de notas por resolver quando há alguma) — abre uma folha com a explicação da página e, lá dentro,
+  "Notas desta página" e "Sugestão ou reportar erro". Nada foi removido, só reorganizado.
+- O botão de ajuda (?) fica sempre na mesma posição — a última à direita — em **todas** as páginas da app
+  (antes a ordem variava de página para página).
+- Em **Ingredientes**, as ações menos usadas (Juntar marcas/fornecedores, Preencher nutrição pela INSA,
+  Importar CSV) passam a viver atrás de um único menu (⋮), em vez de 3 ícones soltos — a barra de topo fica
+  com metade dos ícones.
+- **Conteúdo dos botões de ajuda atualizado**: todas as páginas que ganharam funcionalidades novas nas
+  últimas versões (ordenar/filtrar, categorias de receitas, marcas/fornecedores, notas por página, faturas em
+  lote, uso individual/múltiplo nas embalagens, etc.) agora explicam essas funcionalidades — a ajuda estava
+  desatualizada em relação à app.
+- **Lista de compras — comparação de fornecedores**: ao escolher, para adicionar, um ingrediente que já
+  compras a mais do que um fornecedor, aparece um aviso a dizer **qual é o mais barato e quanto poupas** (ex.
+  "Makro é o mais barato — €1,20/kg · poupas 27% vs Continente"). Um ícone de informação abre a comparação
+  completa, do mais barato ao mais caro, por kg/L/unidade consoante o ingrediente.
+
 ## 1.27.0 — 2026-09-28 — Ordenar e filtrar nas listas
 
 - Novo botão de **ordenação** (ícone de seta, junto à ajuda) nos ecrãs de lista: Faturas, Ingredientes,

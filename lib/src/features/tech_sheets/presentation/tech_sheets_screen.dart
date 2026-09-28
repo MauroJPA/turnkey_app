@@ -140,7 +140,6 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
         ),
         title: Text(_trash ? 'Fichas · Lixeira' : 'Fichas Técnicas'),
         actions: [
-          const HelpActions(topic: HelpTopic.fichas),
           if (!_trash)
             SortMenuButton<FichaTecnica>(
               options: _sortOptions,
@@ -164,6 +163,7 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
               icon: const Icon(Icons.add),
               onPressed: _busy ? null : _add,
             ),
+          const HelpActions(topic: HelpTopic.fichas),
         ],
       ),
       body: Column(

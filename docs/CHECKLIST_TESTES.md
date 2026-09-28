@@ -943,6 +943,22 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Em todos os ecrãs acima: sair e voltar à página **mantém o critério e a ordem escolhidos** enquanto a
       app não é reiniciada (é estado do ecrã, não é guardado no servidor).
 
+## 49. Barra de topo redesenhada + comparação de fornecedores
+
+- [ ] Em **qualquer página**, o botão "?" é sempre o último ícone à direita da barra de topo (antes a ordem
+      variava). Toca nele: abre uma folha com a explicação da página e, mais abaixo, "Notas desta página"
+      (com a bolinha de contagem se houver notas por resolver) e "Sugestão ou reportar erro" — ambos
+      continuam a funcionar exatamente como antes, só mudou onde se chega a eles.
+- [ ] Em **Ingredientes**, o menu (⋮) junta "Juntar marcas/fornecedores repetidos", "Preencher nutrição pela
+      tabela INSA" e "Importar CSV" — testa cada uma a partir do menu.
+- [ ] O conteúdo do "?" nas páginas que mudaram recentemente (Ingredientes, Receitas, Produtos, Fichas
+      Técnicas, Vendas, Encomendas, Faturas, Rever fatura, Limpeza e insumos, Embalagens, Lista de compras)
+      menciona as funcionalidades novas (ordenar/filtrar, marcas/fornecedores, notas por página, etc.).
+- [ ] **Lista de compras**: adiciona um ingrediente que já compras a mais do que um fornecedor (precisa de
+      ter 2+ "produtos de compra" em Ingredientes → abrir o ingrediente) — aparece o aviso "X é o mais barato"
+      com a poupança em %. O ícone (ⓘ) abre a lista completa de fornecedores, do mais barato ao mais caro.
+      Um ingrediente com um só fornecedor (ou preços iguais) não mostra o aviso.
+
 ---
 
 ## Notas / ajustes pedidos

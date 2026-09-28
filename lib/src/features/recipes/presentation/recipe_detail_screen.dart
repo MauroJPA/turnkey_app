@@ -29,8 +29,7 @@ class RecipeDetailScreen extends ConsumerStatefulWidget {
   final String recipeId;
 
   @override
-  ConsumerState<RecipeDetailScreen> createState() =>
-      _RecipeDetailScreenState();
+  ConsumerState<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
 }
 
 class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
@@ -45,8 +44,9 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
       return true;
     } on Object catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
       return false;
     } finally {
@@ -86,7 +86,10 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
         );
       } else {
         await actions.addSubReceita(
-            widget.recipeId, picked.id, picked.quantidadeG);
+          widget.recipeId,
+          picked.id,
+          picked.quantidadeG,
+        );
       }
     });
   }
@@ -173,7 +176,9 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
     );
     if (picked == null) return;
     await _run(
-      () => ref.read(recipeActionsProvider).vincular(
+      () => ref
+          .read(recipeActionsProvider)
+          .vincular(
             widget.recipeId,
             item.id,
             ingredienteId: picked.kind == PickedKind.ingrediente
@@ -204,13 +209,11 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
           ),
         ),
         actions: [
-          const HelpActions(topic: HelpTopic.receitaDetalhe),
           detailAsync.maybeWhen(
             data: (d) => IconButton(
               tooltip: 'Agendar produção',
               icon: const Icon(Icons.event_note_outlined),
-              onPressed: () =>
-                  showAgendaLineSheet(context, receita: d.receita),
+              onPressed: () => showAgendaLineSheet(context, receita: d.receita),
             ),
             orElse: () => const SizedBox.shrink(),
           ),
@@ -266,6 +269,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
               ),
               orElse: () => const SizedBox.shrink(),
             ),
+          const HelpActions(topic: HelpTopic.receitaDetalhe),
         ],
       ),
       floatingActionButton: _podeEditar
@@ -277,8 +281,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
           : null,
       body: AsyncValueView<RecipeDetail>(
         value: detailAsync,
-        onRetry: () =>
-            ref.invalidate(recipeDetailProvider(widget.recipeId)),
+        onRetry: () => ref.invalidate(recipeDetailProvider(widget.recipeId)),
         data: (d) => Column(
           children: [
             if (_busy) const LinearProgressIndicator(),
@@ -297,7 +300,10 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                       itemCount: d.itens.length,
                       separatorBuilder: (_, __) => const Divider(height: 1),
                       itemBuilder: (_, i) => _itemTile(
-                        d, d.itens[i], ref.watch(moneyFormatProvider)),
+                        d,
+                        d.itens[i],
+                        ref.watch(moneyFormatProvider),
+                      ),
                     ),
             ),
           ],
@@ -311,9 +317,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
     final produtos = item.ingredienteId == null
         ? const <ProdutoIngrediente>[]
         : ref.watch(produtosDoIngredienteProvider(item.ingredienteId!));
-    final fixado = produtos
-        .where((p) => p.id == item.produtoId)
-        .firstOrNull;
+    final fixado = produtos.where((p) => p.id == item.produtoId).firstOrNull;
     // só faz sentido escolher quando há mais de um produto (ou já há um fixado)
     final podeEscolher = produtos.length > 1 || item.produtoId != null;
     final subtitle = item.pendente
@@ -335,21 +339,21 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
               child: const Text('Ligar'),
             )
           : (item.subReceitaId != null
-              ? const Icon(Icons.link, size: 16)
-              : (podeEscolher
-                    ? IconButton(
-                        tooltip: 'Escolher o produto de compra',
-                        icon: Icon(
-                          fixado != null
-                              ? Icons.push_pin
-                              : Icons.push_pin_outlined,
-                          size: 20,
-                        ),
-                        onPressed: _podeEditar
-                            ? () => _escolherProduto(item, produtos)
-                            : null,
-                      )
-                    : null)),
+                ? const Icon(Icons.link, size: 16)
+                : (podeEscolher
+                      ? IconButton(
+                          tooltip: 'Escolher o produto de compra',
+                          icon: Icon(
+                            fixado != null
+                                ? Icons.push_pin
+                                : Icons.push_pin_outlined,
+                            size: 20,
+                          ),
+                          onPressed: _podeEditar
+                              ? () => _escolherProduto(item, produtos)
+                              : null,
+                        )
+                      : null)),
       onTap: _podeEditar ? () => _editQty(item) : null,
     );
 
@@ -381,14 +385,15 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget cell(String t, String v) => Column(
-          children: [
-            Text(t, style: Theme.of(context).textTheme.bodySmall),
-            const SizedBox(height: 2),
-            Text(v,
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 15)),
-          ],
-        );
+      children: [
+        Text(t, style: Theme.of(context).textTheme.bodySmall),
+        const SizedBox(height: 2),
+        Text(
+          v,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        ),
+      ],
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 14),

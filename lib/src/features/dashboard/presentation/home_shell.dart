@@ -58,48 +58,55 @@ class HomeShell extends ConsumerWidget {
     final compras = ref.watch(shoppingListProvider).valueOrNull;
     final faturas = ref.watch(faturasListProvider).valueOrNull;
     final faturasPorRever = faturas
-        ?.where((f) =>
-            f.estado == FaturaEstado.nova ||
-            f.estado == FaturaEstado.analisada)
+        ?.where(
+          (f) =>
+              f.estado == FaturaEstado.nova ||
+              f.estado == FaturaEstado.analisada,
+        )
         .length;
 
     final stockBaixo = stock?.where((s) => s.stockBaixo).length;
     final hoje = DateTime.now();
     final proximas = planos
-        ?.where((p) =>
-            p.estado != EstadoProducao.concluida &&
-            p.estado != EstadoProducao.cancelada &&
-            !p.data.isBefore(DateTime(hoje.year, hoje.month, hoje.day)))
+        ?.where(
+          (p) =>
+              p.estado != EstadoProducao.concluida &&
+              p.estado != EstadoProducao.cancelada &&
+              !p.data.isBefore(DateTime(hoje.year, hoje.month, hoje.day)),
+        )
         .length;
     final porComprar = compras?.where((c) => !c.comprado).toList();
-    final valorFalta =
-        porComprar?.fold<double>(0, (s, c) => s + c.custoEstimado);
+    final valorFalta = porComprar?.fold<double>(
+      0,
+      (s, c) => s + c.custoEstimado,
+    );
 
     final custosFixos = ref.watch(custosFixosListProvider(false)).valueOrNull;
-    final pagamentosProximos = custosFixos
-        ?.where((c) => c.diaPagamento != null)
-        .map((c) => (custo: c, dias: _diasAtePagamento(c.diaPagamento!, hoje)))
-        .where((p) => p.dias <= 7)
-        .toList()
-      ?..sort((a, b) => a.dias.compareTo(b.dias));
+    final pagamentosProximos =
+        custosFixos
+            ?.where((c) => c.diaPagamento != null)
+            .map(
+              (c) => (custo: c, dias: _diasAtePagamento(c.diaPagamento!, hoje)),
+            )
+            .where((p) => p.dias <= 7)
+            .toList()
+          ?..sort((a, b) => a.dias.compareTo(b.dias));
 
     final encomendas = ref.watch(encomendasListProvider(false)).valueOrNull;
-    final lembreteHoras = ref
-            .watch(configuracaoEncomendasProvider)
-            .valueOrNull
-            ?.lembreteHoras ??
+    final lembreteHoras =
+        ref.watch(configuracaoEncomendasProvider).valueOrNull?.lembreteHoras ??
         4;
-    final encomendasPorVir = encomendas
-        ?.where((e) => e.estado.ativa && e.horasAte(hoje) <= lembreteHoras)
-        .toList()
-      ?..sort((a, b) => a.dataHora.compareTo(b.dataHora));
+    final encomendasPorVir =
+        encomendas
+            ?.where((e) => e.estado.ativa && e.horasAte(hoje) <= lembreteHoras)
+            .toList()
+          ?..sort((a, b) => a.dataHora.compareTo(b.dataHora));
 
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 12,
         title: _marcaAppBar(context, empresa, logoUrl),
         actions: [
-          const HelpActions(topic: HelpTopic.dashboard),
           IconButton(
             tooltip: 'Configurações',
             icon: const Icon(Icons.settings_outlined),
@@ -117,7 +124,10 @@ class HomeShell extends ConsumerWidget {
                 child: Text('${userName ?? ''} · ${papel.label}'),
               ),
               const PopupMenuDivider(),
-              const PopupMenuItem(value: 'sair', child: Text('Terminar sessão')),
+              const PopupMenuItem(
+                value: 'sair',
+                child: Text('Terminar sessão'),
+              ),
               const PopupMenuDivider(),
               // versão da app, discreta (útil para saber se o telemóvel já atualizou)
               PopupMenuItem(
@@ -130,6 +140,7 @@ class HomeShell extends ConsumerWidget {
               ),
             ],
           ),
+          const HelpActions(topic: HelpTopic.dashboard),
         ],
       ),
       body: ListView(
@@ -149,41 +160,41 @@ class HomeShell extends ConsumerWidget {
             ),
           const SizedBox(height: 4),
           if (acessivel('inventario'))
-          _StatCard(
-            icon: Icons.warning_amber_rounded,
-            titulo: 'Stock baixo',
-            valor: stockBaixo == null ? '—' : '$stockBaixo',
-            subtitulo: stockBaixo == null
-                ? 'a carregar…'
-                : (stockBaixo == 0
-                    ? 'tudo acima do mínimo'
-                    : '${stockBaixo == 1 ? 'item' : 'itens'} abaixo do mínimo'),
-            destaque: (stockBaixo ?? 0) > 0,
-            onTap: () => context.go(Routes.inventory),
-          ),
+            _StatCard(
+              icon: Icons.warning_amber_rounded,
+              titulo: 'Stock baixo',
+              valor: stockBaixo == null ? '—' : '$stockBaixo',
+              subtitulo: stockBaixo == null
+                  ? 'a carregar…'
+                  : (stockBaixo == 0
+                        ? 'tudo acima do mínimo'
+                        : '${stockBaixo == 1 ? 'item' : 'itens'} abaixo do mínimo'),
+              destaque: (stockBaixo ?? 0) > 0,
+              onTap: () => context.go(Routes.inventory),
+            ),
           if (acessivel('agenda'))
-          _StatCard(
-            icon: Icons.event_note_outlined,
-            titulo: 'Produções por fazer',
-            valor: proximas == null ? '—' : '$proximas',
-            subtitulo: proximas == null
-                ? 'a carregar…'
-                : (proximas == 0 ? 'nada agendado' : 'de hoje em diante'),
-            onTap: () => context.go(Routes.schedule),
-          ),
+            _StatCard(
+              icon: Icons.event_note_outlined,
+              titulo: 'Produções por fazer',
+              valor: proximas == null ? '—' : '$proximas',
+              subtitulo: proximas == null
+                  ? 'a carregar…'
+                  : (proximas == 0 ? 'nada agendado' : 'de hoje em diante'),
+              onTap: () => context.go(Routes.schedule),
+            ),
           if (acessivel('compras'))
-          _StatCard(
-            icon: Icons.shopping_cart_outlined,
-            titulo: 'A comprar',
-            valor: porComprar == null ? '—' : '${porComprar.length}',
-            subtitulo: porComprar == null
-                ? 'a carregar…'
-                : (porComprar.isEmpty
-                    ? 'nada em falta'
-                    : 'estimativa ${fmt(valorFalta ?? 0)}'),
-            destaque: (porComprar?.isNotEmpty ?? false),
-            onTap: () => context.go(Routes.shopping),
-          ),
+            _StatCard(
+              icon: Icons.shopping_cart_outlined,
+              titulo: 'A comprar',
+              valor: porComprar == null ? '—' : '${porComprar.length}',
+              subtitulo: porComprar == null
+                  ? 'a carregar…'
+                  : (porComprar.isEmpty
+                        ? 'nada em falta'
+                        : 'estimativa ${fmt(valorFalta ?? 0)}'),
+              destaque: (porComprar?.isNotEmpty ?? false),
+              onTap: () => context.go(Routes.shopping),
+            ),
           if (acessivel('faturas') && (faturasPorRever ?? 0) > 0)
             _StatCard(
               icon: Icons.rule_folder_outlined,
@@ -200,7 +211,10 @@ class HomeShell extends ConsumerWidget {
               valor: '${pagamentosProximos!.length}',
               subtitulo: pagamentosProximos
                   .take(3)
-                  .map((p) => '${p.custo.nome} (${p.dias == 0 ? 'hoje' : 'em ${p.dias}d'})')
+                  .map(
+                    (p) =>
+                        '${p.custo.nome} (${p.dias == 0 ? 'hoje' : 'em ${p.dias}d'})',
+                  )
                   .join(', '),
               destaque: pagamentosProximos.any((p) => p.dias <= 2),
               onTap: () => context.go(Routes.custosFixos),
@@ -223,8 +237,10 @@ class HomeShell extends ConsumerWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: Text('Tudo',
-                      style: Theme.of(context).textTheme.titleMedium),
+                  child: Text(
+                    'Tudo',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                 ),
                 TextButton.icon(
                   onPressed: () => showTodasPaginasSheet(context),
@@ -257,7 +273,11 @@ class HomeShell extends ConsumerWidget {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(s.icon, size: 28, color: navPrefs.cor(s.chave)),
+                              Icon(
+                                s.icon,
+                                size: 28,
+                                color: navPrefs.cor(s.chave),
+                              ),
                               const SizedBox(height: 8),
                               Text(
                                 s.label,
@@ -329,8 +349,10 @@ class _StatCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(titulo,
-                        style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      titulo,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     Text(
                       subtitulo,
                       style: Theme.of(context).textTheme.bodySmall,
@@ -340,10 +362,9 @@ class _StatCard extends StatelessWidget {
               ),
               Text(
                 valor,
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineMedium
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(width: 4),
               const Icon(Icons.chevron_right),
@@ -380,8 +401,8 @@ Widget _marcaAppBar(BuildContext context, Empresa? empresa, String logoUrl) {
           empresa?.nome ?? 'gc_turnkey',
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontSize: empresa?.nomeTamanho ?? 18,
-              ),
+            fontSize: empresa?.nomeTamanho ?? 18,
+          ),
         );
   if (logo == null && texto == null) return const SizedBox.shrink();
 
@@ -432,7 +453,7 @@ int _diasAtePagamento(int diaPagamento, DateTime hoje) {
 }
 
 Alignment _alignFor(Alinhamento a) => switch (a) {
-      Alinhamento.esquerda => Alignment.centerLeft,
-      Alinhamento.centro => Alignment.center,
-      Alinhamento.direita => Alignment.centerRight,
-    };
+  Alinhamento.esquerda => Alignment.centerLeft,
+  Alinhamento.centro => Alignment.center,
+  Alinhamento.direita => Alignment.centerRight,
+};

@@ -343,7 +343,6 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
         ),
         title: Text(_trash ? 'Ingredientes · Lixeira' : 'Ingredientes'),
         actions: [
-          const HelpActions(topic: HelpTopic.ingredientes),
           if (!_trash)
             SortMenuButton<Ingrediente>(
               options: _sortOptions,
@@ -354,23 +353,42 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                 _sortAsc = asc;
               }),
             ),
-          if (ref.read(currentPapelProvider).canEditConfig && !_trash)
-            IconButton(
-              tooltip: 'Juntar marcas/fornecedores repetidos',
-              icon: const Icon(Icons.join_full_outlined),
-              onPressed: () => mostrarJuntarMarcasFornecedores(context),
-            ),
           if (_podeEditar && !_trash)
-            IconButton(
-              tooltip: 'Preencher nutrição pela tabela INSA',
-              icon: const Icon(Icons.auto_awesome_outlined),
-              onPressed: _busy ? null : _autoInsa,
-            ),
-          if (_podeEditar && !_trash)
-            IconButton(
-              tooltip: 'Importar CSV',
-              icon: const Icon(Icons.upload_file),
-              onPressed: _busy ? null : _import,
+            PopupMenuButton<String>(
+              tooltip: 'Mais ações',
+              icon: const Icon(Icons.more_vert),
+              onSelected: (v) {
+                if (v == 'juntar') mostrarJuntarMarcasFornecedores(context);
+                if (v == 'insa') _autoInsa();
+                if (v == 'importar') _import();
+              },
+              itemBuilder: (_) => [
+                if (ref.read(currentPapelProvider).canEditConfig)
+                  const PopupMenuItem(
+                    value: 'juntar',
+                    child: ListTile(
+                      leading: Icon(Icons.join_full_outlined),
+                      title: Text('Juntar marcas/fornecedores repetidos'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                const PopupMenuItem(
+                  value: 'insa',
+                  child: ListTile(
+                    leading: Icon(Icons.auto_awesome_outlined),
+                    title: Text('Preencher nutrição pela tabela INSA'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'importar',
+                  child: ListTile(
+                    leading: Icon(Icons.upload_file),
+                    title: Text('Importar CSV'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
             ),
           IconButton(
             tooltip: _trash ? 'Ver ativos' : 'Lixeira',
@@ -385,6 +403,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
               icon: const Icon(Icons.add),
               onPressed: _busy ? null : _add,
             ),
+          const HelpActions(topic: HelpTopic.ingredientes),
         ],
       ),
       body: Column(

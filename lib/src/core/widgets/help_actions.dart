@@ -5,10 +5,10 @@ import '../../features/feedback/application/nota_pagina_providers.dart';
 import '../../features/feedback/data/suggestion_repository.dart';
 import '../../features/feedback/presentation/notas_pagina_sheet.dart';
 import '../help/help_content.dart';
-import 'help_button.dart';
 
-/// Ações para o `AppBar` de qualquer página: notas de equipa, enviar
-/// sugestão/erro e ajuda. Substitui o `HelpButton` sozinho.
+/// Botão único do `AppBar` de qualquer página: ajuda, notas da equipa e
+/// sugestão/erro — tudo atrás de um só ícone, para não encher a barra de
+/// ícones com 3 botões pouco usados.
 class HelpActions extends ConsumerWidget {
   const HelpActions({super.key, required this.topic});
 
@@ -16,33 +16,110 @@ class HelpActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final porResolver = ref
-        .watch(notasPorResolverProvider(topic.name))
-        .valueOrNull;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          icon: Badge(
-            label: Text('$porResolver'),
-            isLabelVisible: (porResolver ?? 0) > 0,
-            child: const Icon(Icons.sticky_note_2_outlined),
-          ),
-          tooltip: 'Notas desta página (para a equipa)',
-          onPressed: () => mostrarNotasPagina(context, pagina: topic.name),
-        ),
-        IconButton(
-          icon: const Icon(Icons.feedback_outlined),
-          tooltip: 'Sugerir melhoria / reportar erro',
-          onPressed: () => _abrir(context, ref, topic),
-        ),
-        HelpButton(topic: topic),
-      ],
+    final porResolver =
+        ref.watch(notasPorResolverProvider(topic.name)).valueOrNull ?? 0;
+    return IconButton(
+      icon: Badge(
+        label: Text('$porResolver'),
+        isLabelVisible: porResolver > 0,
+        child: const Icon(Icons.help_outline),
+      ),
+      tooltip: 'Ajuda, notas e sugestões',
+      onPressed: () => _abrirMenu(context, ref, topic, porResolver),
     );
   }
 }
 
-Future<void> _abrir(
+void _abrirMenu(
+  BuildContext context,
+  WidgetRef ref,
+  HelpTopic topic,
+  int porResolver,
+) {
+  final entry = helpContent[topic];
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (entry != null) ...[
+                Row(
+                  children: [
+                    Icon(
+                      Icons.lightbulb_outline,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        entry.titulo,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                for (final p in entry.paragrafos)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('•  '),
+                        Expanded(
+                          child: Text(
+                            p,
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const Divider(height: 24),
+              ],
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Badge(
+                  label: Text('$porResolver'),
+                  isLabelVisible: porResolver > 0,
+                  child: const Icon(Icons.sticky_note_2_outlined),
+                ),
+                title: const Text('Notas desta página'),
+                subtitle: const Text('Para a equipa ver e resolver'),
+                onTap: () {
+                  Navigator.pop(context);
+                  mostrarNotasPagina(context, pagina: topic.name);
+                },
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.feedback_outlined),
+                title: const Text('Sugestão ou reportar erro'),
+                subtitle: const Text('Vai para a equipa de desenvolvimento'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _abrirSugestao(context, ref, topic);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+Future<void> _abrirSugestao(
   BuildContext context,
   WidgetRef ref,
   HelpTopic topic,
