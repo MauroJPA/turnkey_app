@@ -97,6 +97,43 @@ void main() {
       expect(item.acao, AcaoFatura.pendente);
       expect(item.aplicado, isFalse);
     });
+
+    test('lê produto, marca, fornecedor e descrição da fatura', () {
+      final item = ItemFaturaAnterior.fromRecord(
+        RecordModel.fromJson({
+          'id': 'i1',
+          'collectionName': 'faturas_itens',
+          'linha_index': 1,
+          'aplicado': true,
+          'acao': 'preco',
+          'ingrediente': 'ing1',
+          'produto': 'prod1',
+          'marca': 'Sidul',
+          'fornecedor': 'Makro',
+          'descricao_fatura': 'Açúcar branco Sidul 1kg',
+        }),
+      );
+      expect(item.produtoId, 'prod1');
+      expect(item.marca, 'Sidul');
+      expect(item.fornecedor, 'Makro');
+      expect(item.descricaoFatura, 'Açúcar branco Sidul 1kg');
+      expect(item.temAlvoParaCorrigir, isTrue);
+    });
+
+    test('sem produto/consumível/embalagem: nada para corrigir', () {
+      final item = ItemFaturaAnterior.fromRecord(
+        RecordModel.fromJson({
+          'id': 'i1',
+          'collectionName': 'faturas_itens',
+          'linha_index': 0,
+          'acao': 'pendente',
+        }),
+      );
+      expect(item.produtoId, isNull);
+      expect(item.temAlvoParaCorrigir, isFalse);
+      expect(item.marca, '');
+      expect(item.fornecedor, '');
+    });
   });
 
   group('emparelharEmbalagem', () {

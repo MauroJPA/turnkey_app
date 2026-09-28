@@ -119,7 +119,10 @@ class FaturaLinhaIa {
     precoUnitario: (j['preco_unitario'] as num?)?.toDouble(),
     total: (j['total'] as num?)?.toDouble(),
     embalagemG: (j['embalagem_g'] as num?)?.toDouble(),
-    embalagemUnidade: switch ((j['embalagem_unidade'] ?? '').toString().trim().toLowerCase()) {
+    embalagemUnidade: switch ((j['embalagem_unidade'] ?? '')
+        .toString()
+        .trim()
+        .toLowerCase()) {
       'ml' => 'ml',
       'un' => 'un',
       _ => 'g',
@@ -275,6 +278,10 @@ class ItemFaturaAnterior {
     this.ingredienteId,
     this.consumivelId,
     this.embalagemId,
+    this.produtoId,
+    this.descricaoFatura = '',
+    this.marca = '',
+    this.fornecedor = '',
   });
 
   final int index;
@@ -286,6 +293,24 @@ class ItemFaturaAnterior {
   final String? consumivelId;
   final String? embalagemId;
 
+  /// Produto de compra (marca) tocado por esta linha — só existe quando o
+  /// preço já foi aplicado a um ingrediente. `null` = ainda não há nada para
+  /// corrigir (ex.: linha "só stock" ou por rever).
+  final String? produtoId;
+
+  final String descricaoFatura;
+
+  /// Marca/fornecedor que ficaram gravados ao aplicar — para mostrar e dar
+  /// para o proprietário/administrador corrigir, mesmo com a linha já
+  /// aplicada (ver `InvoiceRepository.corrigirItem`).
+  final String marca;
+  final String fornecedor;
+
+  /// Há um registo (produto/consumível/embalagem) ligado a esta linha para
+  /// corrigir marca/fornecedor.
+  bool get temAlvoParaCorrigir =>
+      produtoId != null || consumivelId != null || embalagemId != null;
+
   factory ItemFaturaAnterior.fromRecord(RecordModel r) => ItemFaturaAnterior(
     index: r.getDoubleValue('linha_index').round(),
     aplicado: r.getBoolValue('aplicado'),
@@ -296,5 +321,9 @@ class ItemFaturaAnterior {
     ingredienteId: _naoVazio(r.getStringValue('ingrediente')),
     consumivelId: _naoVazio(r.getStringValue('consumivel')),
     embalagemId: _naoVazio(r.getStringValue('embalagem')),
+    produtoId: _naoVazio(r.getStringValue('produto')),
+    descricaoFatura: r.getStringValue('descricao_fatura'),
+    marca: r.getStringValue('marca'),
+    fornecedor: r.getStringValue('fornecedor'),
   );
 }

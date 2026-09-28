@@ -236,7 +236,9 @@ class InvoiceRepository {
 
   /// Ficheiros grandes: o servidor lê o ficheiro já guardado e analisa-o por
   /// janelas de páginas (uma por pedido), para se ver o progresso e retomar.
-  Future<({int paginas, int proxima, bool retomado})> preparar(String id) async {
+  Future<({int paginas, int proxima, bool retomado})> preparar(
+    String id,
+  ) async {
     final res = await _pb.send(
       '/api/gc_turnkey/faturas/$id/preparar',
       method: 'POST',
@@ -342,6 +344,33 @@ class InvoiceRepository {
         .collection('faturas_itens')
         .getFullList(filter: 'fatura = "$faturaId"');
     return recs.map(ItemFaturaAnterior.fromRecord).toList();
+  }
+
+  /// Corrige a marca e/ou o fornecedor de uma linha JÁ APLICADA (mesmo com a
+  /// fatura confirmada) — só o proprietário e o administrador, para o caso de
+  /// algo passar despercebido e só se notar depois, olhando de novo para a
+  /// fatura em PDF/imagem. Ao contrário de `aplicar`, isto substitui sempre o
+  /// valor gravado, mesmo que já não estivesse em branco.
+  Future<({String marca, String fornecedor})> corrigirItem(
+    String faturaId,
+    int index, {
+    String? marca,
+    String? fornecedor,
+  }) async {
+    final res = await _pb.send(
+      '/api/gc_turnkey/faturas/$faturaId/corrigir-item',
+      method: 'POST',
+      body: {
+        'index': index,
+        if (marca != null) 'marca': marca,
+        if (fornecedor != null) 'fornecedor': fornecedor,
+      },
+    );
+    final m = res as Map;
+    return (
+      marca: (m['marca'] ?? '').toString(),
+      fornecedor: (m['fornecedor'] ?? '').toString(),
+    );
   }
 
   /// Só o proprietário: a fatura fica escondida (não se perde nada) e pode ser restaurada.

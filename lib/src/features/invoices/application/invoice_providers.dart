@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../consumables/application/consumivel_providers.dart';
 import '../../ingredients/application/ingredients_providers.dart';
+import '../../packaging/application/embalagem_providers.dart';
 import '../data/invoice_repository.dart';
 import '../domain/fatura.dart';
 
@@ -82,5 +84,25 @@ class InvoiceActions {
     _ref.invalidate(faturasListProvider);
     _ref.invalidate(faturasApagadasProvider);
     return n;
+  }
+
+  /// Corrige marca/fornecedor de uma linha já aplicada (proprietário/admin).
+  Future<({String marca, String fornecedor})> corrigirItem(
+    String faturaId,
+    int index, {
+    String? marca,
+    String? fornecedor,
+  }) async {
+    final r = await _repo.corrigirItem(
+      faturaId,
+      index,
+      marca: marca,
+      fornecedor: fornecedor,
+    );
+    _ref.invalidate(itensFaturaProvider(faturaId));
+    _ref.invalidate(ingredientsListProvider);
+    _ref.invalidate(consumiveisListProvider);
+    _ref.invalidate(embalagensListProvider);
+    return r;
   }
 }
