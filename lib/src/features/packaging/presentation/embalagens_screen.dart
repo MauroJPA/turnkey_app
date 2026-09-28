@@ -425,8 +425,38 @@ class _EmbalagemFormState extends ConsumerState<_EmbalagemForm> {
                 for (final u in UsoEmbalagem.values)
                   DropdownMenuItem(value: u, child: Text(u.label)),
               ],
-              onChanged: (v) => setState(() => _uso = v),
+              onChanged: (v) => setState(() {
+                _uso = v;
+                // Individual é sempre 1 peça; múltiplo pede uma quantidade
+                // (2, 3, 4…) — arranca em 2 se ainda estava em 1 ou vazio.
+                if (v == UsoEmbalagem.individual) {
+                  _rende.text = '1';
+                } else if (v == UsoEmbalagem.multiplo && _num(_rende) <= 1) {
+                  _rende.text = '2';
+                }
+              }),
             ),
+            if (_uso == UsoEmbalagem.multiplo) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Quantidade do múltiplo',
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final n in const [2, 3, 4, 5, 6, 8, 10, 12])
+                    ChoiceChip(
+                      label: Text('$n'),
+                      selected: _num(_rende) == n,
+                      onSelected: (_) =>
+                          setState(() => _rende.text = _s(n.toDouble())),
+                    ),
+                ],
+              ),
+            ],
             const SizedBox(height: 12),
             Text(
               'Formatos de cookie (opcional)',
