@@ -94,9 +94,12 @@ routerAdd(
     let precos = 0;
     let precosIgnorados = 0;
     let movimentos = 0;
+    let puladas = 0; // linhas já aplicadas antes (não se tocam outra vez)
+    let pendentes = 0;
 
     e.app.runInTransaction((tx) => {
-      // limpar linhas anteriores desta fatura
+      // linhas já gravadas antes (por índice) — as marcadas `aplicado` não se
+      // voltam a tocar (evita duplicar preços/movimentos ao reaplicar a fatura).
       const antigas = tx.findRecordsByFilter(
         'faturas_itens',
         'fatura = {:f}',
@@ -105,19 +108,66 @@ routerAdd(
         0,
         { f: id },
       );
-      for (const a of antigas) tx.delete(a);
+      const porIndice = {};
+      for (const a of antigas) {
+        const ix = a.getFloat('linha_index');
+        if (ix !== null && ix !== undefined) porIndice[ix] = a;
+      }
 
-      for (const l of linhas) {
-        const acao = l.acao || 'ignorar';
+      for (let li = 0; li < linhas.length; li++) {
+        const l = linhas[li];
+        const indice = Number.isFinite(Number(l.index)) ? Number(l.index) : li;
+        const existente = porIndice[indice];
+        if (existente && existente.getBool('aplicado')) {
+          puladas++;
+          continue;
+        }
+
+        const acao = l.acao || 'pendente';
         const ingId = l.ingredienteId || '';
         const consId = l.consumivelId || '';
+        const embId = l.embalagemId || '';
         const q = Number(l.quantidadeG || 0);
         const pu = Number(l.precoUnitario || 0);
         const emb = Number(l.embalagemG || 0);
 
+        // Embalagens (caixas, sacos, adesivos…): preço por peça (sem stock).
+        if (acao !== 'ignorar' && acao !== 'pendente' && embId && !ingId && !consId) {
+          let embReg = null;
+          try {
+            embReg = tx.findRecordById('embalagens', String(embId));
+            if (embReg.getString('empresa') !== empresaId) embReg = null;
+          } catch (_) {
+            embReg = null;
+          }
+          if (embReg) {
+            const prods = require(`${__hooks}/produtos.js`);
+            const desc = prods.normalizarDescricao(l.descricaoFatura);
+            let nomes = [];
+            try {
+              const v = JSON.parse(embReg.getString('nomes_fatura') || '[]');
+              if (Array.isArray(v)) nomes = v;
+            } catch (_) {}
+            if (desc && nomes.indexOf(desc) === -1) {
+              nomes.push(desc);
+              while (nomes.length > 50) nomes.shift();
+              embReg.set('nomes_fatura', nomes);
+            }
+            if (!embReg.getString('fornecedor') && fatura.getString('fornecedor')) {
+              embReg.set('fornecedor', fatura.getString('fornecedor'));
+            }
+            if (pu > 0 && (acao === 'preco' || acao === 'ambos')) {
+              embReg.set('preco_compra', pu);
+              embReg.set('unidades_compra', 1);
+              precos++;
+            }
+            tx.save(embReg);
+          }
+        }
+
         // Limpeza / insumos: guarda o preço e o nome desta fatura no consumível
         // (sem stock). Os documentos (FDS…) ficam onde estão — a app mostra-os.
-        if (acao !== 'ignorar' && consId && !ingId) {
+        if (acao !== 'ignorar' && acao !== 'pendente' && consId && !ingId) {
           let cons = null;
           try {
             cons = tx.findRecordById('consumiveis', String(consId));
@@ -161,7 +211,7 @@ routerAdd(
           }
         }
 
-        if (acao !== 'ignorar' && ingId) {
+        if (acao !== 'ignorar' && acao !== 'pendente' && ingId) {
           if (acao === 'preco' || acao === 'ambos') {
             let ing;
             try {
@@ -259,22 +309,46 @@ routerAdd(
           }
         }
 
-        const row = new Record(tx.findCollectionByNameOrId('faturas_itens'));
+        const aplicadaAgora =
+          acao !== 'ignorar' && acao !== 'pendente' && (!!ingId || !!consId || !!embId);
+
+        const row = existente || new Record(tx.findCollectionByNameOrId('faturas_itens'));
         row.set('empresa', empresaId);
         row.set('fatura', id);
-        if (ingId) row.set('ingrediente', ingId);
-        else if (consId) row.set('consumivel', consId);
+        row.set('linha_index', indice);
+        row.set('ingrediente', ingId || '');
+        row.set('consumivel', consId || '');
+        row.set('embalagem', embId || '');
         row.set('descricao_fatura', String(l.descricaoFatura || ''));
         row.set('quantidade_g', q);
         row.set('preco_unitario', pu);
         row.set('total_linha', Number(l.totalLinha || 0));
         row.set('embalagem_g', emb);
         row.set('acao', acao);
-        row.set('aplicado', acao !== 'ignorar' && (!!ingId || !!consId));
+        row.set('aplicado', aplicadaAgora);
         tx.save(row);
       }
 
-      fatura.set('estado', 'confirmada');
+      // Total de linhas desta fatura (não só as submetidas agora — dá para
+      // aplicar por partes) e o que já está resolvido (aplicado ou ignorado),
+      // juntando rondas anteriores com esta.
+      let totalLinhas = linhas.length;
+      try {
+        const di = JSON.parse(fatura.getString('dados_ia') || '{}');
+        if (Array.isArray(di.linhas) && di.linhas.length > 0) totalLinhas = di.linhas.length;
+      } catch (_) {}
+      const todas = tx.findRecordsByFilter('faturas_itens', 'fatura = {:f}', '', 0, 0, { f: id });
+      const vistos = {};
+      let resolvidas = 0;
+      for (const r of todas) {
+        const ix = r.getFloat('linha_index');
+        if (ix === null || ix === undefined || vistos[ix]) continue;
+        vistos[ix] = true;
+        if (r.getBool('aplicado') || r.getString('acao') === 'ignorar') resolvidas++;
+      }
+      pendentes = Math.max(0, totalLinhas - resolvidas);
+      fatura.set('pendentes_linhas', pendentes);
+      fatura.set('estado', pendentes > 0 ? 'analisada' : 'confirmada');
       tx.save(fatura);
     });
 
@@ -282,6 +356,8 @@ routerAdd(
       precos: precos,
       precosIgnorados: precosIgnorados,
       movimentos: movimentos,
+      puladas: puladas,
+      pendentes: pendentes,
     });
   },
   $apis.requireAuth('users', '_superusers'),

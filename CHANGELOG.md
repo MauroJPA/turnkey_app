@@ -2,6 +2,27 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.19.0 — 2026-09-28 — Faturas: aplicar por partes e embalagens
+
+- **Aplicar só o que já sabes, sem bloquear a fatura.** Nem sempre há informação para decidir logo uma linha
+  (falta a marca, o preço, ainda não sabes qual ingrediente é). Cada linha pode ficar **"Por rever depois"** —
+  diferente de "Ignorar" (essa é definitiva, tipo portes ou descontos). Ao carregar em **Aplicar**, só as linhas
+  decididas (Preço/Stock/Preço+Stock) são gravadas; as "por rever" ficam de fora, sem impedir as outras.
+- **A fatura mostra quantas faltam.** Sem tudo decidido, fica com o chip **"N por rever"** em vez de "Analisada";
+  só passa a "Confirmada" quando não sobra nenhuma. Reabrir a fatura mostra só as que faltam — as já aplicadas
+  ficam resumidas numa linha ("N linha(s) já aplicada(s) antes"), sem precisares de as rever outra vez.
+  Voltar a aplicar nunca duplica um preço ou um movimento de stock, mesmo reenviando tudo.
+- **Embalagens também vêm nas faturas.** Uma linha pode agora ligar-se a uma **Embalagem** (caixa, saco,
+  saqueta, adesivo…) em vez de um ingrediente ou consumível — terceiro botão "Embalagem" na revisão. A IA já
+  distingue material de embalar (`tipo_item: "embalagem"`) e sugere o tipo; aplicar atualiza o preço por peça da
+  embalagem (e aprende o texto da fatura, como os produtos e os consumíveis).
+- Migration `1707955214_faturas_pendente_embalagem` (`faturas_itens.linha_index` e ação `pendente`;
+  `faturas_itens.embalagem`; `faturas.pendentes_linhas`; `embalagens.nomes_fatura`).
+- O endpoint `/aplicar` passa a identificar as linhas pelo índice, em vez de apagar e recriar tudo — dá para
+  aplicar a mesma fatura várias vezes seguidas, cada vez só com o que já está pronto.
+- Testes: secção 8d do `test/security/seguranca.py` (aplicar parcial, não duplicar, embalagens, isolamento —
+  362 verificações, 0 falhas) e `test/faturas_pendente_embalagem_test.dart`.
+
 ## 1.18.0 — 2026-09-26 — Faturas: repetição automática, resumo do que entrou, corrigir e apagar (proprietário)
 
 - **A análise repete sozinha.** Quando a IA falha numa janela de páginas (sobrecarga, rede), a app espera e volta a

@@ -25,8 +25,12 @@ final invoiceRepositoryProvider = Provider<InvoiceRepository>((ref) {
 
 /// Uma linha pronta a aplicar (do ecrã de revisão).
 typedef LinhaAAplicar = ({
+  /// Posição desta linha em `fatura.linhasIa` — o servidor usa-a para saber o
+  /// que já foi aplicado antes e não voltar a tocar (aplicar por partes).
+  int index,
   String? ingredienteId,
   String? consumivelId,
+  String? embalagemId,
   String descricaoFatura,
   double quantidadeG,
   double precoUnitario,
@@ -36,6 +40,15 @@ typedef LinhaAAplicar = ({
   String? produtoId,
   String marca,
   String produtoNome,
+});
+
+/// Resultado de aplicar as linhas de uma fatura.
+typedef ResultadoAplicar = ({
+  int precos,
+  int precosIgnorados,
+  int movimentos,
+  int pendentes,
+  int puladas,
 });
 
 class InvoiceRepository {
@@ -284,7 +297,7 @@ class InvoiceRepository {
     return r.bodyBytes;
   }
 
-  Future<({int precos, int precosIgnorados, int movimentos})> aplicar(
+  Future<ResultadoAplicar> aplicar(
     String id,
     List<LinhaAAplicar> linhas,
   ) async {
@@ -295,6 +308,7 @@ class InvoiceRepository {
         'linhas': [
           for (final l in linhas)
             {
+              'index': l.index,
               if (l.ingredienteId != null) 'ingredienteId': l.ingredienteId,
               'descricaoFatura': l.descricaoFatura,
               'quantidadeG': l.quantidadeG,
@@ -304,6 +318,7 @@ class InvoiceRepository {
               'acao': l.acao.api,
               if (l.produtoId != null) 'produtoId': l.produtoId,
               if (l.consumivelId != null) 'consumivelId': l.consumivelId,
+              if (l.embalagemId != null) 'embalagemId': l.embalagemId,
               if (l.marca.isNotEmpty) 'marca': l.marca,
               'produtoNome': l.produtoNome,
             },
@@ -315,7 +330,18 @@ class InvoiceRepository {
       precos: (m['precos'] as num?)?.toInt() ?? 0,
       precosIgnorados: (m['precosIgnorados'] as num?)?.toInt() ?? 0,
       movimentos: (m['movimentos'] as num?)?.toInt() ?? 0,
+      pendentes: (m['pendentes'] as num?)?.toInt() ?? 0,
+      puladas: (m['puladas'] as num?)?.toInt() ?? 0,
     );
+  }
+
+  /// Decisões já gravadas nesta fatura (rondas anteriores de "Aplicar"), por
+  /// índice de linha — para reabrir a revisão sem repetir o que já está feito.
+  Future<List<ItemFaturaAnterior>> itensAnteriores(String faturaId) async {
+    final recs = await _pb
+        .collection('faturas_itens')
+        .getFullList(filter: 'fatura = "$faturaId"');
+    return recs.map(ItemFaturaAnterior.fromRecord).toList();
   }
 
   /// Só o proprietário: a fatura fica escondida (não se perde nada) e pode ser restaurada.

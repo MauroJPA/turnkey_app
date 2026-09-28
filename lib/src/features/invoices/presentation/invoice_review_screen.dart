@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -23,10 +24,13 @@ import '../../ingredients/data/ingredient_product_repository.dart';
 import '../../ingredients/data/ingredient_repository.dart';
 import '../../ingredients/domain/ingredient.dart';
 import '../../ingredients/domain/produto_ingrediente.dart';
+import '../../packaging/application/embalagem_providers.dart';
+import '../../packaging/domain/embalagem.dart';
 import '../application/analise_faturas_controller.dart';
 import '../application/invoice_providers.dart';
 import '../data/invoice_repository.dart';
 import '../domain/fatura.dart';
+import '../domain/invoice_erros.dart';
 import '../domain/match_ingrediente.dart';
 import 'invoice_owner_widgets.dart';
 
@@ -94,7 +98,7 @@ class InvoiceReviewScreen extends ConsumerWidget {
           }
           return ingsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('$e')),
+            error: (e, _) => Center(child: Text(mensagemAmigavel(e))),
             data: (ings) => ref
                 .watch(produtosIngredienteProvider)
                 .when(
@@ -105,6 +109,8 @@ class InvoiceReviewScreen extends ConsumerWidget {
                     ingredientes: ings,
                     produtos: const [],
                     consumiveis: const [],
+                    embalagens: const [],
+                    anteriores: const [],
                   ),
                   data: (prods) => ref
                       .watch(consumiveisListProvider)
@@ -116,13 +122,47 @@ class InvoiceReviewScreen extends ConsumerWidget {
                           ingredientes: ings,
                           produtos: prods,
                           consumiveis: const [],
+                          embalagens: const [],
+                          anteriores: const [],
                         ),
-                        data: (cons) => _Revisao(
-                          fatura: fatura,
-                          ingredientes: ings,
-                          produtos: prods,
-                          consumiveis: cons,
-                        ),
+                        data: (cons) => ref
+                            .watch(embalagensListProvider)
+                            .when(
+                              loading: () => const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                              error: (e, _) => _Revisao(
+                                fatura: fatura,
+                                ingredientes: ings,
+                                produtos: prods,
+                                consumiveis: cons,
+                                embalagens: const [],
+                                anteriores: const [],
+                              ),
+                              data: (embs) => ref
+                                  .watch(itensFaturaProvider(fatura.id))
+                                  .when(
+                                    loading: () => const Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                    error: (e, _) => _Revisao(
+                                      fatura: fatura,
+                                      ingredientes: ings,
+                                      produtos: prods,
+                                      consumiveis: cons,
+                                      embalagens: embs,
+                                      anteriores: const [],
+                                    ),
+                                    data: (anteriores) => _Revisao(
+                                      fatura: fatura,
+                                      ingredientes: ings,
+                                      produtos: prods,
+                                      consumiveis: cons,
+                                      embalagens: embs,
+                                      anteriores: anteriores,
+                                    ),
+                                  ),
+                            ),
                       ),
                 ),
           );
@@ -297,63 +337,131 @@ double? _converter(double v, String de, String para, {double densidade = 1}) {
 String _normNome(String s) =>
     s.toLowerCase().trim().replaceAll(RegExp(r'\s+'), ' ');
 
+/// A que ficha se liga uma linha de fatura.
+enum TipoLinha { ingrediente, consumivel, embalagem }
+
+/// Tipo inicial de uma linha: o que já estava decidido numa ronda anterior
+/// (se houver) manda; senão, o que a IA sugeriu.
+TipoLinha _tipoInicial(FaturaLinhaIa ia, ItemFaturaAnterior? anterior) {
+  if (anterior != null) {
+    if (anterior.embalagemId != null) return TipoLinha.embalagem;
+    if (anterior.consumivelId != null) return TipoLinha.consumivel;
+    if (anterior.ingredienteId != null) return TipoLinha.ingrediente;
+  }
+  if (ia.embalagem) return TipoLinha.embalagem;
+  if (ia.consumivel) return TipoLinha.consumivel;
+  return TipoLinha.ingrediente;
+}
+
+/// Ação inicial de uma linha: a de uma ronda anterior (se houver — inclui
+/// "pendente" e "ignorar", decisões que se mantêm), senão o que dá para
+/// decidir já a partir do emparelhamento automático. Sem nada para ligar,
+/// fica "por rever depois" em vez de silenciosamente ignorada.
+AcaoFatura _acaoInicial({
+  required FaturaLinhaIa ia,
+  required ItemFaturaAnterior? anterior,
+  required MatchLinha? match,
+  required Consumivel? consMatch,
+  required Embalagem? embMatch,
+  required bool isLista,
+}) {
+  if (anterior != null) return anterior.acao;
+  if (ia.embalagem) {
+    return embMatch != null ? AcaoFatura.preco : AcaoFatura.pendente;
+  }
+  if (match == null && consMatch == null) return AcaoFatura.pendente;
+  return isLista ? AcaoFatura.preco : AcaoFatura.ambos;
+}
+
 class _LinhaState {
-  _LinhaState(this.ia, MatchLinha? match, bool isLista, {Consumivel? consMatch})
-    : consumivel = ia.consumivel,
-      cons = consMatch,
-      categoria = CategoriaConsumivel.values.firstWhere(
-        (c) => c.api == ia.categoriaConsumivel,
-        orElse: () => CategoriaConsumivel.limpeza,
-      ),
-      ingrediente = match?.ingrediente,
-      produto = match?.produto,
-      marca = TextEditingController(
-        text: ia.marca.isNotEmpty ? ia.marca : (match?.produto?.marca ?? ''),
-      ),
-      // "2 un" de 15 g: mostra 2 unidades (=30 g); "200 g": mostra 200 g; "1 L": 1000 ml
-      unidadeQtd = ia.contaEmbalagens ? 'un' : (ia.unidadeEVolume ? 'ml' : 'g'),
-      qtd = TextEditingController(
-        text: ia.contaEmbalagens
-            ? ((ia.quantidade ?? 0) > 0 ? _fmtNum(ia.quantidade!) : '')
-            : (ia.quantidadeG > 0 ? ia.quantidadeG.toStringAsFixed(0) : ''),
-      ),
-      // a embalagem lida vem na unidade da IA; a do ingrediente/produto ligado, na dele
-      unidadeEmb = (ia.embalagemG ?? 0) > 0
-          ? ia.embalagemUnidade
-          : (match?.ingrediente.un ?? 'g'),
-      unidadeIng = (ia.embalagemG ?? 0) > 0
-          ? ia.embalagemUnidade
-          : (ia.contaEmbalagens ? 'g' : (ia.unidadeEVolume ? 'ml' : 'g')),
-      caracteristica = TextEditingController(text: ia.caracteristica),
-      preco = TextEditingController(
-        text: (ia.precoUnitario ?? 0) > 0
-            ? ia.precoUnitario!.toStringAsFixed(2)
-            : '',
-      ),
-      emb = TextEditingController(
-        text: (ia.embalagemG ?? 0) > 0
-            ? ia.embalagemG!.toStringAsFixed(0)
-            : (match?.produto != null && match!.produto!.embalagemG > 0
-                  ? match.produto!.embalagemG.toStringAsFixed(0)
-                  : (match != null && match.ingrediente.gramasEmbalagem > 0
-                        ? match.ingrediente.gramasEmbalagem.toStringAsFixed(0)
-                        : '')),
-      ),
-      nome = TextEditingController(text: ia.descricao),
-      acao = match == null && consMatch == null
-          ? AcaoFatura.ignorar
-          : (isLista ? AcaoFatura.preco : AcaoFatura.ambos);
+  _LinhaState(
+    this.ia,
+    this.index, {
+    MatchLinha? match,
+    Consumivel? consMatch,
+    Embalagem? embMatch,
+    required bool isLista,
+    ItemFaturaAnterior? anterior,
+  }) : aplicadaAnterior = anterior?.aplicado ?? false,
+       tipo = _tipoInicial(ia, anterior),
+       cons = consMatch,
+       embalagemSel = embMatch,
+       categoria = CategoriaConsumivel.values.firstWhere(
+         (c) => c.api == ia.categoriaConsumivel,
+         orElse: () => CategoriaConsumivel.limpeza,
+       ),
+       tipoEmbalagemSel = kTiposEmbalagem.contains(ia.tipoEmbalagem)
+           ? ia.tipoEmbalagem
+           : 'Caixa',
+       ingrediente = match?.ingrediente,
+       produto = match?.produto,
+       marca = TextEditingController(
+         text: ia.marca.isNotEmpty ? ia.marca : (match?.produto?.marca ?? ''),
+       ),
+       // "2 un" de 15 g: mostra 2 unidades (=30 g); "200 g": mostra 200 g; "1 L": 1000 ml
+       unidadeQtd = ia.contaEmbalagens ? 'un' : (ia.unidadeEVolume ? 'ml' : 'g'),
+       qtd = TextEditingController(
+         text: ia.contaEmbalagens
+             ? ((ia.quantidade ?? 0) > 0 ? _fmtNum(ia.quantidade!) : '')
+             : (ia.quantidadeG > 0 ? ia.quantidadeG.toStringAsFixed(0) : ''),
+       ),
+       // a embalagem lida vem na unidade da IA; a do ingrediente/produto ligado, na dele
+       unidadeEmb = (ia.embalagemG ?? 0) > 0
+           ? ia.embalagemUnidade
+           : (match?.ingrediente.un ?? 'g'),
+       unidadeIng = (ia.embalagemG ?? 0) > 0
+           ? ia.embalagemUnidade
+           : (ia.contaEmbalagens ? 'g' : (ia.unidadeEVolume ? 'ml' : 'g')),
+       caracteristica = TextEditingController(text: ia.caracteristica),
+       preco = TextEditingController(
+         text: (ia.precoUnitario ?? 0) > 0
+             ? ia.precoUnitario!.toStringAsFixed(2)
+             : '',
+       ),
+       emb = TextEditingController(
+         text: (ia.embalagemG ?? 0) > 0
+             ? ia.embalagemG!.toStringAsFixed(0)
+             : (match?.produto != null && match!.produto!.embalagemG > 0
+                   ? match.produto!.embalagemG.toStringAsFixed(0)
+                   : (match != null && match.ingrediente.gramasEmbalagem > 0
+                         ? match.ingrediente.gramasEmbalagem.toStringAsFixed(0)
+                         : '')),
+       ),
+       nome = TextEditingController(text: ia.descricao),
+       acao = _acaoInicial(
+         ia: ia,
+         anterior: anterior,
+         match: match,
+         consMatch: consMatch,
+         embMatch: embMatch,
+         isLista: isLista,
+       );
 
   final FaturaLinhaIa ia;
 
-  /// A linha é limpeza/insumo (em vez de ingrediente).
-  bool consumivel;
+  /// Posição desta linha em `fatura.linhasIa` — identifica-a no servidor,
+  /// mesmo quando só se aplicam algumas linhas de cada vez.
+  final int index;
+
+  /// Já foi aplicada numa ronda anterior (preço/stock já atualizados) — fica
+  /// só para consulta, sem precisar de ser revista outra vez.
+  final bool aplicadaAnterior;
+
+  /// A que se liga esta linha: um ingrediente, um consumível (limpeza/insumo)
+  /// ou uma embalagem (caixa, saco, adesivo…).
+  TipoLinha tipo;
 
   /// Produto de limpeza/insumo ligado (null se vai criar um novo).
   Consumivel? cons;
 
   /// Categoria do consumível a criar.
   CategoriaConsumivel categoria;
+
+  /// Embalagem ligada (null se vai criar uma nova).
+  Embalagem? embalagemSel;
+
+  /// Tipo da embalagem nova a criar (`kTiposEmbalagem`).
+  String tipoEmbalagemSel;
 
   /// Ingrediente genérico ligado a esta linha (null se vai criar um novo).
   Ingrediente? ingrediente;
@@ -364,7 +472,8 @@ class _LinhaState {
   /// Marca do produto (lida pela IA; editável).
   final TextEditingController marca;
 
-  /// Criar um ingrediente novo (com o nome do campo [nome]).
+  /// Criar um registo novo (ingrediente, consumível ou embalagem, consoante
+  /// [tipo]) com o nome do campo [nome].
   bool criarNovo = false;
 
   /// Renomear o [ingrediente] ligado para [nome] — propaga a todas as receitas
@@ -388,7 +497,7 @@ class _LinhaState {
   final TextEditingController preco;
   final TextEditingController emb;
 
-  /// Nome para o ingrediente novo / para o renomear.
+  /// Nome para o registo novo / para o renomear.
   final TextEditingController nome;
 
   AcaoFatura acao;
@@ -397,7 +506,8 @@ class _LinhaState {
       double.tryParse(c.text.replaceAll(',', '.').trim()) ?? 0;
 
   /// Unidade do ingrediente desta linha: a do ingrediente ligado, ou a escolhida
-  /// para o novo; sem ingrediente, a da embalagem.
+  /// para o novo; sem ingrediente, a da embalagem. Só faz sentido para [tipo]
+  /// ingrediente.
   String get ingUn => criarNovo
       ? unidadeIng
       : (ingrediente?.un ?? (unidadeEmb == 'un' ? 'un' : unidadeEmb));
@@ -419,7 +529,9 @@ class _LinhaState {
   }
 
   /// Aviso se as unidades não se entendem (ex.: embalagem em un, ingrediente em g).
+  /// Só se aplica a linhas de ingrediente (as outras não pesam nem têm stock).
   String? get problemaUnidade {
+    if (tipo != TipoLinha.ingrediente) return null;
     if (embV > 0 && embNaUnidade == null) {
       return 'A embalagem está em $unidadeEmb e o ingrediente em $ingUn: '
           'não dá para converter. Muda uma das unidades.';
@@ -441,11 +553,22 @@ class _LinhaState {
       _normNome(ingrediente!.nome) != _normNome(ia.descricao);
 
   bool get temAlvo =>
-      criarNovo || (consumivel ? cons != null : ingrediente != null);
+      criarNovo ||
+      switch (tipo) {
+        TipoLinha.consumivel => cons != null,
+        TipoLinha.embalagem => embalagemSel != null,
+        TipoLinha.ingrediente => ingrediente != null,
+      };
 
-  LinhaAAplicar toAplicar(String? ingredienteId, {String? consumivelId}) => (
+  LinhaAAplicar toAplicar(
+    String? ingredienteId, {
+    String? consumivelId,
+    String? embalagemId,
+  }) => (
+    index: index,
     ingredienteId: ingredienteId,
     consumivelId: consumivelId,
+    embalagemId: embalagemId,
     descricaoFatura: ia.descricao,
     quantidadeG: gramasComprados,
     precoUnitario: _n(preco),
@@ -464,11 +587,18 @@ class _Revisao extends ConsumerStatefulWidget {
     required this.ingredientes,
     required this.produtos,
     required this.consumiveis,
+    required this.embalagens,
+    required this.anteriores,
   });
   final Fatura fatura;
   final List<Ingrediente> ingredientes;
   final List<ProdutoIngrediente> produtos;
   final List<Consumivel> consumiveis;
+  final List<Embalagem> embalagens;
+
+  /// Decisões já gravadas nesta fatura (rondas anteriores de "Aplicar"), por
+  /// índice de linha.
+  final List<ItemFaturaAnterior> anteriores;
 
   @override
   ConsumerState<_Revisao> createState() => _RevisaoState();
@@ -484,15 +614,49 @@ class _RevisaoState extends ConsumerState<_Revisao> {
   @override
   void initState() {
     super.initState();
+    final anterioresPorIndice = {
+      for (final a in widget.anteriores) a.index: a,
+    };
+    final ias = widget.fatura.linhasIa;
     _linhas = [
-      for (final ia in widget.fatura.linhasIa)
-        _LinhaState(
-          ia,
-          ia.consumivel ? null : _matchIngrediente(ia),
-          _isLista,
-          consMatch: ia.consumivel ? _matchConsumivel(ia) : null,
-        ),
+      for (var i = 0; i < ias.length; i++)
+        _linhaPara(i, ias[i], anterioresPorIndice[i]),
     ];
+  }
+
+  _LinhaState _linhaPara(int i, FaturaLinhaIa ia, ItemFaturaAnterior? ant) {
+    MatchLinha? match;
+    Consumivel? consMatch;
+    Embalagem? embMatch;
+    if (ant?.ingredienteId != null) {
+      final ing = widget.ingredientes
+          .firstWhereOrNull((x) => x.id == ant!.ingredienteId);
+      if (ing != null) match = (ingrediente: ing, produto: null);
+    } else if (ant?.consumivelId != null) {
+      consMatch = widget.consumiveis
+          .firstWhereOrNull((c) => c.id == ant!.consumivelId);
+    } else if (ant?.embalagemId != null) {
+      embMatch = widget.embalagens
+          .firstWhereOrNull((e) => e.id == ant!.embalagemId);
+    } else if (ant == null) {
+      // sem decisão anterior: usa o emparelhamento automático
+      if (ia.embalagem) {
+        embMatch = _matchEmbalagem(ia);
+      } else if (ia.consumivel) {
+        consMatch = _matchConsumivel(ia);
+      } else {
+        match = _matchIngrediente(ia);
+      }
+    }
+    return _LinhaState(
+      ia,
+      i,
+      match: match,
+      consMatch: consMatch,
+      embMatch: embMatch,
+      isLista: _isLista,
+      anterior: ant,
+    );
   }
 
   MatchLinha? _matchIngrediente(FaturaLinhaIa ia) => emparelharLinha(
@@ -512,28 +676,41 @@ class _RevisaoState extends ConsumerState<_Revisao> {
     consumiveis: widget.consumiveis,
   );
 
-  /// Muda a linha entre "ingrediente" e "limpeza/insumo" e volta a procurar
-  /// a correspondência do novo tipo.
-  void _mudarTipo(_LinhaState l, bool consumivel) {
-    if (l.consumivel == consumivel) return;
+  Embalagem? _matchEmbalagem(FaturaLinhaIa ia) => emparelharEmbalagem(
+    descricao: ia.descricao,
+    nomeGenerico: ia.nomeGenerico,
+    embalagens: widget.embalagens,
+  );
+
+  /// Muda a linha entre ingrediente, limpeza/insumo e embalagem, e volta a
+  /// procurar a correspondência do novo tipo.
+  void _mudarTipo(_LinhaState l, TipoLinha tipo) {
+    if (l.tipo == tipo) return;
     setState(() {
-      l.consumivel = consumivel;
+      l.tipo = tipo;
       l.criarNovo = false;
       l.renomear = false;
       l.ingrediente = null;
       l.produto = null;
       l.cons = null;
-      if (consumivel) {
-        l.cons = _matchConsumivel(l.ia);
-      } else {
-        final m = _matchIngrediente(l.ia);
-        l.ingrediente = m?.ingrediente;
-        l.produto = m?.produto;
+      l.embalagemSel = null;
+      switch (tipo) {
+        case TipoLinha.consumivel:
+          l.cons = _matchConsumivel(l.ia);
+        case TipoLinha.embalagem:
+          l.embalagemSel = _matchEmbalagem(l.ia);
+        case TipoLinha.ingrediente:
+          final m = _matchIngrediente(l.ia);
+          l.ingrediente = m?.ingrediente;
+          l.produto = m?.produto;
       }
-      if (l.temAlvo && l.acao == AcaoFatura.ignorar) {
-        l.acao = _isLista || consumivel ? AcaoFatura.preco : AcaoFatura.ambos;
+      if (l.temAlvo &&
+          (l.acao == AcaoFatura.ignorar || l.acao == AcaoFatura.pendente)) {
+        l.acao = (_isLista || tipo != TipoLinha.ingrediente)
+            ? AcaoFatura.preco
+            : AcaoFatura.ambos;
       }
-      if (consumivel &&
+      if (tipo != TipoLinha.ingrediente &&
           (l.acao == AcaoFatura.stock || l.acao == AcaoFatura.ambos)) {
         l.acao = AcaoFatura.preco;
       }
@@ -554,12 +731,44 @@ class _RevisaoState extends ConsumerState<_Revisao> {
     );
     if (r == null) return;
     setState(() {
-      if (l.acao == AcaoFatura.ignorar) l.acao = AcaoFatura.preco;
+      if (l.acao == AcaoFatura.ignorar || l.acao == AcaoFatura.pendente) {
+        l.acao = AcaoFatura.preco;
+      }
       if (r is Consumivel) {
         l.cons = r;
         l.criarNovo = false;
       } else {
         l.cons = null;
+        l.criarNovo = true;
+        l.nome.text = l.ia.nomeGenerico.isNotEmpty
+            ? l.ia.nomeGenerico
+            : l.ia.descricao;
+      }
+    });
+  }
+
+  Future<void> _escolherEmbalagem(_LinhaState l) async {
+    final r = await showModalBottomSheet<Object>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _EmbalagemPicker(
+        embalagens: widget.embalagens,
+        sugestaoNome: l.ia.nomeGenerico.isNotEmpty
+            ? l.ia.nomeGenerico
+            : l.ia.descricao,
+      ),
+    );
+    if (r == null) return;
+    setState(() {
+      if (l.acao == AcaoFatura.ignorar || l.acao == AcaoFatura.pendente) {
+        l.acao = AcaoFatura.preco;
+      }
+      if (r is Embalagem) {
+        l.embalagemSel = r;
+        l.criarNovo = false;
+      } else {
+        l.embalagemSel = null;
         l.criarNovo = true;
         l.nome.text = l.ia.nomeGenerico.isNotEmpty
             ? l.ia.nomeGenerico
@@ -583,7 +792,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
     );
     if (r == null) return;
     setState(() {
-      if (l.acao == AcaoFatura.ignorar) {
+      if (l.acao == AcaoFatura.ignorar || l.acao == AcaoFatura.pendente) {
         l.acao = _isLista ? AcaoFatura.preco : AcaoFatura.ambos;
       }
       switch (r) {
@@ -614,14 +823,14 @@ class _RevisaoState extends ConsumerState<_Revisao> {
 
   Future<void> _aplicar() async {
     final aAplicar = _linhas
-        .where((l) => l.acao != AcaoFatura.ignorar)
+        .where((l) => !l.aplicadaAnterior && l.acao.aplicaAgora)
         .toList();
     if (aAplicar.any((l) => !l.temAlvo)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Há linhas sem ingrediente ou produto. Liga, cria um novo, ou '
-            'põe em Ignorar.',
+            'Há linhas sem ingrediente, produto ou embalagem. Liga, cria um '
+            'novo, põe em "Por rever depois" ou "Ignorar".',
           ),
         ),
       );
@@ -632,13 +841,13 @@ class _RevisaoState extends ConsumerState<_Revisao> {
     )) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Dá um nome ao ingrediente a criar/renomear.'),
+          content: Text('Dá um nome ao que vais criar/renomear.'),
         ),
       );
       return;
     }
     final semUnidade = aAplicar.where(
-      (l) => !l.consumivel && l.problemaUnidade != null,
+      (l) => l.tipo == TipoLinha.ingrediente && l.problemaUnidade != null,
     );
     if (semUnidade.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -646,9 +855,19 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       );
       return;
     }
-    final novos = aAplicar.where((l) => l.criarNovo && !l.consumivel).length;
-    final novosCons = aAplicar.where((l) => l.criarNovo && l.consumivel).length;
+    final novos = aAplicar
+        .where((l) => l.criarNovo && l.tipo == TipoLinha.ingrediente)
+        .length;
+    final novosCons = aAplicar
+        .where((l) => l.criarNovo && l.tipo == TipoLinha.consumivel)
+        .length;
+    final novosEmb = aAplicar
+        .where((l) => l.criarNovo && l.tipo == TipoLinha.embalagem)
+        .length;
     final renomes = aAplicar.where((l) => l.renomear).length;
+    final pendentesFicam = _linhas
+        .where((l) => !l.aplicadaAnterior && l.acao == AcaoFatura.pendente)
+        .length;
 
     // Aviso: preços que não vão mudar porque a fatura é mais antiga do que a
     // última atualização de preço do ingrediente (o servidor também garante).
@@ -674,18 +893,25 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       context,
       titulo: 'Aplicar ${aAplicar.length} linha(s)?',
       mensagem: [
-        'Atualiza os preços dos ingredientes escolhidos e dá entrada no '
-            'inventário das quantidades marcadas.',
+        'Atualiza os preços escolhidos e dá entrada no inventário das '
+            'quantidades marcadas.',
         if (maisAntigos > 0)
           'Atenção: $maisAntigos preço(s) NÃO vão mudar — esta fatura é mais '
               'antiga do que a última atualização desse ingrediente.',
         if (novos > 0) 'Cria $novos ingrediente(s) novo(s).',
         if (novosCons > 0)
           'Cria $novosCons produto(s) de limpeza/insumos novo(s).',
+        if (novosEmb > 0) 'Cria $novosEmb embalagem(ns) nova(s).',
         if (renomes > 0)
           'Renomeia $renomes ingrediente(s) — muda em todas as receitas e '
               'fichas que o usam.',
-        'A fatura fica confirmada.',
+        if (pendentesFicam > 0)
+          '$pendentesFicam linha(s) ficam por rever depois — nada muda '
+              'nelas; a fatura fica na lista para voltares quando tiveres a '
+              'informação.',
+        pendentesFicam > 0
+            ? 'As restantes ficam confirmadas.'
+            : 'A fatura fica confirmada.',
       ].join(' '),
       confirmar: 'Aplicar',
     );
@@ -696,82 +922,104 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       final forn = widget.fatura.fornecedor.trim();
       final ids = <_LinhaState, String?>{};
       final consIds = <_LinhaState, String?>{};
-      for (final l in _linhas) {
-        if (l.acao == AcaoFatura.ignorar) {
-          ids[l] = null;
-          continue;
-        }
-        if (l.consumivel) {
-          if (l.criarNovo) {
-            // o preço e o nome da fatura ficam ao aplicar (no servidor)
-            final novo = await ref
-                .read(consumivelActionsProvider)
-                .criar(
-                  ConsumivelInput(
-                    nome: l.nome.text.trim(),
-                    categoria: l.categoria,
-                    marca: l.marca.text.trim(),
-                    fornecedor: forn,
-                    exigeFds: l.categoria.exigeFdsPorOmissao,
-                  ),
-                );
-            consIds[l] = novo.id;
-          } else {
-            consIds[l] = l.cons?.id;
-          }
-          continue;
-        }
-        if (l.criarNovo) {
-          final novo = await repo.create(
-            IngredienteInput(
-              nome: l.nome.text.trim(),
-              caracteristica: l.caracteristica.text.trim(),
-              unidade: l.unidadeIng,
-              // o preço e a marca ficam no produto de compra, criado ao aplicar
-              // (só numa linha "só stock" é que o preço vai já no ingrediente)
-              preco: l.acao == AcaoFatura.stock ? l.precoV : 0,
-              gramasEmbalagem: l.acao == AcaoFatura.stock
-                  ? (l.embNaUnidade ?? 0)
-                  : 0,
-              origem: OrigemIngrediente.comprado,
-            ),
-          );
-          ids[l] = novo.id;
-        } else if (l.renomear && l.ingrediente != null) {
-          final ing = l.ingrediente!;
-          await repo.update(
-            ing.id,
-            IngredienteInput(
-              nome: l.nome.text.trim(),
-              caracteristica: ing.caracteristica,
-              marca: ing.marca,
-              fornecedor: forn.isNotEmpty ? forn : ing.fornecedor,
-              preco: ing.preco,
-              gramasEmbalagem: ing.gramasEmbalagem,
-              disponivel: ing.disponivel,
-              origem: ing.origem,
-              unidade: ing.un,
-              gramasUnidade: ing.gramasUnidade,
-            ),
-          );
-          ids[l] = ing.id;
-        } else {
-          ids[l] = l.ingrediente?.id;
+      final embIds = <_LinhaState, String?>{};
+      for (final l in aAplicar) {
+        switch (l.tipo) {
+          case TipoLinha.consumivel:
+            if (l.criarNovo) {
+              // o preço e o nome da fatura ficam ao aplicar (no servidor)
+              final novo = await ref
+                  .read(consumivelActionsProvider)
+                  .criar(
+                    ConsumivelInput(
+                      nome: l.nome.text.trim(),
+                      categoria: l.categoria,
+                      marca: l.marca.text.trim(),
+                      fornecedor: forn,
+                      exigeFds: l.categoria.exigeFdsPorOmissao,
+                    ),
+                  );
+              consIds[l] = novo.id;
+            } else {
+              consIds[l] = l.cons?.id;
+            }
+          case TipoLinha.embalagem:
+            if (l.criarNovo) {
+              // o preço e o nome da fatura ficam ao aplicar (no servidor)
+              final novo = await ref
+                  .read(embalagemActionsProvider)
+                  .criar(
+                    EmbalagemInput(
+                      nome: l.nome.text.trim(),
+                      tipo: l.tipoEmbalagemSel,
+                      fornecedor: forn,
+                    ),
+                  );
+              embIds[l] = novo.id;
+            } else {
+              embIds[l] = l.embalagemSel?.id;
+            }
+          case TipoLinha.ingrediente:
+            if (l.criarNovo) {
+              final novo = await repo.create(
+                IngredienteInput(
+                  nome: l.nome.text.trim(),
+                  caracteristica: l.caracteristica.text.trim(),
+                  unidade: l.unidadeIng,
+                  // o preço e a marca ficam no produto de compra, criado ao
+                  // aplicar (só numa linha "só stock" é que o preço vai já
+                  // no ingrediente)
+                  preco: l.acao == AcaoFatura.stock ? l.precoV : 0,
+                  gramasEmbalagem: l.acao == AcaoFatura.stock
+                      ? (l.embNaUnidade ?? 0)
+                      : 0,
+                  origem: OrigemIngrediente.comprado,
+                ),
+              );
+              ids[l] = novo.id;
+            } else if (l.renomear && l.ingrediente != null) {
+              final ing = l.ingrediente!;
+              await repo.update(
+                ing.id,
+                IngredienteInput(
+                  nome: l.nome.text.trim(),
+                  caracteristica: ing.caracteristica,
+                  marca: ing.marca,
+                  fornecedor: forn.isNotEmpty ? forn : ing.fornecedor,
+                  preco: ing.preco,
+                  gramasEmbalagem: ing.gramasEmbalagem,
+                  disponivel: ing.disponivel,
+                  origem: ing.origem,
+                  unidade: ing.un,
+                  gramasUnidade: ing.gramasUnidade,
+                ),
+              );
+              ids[l] = ing.id;
+            } else {
+              ids[l] = l.ingrediente?.id;
+            }
         }
       }
 
+      // Reenvia todas as linhas (mesmo as já aplicadas antes ou por rever): o
+      // servidor identifica pelo índice e só mexe nas que ainda faltam.
+      final linhasEnviar = _linhas
+          .map(
+            (l) => l.toAplicar(
+              ids[l],
+              consumivelId: consIds[l],
+              embalagemId: embIds[l],
+            ),
+          )
+          .toList();
       final res = await ref
           .read(invoiceActionsProvider)
-          .aplicar(
-            widget.fatura.id,
-            _linhas
-                .map((l) => l.toAplicar(ids[l], consumivelId: consIds[l]))
-                .toList(),
-          );
+          .aplicar(widget.fatura.id, linhasEnviar);
       ref.invalidate(ingredientsListProvider);
       ref.invalidate(produtosIngredienteProvider);
       ref.invalidate(consumiveisListProvider);
       ref.invalidate(consumivelDocumentosProvider);
+      ref.invalidate(embalagensListProvider);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -782,7 +1030,9 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                 '${res.precosIgnorados} preço(s) mantidos (fatura mais antiga)',
               if (novos > 0) '$novos novo(s)',
               if (novosCons > 0) '$novosCons produto(s) de limpeza/insumos',
+              if (novosEmb > 0) '$novosEmb embalagem(ns)',
               if (renomes > 0) '$renomes renomeado(s)',
+              if (res.pendentes > 0) '${res.pendentes} por rever',
             ].join(' · '),
           ),
         ),
@@ -797,7 +1047,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('$e')));
+        ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -1208,20 +1458,94 @@ class _RevisaoState extends ConsumerState<_Revisao> {
     ];
   }
 
+  /// Campos de uma linha de embalagem (caixa, saco, saqueta, adesivo…).
+  List<Widget> _blocoEmbalagem(_LinhaState l) {
+    final cs = Theme.of(context).colorScheme;
+    return [
+      InkWell(
+        onTap: () => _escolherEmbalagem(l),
+        child: InputDecorator(
+          decoration: InputDecoration(
+            labelText: 'Embalagem (caixa, saco, adesivo…)',
+            isDense: true,
+            suffixIcon: const Icon(Icons.arrow_drop_down),
+            helperText: l.criarNovo ? 'Vai criar uma embalagem nova' : null,
+          ),
+          child: Text(
+            l.criarNovo
+                ? 'Nova embalagem'
+                : (l.embalagemSel?.nome ?? 'Escolher embalagem…'),
+            style: TextStyle(color: !l.temAlvo ? cs.error : null),
+          ),
+        ),
+      ),
+      if (l.criarNovo) ...[
+        const SizedBox(height: 8),
+        TextField(
+          controller: l.nome,
+          decoration: const InputDecoration(
+            labelText: 'Nome da embalagem nova',
+            isDense: true,
+          ),
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          key: ValueKey('${identityHashCode(l)}_${l.tipoEmbalagemSel}'),
+          initialValue: l.tipoEmbalagemSel,
+          decoration: const InputDecoration(labelText: 'Tipo', isDense: true),
+          items: [
+            for (final t in kTiposEmbalagem)
+              DropdownMenuItem(value: t, child: Text(t)),
+          ],
+          onChanged: (t) =>
+              setState(() => l.tipoEmbalagemSel = t ?? l.tipoEmbalagemSel),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Depois ajusta em Embalagens quantas peças rendem por unidade de '
+          'produto.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final f = widget.fatura;
+    final visiveis = _linhas.where((l) => !l.aplicadaAnterior).toList();
+    final aplicadasCount = _linhas.length - visiveis.length;
+    final cs = Theme.of(context).colorScheme;
     final lista = ListView(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
       children: [
         _cabecalho(f),
         const SizedBox(height: 8),
+        if (aplicadasCount > 0)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.check_circle_outline, size: 16, color: cs.primary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '$aplicadasCount linha(s) já aplicada(s) antes — não '
+                    'precisas de as rever.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              ],
+            ),
+          ),
         Text(
           'Linhas lidas pela IA — confirma cada uma',
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const SizedBox(height: 4),
-        for (final l in _linhas)
+        for (final l in visiveis)
           Card(
             margin: const EdgeInsets.symmetric(vertical: 3),
             child: Padding(
@@ -1234,24 +1558,33 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 6),
-                  SegmentedButton<bool>(
+                  SegmentedButton<TipoLinha>(
                     showSelectedIcon: false,
                     style: const ButtonStyle(
                       visualDensity: VisualDensity.compact,
                     ),
                     segments: const [
-                      ButtonSegment(value: false, label: Text('Ingrediente')),
                       ButtonSegment(
-                        value: true,
+                        value: TipoLinha.ingrediente,
+                        label: Text('Ingrediente'),
+                      ),
+                      ButtonSegment(
+                        value: TipoLinha.consumivel,
                         label: Text('Limpeza / insumo'),
                       ),
+                      ButtonSegment(
+                        value: TipoLinha.embalagem,
+                        label: Text('Embalagem'),
+                      ),
                     ],
-                    selected: {l.consumivel},
+                    selected: {l.tipo},
                     onSelectionChanged: (v) => _mudarTipo(l, v.first),
                   ),
                   const SizedBox(height: 6),
-                  if (l.consumivel)
+                  if (l.tipo == TipoLinha.consumivel)
                     ..._blocoConsumivel(l)
+                  else if (l.tipo == TipoLinha.embalagem)
+                    ..._blocoEmbalagem(l)
                   else
                     InkWell(
                       onTap: () => _escolherIngrediente(l),
@@ -1279,7 +1612,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                         ),
                       ),
                     ),
-                  if (!l.consumivel &&
+                  if (l.tipo == TipoLinha.ingrediente &&
                       (l.ingrediente != null || l.criarNovo)) ...[
                     const SizedBox(height: 8),
                     TextField(
@@ -1305,7 +1638,8 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                       }),
                     ),
                   ],
-                  if (!l.consumivel && (l.criarNovo || l.renomear)) ...[
+                  if (l.tipo == TipoLinha.ingrediente &&
+                      (l.criarNovo || l.renomear)) ...[
                     const SizedBox(height: 8),
                     TextField(
                       controller: l.nome,
@@ -1349,7 +1683,9 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                       ),
                     ],
                   ],
-                  if (!l.consumivel && l.ingrediente != null && l.nomeDiferente)
+                  if (l.tipo == TipoLinha.ingrediente &&
+                      l.ingrediente != null &&
+                      l.nomeDiferente)
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: CheckboxListTile(
@@ -1373,7 +1709,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      if (!_isLista && !l.consumivel) ...[
+                      if (!_isLista && l.tipo == TipoLinha.ingrediente) ...[
                         Expanded(child: _campoComprado(l)),
                         const SizedBox(width: 8),
                       ],
@@ -1392,7 +1728,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                       ),
                     ],
                   ),
-                  if (!l.consumivel) ...[
+                  if (l.tipo == TipoLinha.ingrediente) ...[
                     const SizedBox(height: 8),
                     _campoEmbalagem(l),
                     if (l.problemaUnidade != null)
@@ -1410,8 +1746,8 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                   const SizedBox(height: 8),
                   DropdownButtonFormField<AcaoFatura>(
                     // `l.acao` também muda por fora (ex.: ao escolher
-                    // ingrediente numa linha "ignorar" — linha 288); a
-                    // key força um remount para o `initialValue` refletir
+                    // ingrediente numa linha "por rever" — `_escolherIngrediente`);
+                    // a key força um remount para o `initialValue` refletir
                     // essa mudança (deixou de ser um campo controlado).
                     key: ValueKey('${identityHashCode(l)}_${l.acao.name}'),
                     initialValue: l.acao,
@@ -1421,13 +1757,14 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                     ),
                     items: [
                       for (final a in AcaoFatura.values)
-                        if ((!_isLista && !l.consumivel) ||
+                        if ((!_isLista && l.tipo == TipoLinha.ingrediente) ||
                             a == AcaoFatura.preco ||
+                            a == AcaoFatura.pendente ||
                             a == AcaoFatura.ignorar)
                           DropdownMenuItem(value: a, child: Text(a.label)),
                     ],
                     onChanged: (a) =>
-                        setState(() => l.acao = a ?? AcaoFatura.ignorar),
+                        setState(() => l.acao = a ?? AcaoFatura.pendente),
                   ),
                 ],
               ),
@@ -1612,6 +1949,68 @@ class _ConsumivelPickerState extends State<_ConsumivelPicker> {
                     itens[i].categoria.label,
                     if (itens[i].marca.isNotEmpty) itens[i].marca,
                   ].join(' · '),
+                ),
+                onTap: () => Navigator.pop(context, itens[i]),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmbalagemPicker extends StatefulWidget {
+  const _EmbalagemPicker({required this.embalagens, required this.sugestaoNome});
+  final List<Embalagem> embalagens;
+  final String sugestaoNome;
+
+  @override
+  State<_EmbalagemPicker> createState() => _EmbalagemPickerState();
+}
+
+class _EmbalagemPickerState extends State<_EmbalagemPicker> {
+  String _q = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final itens = widget.embalagens
+        .where(
+          (e) =>
+              _q.isEmpty ||
+              '${e.nome} ${e.tipo}'.toLowerCase().contains(_q.toLowerCase()),
+        )
+        .toList();
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.8,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TextField(
+              autofocus: true,
+              onChanged: (v) => setState(() => _q = v),
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search),
+                hintText: 'Procurar embalagem',
+                isDense: true,
+              ),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.add_circle_outline),
+            title: const Text('Criar embalagem nova'),
+            subtitle: Text('«${widget.sugestaoNome}»'),
+            onTap: () => Navigator.pop(context, const _EscolhaNovo()),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: ListView.builder(
+              itemCount: itens.length,
+              itemBuilder: (_, i) => ListTile(
+                title: Text(itens[i].nome),
+                subtitle: Text(
+                  itens[i].tipo.isEmpty ? 'Sem tipo' : itens[i].tipo,
                 ),
                 onTap: () => Navigator.pop(context, itens[i]),
               ),
