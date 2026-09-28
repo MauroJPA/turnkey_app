@@ -2,6 +2,14 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.20.1 — 2026-09-28 — Embalagens: quantidade do múltiplo
+
+- Quando o **uso** é **Múltiplo**, aparece agora uma escolha rápida da quantidade (2, 3, 4, 5, 6, 8, 10, 12 —
+  chips) tanto no ecrã de **Embalagens** como ao criar uma embalagem nova na revisão de uma fatura. Escolher
+  **Individual** fixa a quantidade em 1 automaticamente; para outros valores continua a dar para escrever à mão
+  no campo "Uma peça embala quantas unidades?" (Embalagens) — a quantidade é o próprio `rende_unidades` que já
+  existia, só ficou mais fácil de escolher quando é um múltiplo.
+
 ## 1.20.0 — 2026-09-28 — Embalagens: característica, uso e formatos de cookie
 
 - **Característica na embalagem**, tal como já havia nos ingredientes: um texto livre para distinguir variantes

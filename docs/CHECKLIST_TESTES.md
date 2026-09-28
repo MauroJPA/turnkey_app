@@ -807,6 +807,13 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] (Segurança, já cobertos pela suite automática — não repetir à mão salvo dúvida) uma embalagem não pode
       ficar com uma lista de formatos de cookie que misture o próprio com o de outra empresa; a app nunca deixa
       escolher formatos que não sejam os da empresa.
+- [ ] Escolher **uso = Múltiplo**: aparecem chips de quantidade (2, 3, 4, 5, 6, 8, 10, 12). Escolher "6" e
+      guardar: reabrir mostra "rende 6 un" e o custo por unidade já divide por 6.
+- [ ] Escolher **uso = Individual**: a quantidade fica em 1 automaticamente (chips desaparecem).
+- [ ] Precisar de uma quantidade fora da lista rápida (ex.: 24): continua a dar para escrever no campo "Uma peça
+      embala quantas unidades?" mais abaixo — os chips são só um atalho, não travam valores maiores.
+- [ ] O mesmo seletor de quantidade aparece ao criar uma embalagem nova (uso = Múltiplo) diretamente na revisão
+      de uma fatura; aplicar a linha cria a embalagem já com essa quantidade em `rende_unidades`.
 
 ---
 
