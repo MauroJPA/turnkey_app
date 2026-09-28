@@ -7,6 +7,7 @@ import 'package:pocketbase/pocketbase.dart' show ClientException;
 
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/data/marcas_fornecedores_providers.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
@@ -22,6 +23,7 @@ import '../data/ingredient_repository.dart';
 import '../domain/ingredient.dart';
 import 'ingredient_form_sheet.dart';
 import 'juntar_ingrediente_sheet.dart';
+import 'juntar_marcas_fornecedores_sheet.dart';
 import 'nutricao_sheet.dart';
 
 class IngredientsScreen extends ConsumerStatefulWidget {
@@ -123,8 +125,9 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
       return true;
     } on Object catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
       return false;
     } finally {
@@ -160,8 +163,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
     // (que lista os ingredientes/subprodutos a preencher, em cascata).
     if (i.eProdutoProprio) {
       final recs = ref.read(recipesListProvider(false)).valueOrNull;
-      final rec =
-          recs?.where((r) => r.id == i.receitaEspelhoId).firstOrNull;
+      final rec = recs?.where((r) => r.id == i.receitaEspelhoId).firstOrNull;
       if (rec != null) {
         await showNutricaoReceitaSheet(context, receita: rec);
         return;
@@ -174,7 +176,8 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
     final ok = await confirmDialog(
       context,
       titulo: 'Preencher pela tabela INSA?',
-      mensagem: 'Procura na Tabela da Composição de Alimentos (INSA) um '
+      mensagem:
+          'Procura na Tabela da Composição de Alimentos (INSA) um '
           'alimento parecido com cada ingrediente SEM nutrição e preenche '
           'os valores + alergénios quando há uma correspondência clara. '
           'Os que ficarem em dúvida são marcados "por rever" para tu '
@@ -183,30 +186,31 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
     );
     if (!ok) return;
     await _run(() async {
-      final r =
-          await ref.read(ingredientActionsProvider).autoPreencherInsa();
+      final r = await ref.read(ingredientActionsProvider).autoPreencherInsa();
       if (!mounted) return;
       final rever = r.porRever + r.semCorrespondencia;
       setState(() => _soRevisao = rever > 0);
-      unawaited(showDialog<void>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Tabela INSA'),
-          content: Text(
-            r.total == 0
-                ? 'Todos os ingredientes já tinham nutrição.'
-                : 'Preenchidos automaticamente: ${r.aplicados}.\n'
-                    'Por rever (escolher o alimento certo): ${r.porRever}.\n'
-                    'Sem correspondência na INSA: ${r.semCorrespondencia}.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('OK'),
+      unawaited(
+        showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Tabela INSA'),
+            content: Text(
+              r.total == 0
+                  ? 'Todos os ingredientes já tinham nutrição.'
+                  : 'Preenchidos automaticamente: ${r.aplicados}.\n'
+                        'Por rever (escolher o alimento certo): ${r.porRever}.\n'
+                        'Sem correspondência na INSA: ${r.semCorrespondencia}.',
             ),
-          ],
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
         ),
-      ));
+      );
     });
   }
 
@@ -261,7 +265,8 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
   List<Ingrediente> _filter(List<Ingrediente> all) {
     return all.where((i) {
       final q = _query.toLowerCase();
-      final matchQ = q.isEmpty ||
+      final matchQ =
+          q.isEmpty ||
           i.nome.toLowerCase().contains(q) ||
           i.marca.toLowerCase().contains(q) ||
           i.caracteristica.toLowerCase().contains(q);
@@ -287,8 +292,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         children: [
-          Text('Nutrição:  ',
-              style: Theme.of(context).textTheme.bodySmall),
+          Text('Nutrição:  ', style: Theme.of(context).textTheme.bodySmall),
           for (final (ic, cor, txt) in itens)
             Padding(
               padding: const EdgeInsets.only(right: 12),
@@ -322,6 +326,12 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
         title: Text(_trash ? 'Ingredientes · Lixeira' : 'Ingredientes'),
         actions: [
           const HelpActions(topic: HelpTopic.ingredientes),
+          if (ref.read(currentPapelProvider).canEditConfig && !_trash)
+            IconButton(
+              tooltip: 'Juntar marcas/fornecedores repetidos',
+              icon: const Icon(Icons.join_full_outlined),
+              onPressed: () => mostrarJuntarMarcasFornecedores(context),
+            ),
           if (_podeEditar && !_trash)
             IconButton(
               tooltip: 'Preencher nutrição pela tabela INSA',
@@ -336,7 +346,9 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
             ),
           IconButton(
             tooltip: _trash ? 'Ver ativos' : 'Lixeira',
-            icon: Icon(_trash ? Icons.inventory_2_outlined : Icons.delete_outline),
+            icon: Icon(
+              _trash ? Icons.inventory_2_outlined : Icons.delete_outline,
+            ),
             onPressed: () => setState(() => _trash = !_trash),
           ),
           if (_podeEditar && !_trash)
@@ -374,32 +386,28 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
           Expanded(
             child: AsyncValueView<List<Ingrediente>>(
               value: listAsync,
-              onRetry: () =>
-                  ref.invalidate(ingredientsListProvider(_trash)),
+              onRetry: () => ref.invalidate(ingredientsListProvider(_trash)),
               data: (all) {
                 final fornecedores = <String>{
                   'Todos',
                   for (final i in all)
                     if (i.fornecedor.isNotEmpty) i.fornecedor,
                 };
-                final nRever =
-                    all.where((i) => i.precisaRevisaoInsa).length;
+                final nRever = all.where((i) => i.precisaRevisaoInsa).length;
                 if (_soRevisao && nRever == 0) _soRevisao = false;
                 final items = _filter(all);
                 return Column(
                   children: [
                     if (nRever > 0)
                       Padding(
-                        padding:
-                            const EdgeInsets.fromLTRB(12, 4, 12, 0),
+                        padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
                         child: Align(
                           alignment: Alignment.centerLeft,
                           child: FilterChip(
                             avatar: const Icon(Icons.rule, size: 18),
                             label: Text('Por rever da INSA ($nRever)'),
                             selected: _soRevisao,
-                            onSelected: (v) =>
-                                setState(() => _soRevisao = v),
+                            onSelected: (v) => setState(() => _soRevisao = v),
                           ),
                         ),
                       ),
@@ -420,6 +428,20 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                                       setState(() => _fornecedor = f),
                                 ),
                               ),
+                            if (fornecedores.length > 2 &&
+                                ref.read(currentPapelProvider).canEditConfig)
+                              ActionChip(
+                                avatar: const Icon(
+                                  Icons.join_full_outlined,
+                                  size: 16,
+                                ),
+                                label: const Text('Juntar repetidos'),
+                                onPressed: () =>
+                                    mostrarJuntarMarcasFornecedores(
+                                      context,
+                                      tipoInicial: TipoCatalogo.fornecedor,
+                                    ),
+                              ),
                           ],
                         ),
                       ),
@@ -430,8 +452,8 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                               child: Text(
                                 all.isEmpty
                                     ? (_trash
-                                        ? 'Lixeira vazia'
-                                        : 'Sem ingredientes. Usa + ou importa um CSV.')
+                                          ? 'Lixeira vazia'
+                                          : 'Sem ingredientes. Usa + ou importa um CSV.')
                                     : 'Nada corresponde ao filtro.',
                               ),
                             )
@@ -468,19 +490,13 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text(
-          fmt(i.preco),
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        Text(fmt(i.preco), style: const TextStyle(fontWeight: FontWeight.bold)),
         if (i.gramasEmbalagem > 0)
-          Text(
-            switch (i.un) {
-              'ml' => '${fmt(i.custoPorGrama * 1000)}/L',
-              'un' => '${fmt(i.custoPorGrama)}/un',
-              _ => '${fmt(i.custoPorGrama * 1000)}/kg',
-            },
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          Text(switch (i.un) {
+            'ml' => '${fmt(i.custoPorGrama * 1000)}/L',
+            'un' => '${fmt(i.custoPorGrama)}/un',
+            _ => '${fmt(i.custoPorGrama * 1000)}/kg',
+          }, style: Theme.of(context).textTheme.bodySmall),
       ],
     );
 
@@ -497,10 +513,8 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
               onPressed: _busy
                   ? null
                   : () => _run(
-                        () => ref
-                            .read(ingredientActionsProvider)
-                            .restore(i.id),
-                      ),
+                      () => ref.read(ingredientActionsProvider).restore(i.id),
+                    ),
             ),
             IconButton(
               tooltip: 'Apagar definitivamente',
@@ -555,31 +569,31 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
               ],
             ),
           if (_podeEditar)
-            Builder(builder: (context) {
-              final cs = Theme.of(context).colorScheme;
-              final (IconData ic, Color cor) = switch (i.fonteNutri) {
-                FonteNutri.vazia => (
+            Builder(
+              builder: (context) {
+                final cs = Theme.of(context).colorScheme;
+                final (IconData ic, Color cor) = switch (i.fonteNutri) {
+                  FonteNutri.vazia => (
                     Icons.local_dining_outlined,
                     Theme.of(context).disabledColor,
                   ),
-                FonteNutri.porRever => (Icons.rule, cs.error),
-                FonteNutri.insa => (Icons.menu_book, cs.primary),
-                FonteNutri.manual => (Icons.edit_note, cs.secondary),
-                FonteNutri.comFoto => (Icons.photo_camera, cs.tertiary),
-              };
-              return IconButton(
-                tooltip: 'Nutrição: ${i.fonteNutri.label}',
-                icon: Icon(ic, size: 20, color: cor),
-                onPressed: () => _nutricao(i),
-              );
-            }),
+                  FonteNutri.porRever => (Icons.rule, cs.error),
+                  FonteNutri.insa => (Icons.menu_book, cs.primary),
+                  FonteNutri.manual => (Icons.edit_note, cs.secondary),
+                  FonteNutri.comFoto => (Icons.photo_camera, cs.tertiary),
+                };
+                return IconButton(
+                  tooltip: 'Nutrição: ${i.fonteNutri.label}',
+                  icon: Icon(ic, size: 20, color: cor),
+                  onPressed: () => _nutricao(i),
+                );
+              },
+            ),
         ],
       ),
       onTap: _podeEditar ? () => _edit(i) : null,
       onLongPress: _podeEditar
-          ? () => _run(
-                () => ref.read(ingredientActionsProvider).duplicate(i),
-              )
+          ? () => _run(() => ref.read(ingredientActionsProvider).duplicate(i))
           : null,
     );
 
@@ -593,7 +607,8 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
         mensagem: 'Mover "${i.nome}" para a lixeira?',
         confirmar: 'Mover',
       ),
-      apagar: () => _run(() => ref.read(ingredientActionsProvider).moveToTrash(i.id)),
+      apagar: () =>
+          _run(() => ref.read(ingredientActionsProvider).moveToTrash(i.id)),
       child: tile,
     );
   }

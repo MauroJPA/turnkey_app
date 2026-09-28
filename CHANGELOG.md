@@ -2,6 +2,24 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.23.0 — 2026-09-28 — Juntar marcas/fornecedores repetidos
+
+- **Corrigir nomes duplicados de marca/fornecedor.** A mesma marca/fornecedor real acaba às vezes com vários
+  nomes ligeiramente diferentes — escritos à mão de formas diferentes, ou lidos por IA de faturas diferentes
+  do mesmo fornecedor (ex.: "Recheio", "Recheio Cash & Carry, S.A.", "Recheio Cash & Carry, SA"). Novo ecrã
+  **"Juntar marcas/fornecedores"** (ícone no topo de Ingredientes, e atalho junto ao filtro de fornecedor):
+  escolhe os que são o mesmo, escreve o nome final, e todos os produtos de compra, consumíveis e embalagens
+  que tinham esses nomes passam a ter o nome escolhido — de uma vez, em toda a empresa. Só proprietário e
+  administrador (pode alterar muitos registos de uma vez).
+- **Simplificar, para não voltar a acontecer**: espaços a mais (duplos, tabs) na marca/fornecedor — quer
+  escritos à mão quer lidos pela IA de uma fatura — passam a ser normalizados para um só espaço antes de
+  gravar, tanto ao aplicar faturas como ao corrigir. Nunca junta nomes diferentes sozinho — isso continua a
+  ser sempre uma escolha da pessoa, na ferramenta de juntar.
+- Novo endpoint `POST /api/gc_turnkey/marcas-fornecedores/juntar` (`pb/hooks/marcas_fornecedores.pb.js`).
+- Testes: nova secção "9a. Juntar marcas/fornecedores repetidos" em `test/security/seguranca.py` — papéis
+  (editor/viewer recusados), isolamento entre empresas, validação, junção a sério (produtos + embalagem +
+  sincronização do ingrediente genérico), normalização de espaços e marca vs. fornecedor.
+
 ## 1.22.0 — 2026-09-28 — Marca/fornecedor sincronizados, sugestões e maiúscula inicial
 
 - **Bug corrigido: a marca e o fornecedor não apareciam na lista de Ingredientes.** Ao aplicar uma fatura, a

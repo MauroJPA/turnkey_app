@@ -57,6 +57,9 @@ routerAdd(
   '/api/gc_turnkey/faturas/{id}/aplicar',
   (e) => {
     const cascade = require(`${__hooks}/cascade.js`);
+    // espaços a mais (duplos, tabs) na marca/fornecedor lidos da fatura só
+    // criam variantes novas do mesmo nome — nunca junta nomes diferentes.
+    const normEsp = require(`${__hooks}/marcas_fornecedores.js`).normalizarEspacos;
     const auth = e.auth;
     const isSuper =
       auth && auth.collection() && auth.collection().name === '_superusers';
@@ -81,6 +84,7 @@ routerAdd(
     const linhas = Array.isArray(body.linhas) ? body.linhas : [];
     const numero = fatura.getString('numero');
     const nota = 'Fatura' + (numero ? ' ' + numero : '');
+    const fornecedorFatura = normEsp(fatura.getString('fornecedor'));
 
     // Data desta fatura (YYYY-MM-DD). Só atualiza o preço de um ingrediente se
     // esta fatura for igual ou mais recente do que a última atualização de
@@ -161,8 +165,8 @@ routerAdd(
               while (nomes.length > 50) nomes.shift();
               embReg.set('nomes_fatura', nomes);
             }
-            if (!embReg.getString('fornecedor') && fatura.getString('fornecedor')) {
-              embReg.set('fornecedor', fatura.getString('fornecedor'));
+            if (!embReg.getString('fornecedor') && fornecedorFatura) {
+              embReg.set('fornecedor', fornecedorFatura);
             }
             if (pu > 0 && (acao === 'preco' || acao === 'ambos')) {
               embReg.set('preco_compra', pu);
@@ -198,10 +202,10 @@ routerAdd(
               cons.set('nomes_fatura', nomes);
             }
             if (l.marca && !cons.getString('marca')) {
-              cons.set('marca', String(l.marca).substring(0, 200));
+              cons.set('marca', normEsp(l.marca).substring(0, 200));
             }
-            if (!cons.getString('fornecedor') && fatura.getString('fornecedor')) {
-              cons.set('fornecedor', fatura.getString('fornecedor'));
+            if (!cons.getString('fornecedor') && fornecedorFatura) {
+              cons.set('fornecedor', fornecedorFatura);
             }
             if (pu > 0 && (acao === 'preco' || acao === 'ambos')) {
               const ultima = soData(cons.getString('preco_atualizado_em'));
@@ -282,10 +286,10 @@ routerAdd(
               // de fatura) mas ainda sem essa informação. Nunca substitui um
               // valor já certo — para isso há o endpoint /corrigir-item.
               if (l.marca && !prod.getString('marca')) {
-                prod.set('marca', String(l.marca).substring(0, 200));
+                prod.set('marca', normEsp(l.marca).substring(0, 200));
               }
-              if (!prod.getString('fornecedor') && fatura.getString('fornecedor')) {
-                prod.set('fornecedor', fatura.getString('fornecedor'));
+              if (!prod.getString('fornecedor') && fornecedorFatura) {
+                prod.set('fornecedor', fornecedorFatura);
               }
               // aprende o nome desta fatura para emparelhar sozinho da próxima vez
               const nomes = lerNomes(prod);
@@ -404,6 +408,7 @@ routerAdd(
   'POST',
   '/api/gc_turnkey/faturas/{id}/corrigir-item',
   (e) => {
+    const normEsp = require(`${__hooks}/marcas_fornecedores.js`).normalizarEspacos;
     const auth = e.auth;
     const isSuper =
       auth && auth.collection() && auth.collection().name === '_superusers';
@@ -429,7 +434,7 @@ routerAdd(
     if (!Object.prototype.hasOwnProperty.call(body, 'marca')) {
       throw new BadRequestError('Nada para corrigir.');
     }
-    const novaMarca = String(body.marca || '').substring(0, 200);
+    const novaMarca = normEsp(body.marca).substring(0, 200);
 
     let resultado = null;
     e.app.runInTransaction((tx) => {

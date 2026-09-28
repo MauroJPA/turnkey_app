@@ -1481,6 +1481,87 @@ def teste_consumiveis():
         check(cb2.get('preco', 0) == 0, 'uma fatura da empresa A não altera consumíveis da empresa B', str(cb2)[:120])
 
 
+def teste_juntar_marcas_fornecedores():
+    """9a. Juntar marcas/fornecedores repetidos (mesmo fornecedor, nomes diferentes)."""
+    sec('9a. Juntar marcas/fornecedores repetidos')
+    t = tok['editorA']
+    su_url = '/api/gc_turnkey/marcas-fornecedores/juntar'
+    base = dict(dados[('ingredientes', 'A')][1])
+    base.update(nome='Ingrediente Recheio', origem='comprado', preco=0, gramas_embalagem=0)
+    st, ing, _ = call('POST', '/api/collections/ingredientes/records', base, t)
+    check(st == 200, 'criar o ingrediente genérico', f'status {st} {str(ing)[:120]}')
+    gid = ing['id']
+
+    def produto(nome, fornecedor, data):
+        st, r, _ = call('POST', '/api/collections/ingrediente_produtos/records',
+                        {'empresa': empresas['A'], 'ingrediente': gid, 'nome': nome, 'fornecedor': fornecedor,
+                         'embalagem_g': 1000, 'preco': 2.0, 'preco_atualizado_em': data + ' 00:00:00.000Z'}, t)
+        assert st == 200, (st, r)
+        return r['id']
+
+    p1 = produto('Farinha A', 'Recheio', '2026-09-01')
+    p2 = produto('Farinha B', 'Recheio Cash & Carry, S.A.', '2026-09-05')
+    p3 = produto('Farinha C', 'Recheio Cash & Carry, SA', '2026-09-10')  # a mais recente
+
+    # embalagem também tem fornecedor (mas não marca)
+    emb = dados[('embalagens', 'A')][1]
+    st, eb, _ = call('POST', '/api/collections/embalagens/records',
+                     dict(emb, nome='Caixa Recheio teste', preco_compra=1, fornecedor='Recheio'), t)
+    check(st == 200, 'criar a embalagem do fornecedor a juntar', f'status {st} {str(eb)[:120]}')
+    eb_id = eb['id']
+
+    corpo = {'tipo': 'fornecedor', 'valores': ['Recheio', 'Recheio Cash & Carry, S.A.'], 'destino': 'Recheio Cash & Carry, SA'}
+    st, rj0, _ = call('POST', su_url, corpo, tok['editorA'])
+    check(st != 200, 'editor não pode juntar (só proprietário/administrador)', f'status {st} {str(rj0)[:120]}')
+    st, rj0b, _ = call('POST', su_url, corpo, tok['viewerA'])
+    check(st != 200, 'viewer não pode juntar', f'status {st}')
+
+    # empresa B: mesmo com owner legítimo, não mexe em nada da empresa A (âmbito por empresa)
+    st, rjb, _ = call('POST', su_url, corpo, tok['ownerB'])
+    check(st == 200 and rjb.get('alterados') == 0, 'a empresa B não altera nada da empresa A (0 alterados)', f'{st} {str(rjb)[:160]}')
+    p1_intacto = call('GET', f'/api/collections/ingrediente_produtos/records/{p1}', tok=t)[1]
+    check(p1_intacto.get('fornecedor') == 'Recheio', 'confirma: o produto da empresa A não foi tocado pela B', str(p1_intacto)[:120])
+
+    # validação
+    st, rve, _ = call('POST', su_url, {'tipo': 'invalido', 'valores': ['x'], 'destino': 'y'}, tok['ownerA'])
+    check(st != 200, 'tipo inválido é recusado', f'status {st}')
+    st, rve2, _ = call('POST', su_url, {'tipo': 'fornecedor', 'valores': [], 'destino': 'y'}, tok['ownerA'])
+    check(st != 200, 'sem valores a juntar é recusado', f'status {st}')
+    st, rve3, _ = call('POST', su_url, {'tipo': 'fornecedor', 'valores': ['a'], 'destino': ''}, tok['ownerA'])
+    check(st != 200, 'sem nome final é recusado', f'status {st}')
+
+    # o proprietário junta a sério: 2 produtos + 1 embalagem tinham os valores antigos
+    st, rj, _ = call('POST', su_url, corpo, tok['ownerA'])
+    check(st == 200 and rj.get('alterados') == 3,
+          'proprietário junta: 2 produtos + 1 embalagem alterados (3)', f'{st} {str(rj)[:160]}')
+    for pid in (p1, p2, p3):
+        r = call('GET', f'/api/collections/ingrediente_produtos/records/{pid}', tok=t)[1]
+        check(r.get('fornecedor') == 'Recheio Cash & Carry, SA', f'produto {pid} ficou com o nome final', str(r)[:120])
+    eb2 = call('GET', f'/api/collections/embalagens/records/{eb_id}', tok=t)[1]
+    check(eb2.get('fornecedor') == 'Recheio Cash & Carry, SA', 'a embalagem também ficou com o nome final', str(eb2)[:120])
+    gen = call('GET', f'/api/collections/ingredientes/records/{gid}', tok=t)[1]
+    check(gen.get('fornecedor') == 'Recheio Cash & Carry, SA',
+          'o ingrediente genérico (compra mais recente) sincroniza o nome final', str(gen)[:160])
+
+    # espaços a mais no nome final são normalizados (nunca cria outra variante nova)
+    p4 = produto('Farinha E', 'Recheio Distribuição X', '2026-09-02')
+    st, rj2, _ = call('POST', su_url,
+                       {'tipo': 'fornecedor', 'valores': ['Recheio Distribuição X'], 'destino': '  Recheio   Cash & Carry, SA  '},
+                       tok['ownerA'])
+    check(st == 200 and rj2.get('destino') == 'Recheio Cash & Carry, SA',
+          'espaços a mais no nome final são normalizados (não cria outra variante)', f'{st} {str(rj2)[:160]}')
+    p4_final = call('GET', f'/api/collections/ingrediente_produtos/records/{p4}', tok=t)[1]
+    check(p4_final.get('fornecedor') == 'Recheio Cash & Carry, SA',
+          'o valor gravado já vem sem os espaços a mais', str(p4_final)[:120])
+
+    # marca: não mexe em embalagens (não têm marca)
+    st, pm1, _ = call('POST', '/api/collections/ingrediente_produtos/records',
+                      {'empresa': empresas['A'], 'ingrediente': gid, 'nome': 'Farinha D', 'marca': 'Cerealis',
+                       'embalagem_g': 1000, 'preco': 1, 'preco_atualizado_em': '2026-09-01 00:00:00.000Z'}, t)
+    st, rjm, _ = call('POST', su_url, {'tipo': 'marca', 'valores': ['Cerealis'], 'destino': 'Cerealis Portugal'}, tok['ownerA'])
+    check(st == 200 and rjm.get('alterados') == 1, 'juntar marca só mexe em produtos/consumíveis, não em embalagens', f'{st} {str(rjm)[:160]}')
+
+
 def teste_produto_na_receita():
     """9b. Linha de receita com produto de compra fixado: o custo é o do produto."""
     sec('9b. Produto fixado na linha de receita')
@@ -1868,6 +1949,7 @@ def main():
         teste_faturas_edicao()
         teste_faturas_pendente_embalagem()
         teste_produtos()
+        teste_juntar_marcas_fornecedores()
         teste_produto_na_receita()
         teste_juntar()
         teste_compras_produto()

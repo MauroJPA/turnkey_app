@@ -67,7 +67,9 @@ onRecordUpdateRequest((e) => {
     try {
       const f = e.record;
       const empresaId = f.getString('empresa');
-      const novoFornecedor = depoisV.fornecedor;
+      // espaços a mais só criam variantes novas do mesmo nome ao propagar.
+      const novoFornecedor = require(`${__hooks}/marcas_fornecedores.js`)
+        .normalizarEspacos(depoisV.fornecedor);
       const itens = e.app.findRecordsByFilter('faturas_itens', 'fatura = {:f}', '', 0, 0, { f: f.id });
       const vistos = {};
       for (const it of itens) {

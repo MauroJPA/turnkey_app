@@ -858,6 +858,24 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 
 ---
 
+## 44. Juntar marcas/fornecedores repetidos
+
+- [ ] Ter (ou criar) um fornecedor com nomes ligeiramente diferentes em produtos diferentes (ex.: "Recheio",
+      "Recheio Cash & Carry, S.A.", "Recheio Cash & Carry, SA"). Em Ingredientes, tocar no ícone "Juntar
+      marcas/fornecedores repetidos" (topo do ecrã) ou no chip "Juntar repetidos" junto ao filtro de
+      fornecedor.
+- [ ] Escolher **Fornecedor**, selecionar os nomes que são o mesmo (chips), escrever o nome final (ou tocar
+      num dos escolhidos para o preencher automaticamente) e tocar em **Juntar**. Aparece quantos registos
+      foram atualizados.
+- [ ] Confirmar: os produtos de compra, consumíveis e embalagens que tinham esses nomes ficam todos com o
+      nome final; a lista de Ingredientes (fornecedor sincronizado) também atualiza.
+- [ ] Repetir com **Marca**: só mexe em produtos de compra e consumíveis (embalagens não têm marca).
+- [ ] Com sessão de **editor** ou **viewer**: o ícone/chip não aparece (só proprietário/administrador).
+- [ ] Escrever o nome final com espaços a mais (ex.: "Recheio   Cash  & Carry"): grava com um só espaço entre
+      palavras.
+
+---
+
 ## Notas / ajustes pedidos
 
 _(escreve aqui, por número, o que queres mudar)_
