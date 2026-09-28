@@ -2,6 +2,29 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.20.0 — 2026-09-28 — Embalagens: característica, uso e formatos de cookie
+
+- **Característica na embalagem**, tal como já havia nos ingredientes: um texto livre para distinguir variantes
+  ("kraft com janela", "transparente 250 ml"…). Editável no ecrã de Embalagens e ao criar uma embalagem nova
+  diretamente na revisão de uma fatura.
+- **Uso da embalagem** — lista fixa: **Individual**, **Múltiplo** (ex.: caixa de 6), **A granel** ou **Outro**.
+  Opcional; ajuda a saber para que serve cada peça sem ter de adivinhar pelo nome.
+- **Formatos de cookie a que se destina** — liga a embalagem a um ou mais **Formatos de cookie** já existentes
+  (seleção múltipla por chips). Em branco = serve para qualquer formato.
+- Migration `1707955215_embalagem_caracteristica_formato` (`embalagens.caracteristica`, `embalagens.uso`,
+  `embalagens.formatos_cookie`).
+- **Segurança da relação múltipla**: a regra declarativa do PocketBase só garante que *pelo menos um* dos
+  formatos escolhidos é da mesma empresa quando o campo aceita vários valores — não que *todos* sejam. Foi
+  acrescentado o hook `pb/hooks/embalagens_validacao.pb.js`, que confirma, um a um, que cada formato
+  selecionado é da mesma empresa, tanto ao criar como ao alterar uma embalagem.
+- A IA das faturas passou a reconhecer característica também em linhas de embalagem (ex.: "Saco kraft com
+  janela" → nome genérico "Saco", característica "kraft com janela"); uso e formatos continuam a ser escolhidos
+  à mão, por serem decisões da pessoa, não algo que se lê na fatura.
+- Testes: `test/embalagem_test.dart` (enum, `fromRecord`, `toBody`) e uma secção nova em
+  `test/security/seguranca.py` que prova especificamente que uma lista **mista** (um formato próprio + um de
+  outra empresa) é recusada ao criar e ao atualizar — o isolamento genérico só testa um id sozinho, por isso
+  não bastava para provar que o hook está a validar cada elemento da lista.
+
 ## 1.19.0 — 2026-09-28 — Faturas: aplicar por partes e embalagens
 
 - **Aplicar só o que já sabes, sem bloquear a fatura.** Nem sempre há informação para decidir logo uma linha

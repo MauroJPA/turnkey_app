@@ -19,6 +19,7 @@ import '../../consumables/domain/consumivel.dart';
 import '../../consumables/presentation/consumiveis_screen.dart'
     show apresentaEstadoFds;
 import '../../consumables/presentation/consumivel_sheet.dart';
+import '../../cookie_formats/application/cookie_format_providers.dart';
 import '../../ingredients/application/ingredients_providers.dart';
 import '../../ingredients/data/ingredient_product_repository.dart';
 import '../../ingredients/data/ingredient_repository.dart';
@@ -399,7 +400,9 @@ class _LinhaState {
          text: ia.marca.isNotEmpty ? ia.marca : (match?.produto?.marca ?? ''),
        ),
        // "2 un" de 15 g: mostra 2 unidades (=30 g); "200 g": mostra 200 g; "1 L": 1000 ml
-       unidadeQtd = ia.contaEmbalagens ? 'un' : (ia.unidadeEVolume ? 'ml' : 'g'),
+       unidadeQtd = ia.contaEmbalagens
+           ? 'un'
+           : (ia.unidadeEVolume ? 'ml' : 'g'),
        qtd = TextEditingController(
          text: ia.contaEmbalagens
              ? ((ia.quantidade ?? 0) > 0 ? _fmtNum(ia.quantidade!) : '')
@@ -463,6 +466,13 @@ class _LinhaState {
   /// Tipo da embalagem nova a criar (`kTiposEmbalagem`).
   String tipoEmbalagemSel;
 
+  /// Para que serve a embalagem nova (opcional).
+  UsoEmbalagem? usoEmbalagemSel;
+
+  /// Formatos de cookie a que se destina a embalagem nova (opcional; vazio =
+  /// qualquer formato).
+  final Set<String> formatosCookieSel = {};
+
   /// Ingrediente genérico ligado a esta linha (null se vai criar um novo).
   Ingrediente? ingrediente;
 
@@ -490,7 +500,8 @@ class _LinhaState {
   /// Unidade do ingrediente NOVO a criar (`g`, `ml` ou `un`).
   String unidadeIng;
 
-  /// Característica do ingrediente novo (T55, T65, integral…).
+  /// Característica do registo novo (ingrediente: T55, T65, integral…;
+  /// embalagem: kraft com janela, transparente…).
   final TextEditingController caracteristica;
 
   final TextEditingController qtd;
@@ -614,9 +625,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
   @override
   void initState() {
     super.initState();
-    final anterioresPorIndice = {
-      for (final a in widget.anteriores) a.index: a,
-    };
+    final anterioresPorIndice = {for (final a in widget.anteriores) a.index: a};
     final ias = widget.fatura.linhasIa;
     _linhas = [
       for (var i = 0; i < ias.length; i++)
@@ -629,15 +638,18 @@ class _RevisaoState extends ConsumerState<_Revisao> {
     Consumivel? consMatch;
     Embalagem? embMatch;
     if (ant?.ingredienteId != null) {
-      final ing = widget.ingredientes
-          .firstWhereOrNull((x) => x.id == ant!.ingredienteId);
+      final ing = widget.ingredientes.firstWhereOrNull(
+        (x) => x.id == ant!.ingredienteId,
+      );
       if (ing != null) match = (ingrediente: ing, produto: null);
     } else if (ant?.consumivelId != null) {
-      consMatch = widget.consumiveis
-          .firstWhereOrNull((c) => c.id == ant!.consumivelId);
+      consMatch = widget.consumiveis.firstWhereOrNull(
+        (c) => c.id == ant!.consumivelId,
+      );
     } else if (ant?.embalagemId != null) {
-      embMatch = widget.embalagens
-          .firstWhereOrNull((e) => e.id == ant!.embalagemId);
+      embMatch = widget.embalagens.firstWhereOrNull(
+        (e) => e.id == ant!.embalagemId,
+      );
     } else if (ant == null) {
       // sem decisão anterior: usa o emparelhamento automático
       if (ia.embalagem) {
@@ -840,9 +852,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       (l) => (l.criarNovo || l.renomear) && l.nome.text.trim().isEmpty,
     )) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Dá um nome ao que vais criar/renomear.'),
-        ),
+        const SnackBar(content: Text('Dá um nome ao que vais criar/renomear.')),
       );
       return;
     }
@@ -952,6 +962,9 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                     EmbalagemInput(
                       nome: l.nome.text.trim(),
                       tipo: l.tipoEmbalagemSel,
+                      caracteristica: l.caracteristica.text.trim(),
+                      uso: l.usoEmbalagemSel,
+                      formatosCookieIds: l.formatosCookieSel.toList(),
                       fornecedor: forn,
                     ),
                   );
@@ -1501,10 +1514,69 @@ class _RevisaoState extends ConsumerState<_Revisao> {
           onChanged: (t) =>
               setState(() => l.tipoEmbalagemSel = t ?? l.tipoEmbalagemSel),
         ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: l.caracteristica,
+          decoration: const InputDecoration(
+            labelText: 'Característica (opcional)',
+            hintText: 'Kraft com janela, transparente, 250 ml…',
+            isDense: true,
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<UsoEmbalagem?>(
+          key: ValueKey('${identityHashCode(l)}_${l.usoEmbalagemSel}'),
+          initialValue: l.usoEmbalagemSel,
+          decoration: const InputDecoration(
+            labelText: 'Uso (opcional)',
+            isDense: true,
+          ),
+          items: [
+            const DropdownMenuItem(value: null, child: Text('Não definido')),
+            for (final u in UsoEmbalagem.values)
+              DropdownMenuItem(value: u, child: Text(u.label)),
+          ],
+          onChanged: (u) => setState(() => l.usoEmbalagemSel = u),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Formatos de cookie (opcional)',
+          style: Theme.of(context).textTheme.labelMedium,
+        ),
+        const SizedBox(height: 4),
+        ref
+            .watch(formatosAtivosProvider)
+            .maybeWhen(
+              data: (formatos) => formatos.isEmpty
+                  ? Text(
+                      'Sem formatos de cookie criados ainda.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    )
+                  : Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final fmt in formatos)
+                          FilterChip(
+                            label: Text(fmt.nome),
+                            visualDensity: VisualDensity.compact,
+                            selected: l.formatosCookieSel.contains(fmt.id),
+                            onSelected: (v) => setState(() {
+                              if (v) {
+                                l.formatosCookieSel.add(fmt.id);
+                              } else {
+                                l.formatosCookieSel.remove(fmt.id);
+                              }
+                            }),
+                          ),
+                      ],
+                    ),
+              orElse: () => const SizedBox.shrink(),
+            ),
         const SizedBox(height: 4),
         Text(
-          'Depois ajusta em Embalagens quantas peças rendem por unidade de '
-          'produto.',
+          'Em branco serve para qualquer formato. Depois ajusta em '
+          'Embalagens quantas peças rendem por unidade de produto.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
@@ -1961,7 +2033,10 @@ class _ConsumivelPickerState extends State<_ConsumivelPicker> {
 }
 
 class _EmbalagemPicker extends StatefulWidget {
-  const _EmbalagemPicker({required this.embalagens, required this.sugestaoNome});
+  const _EmbalagemPicker({
+    required this.embalagens,
+    required this.sugestaoNome,
+  });
   final List<Embalagem> embalagens;
   final String sugestaoNome;
 

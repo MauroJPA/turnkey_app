@@ -1217,6 +1217,28 @@ def teste_faturas_pendente_embalagem():
     eb2 = call('GET', f'/api/collections/embalagens/records/{eb_id}', tok=tok['ownerB'])[1]
     check(eb2.get('preco_compra', -1) == 0, 'a embalagem da empresa B não foi alterada', str(eb2)[:120])
 
+    # --- embalagens.formatos_cookie: relação múltipla, TODOS os ids têm de ser da mesma empresa ---
+    # (a regra declarativa só garante que PELO MENOS UM é da empresa certa numa
+    # lista; isto testa especificamente uma lista MISTA para provar que o hook
+    # embalagens_validacao.pb.js está a validar cada id, não só a regra.)
+    fmt_a = dados.get(('formatos_cookie', 'A'))
+    fmt_b = dados.get(('formatos_cookie', 'B'))
+    if fmt_a and fmt_b:
+        st, emix, _ = call('POST', '/api/collections/embalagens/records',
+                            dict(emb, nome='Caixa formatos mista', preco_compra=0,
+                                 formatos_cookie=[fmt_a[0], fmt_b[0]]), t)
+        check(st != 200, 'embalagens.formatos_cookie: lista MISTA (1 de A + 1 de B) é recusada', f'status {st} {str(emix)[:160]}')
+        st, eok, _ = call('POST', '/api/collections/embalagens/records',
+                           dict(emb, nome='Caixa formato próprio', preco_compra=0,
+                                formatos_cookie=[fmt_a[0]]), t)
+        check(st == 200, 'embalagens.formatos_cookie: lista só com formatos da própria empresa é aceite', f'status {st} {str(eok)[:160]}')
+        if st == 200:
+            st, eupd, _ = call('PATCH', f"/api/collections/embalagens/records/{eok['id']}",
+                                {'formatos_cookie': [fmt_a[0], fmt_b[0]]}, t)
+            check(st != 200, 'embalagens.formatos_cookie: atualizar para uma lista mista também é recusado', f'status {st} {str(eupd)[:160]}')
+    else:
+        aviso('embalagens.formatos_cookie (lista mista): formatos_cookie não foi semeado em A/B — não testado')
+
 
 def teste_produtos():
     """9. Ingredientes genéricos e produtos de compra: custo pela compra mais recente."""
