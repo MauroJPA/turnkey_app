@@ -473,6 +473,10 @@ class _LinhaState {
   /// qualquer formato).
   final Set<String> formatosCookieSel = {};
 
+  /// Quantas peças formam o múltiplo (só relevante quando
+  /// `usoEmbalagemSel == UsoEmbalagem.multiplo`, ex.: caixa de 6 → 6).
+  int quantidadeMultiplo = 2;
+
   /// Ingrediente genérico ligado a esta linha (null se vai criar um novo).
   Ingrediente? ingrediente;
 
@@ -965,6 +969,9 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                       caracteristica: l.caracteristica.text.trim(),
                       uso: l.usoEmbalagemSel,
                       formatosCookieIds: l.formatosCookieSel.toList(),
+                      rendeUnidades: l.usoEmbalagemSel == UsoEmbalagem.multiplo
+                          ? l.quantidadeMultiplo.toDouble()
+                          : 1,
                       fornecedor: forn,
                     ),
                   );
@@ -1538,6 +1545,27 @@ class _RevisaoState extends ConsumerState<_Revisao> {
           ],
           onChanged: (u) => setState(() => l.usoEmbalagemSel = u),
         ),
+        if (l.usoEmbalagemSel == UsoEmbalagem.multiplo) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Quantidade do múltiplo',
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final n in const [2, 3, 4, 5, 6, 8, 10, 12])
+                ChoiceChip(
+                  label: Text('$n'),
+                  visualDensity: VisualDensity.compact,
+                  selected: l.quantidadeMultiplo == n,
+                  onSelected: (_) => setState(() => l.quantidadeMultiplo = n),
+                ),
+            ],
+          ),
+        ],
         const SizedBox(height: 8),
         Text(
           'Formatos de cookie (opcional)',
@@ -1575,8 +1603,11 @@ class _RevisaoState extends ConsumerState<_Revisao> {
             ),
         const SizedBox(height: 4),
         Text(
-          'Em branco serve para qualquer formato. Depois ajusta em '
-          'Embalagens quantas peças rendem por unidade de produto.',
+          l.usoEmbalagemSel == UsoEmbalagem.multiplo
+              ? 'Em branco serve para qualquer formato. Depois confirma em '
+                    'Embalagens o custo por unidade.'
+              : 'Em branco serve para qualquer formato. Depois ajusta em '
+                    'Embalagens quantas peças rendem por unidade de produto.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
