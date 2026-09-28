@@ -1,6 +1,7 @@
 import '../../consumables/domain/consumivel.dart';
 import '../../ingredients/domain/ingredient.dart';
 import '../../ingredients/domain/produto_ingrediente.dart';
+import '../../packaging/domain/embalagem.dart';
 
 String _normalizar(String s) {
   const acentos = {
@@ -200,6 +201,38 @@ Consumivel? emparelharConsumivel({
     if (score > melhorScore) {
       melhorScore = score;
       melhor = c;
+    }
+  }
+  return melhorScore >= minScore ? melhor : null;
+}
+
+/// Liga uma linha de fatura a uma embalagem (caixa, saco, adesivo…): primeiro
+/// pelo nome de fatura já aprendido, depois por semelhança com o nome/tipo.
+Embalagem? emparelharEmbalagem({
+  required String descricao,
+  String nomeGenerico = '',
+  required List<Embalagem> embalagens,
+  double minScore = 0.34,
+}) {
+  final desc = normalizarDescricao(descricao);
+  for (final emb in embalagens) {
+    if (emb.nomesFatura.contains(desc)) return emb;
+  }
+  Embalagem? melhor;
+  var melhorScore = 0.0;
+  for (final emb in embalagens) {
+    final b = _tokens('${emb.nome} ${emb.tipo}');
+    if (b.isEmpty) continue;
+    var score = 0.0;
+    for (final texto in [descricao, if (nomeGenerico.isNotEmpty) nomeGenerico]) {
+      final a = _tokens(texto);
+      if (a.isEmpty) continue;
+      final j = a.intersection(b).length / a.union(b).length;
+      if (j > score) score = j;
+    }
+    if (score > melhorScore) {
+      melhorScore = score;
+      melhor = emb;
     }
   }
   return melhorScore >= minScore ? melhor : null;

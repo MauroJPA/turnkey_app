@@ -774,6 +774,22 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Como **editor**: não aparecem o lápis nem "Apagar"; consegue carregar e analisar faturas e aplicar preços.
 - [ ] Uma fatura apagada não aparece na contabilidade e não bloqueia carregar outra vez a mesma fatura.
 
+## 40. Aplicar por partes e embalagens nas faturas
+
+- [ ] Fatura com 3+ linhas: decide só uma (Preço, com ingrediente ligado) e deixa as outras em **"Por rever depois"**
+      (é a ação por omissão quando a IA não encontra correspondência). Carregar em **Aplicar** não pede para decidir
+      as outras — só a decidida é gravada.
+- [ ] Na lista de faturas, essa fatura mostra o chip **"N por rever"** (não "Analisada").
+- [ ] Reabrir a fatura: a linha já aplicada não aparece como cartão — só o aviso "1 linha já aplicada antes"; as
+      outras continuam por decidir. Decide mais uma e aplica: o chip passa a "N-1 por rever".
+- [ ] Decidir a última linha (ou marcá-la "Ignorar"): a fatura passa a **Confirmada**.
+- [ ] Aplicar duas vezes seguidas sem mudar nada: o preço e o stock não duplicam (confere o histórico do ingrediente
+      e o movimento de inventário).
+- [ ] Uma linha de **"Fita adesiva"** ou **"Caixa take-away"**: o terceiro botão **Embalagem** liga a uma embalagem
+      existente ou cria uma nova (nome + tipo); aplicar atualiza o preço por peça em **Embalagens** e, numa fatura
+      seguinte com o mesmo texto, liga sozinha.
+- [ ] Uma embalagem "por rever depois" não bloqueia aplicar as restantes linhas da mesma fatura.
+
 ---
 
 ## Notas / ajustes pedidos

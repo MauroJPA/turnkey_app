@@ -1128,6 +1128,96 @@ def teste_faturas_edicao():
     check(fid not in [x.get('id') for x in ex.get('faturas', [])], 'a fatura apagada não vai para a contabilidade', str(ex)[:120])
 
 
+def teste_faturas_pendente_embalagem():
+    """8d. Aplicar por partes (linhas pendentes) e faturas com embalagens."""
+    sec('8d. Aplicar por partes e embalagens nas faturas')
+    t = tok['editorA']
+    base = dict(dados[('ingredientes', 'A')][1])
+    base.update(origem='comprado', preco=0, gramas_embalagem=0)
+
+    def ingrediente(nome):
+        st, r, _ = call('POST', '/api/collections/ingredientes/records', dict(base, nome=nome), t)
+        assert st == 200, (st, r)
+        return r['id']
+
+    ing_a = ingrediente('Ingrediente pendente A')
+    ing_b = ingrediente('Ingrediente pendente B')
+
+    dados_ia = {'linhas': [
+        {'descricao': 'Farinha X 1kg', 'quantidade': 1, 'unidade': 'un'},
+        {'descricao': 'Coisa desconhecida', 'quantidade': 1, 'unidade': 'un'},
+    ]}
+    st, f, _ = call('POST', '/api/collections/faturas/records',
+                    {'empresa': empresas['A'], 'autor': users['editorA'], 'tipo': 'fatura', 'estado': 'analisada',
+                     'fornecedor': 'Fornecedor Parcial', 'data_fatura': '2026-09-20 00:00:00.000Z',
+                     'dados_ia': dados_ia}, su)
+    assert st == 200, (st, f)
+    fid = f['id']
+    base_url = f'/api/gc_turnkey/faturas/{fid}'
+
+    linha0 = {'index': 0, 'ingredienteId': ing_a, 'acao': 'preco', 'precoUnitario': 2.0,
+              'descricaoFatura': 'Farinha X 1kg', 'embalagemG': 1000}
+    linha1 = {'index': 1, 'acao': 'pendente', 'descricaoFatura': 'Coisa desconhecida'}
+    st, r1, _ = call('POST', f'{base_url}/aplicar', {'linhas': [linha0, linha1]}, t)
+    check(st == 200 and r1.get('precos') == 1 and r1.get('pendentes') == 1,
+          'aplicar parcial: 1 preço aplicado, 1 linha fica pendente', f'{st} {str(r1)[:160]}')
+    fat1 = call('GET', f"/api/collections/faturas/records/{fid}", tok=t)[1]
+    check(fat1.get('estado') == 'analisada' and fat1.get('pendentes_linhas') == 1,
+          'a fatura fica "analisada" (não confirmada) com 1 linha pendente', str(fat1)[:160])
+    ing_a1 = call('GET', f'/api/collections/ingredientes/records/{ing_a}', tok=t)[1]
+    check(abs(ing_a1.get('preco', 0) - 2.0) < 1e-6, 'o preço da linha decidida foi aplicado', str(ing_a1)[:120])
+    itens1 = call('GET', f"/api/collections/faturas_itens/records?filter=fatura='{fid}'&perPage=50", tok=t)[1].get('items', [])
+    check(len(itens1) == 2, 'ficam 2 linhas gravadas (uma aplicada, uma pendente)', str(len(itens1)))
+
+    # segunda ronda: tenta mudar o preço já aplicado (tem de ser ignorado) e decide a pendente
+    linha0b = dict(linha0, precoUnitario=99.0)
+    linha1b = {'index': 1, 'ingredienteId': ing_b, 'acao': 'preco', 'precoUnitario': 3.0, 'embalagemG': 1000, 'descricaoFatura': 'Coisa desconhecida'}
+    st, r2, _ = call('POST', f'{base_url}/aplicar', {'linhas': [linha0b, linha1b]}, t)
+    check(st == 200 and r2.get('puladas') == 1 and r2.get('precos') == 1 and r2.get('pendentes') == 0,
+          'segunda ronda: a linha já aplicada é saltada; a pendente aplica-se', f'{st} {str(r2)[:160]}')
+    ing_a2 = call('GET', f'/api/collections/ingredientes/records/{ing_a}', tok=t)[1]
+    check(abs(ing_a2.get('preco', 0) - 2.0) < 1e-6, 'reaplicar não muda o preço já aplicado (sem duplicar)', str(ing_a2)[:120])
+    ing_b1 = call('GET', f'/api/collections/ingredientes/records/{ing_b}', tok=t)[1]
+    check(abs(ing_b1.get('preco', 0) - 3.0) < 1e-6, 'a linha antes pendente já tem o preço novo', str(ing_b1)[:120])
+    fat2 = call('GET', f"/api/collections/faturas/records/{fid}", tok=t)[1]
+    check(fat2.get('estado') == 'confirmada' and fat2.get('pendentes_linhas') == 0,
+          'sem mais pendentes: a fatura fica confirmada', str(fat2)[:120])
+    itens2 = call('GET', f"/api/collections/faturas_itens/records?filter=fatura='{fid}'&perPage=50", tok=t)[1].get('items', [])
+    check(len(itens2) == 2, 'continuam só 2 linhas (não duplicou ao reaplicar)', str(len(itens2)))
+
+    # --- embalagens: preço fica na embalagem escolhida ------------------------------
+    emb = dados[('embalagens', 'A')][1]
+    st, e1, _ = call('POST', '/api/collections/embalagens/records',
+                     dict(emb, nome='Caixa take-away teste', tipo='Caixa', preco_compra=0, fornecedor=''), t)
+    check(st == 200, 'criar a embalagem', f'status {st} {str(e1)[:120]}')
+    eid = e1['id']
+    st, f2, _ = call('POST', '/api/collections/faturas/records',
+                     {'empresa': empresas['A'], 'autor': users['editorA'], 'tipo': 'fatura', 'estado': 'analisada',
+                      'fornecedor': 'Fornecedor Embalagens', 'data_fatura': '2026-09-21 00:00:00.000Z',
+                      'dados_ia': {'linhas': [{'descricao': 'Caixa take-away 20x20', 'quantidade': 100, 'unidade': 'un'}]}}, su)
+    fid2 = f2['id']
+    linhaE = {'index': 0, 'embalagemId': eid, 'acao': 'preco', 'precoUnitario': 0.42, 'descricaoFatura': 'Caixa take-away 20x20'}
+    st, r3, _ = call('POST', f'/api/gc_turnkey/faturas/{fid2}/aplicar', {'linhas': [linhaE]}, t)
+    check(st == 200 and r3.get('precos') == 1 and r3.get('pendentes') == 0, 'aplicar a linha de embalagem', f'{st} {str(r3)[:160]}')
+    e2 = call('GET', f'/api/collections/embalagens/records/{eid}', tok=t)[1]
+    check(abs(e2.get('preco_compra', 0) - 0.42) < 1e-6 and e2.get('unidades_compra') == 1 and e2.get('fornecedor') == 'Fornecedor Embalagens',
+          'a embalagem fica com o preço por peça e o fornecedor da fatura', str(e2)[:160])
+    check('caixa take-away' in json.dumps(e2.get('nomes_fatura', [])).lower(), 'o nome da fatura ficou aprendido na embalagem', str(e2.get('nomes_fatura'))[:120])
+
+    # isolamento: uma embalagem de outra empresa não é tocada
+    emb_b = dados[('embalagens', 'B')][1]
+    st, eb, _ = call('POST', '/api/collections/embalagens/records', dict(emb_b, nome='Caixa B teste', preco_compra=0), tok['ownerB'])
+    eb_id = eb['id']
+    st, f3, _ = call('POST', '/api/collections/faturas/records',
+                     {'empresa': empresas['A'], 'autor': users['editorA'], 'tipo': 'fatura', 'estado': 'analisada',
+                      'fornecedor': 'X', 'dados_ia': {'linhas': [{'descricao': 'x'}]}}, su)
+    st, r4, _ = call('POST', f"/api/gc_turnkey/faturas/{f3['id']}/aplicar",
+                     {'linhas': [{'index': 0, 'embalagemId': eb_id, 'acao': 'preco', 'precoUnitario': 9.0, 'descricaoFatura': 'x'}]}, t)
+    check(st == 200, 'aplicar com embalagem de outra empresa não rebenta', f'status {st}')
+    eb2 = call('GET', f'/api/collections/embalagens/records/{eb_id}', tok=tok['ownerB'])[1]
+    check(eb2.get('preco_compra', -1) == 0, 'a embalagem da empresa B não foi alterada', str(eb2)[:120])
+
+
 def teste_produtos():
     """9. Ingredientes genéricos e produtos de compra: custo pela compra mais recente."""
     sec('9. Ingredientes genéricos e produtos')
@@ -1672,6 +1762,7 @@ def main():
         teste_sem_chave()
         teste_faturas_ia()
         teste_faturas_edicao()
+        teste_faturas_pendente_embalagem()
         teste_produtos()
         teste_produto_na_receita()
         teste_juntar()

@@ -44,6 +44,8 @@ class FaturaLinhaIa {
     this.marca = '',
     this.consumivel = false,
     this.categoriaConsumivel = '',
+    this.embalagem = false,
+    this.tipoEmbalagem = '',
   });
 
   final String descricao;
@@ -66,6 +68,14 @@ class FaturaLinhaIa {
 
   /// `limpeza`, `desinfecao`, `higiene`, `insumo` ou `outro` (só se [consumivel]).
   final String categoriaConsumivel;
+
+  /// A IA acha que é material de embalar (caixa, saco, adesivo…), não um
+  /// ingrediente nem um consumível de limpeza.
+  final bool embalagem;
+
+  /// `Caixa`, `Saco`, `Saqueta`, `Adesivo`, `Fita`, `Cartão` ou `Outro` (só se
+  /// [embalagem]) — ver `kTiposEmbalagem`.
+  final String tipoEmbalagem;
   final double? quantidade;
   final String unidade;
   final double? precoUnitario;
@@ -119,6 +129,8 @@ class FaturaLinhaIa {
     marca: (j['marca'] ?? '').toString().trim(),
     consumivel: j['tipo_item'] == 'consumivel',
     categoriaConsumivel: (j['categoria_consumivel'] ?? '').toString().trim(),
+    embalagem: j['tipo_item'] == 'embalagem',
+    tipoEmbalagem: (j['tipo_embalagem'] ?? '').toString().trim(),
   );
 }
 
@@ -138,6 +150,7 @@ class Fatura {
     this.apagada = false,
     this.apagadaEm = '',
     this.apagadaPor = '',
+    this.pendentesLinhas = 0,
   });
 
   final String id;
@@ -156,6 +169,12 @@ class Fatura {
   final bool apagada;
   final String apagadaEm;
   final String apagadaPor;
+
+  /// Linhas já vistas mas ainda sem decisão ("por rever depois") — não
+  /// bloqueiam aplicar as restantes; ficam à espera de mais informação.
+  final int pendentesLinhas;
+
+  bool get temPendentes => pendentesLinhas > 0;
 
   bool get temFicheiro => ficheiro.isNotEmpty;
 
@@ -217,6 +236,7 @@ class Fatura {
       apagada: r.getBoolValue('apagada'),
       apagadaEm: r.getStringValue('apagada_em'),
       apagadaPor: r.getStringValue('apagada_por'),
+      pendentesLinhas: r.getDoubleValue('pendentes_linhas').round(),
     );
   }
 }
@@ -226,6 +246,7 @@ enum AcaoFatura {
   preco,
   stock,
   ambos,
+  pendente,
   ignorar;
 
   String get api => name;
@@ -233,6 +254,47 @@ enum AcaoFatura {
     AcaoFatura.preco => 'Preço',
     AcaoFatura.stock => 'Stock',
     AcaoFatura.ambos => 'Preço + Stock',
+    AcaoFatura.pendente => 'Por rever depois',
     AcaoFatura.ignorar => 'Ignorar',
   };
+
+  /// Vai mesmo atualizar preço/stock agora (ao contrário de "pendente" ou
+  /// "ignorar", que não têm efeito nenhum nesta ronda).
+  bool get aplicaAgora => this == preco || this == stock || this == ambos;
+}
+
+String? _naoVazio(String v) => v.isEmpty ? null : v;
+
+/// A linha de índice [index] desta fatura já foi gravada numa ronda anterior
+/// de "Aplicar" — para reabrir a revisão sem repetir o que já está decidido.
+class ItemFaturaAnterior {
+  const ItemFaturaAnterior({
+    required this.index,
+    required this.aplicado,
+    required this.acao,
+    this.ingredienteId,
+    this.consumivelId,
+    this.embalagemId,
+  });
+
+  final int index;
+
+  /// Preço/stock já atualizados com esta linha — não se toca mais nela.
+  final bool aplicado;
+  final AcaoFatura acao;
+  final String? ingredienteId;
+  final String? consumivelId;
+  final String? embalagemId;
+
+  factory ItemFaturaAnterior.fromRecord(RecordModel r) => ItemFaturaAnterior(
+    index: r.getDoubleValue('linha_index').round(),
+    aplicado: r.getBoolValue('aplicado'),
+    acao: AcaoFatura.values.firstWhere(
+      (a) => a.api == r.getStringValue('acao'),
+      orElse: () => AcaoFatura.pendente,
+    ),
+    ingredienteId: _naoVazio(r.getStringValue('ingrediente')),
+    consumivelId: _naoVazio(r.getStringValue('consumivel')),
+    embalagemId: _naoVazio(r.getStringValue('embalagem')),
+  );
 }

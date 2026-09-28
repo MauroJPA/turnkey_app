@@ -71,8 +71,9 @@ function analisarImagemIA(opts) {
       '"quantidade": number|null, "unidade": string|null, "preco_unitario": ' +
       'number|null, "total": number|null, "embalagem_g": number|null, "embalagem_unidade": "g"|"ml"|"un", ' +
       '"caracteristica": string|null, ' +
-      '"tipo_item": "ingrediente"|"consumivel", "categoria_consumivel": ' +
-      '"limpeza"|"desinfecao"|"higiene"|"insumo"|"outro"|null}]}]}. ' +
+      '"tipo_item": "ingrediente"|"consumivel"|"embalagem", "categoria_consumivel": ' +
+      '"limpeza"|"desinfecao"|"higiene"|"insumo"|"outro"|null, "tipo_embalagem": ' +
+      '"Caixa"|"Saco"|"Saqueta"|"Adesivo"|"Fita"|"Cartão"|"Outro"|null}]}]}. ' +
       '"paginas" são os números (a começar em 1) das páginas do ficheiro onde ' +
       'aparece esse documento; numa imagem, [1]. Uma página pertence a um só ' +
       'documento. Uma continuação ("página 2 de 2", "continua") pertence ao ' +
@@ -101,6 +102,11 @@ function analisarImagemIA(opts) {
       '(detergentes, desengordurantes, lixívia), desinfecao (desinfetantes, ' +
       'álcool), higiene (sabonete, luvas, toucas, papel de mãos), insumo ' +
       '(outros materiais), outro; para ingredientes é null. ' +
+      '"embalagem" é para material de EMBALAR o produto final, não para comer nem ' +
+      'para limpar: caixas, sacos, saquetas, sacos take-away, adesivos/etiquetas, ' +
+      'fita-cola, cartão, rótulos. Para embalagens, nome_generico é o tipo sem ' +
+      'marca/medida ("Caixa take-away", "Adesivo redondo") e tipo_embalagem é o ' +
+      'que mais se aproxima da lista dada; para as outras linhas é null. ' +
       'quantidade é o número que aparece na coluna da quantidade, na unidade ' +
       'que a fatura indica (un, kg, g, L, cx…), sem multiplicar: "2 un" de ' +
       '"Noz moscada 15g" -> quantidade 2, unidade "un", embalagem_g 15; ' +
