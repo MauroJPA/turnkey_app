@@ -959,6 +959,17 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       com a poupança em %. O ícone (ⓘ) abre a lista completa de fornecedores, do mais barato ao mais caro.
       Um ingrediente com um só fornecedor (ou preços iguais) não mostra o aviso.
 
+## 50. Selecionar vários ingredientes para juntar
+
+- [ ] Ingredientes → menu (⋮) → "Selecionar ingredientes para juntar": entra num modo de seleção (título muda
+      para "N selecionado(s)", X para cancelar).
+- [ ] Ingredientes de **fabrico próprio** aparecem com a caixa desativada (não podem juntar-se).
+- [ ] Seleciona 3 ingredientes comprados parecidos (ex. duplicados por engano) e toca "Juntar".
+- [ ] Escolhe qual fica — a mensagem de confirmação lista corretamente os outros que vão desaparecer.
+- [ ] Depois de confirmar: só o escolhido fica na lista; os outros aparecem na Lixeira (podem ser restaurados
+      se for engano). Receitas/fichas que usavam os ingredientes juntados continuam a funcionar.
+- [ ] Cancelar a seleção (X) não altera nada.
+
 ---
 
 ## Notas / ajustes pedidos

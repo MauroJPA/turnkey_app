@@ -41,6 +41,8 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
   bool _trash = false;
   bool _busy = false;
   bool _soRevisao = false;
+  bool _selecionandoJuntar = false;
+  final Set<String> _selecionadosJuntar = {};
 
   static final List<SortOption<Ingrediente>> _sortOptions = [
     SortOption<Ingrediente>(
@@ -131,6 +133,109 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
       SnackBar(
         content: Text(
           '«${origem.nome}» juntou-se a «${destino.nome}». $extra'.trim(),
+        ),
+      ),
+    );
+  }
+
+  void _iniciarSelecaoJuntar() => setState(() {
+    _selecionandoJuntar = true;
+    _selecionadosJuntar.clear();
+  });
+
+  void _sairSelecaoJuntar() => setState(() {
+    _selecionandoJuntar = false;
+    _selecionadosJuntar.clear();
+  });
+
+  void _alternarSelecaoJuntar(String id) => setState(() {
+    if (_selecionadosJuntar.contains(id)) {
+      _selecionadosJuntar.remove(id);
+    } else {
+      _selecionadosJuntar.add(id);
+    }
+  });
+
+  Future<Ingrediente?> _escolherQualFica(List<Ingrediente> selecionados) {
+    return showDialog<Ingrediente>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Qual ingrediente fica?'),
+        children: [
+          for (final i in selecionados)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(ctx, i),
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(i.nome),
+                subtitle: Text(
+                  [
+                    if (i.marca.isNotEmpty) i.marca,
+                    if (i.fornecedor.isNotEmpty) i.fornecedor,
+                  ].join(' · '),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Junta os ingredientes selecionados num só, escolhido de entre eles.
+  Future<void> _juntarSelecionados(List<Ingrediente> todos) async {
+    final selecionados = [
+      for (final i in todos)
+        if (_selecionadosJuntar.contains(i.id)) i,
+    ];
+    if (selecionados.length < 2) return;
+    final destino = await _escolherQualFica(selecionados);
+    if (destino == null || !mounted) return;
+    final origens = [
+      for (final i in selecionados)
+        if (i.id != destino.id) i,
+    ];
+    final ok = await confirmDialog(
+      context,
+      titulo: 'Juntar ${selecionados.length} ingredientes?',
+      mensagem:
+          '«${origens.map((o) => o.nome).join('», «')}» passam a fazer '
+          'parte de «${destino.nome}»: as receitas, fichas, stock, compras '
+          'e produtos de compra passam para «${destino.nome}», e os '
+          'alergénios juntam-se. Os outros vão para a lixeira.',
+      confirmar: 'Juntar',
+    );
+    if (!ok) return;
+    setState(() => _busy = true);
+    var falhas = 0;
+    final alergenios = <String>{};
+    for (final o in origens) {
+      try {
+        final r = await ref
+            .read(ingredientActionsProvider)
+            .juntar(o.id, destino.id);
+        alergenios.addAll(r.alergeniosAdicionados);
+      } on Object {
+        falhas++;
+      }
+    }
+    ref.invalidate(recipesListProvider);
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      _selecionandoJuntar = false;
+      _selecionadosJuntar.clear();
+    });
+    final extra = [
+      if (falhas > 0) '$falhas não foi possível juntar.',
+      if (alergenios.isNotEmpty)
+        'Alergénios acrescentados: ${alergenios.join(', ')}.',
+    ].join(' ');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${origens.length} ingrediente(s) juntaram-se a «${destino.nome}». '
+                  '$extra'
+              .trim(),
         ),
       ),
     );
@@ -336,76 +441,106 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
     ref.watch(recipesListProvider(false));
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(Routes.home),
-        ),
-        title: Text(_trash ? 'Ingredientes · Lixeira' : 'Ingredientes'),
-        actions: [
-          if (!_trash)
-            SortMenuButton<Ingrediente>(
-              options: _sortOptions,
-              selectedIndex: _sortIndex,
-              ascending: _sortAsc,
-              onChanged: (i, asc) => setState(() {
-                _sortIndex = i;
-                _sortAsc = asc;
-              }),
-            ),
-          if (_podeEditar && !_trash)
-            PopupMenuButton<String>(
-              tooltip: 'Mais ações',
-              icon: const Icon(Icons.more_vert),
-              onSelected: (v) {
-                if (v == 'juntar') mostrarJuntarMarcasFornecedores(context);
-                if (v == 'insa') _autoInsa();
-                if (v == 'importar') _import();
-              },
-              itemBuilder: (_) => [
-                if (ref.read(currentPapelProvider).canEditConfig)
-                  const PopupMenuItem(
-                    value: 'juntar',
-                    child: ListTile(
-                      leading: Icon(Icons.join_full_outlined),
-                      title: Text('Juntar marcas/fornecedores repetidos'),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
-                const PopupMenuItem(
-                  value: 'insa',
-                  child: ListTile(
-                    leading: Icon(Icons.auto_awesome_outlined),
-                    title: Text('Preencher nutrição pela tabela INSA'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'importar',
-                  child: ListTile(
-                    leading: Icon(Icons.upload_file),
-                    title: Text('Importar CSV'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
+      appBar: _selecionandoJuntar
+          ? AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                tooltip: 'Cancelar seleção',
+                onPressed: _sairSelecaoJuntar,
+              ),
+              title: Text('${_selecionadosJuntar.length} selecionado(s)'),
+              actions: [
+                TextButton(
+                  onPressed: _selecionadosJuntar.length < 2
+                      ? null
+                      : () => _juntarSelecionados(
+                          listAsync.valueOrNull ?? const <Ingrediente>[],
+                        ),
+                  child: const Text('Juntar'),
                 ),
               ],
+            )
+          : AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.go(Routes.home),
+              ),
+              title: Text(_trash ? 'Ingredientes · Lixeira' : 'Ingredientes'),
+              actions: [
+                if (!_trash)
+                  SortMenuButton<Ingrediente>(
+                    options: _sortOptions,
+                    selectedIndex: _sortIndex,
+                    ascending: _sortAsc,
+                    onChanged: (i, asc) => setState(() {
+                      _sortIndex = i;
+                      _sortAsc = asc;
+                    }),
+                  ),
+                if (_podeEditar && !_trash)
+                  PopupMenuButton<String>(
+                    tooltip: 'Mais ações',
+                    icon: const Icon(Icons.more_vert),
+                    onSelected: (v) {
+                      if (v == 'juntar') {
+                        mostrarJuntarMarcasFornecedores(context);
+                      }
+                      if (v == 'selecionar_juntar') _iniciarSelecaoJuntar();
+                      if (v == 'insa') _autoInsa();
+                      if (v == 'importar') _import();
+                    },
+                    itemBuilder: (_) => [
+                      const PopupMenuItem(
+                        value: 'selecionar_juntar',
+                        child: ListTile(
+                          leading: Icon(Icons.checklist_outlined),
+                          title: Text('Selecionar ingredientes para juntar'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                      if (ref.read(currentPapelProvider).canEditConfig)
+                        const PopupMenuItem(
+                          value: 'juntar',
+                          child: ListTile(
+                            leading: Icon(Icons.join_full_outlined),
+                            title: Text('Juntar marcas/fornecedores repetidos'),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                      const PopupMenuItem(
+                        value: 'insa',
+                        child: ListTile(
+                          leading: Icon(Icons.auto_awesome_outlined),
+                          title: Text('Preencher nutrição pela tabela INSA'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'importar',
+                        child: ListTile(
+                          leading: Icon(Icons.upload_file),
+                          title: Text('Importar CSV'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ],
+                  ),
+                IconButton(
+                  tooltip: _trash ? 'Ver ativos' : 'Lixeira',
+                  icon: Icon(
+                    _trash ? Icons.inventory_2_outlined : Icons.delete_outline,
+                  ),
+                  onPressed: () => setState(() => _trash = !_trash),
+                ),
+                if (_podeEditar && !_trash)
+                  IconButton(
+                    tooltip: 'Novo ingrediente',
+                    icon: const Icon(Icons.add),
+                    onPressed: _busy ? null : _add,
+                  ),
+                const HelpActions(topic: HelpTopic.ingredientes),
+              ],
             ),
-          IconButton(
-            tooltip: _trash ? 'Ver ativos' : 'Lixeira',
-            icon: Icon(
-              _trash ? Icons.inventory_2_outlined : Icons.delete_outline,
-            ),
-            onPressed: () => setState(() => _trash = !_trash),
-          ),
-          if (_podeEditar && !_trash)
-            IconButton(
-              tooltip: 'Novo ingrediente',
-              icon: const Icon(Icons.add),
-              onPressed: _busy ? null : _add,
-            ),
-          const HelpActions(topic: HelpTopic.ingredientes),
-        ],
-      ),
       body: Column(
         children: [
           if (_busy) const LinearProgressIndicator(),
@@ -536,6 +671,26 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
       if (!i.disponivel) 'indisponível',
       if (i.alergenios.isNotEmpty) 'contém: ${i.alergenios.join(', ')}',
     ].join(' · ');
+
+    if (_selecionandoJuntar) {
+      final podeSelecionar = i.origem == OrigemIngrediente.comprado;
+      return ListTile(
+        leading: Checkbox(
+          value: _selecionadosJuntar.contains(i.id),
+          onChanged: podeSelecionar
+              ? (_) => _alternarSelecaoJuntar(i.id)
+              : null,
+        ),
+        title: Text(i.nomeComCaracteristica),
+        subtitle: Text(
+          podeSelecionar
+              ? subtitle
+              : 'Produto de fabrico próprio — não se pode juntar',
+        ),
+        enabled: podeSelecionar,
+        onTap: podeSelecionar ? () => _alternarSelecaoJuntar(i.id) : null,
+      );
+    }
 
     final trailing = Column(
       mainAxisAlignment: MainAxisAlignment.center,

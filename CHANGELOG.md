@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.29.0 — 2026-09-29 — Selecionar vários ingredientes para juntar
+
+- Em **Ingredientes**, o menu (⋮) ganha "Selecionar ingredientes para juntar": entra num modo de seleção
+  (como o das Faturas) com uma caixa em cada ingrediente comprado — os de fabrico próprio não podem ser
+  selecionados. Escolhe 2 ou mais e toca em "Juntar".
+- Depois de escolher, a app pergunta **qual dos selecionados fica** — os outros passam a ser produtos de
+  compra dele (receitas, fichas, stock e faturas seguem tudo) e vão para a lixeira, tal como já acontecia ao
+  juntar um a um.
+- Testado manualmente: 3 ingredientes selecionados → escolher qual fica → confirmar → só o escolhido fica na
+  lista ativa, os outros dois aparecem na Lixeira.
+
 ## 1.28.0 — 2026-09-28 — Barra de topo redesenhada + comparação de fornecedores nas compras
 
 - **Barra de topo mais limpa e consistente em toda a app**: o botão de ajuda (?), as notas da página e a
