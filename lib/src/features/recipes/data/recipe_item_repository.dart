@@ -26,6 +26,16 @@ class RecipeItemRepository {
     return recs.map(ItemReceita.fromRecord).toList();
   }
 
+  /// Ids das receitas desta empresa com pelo menos uma linha por ligar —
+  /// uma só query (para marcar a lista de receitas sem abrir cada uma).
+  Future<Set<String>> receitasComPendencias() async {
+    final recs = await _c.getFullList(
+      filter: 'empresa = "$_empresaId" && ingrediente = "" && sub_receita = ""',
+      fields: 'receita',
+    );
+    return {for (final r in recs) r.getStringValue('receita')};
+  }
+
   Future<void> addIngrediente(
     String recipeId,
     String ingredienteId,

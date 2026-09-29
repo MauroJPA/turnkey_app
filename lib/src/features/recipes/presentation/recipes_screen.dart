@@ -9,6 +9,7 @@ import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../../core/widgets/pendencia_aviso.dart';
 import '../../../core/widgets/sort_menu_button.dart';
 import '../../../core/widgets/swipe_to_delete.dart';
 import '../application/recipes_providers.dart';
@@ -200,11 +201,17 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
                     ),
                   );
                 }
+                final pendencias =
+                    ref.watch(receitasComPendenciasProvider).valueOrNull ??
+                    const <String>{};
                 return ListView.separated(
                   itemCount: items.length,
                   separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (_, i) =>
-                      _tile(items[i], ref.watch(moneyFormatProvider)),
+                  itemBuilder: (_, i) => _tile(
+                    items[i],
+                    ref.watch(moneyFormatProvider),
+                    pendencias.contains(items[i].id),
+                  ),
                 );
               },
             ),
@@ -214,7 +221,7 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
     );
   }
 
-  Widget _tile(Receita r, MoneyFmt fmt) {
+  Widget _tile(Receita r, MoneyFmt fmt, bool temPendencias) {
     if (_trash) {
       return ListTile(
         title: Text(r.nome),
@@ -259,16 +266,37 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
       );
     }
 
-    final subtitle = [
+    final partes = [
       r.categoria,
       if (r.rendimentoEsperado > 0)
         '${r.rendimentoEsperado.toStringAsFixed(0)} g',
-      if (r.custoReceita > 0) fmt(r.custoReceita),
     ].join(' · ');
+    final cs = Theme.of(context).colorScheme;
 
     final tile = ListTile(
       title: Text(r.nome),
-      subtitle: Text(subtitle),
+      subtitle: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(r.custoReceita > 0 ? '$partes · ' : partes),
+          if (r.custoReceita > 0)
+            Text(
+              fmt(r.custoReceita),
+              style: temPendencias
+                  ? TextStyle(color: cs.error, fontWeight: FontWeight.bold)
+                  : null,
+            ),
+          if (temPendencias) ...[
+            const SizedBox(width: 2),
+            const PendenciaAviso(
+              mensagem:
+                  'Este preço não é definitivo: há pelo menos um item da '
+                  'receita ainda por ligar a um ingrediente ou sub-receita '
+                  '— abre a receita e liga-o para o custo ficar certo.',
+            ),
+          ],
+        ],
+      ),
       trailing: r.publicarComoIngrediente
           ? const Icon(Icons.link, size: 18)
           : const Icon(Icons.chevron_right),

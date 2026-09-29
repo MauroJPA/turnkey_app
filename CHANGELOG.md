@@ -2,6 +2,15 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.33.0 — 2026-09-29 — Preço a vermelho quando a receita tem linhas por ligar
+
+- **Receitas com linhas por ligar a um ingrediente/sub-receita** agora mostram o preço a **vermelho, com um
+  aviso (⚠)** — tanto na lista de Receitas como no "Custo (prev.)"/"Custo/kg" dentro da receita. Passar o rato
+  por cima (ou tocar) no aviso explica porquê o valor não é definitivo. Antes só havia uma faixa a avisar
+  dentro da receita — não dava para ver de relance, na lista, quais receitas tinham este problema.
+- Corrigido de caminho: o diálogo do aviso fechava a página em vez de se fechar a ele próprio (erro de
+  `context` do diálogo) — haveria de fazer a app "desaparecer" ao tocar em "Entendi".
+
 ## 1.32.0 — 2026-09-29 — Característica em todo o lado, stock para Bebida/Revenda/Limpeza, buscas sem acentos
 
 - **Não dava para distinguir variantes ao rever uma fatura** (ex.: "Café em grão" Rioba gold vs. Rioba bio

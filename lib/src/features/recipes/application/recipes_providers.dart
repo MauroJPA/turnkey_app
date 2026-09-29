@@ -6,9 +6,17 @@ import '../domain/recipe.dart';
 import '../domain/recipe_item.dart';
 
 /// Lista de receitas ativas (ou da lixeira).
-final recipesListProvider =
-    FutureProvider.autoDispose.family<List<Receita>, bool>((ref, trash) {
-  return ref.watch(recipeRepositoryProvider).list(trash: trash);
+final recipesListProvider = FutureProvider.autoDispose
+    .family<List<Receita>, bool>((ref, trash) {
+      return ref.watch(recipeRepositoryProvider).list(trash: trash);
+    });
+
+/// Ids das receitas com linhas por ligar — para marcar o preço a vermelho
+/// na lista, sem abrir cada receita.
+final receitasComPendenciasProvider = FutureProvider.autoDispose<Set<String>>((
+  ref,
+) {
+  return ref.watch(recipeItemRepositoryProvider).receitasComPendencias();
 });
 
 /// Receita + linhas + totais (pré-visualização; o custo definitivo vem do hook).
@@ -18,15 +26,14 @@ class RecipeDetail {
   final Receita receita;
   final List<ItemReceita> itens;
 
-  double get pesoLinhas =>
-      itens.fold(0, (s, i) => s + i.pesoG);
+  double get pesoLinhas => itens.fold(0, (s, i) => s + i.pesoG);
 
-  double get pesoTotal => receita.rendimentoManual && receita.rendimentoEsperado > 0
+  double get pesoTotal =>
+      receita.rendimentoManual && receita.rendimentoEsperado > 0
       ? receita.rendimentoEsperado
       : pesoLinhas;
 
-  double get custoPreview =>
-      itens.fold(0, (s, i) => s + i.custoLinha);
+  double get custoPreview => itens.fold(0, (s, i) => s + i.custoLinha);
 
   double get custoPorKg =>
       pesoTotal > 0 ? (custoPreview / pesoTotal) * 1000 : 0;
@@ -37,13 +44,14 @@ class RecipeDetail {
       pesoLinhas > 0 ? (i.pesoG / pesoLinhas) * 100 : 0;
 }
 
-final recipeDetailProvider =
-    FutureProvider.autoDispose.family<RecipeDetail, String>((ref, id) async {
-  final receita = await ref.watch(recipeRepositoryProvider).getById(id);
-  final itens =
-      await ref.watch(recipeItemRepositoryProvider).listForRecipe(id);
-  return RecipeDetail(receita: receita, itens: itens);
-});
+final recipeDetailProvider = FutureProvider.autoDispose
+    .family<RecipeDetail, String>((ref, id) async {
+      final receita = await ref.watch(recipeRepositoryProvider).getById(id);
+      final itens = await ref
+          .watch(recipeItemRepositoryProvider)
+          .listForRecipe(id);
+      return RecipeDetail(receita: receita, itens: itens);
+    });
 
 final recipeActionsProvider = Provider<RecipeActions>(RecipeActions.new);
 
@@ -54,10 +62,14 @@ class RecipeActions {
   RecipeRepository get _repo => _ref.read(recipeRepositoryProvider);
   RecipeItemRepository get _items => _ref.read(recipeItemRepositoryProvider);
 
-  void _refreshLists() => _ref.invalidate(recipesListProvider);
+  void _refreshLists() {
+    _ref.invalidate(recipesListProvider);
+    _ref.invalidate(receitasComPendenciasProvider);
+  }
+
   void _refreshDetail(String id) {
     _ref.invalidate(recipeDetailProvider(id));
-    _ref.invalidate(recipesListProvider);
+    _refreshLists();
   }
 
   Future<Receita> create(RecipeInput input) async {

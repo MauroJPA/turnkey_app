@@ -11,6 +11,7 @@ import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../../core/widgets/history_sheet.dart';
+import '../../../core/widgets/pendencia_aviso.dart';
 import '../../../core/widgets/swipe_to_delete.dart';
 import '../../ingredients/application/ingredients_providers.dart';
 import '../../ingredients/data/ingredient_product_repository.dart';
@@ -415,13 +416,34 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget cell(String t, String v) => Column(
+    final cs = Theme.of(context).colorScheme;
+    final pendente = detail.temPendencias;
+    Widget cell(String t, String v, {bool aviso = false}) => Column(
       children: [
         Text(t, style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 2),
-        Text(
-          v,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              v,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                color: aviso ? cs.error : null,
+              ),
+            ),
+            if (aviso) ...[
+              const SizedBox(width: 4),
+              const PendenciaAviso(
+                mensagem:
+                    'Este valor não é definitivo: há pelo menos uma linha '
+                    'ainda por ligar a um ingrediente ou sub-receita — '
+                    'liga-a para o custo ficar certo.',
+              ),
+            ],
+          ],
         ),
       ],
     );
@@ -432,8 +454,8 @@ class _Header extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           cell('Peso', '${detail.pesoTotal.toStringAsFixed(0)} g'),
-          cell('Custo (prev.)', fmt(detail.custoPreview)),
-          cell('Custo/kg', fmt(detail.custoPorKg)),
+          cell('Custo (prev.)', fmt(detail.custoPreview), aviso: pendente),
+          cell('Custo/kg', fmt(detail.custoPorKg), aviso: pendente),
         ],
       ),
     );

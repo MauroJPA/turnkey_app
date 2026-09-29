@@ -1035,6 +1035,17 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] O campo de preço nessas linhas chama-se "Preço da compra" com a nota "o total pago, não o preço de 1
       unidade".
 
+## 55. Preço a vermelho quando a receita tem linhas por ligar
+
+- [ ] Numa receita com pelo menos uma linha "por ligar" (importada sem correspondência, ou "Trocar" cancelado
+      a meio): na lista de **Receitas**, o preço dessa receita aparece a vermelho com um "⚠" a seguir.
+- [ ] Toca (ou, no rato, passa por cima) no "⚠" — aparece a explicação ("Este preço não é definitivo…") e o
+      diálogo fecha bem com "Entendi" (a lista continua lá, não fecha a página).
+- [ ] Abre essa receita: "Custo (prev.)" e "Custo/kg" também aparecem a vermelho com "⚠", com a mesma
+      explicação ao tocar. Liga a linha pendente a um ingrediente — os valores voltam à cor normal (na
+      receita e, ao voltar atrás, na lista).
+- [ ] Uma receita sem linhas pendentes mostra o preço na cor normal, sem "⚠", em ambos os sítios.
+
 ---
 
 ## Notas / ajustes pedidos
