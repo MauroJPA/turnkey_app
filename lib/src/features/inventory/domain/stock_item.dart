@@ -2,7 +2,7 @@ import 'package:pocketbase/pocketbase.dart';
 
 import '../../../core/formatting/quantities.dart';
 
-enum StockTipo { ingrediente, ficha, livre }
+enum StockTipo { ingrediente, ficha, consumivel, livre }
 
 /// Categorias para itens que não são de receita — o "inventário geral da loja"
 /// (mesas, bancadas, facas, sabão, sacos de lixo…).
@@ -70,6 +70,7 @@ class StockItem {
   String get unidade => switch (tipo) {
         StockTipo.ingrediente => unidadeNormalizada(unidadeIng),
         StockTipo.ficha => 'un',
+        StockTipo.consumivel => 'un',
         StockTipo.livre => unidadeLivre.isEmpty ? 'un' : unidadeLivre,
       };
 

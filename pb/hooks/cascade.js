@@ -1027,17 +1027,21 @@ function explodeComprasDe(app, alvo, receitaId, ingredienteId, porProduto) {
 // ---------------------------------------------------------------------------
 // Aplica um movimento de stock: upsert da linha `inventario` do item e cria
 // um registo em `movimentos_inventario`. Devolve a quantidade final.
-// item = { empresaId, ingredienteId? | fichaId? | descricao?(item livre) }
+// item = { empresaId, ingredienteId? | fichaId? | consumivelId? | descricao?(item livre) }
 // ---------------------------------------------------------------------------
 function aplicarMovimento(app, item, delta, motivo, opts) {
   opts = opts || {};
-  const livre = !item.ingredienteId && !item.fichaId && item.descricao;
+  const livre =
+    !item.ingredienteId && !item.fichaId && !item.consumivelId && item.descricao;
   const alvoCampo = item.ingredienteId
     ? 'ingrediente'
     : item.fichaId
       ? 'ficha'
-      : 'descricao';
-  const alvoId = item.ingredienteId || item.fichaId || item.descricao;
+      : item.consumivelId
+        ? 'consumivel'
+        : 'descricao';
+  const alvoId =
+    item.ingredienteId || item.fichaId || item.consumivelId || item.descricao;
   if (!alvoId) throw new BadRequestError('Falta ingrediente, ficha ou descrição.');
 
   const achados = app.findRecordsByFilter(

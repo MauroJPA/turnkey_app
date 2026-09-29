@@ -2,6 +2,26 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.32.0 — 2026-09-29 — Característica em todo o lado, stock para Bebida/Revenda/Limpeza, buscas sem acentos
+
+- **Não dava para distinguir variantes ao rever uma fatura** (ex.: "Café em grão" Rioba gold vs. Rioba bio
+  apareciam ambos só como "Rioba · 1 kg"). Os seletores de ingrediente e de embalagem, ao rever uma fatura,
+  passam a mostrar a **característica** no nome, tal como já acontecia noutros sítios da app.
+- **Limpeza/Insumo/Bebida/Revenda ganham "Característica"** (opcional, ex.: "lata 33cl", "sabor limão") — no
+  ecrã Limpeza e insumos e ao criar um produto novo a partir de uma fatura. Aparece no nome nas listas e nos
+  seletores, para nunca mais confundir variantes do mesmo produto.
+- **Bebida/Revenda (e Limpeza/Insumo, se quiseres) passam a ter stock**, tal como Ingrediente: a linha da fatura
+  ganha "Comprado" (quantidade em unidades) e a Ação "Stock"/"Ambos" fica disponível — a compra dá entrada no
+  Inventário (aba "Material da loja") e o preço por unidade é calculado sozinho a partir do total pago e da
+  quantidade comprada (tal como já acontecia com as peças de uma embalagem).
+- **Preço de Limpeza/Insumo/Bebida/Revenda na fatura passa a ser "Preço da compra"** (o total pago), não o preço
+  de 1 unidade — evita gravar um custo por unidade inflado quando se compra em quantidade.
+- **Busca sem acentos e maiúsculas/minúsculas** também nos seletores de Embalagem e de Limpeza/Insumo/Bebida/
+  Revenda ao rever uma fatura, e na pesquisa do ecrã Limpeza e insumos — antes só os ingredientes tinham isto.
+- Testado de ponta a ponta num servidor descartável com cópia dos dados reais: criar uma Bebida nova por uma
+  fatura com "Ambos" (preço + stock), confirmar característica gravada, preço por unidade correto (total ÷
+  quantidade) e entrada no Inventário com a quantidade certa.
+
 ## 1.31.1 — 2026-09-29 — Logótipo largo sem cortar, botão "+ Item" já não tapa a última linha
 
 - **Corrigido: logótipos não quadrados ficavam cortados** na barra superior (e na prévia nova). Um logótipo tipo

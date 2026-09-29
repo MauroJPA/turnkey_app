@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/router.dart';
 import '../../../core/data/marcas_fornecedores_providers.dart';
+import '../../../core/formatting/busca.dart';
 import '../../../core/formatting/dates.dart';
 import '../../../core/formatting/quantities.dart';
 import '../../../core/help/help_content.dart';
@@ -677,7 +678,7 @@ class _LinhaState {
     consumivelId: consumivelId,
     embalagemId: embalagemId,
     descricaoFatura: ia.descricao,
-    quantidadeG: gramasComprados,
+    quantidadeG: tipo.ehConsumivel ? _n(pecas) : gramasComprados,
     precoUnitario: _n(preco),
     totalLinha: ia.total ?? 0,
     embalagemG: embNaUnidade ?? 0,
@@ -1069,10 +1070,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       return;
     }
     final caracteristicaLonga = aAplicar.firstWhereOrNull(
-      (l) =>
-          l.criarNovo &&
-          !l.tipo.ehConsumivel &&
-          l.caracteristica.text.trim().length > 200,
+      (l) => l.criarNovo && l.caracteristica.text.trim().length > 200,
     );
     if (caracteristicaLonga != null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1177,6 +1175,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                     ConsumivelInput(
                       nome: l.nome.text.trim(),
                       categoria: l.categoria.text,
+                      caracteristica: l.caracteristica.text.trim(),
                       marca: l.marca.text.trim(),
                       fornecedor: forn,
                       exigeFds: exigeFdsPorOmissaoPara(l.categoria.text),
@@ -1713,6 +1712,15 @@ class _RevisaoState extends ConsumerState<_Revisao> {
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 8),
+        TextField(
+          controller: l.caracteristica,
+          decoration: const InputDecoration(
+            labelText: 'Característica (opcional)',
+            hintText: 'lata 33cl, garrafa 1L, sabor limão…',
+            isDense: true,
+          ),
+        ),
+        const SizedBox(height: 8),
         AutocompleteTextField(
           controller: l.categoria,
           options: ref.watch(categoriasConsumivelConhecidasProvider),
@@ -2186,6 +2194,22 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                         ),
                         const SizedBox(width: 8),
                       ],
+                      if (!_isLista && l.tipo.ehConsumivel) ...[
+                        Expanded(
+                          child: TextField(
+                            controller: l.pecas,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            decoration: const InputDecoration(
+                              labelText: 'Comprado',
+                              isDense: true,
+                              helperText: 'unidades (ex.: 24 latas)',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
                       Expanded(
                         child: TextField(
                           controller: l.preco,
@@ -2193,11 +2217,21 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                             decimal: true,
                           ),
                           decoration: InputDecoration(
-                            labelText: switch (l.tipo) {
-                              TipoLinha.ingrediente => 'Preço embalagem',
-                              TipoLinha.embalagem => 'Preço da peça',
-                              _ => 'Preço',
-                            },
+                            labelText: l.tipo == TipoLinha.ingrediente
+                                ? 'Preço embalagem'
+                                // O total pago nesta compra, não o preço de
+                                // 1 peça/unidade — o app divide pelo que foi
+                                // comprado sozinho (embalagens.custoPeca /
+                                // consumiveis.preco por unidade).
+                                : (l.tipo == TipoLinha.embalagem ||
+                                          l.tipo.ehConsumivel
+                                      ? 'Preço da compra'
+                                      : 'Preço'),
+                            helperText:
+                                l.tipo == TipoLinha.embalagem ||
+                                    l.tipo.ehConsumivel
+                                ? 'O total pago, não o preço de 1 unidade'
+                                : null,
                             prefixText: '€ ',
                             isDense: true,
                           ),
@@ -2234,7 +2268,9 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                     ),
                     items: [
                       for (final a in AcaoFatura.values)
-                        if ((!_isLista && l.tipo == TipoLinha.ingrediente) ||
+                        if ((!_isLista &&
+                                (l.tipo == TipoLinha.ingrediente ||
+                                    l.tipo.ehConsumivel)) ||
                             a == AcaoFatura.preco ||
                             a == AcaoFatura.pendente ||
                             a == AcaoFatura.ignorar)
@@ -2356,7 +2392,10 @@ class _IngredientePickerState extends State<_IngredientePicker> {
             child: ListView.builder(
               itemCount: itens.length,
               itemBuilder: (_, i) => ListTile(
-                title: Text(itens[i].nome),
+                // O nome sozinho não chega para distinguir variantes do
+                // mesmo produto (ex.: "Café em grão" gold vs. bio) — a
+                // característica tem de aparecer sempre.
+                title: Text(itens[i].nomeComCaracteristica),
                 subtitle: Text(
                   [
                     if (itens[i].marca.isNotEmpty) itens[i].marca,
@@ -2393,11 +2432,7 @@ class _ConsumivelPickerState extends State<_ConsumivelPicker> {
   @override
   Widget build(BuildContext context) {
     final itens = widget.consumiveis
-        .where(
-          (c) =>
-              _q.isEmpty ||
-              '${c.nome} ${c.marca}'.toLowerCase().contains(_q.toLowerCase()),
-        )
+        .where((c) => correspondeABusca('${c.nome} ${c.marca}', _q))
         .toList();
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.8,
@@ -2462,9 +2497,10 @@ class _EmbalagemPickerState extends State<_EmbalagemPicker> {
   Widget build(BuildContext context) {
     final itens = widget.embalagens
         .where(
-          (e) =>
-              _q.isEmpty ||
-              '${e.nome} ${e.tipo}'.toLowerCase().contains(_q.toLowerCase()),
+          (e) => correspondeABusca(
+            '${e.nome} ${e.caracteristica} ${e.tipo} ${e.fornecedor}',
+            _q,
+          ),
         )
         .toList();
     return SizedBox(
@@ -2494,9 +2530,22 @@ class _EmbalagemPickerState extends State<_EmbalagemPicker> {
             child: ListView.builder(
               itemCount: itens.length,
               itemBuilder: (_, i) => ListTile(
-                title: Text(itens[i].nome),
+                // Sem a característica, duas variantes com o mesmo nome
+                // (ex.: caixa "com janela" vs. "sem janela") ficam
+                // indistinguíveis nesta lista.
+                title: Text(
+                  itens[i].caracteristica.isEmpty
+                      ? itens[i].nome
+                      : '${itens[i].nome} ${itens[i].caracteristica}',
+                ),
                 subtitle: Text(
-                  itens[i].tipo.isEmpty ? 'Sem tipo' : itens[i].tipo,
+                  [
+                    if (itens[i].tipo.isNotEmpty)
+                      itens[i].tipo
+                    else
+                      'Sem tipo',
+                    if (itens[i].fornecedor.isNotEmpty) itens[i].fornecedor,
+                  ].join(' · '),
                 ),
                 onTap: () => Navigator.pop(context, itens[i]),
               ),

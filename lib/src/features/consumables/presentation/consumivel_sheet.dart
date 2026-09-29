@@ -56,6 +56,9 @@ class ConsumivelSheet extends ConsumerStatefulWidget {
 class _ConsumivelSheetState extends ConsumerState<ConsumivelSheet> {
   late Consumivel? _atual = widget.existente;
   late final _nome = TextEditingController(text: _atual?.nome ?? '');
+  late final _caracteristica = TextEditingController(
+    text: _atual?.caracteristica ?? '',
+  );
   late final _marca = TextEditingController(text: _atual?.marca ?? '');
   late final _fornecedor = TextEditingController(
     text: _atual?.fornecedor ?? '',
@@ -82,6 +85,7 @@ class _ConsumivelSheetState extends ConsumerState<ConsumivelSheet> {
   void dispose() {
     for (final c in [
       _nome,
+      _caracteristica,
       _marca,
       _fornecedor,
       _embalagem,
@@ -113,6 +117,7 @@ class _ConsumivelSheetState extends ConsumerState<ConsumivelSheet> {
       final input = ConsumivelInput(
         nome: _nome.text,
         categoria: _categoria.text,
+        caracteristica: _caracteristica.text,
         marca: _marca.text,
         fornecedor: _fornecedor.text,
         embalagem: _embalagem.text,
@@ -272,6 +277,15 @@ class _ConsumivelSheetState extends ConsumerState<ConsumivelSheet> {
               readOnly: ler,
               textCapitalization: TextCapitalization.sentences,
               decoration: const InputDecoration(labelText: 'Nome'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _caracteristica,
+              readOnly: ler,
+              decoration: const InputDecoration(
+                labelText: 'Característica (opcional)',
+                hintText: 'lata 33cl, garrafa 1L, sabor limão…',
+              ),
             ),
             const SizedBox(height: 8),
             AutocompleteTextField(

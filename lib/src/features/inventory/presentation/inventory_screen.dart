@@ -184,13 +184,25 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                 children: [
                   _lista(
                     _aplicarVista(
-                      all.where((i) => i.tipo != StockTipo.livre).toList(),
+                      all
+                          .where(
+                            (i) =>
+                                i.tipo == StockTipo.ingrediente ||
+                                i.tipo == StockTipo.ficha,
+                          )
+                          .toList(),
                     ),
                     fmt,
                   ),
                   _listaLoja(
                     _aplicarVista(
-                      all.where((i) => i.tipo == StockTipo.livre).toList(),
+                      all
+                          .where(
+                            (i) =>
+                                i.tipo == StockTipo.livre ||
+                                i.tipo == StockTipo.consumivel,
+                          )
+                          .toList(),
                     ),
                     fmt,
                   ),
@@ -269,6 +281,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
           switch (i.tipo) {
             StockTipo.ficha => 'Produto',
             StockTipo.ingrediente => 'Ingrediente',
+            StockTipo.consumivel =>
+              i.categoria.isEmpty ? 'Consumível' : i.categoria,
             StockTipo.livre => i.categoria.isEmpty ? 'Outro' : i.categoria,
           },
           if (i.valor > 0) 'valor ${fmt(i.valor)}',
@@ -462,6 +476,7 @@ class _HistoricoSheet extends ConsumerWidget {
     final key = (
       ingredienteId: item.tipo == StockTipo.ingrediente ? item.id : null,
       fichaId: item.tipo == StockTipo.ficha ? item.id : null,
+      consumivelId: item.tipo == StockTipo.consumivel ? item.id : null,
       descricao: item.tipo == StockTipo.livre ? item.id : null,
     );
     final async = ref.watch(movimentosProvider(key));

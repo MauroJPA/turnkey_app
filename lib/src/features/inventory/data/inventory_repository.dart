@@ -15,7 +15,8 @@ class InventoryRepository {
   final PocketBase _pb;
   final String _empresaId;
 
-  /// Todos os ingredientes e fichas com o stock atual (0 se não houver linha).
+  /// Todos os ingredientes, fichas e consumíveis com stock (Bebida/Revenda/…)
+  /// com o stock atual (0 se não houver linha).
   Future<List<StockItem>> list() async {
     final ings = await _pb.collection('ingredientes').getFullList(
           filter: 'empresa = "$_empresaId" && deletado != true',
@@ -25,17 +26,24 @@ class InventoryRepository {
           filter: 'empresa = "$_empresaId" && deletado != true',
           sort: 'nome',
         );
+    final cons = await _pb.collection('consumiveis').getFullList(
+          filter: 'empresa = "$_empresaId" && deletado != true',
+          sort: 'nome',
+        );
     final inv = await _pb.collection('inventario').getFullList(
           filter: 'empresa = "$_empresaId"',
         );
 
     final invByIng = <String, RecordModel>{};
     final invByFicha = <String, RecordModel>{};
+    final invByCons = <String, RecordModel>{};
     for (final r in inv) {
       final ing = r.getStringValue('ingrediente');
       final fic = r.getStringValue('ficha');
+      final co = r.getStringValue('consumivel');
       if (ing.isNotEmpty) invByIng[ing] = r;
       if (fic.isNotEmpty) invByFicha[fic] = r;
+      if (co.isNotEmpty) invByCons[co] = r;
     }
 
     final out = <StockItem>[];
@@ -78,10 +86,30 @@ class InventoryRepository {
         ),
       );
     }
-    // Itens livres: linhas de inventário sem ingrediente nem ficha.
+    for (final c in cons) {
+      final row = invByCons[c.id];
+      out.add(
+        StockItem(
+          tipo: StockTipo.consumivel,
+          id: c.id,
+          nome: c.getStringValue('nome'),
+          quantidade: row?.getDoubleValue('quantidade') ?? 0,
+          custoUnitario: c.getDoubleValue('preco'),
+          minimo: row?.getDoubleValue('minimo') ?? 0,
+          localizacao: row?.getStringValue('localizacao') ?? '',
+          inventarioId: row?.id,
+          categoria: c.getStringValue('categoria'),
+          favorito: row?.getBoolValue('favorito') ?? false,
+          usos: row?.getDoubleValue('usos') ?? 0,
+          ultimoUso: row?.getStringValue('ultimo_uso') ?? '',
+        ),
+      );
+    }
+    // Itens livres: linhas de inventário sem ingrediente, ficha ou consumível.
     for (final r in inv) {
       if (r.getStringValue('ingrediente').isNotEmpty) continue;
       if (r.getStringValue('ficha').isNotEmpty) continue;
+      if (r.getStringValue('consumivel').isNotEmpty) continue;
       final desc = r.getStringValue('descricao');
       if (desc.isEmpty) continue;
       out.add(
@@ -108,6 +136,7 @@ class InventoryRepository {
   Future<double> ajustar({
     String? ingredienteId,
     String? fichaId,
+    String? consumivelId,
     String? descricao,
     String? unidade,
     String? categoria,
@@ -124,6 +153,7 @@ class InventoryRepository {
       body: {
         if (ingredienteId != null) 'ingrediente': ingredienteId,
         if (fichaId != null) 'ficha': fichaId,
+        if (consumivelId != null) 'consumivel': consumivelId,
         if (descricao != null) 'descricao': descricao,
         if (unidade != null) 'unidade': unidade,
         if (categoria != null) 'categoria': categoria,
@@ -142,14 +172,17 @@ class InventoryRepository {
   Future<List<MovimentoStock>> movimentos({
     String? ingredienteId,
     String? fichaId,
+    String? consumivelId,
     String? descricao,
   }) async {
     final campo = ingredienteId != null
         ? 'ingrediente'
         : fichaId != null
             ? 'ficha'
-            : 'descricao';
-    final id = ingredienteId ?? fichaId ?? descricao;
+            : consumivelId != null
+                ? 'consumivel'
+                : 'descricao';
+    final id = ingredienteId ?? fichaId ?? consumivelId ?? descricao;
     final res = await _pb.collection('movimentos_inventario').getList(
           page: 1,
           perPage: 60,

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/formatting/busca.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
@@ -202,11 +203,10 @@ class _ConsumiveisScreenState extends ConsumerState<ConsumiveisScreen> {
           for (final x in todos) {
             final e = estadoFds(x, docs.where((d) => d.consumivelId == x.id));
             if (e == EstadoFds.falta || e == EstadoFds.antiga) pendentes++;
-            final q = _pesquisa.trim().toLowerCase();
-            if (q.isNotEmpty &&
-                !'${x.nome} ${x.marca} ${x.fornecedor}'.toLowerCase().contains(
-                  q,
-                )) {
+            if (!correspondeABusca(
+              '${x.nome} ${x.caracteristica} ${x.marca} ${x.fornecedor}',
+              _pesquisa,
+            )) {
               continue;
             }
             if (_categoria != null && x.categoria != _categoria) continue;
@@ -267,7 +267,7 @@ class _ConsumiveisScreenState extends ConsumerState<ConsumiveisScreen> {
                               .where((d) => d.consumivelId == x.id)
                               .length;
                           return ListTile(
-                            title: Text(x.nome),
+                            title: Text(x.nomeComCaracteristica),
                             subtitle: Text(
                               [
                                 x.categoria,

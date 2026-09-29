@@ -8,13 +8,19 @@ final stockListProvider =
   return ref.watch(inventoryRepositoryProvider).list();
 });
 
-typedef ItemRef = ({String? ingredienteId, String? fichaId, String? descricao});
+typedef ItemRef = ({
+  String? ingredienteId,
+  String? fichaId,
+  String? consumivelId,
+  String? descricao,
+});
 
 final movimentosProvider =
     FutureProvider.autoDispose.family<List<MovimentoStock>, ItemRef>(
   (ref, key) => ref.watch(inventoryRepositoryProvider).movimentos(
         ingredienteId: key.ingredienteId,
         fichaId: key.fichaId,
+        consumivelId: key.consumivelId,
         descricao: key.descricao,
       ),
 );
@@ -38,6 +44,7 @@ class InventoryActions {
           ingredienteId:
               item.tipo == StockTipo.ingrediente ? item.id : null,
           fichaId: item.tipo == StockTipo.ficha ? item.id : null,
+          consumivelId: item.tipo == StockTipo.consumivel ? item.id : null,
           descricao: item.tipo == StockTipo.livre ? item.id : null,
           delta: delta,
           motivo: motivo,
@@ -56,6 +63,7 @@ class InventoryActions {
           ingredienteId:
               item.tipo == StockTipo.ingrediente ? item.id : null,
           fichaId: item.tipo == StockTipo.ficha ? item.id : null,
+          consumivelId: item.tipo == StockTipo.consumivel ? item.id : null,
           descricao: item.tipo == StockTipo.livre ? item.id : null,
           favorito: !item.favorito,
         );

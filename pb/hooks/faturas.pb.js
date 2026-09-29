@@ -182,8 +182,10 @@ routerAdd(
           }
         }
 
-        // Limpeza / insumos: guarda o preço e o nome desta fatura no consumível
-        // (sem stock). Os documentos (FDS…) ficam onde estão — a app mostra-os.
+        // Limpeza/insumo/bebida/revenda: guarda o preço e o nome desta fatura
+        // no consumível; Bebida/Revenda (e as outras, se a pessoa escolher
+        // "Stock"/"Ambos") também dão entrada de quantidade no inventário,
+        // tal como um ingrediente. Os documentos (FDS…) ficam onde estão.
         if (acao !== 'ignorar' && acao !== 'pendente' && consId && !ingId) {
           let cons = null;
           try {
@@ -214,7 +216,10 @@ routerAdd(
             if (pu > 0 && (acao === 'preco' || acao === 'ambos')) {
               const ultima = soData(cons.getString('preco_atualizado_em'));
               if (!ultima || (dataFatura && dataFatura >= ultima)) {
-                cons.set('preco', pu);
+                // `preco` é sempre por unidade (para bater certo com o
+                // `preco_venda`, que também é por unidade) — a pessoa indica
+                // o total pago e a quantidade comprada, o resto é automático.
+                cons.set('preco', q > 0 ? pu / q : pu);
                 cons.set(
                   'preco_atualizado_em',
                   (dataFatura || soData(new Date().toISOString())) + 'T00:00:00.000Z',
@@ -227,6 +232,16 @@ routerAdd(
             tx.save(cons);
             marcaFinal = cons.getString('marca');
             fornecedorFinal = cons.getString('fornecedor');
+            if ((acao === 'stock' || acao === 'ambos') && q > 0) {
+              cascade.aplicarMovimento(
+                tx,
+                { empresaId: empresaId, consumivelId: consId },
+                q,
+                'compra',
+                { autorId: autorId, notas: nota, producaoId: null },
+              );
+              movimentos++;
+            }
           }
         }
 

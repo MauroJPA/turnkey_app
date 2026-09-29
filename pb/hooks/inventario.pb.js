@@ -33,8 +33,8 @@ routerAdd(
     if (!empresaId) throw new BadRequestError('empresa em falta.');
 
     const descricaoLivre = (body.descricao || '').toString().trim();
-    if (!body.ingrediente && !body.ficha && !descricaoLivre) {
-      throw new BadRequestError('Indica ingrediente, ficha ou descrição.');
+    if (!body.ingrediente && !body.ficha && !body.consumivel && !descricaoLivre) {
+      throw new BadRequestError('Indica ingrediente, ficha, consumível ou descrição.');
     }
     const delta = Number(body.delta || 0);
     const temMeta =
@@ -51,8 +51,10 @@ routerAdd(
       ? 'ingrediente'
       : body.ficha
         ? 'ficha'
-        : 'descricao';
-    const alvoId = body.ingrediente || body.ficha || descricaoLivre;
+        : body.consumivel
+          ? 'consumivel'
+          : 'descricao';
+    const alvoId = body.ingrediente || body.ficha || body.consumivel || descricaoLivre;
 
     let quantidade = 0;
     e.app.runInTransaction((tx) => {
@@ -63,6 +65,7 @@ routerAdd(
             empresaId: empresaId,
             ingredienteId: body.ingrediente || null,
             fichaId: body.ficha || null,
+            consumivelId: body.consumivel || null,
             descricao: descricaoLivre || null,
             unidade: body.unidade || null,
             categoria: body.categoria || null,

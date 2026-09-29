@@ -44,6 +44,7 @@ class Consumivel {
     required this.id,
     required this.nome,
     this.categoria = 'Limpeza',
+    this.caracteristica = '',
     this.marca = '',
     this.fornecedor = '',
     this.embalagem = '',
@@ -58,6 +59,9 @@ class Consumivel {
   final String id;
   final String nome;
   final String categoria;
+
+  /// O que distingue esta variante (tamanho, sabor, aroma…). Opcional.
+  final String caracteristica;
   final String marca;
   final String fornecedor;
   final String embalagem;
@@ -74,12 +78,16 @@ class Consumivel {
 
   bool get temPrecoVenda => precoVenda > 0;
 
+  String get nomeComCaracteristica =>
+      caracteristica.trim().isEmpty ? nome : '$nome ${caracteristica.trim()}';
+
   factory Consumivel.fromRecord(RecordModel r) {
     final nomes = r.data['nomes_fatura'];
     return Consumivel(
       id: r.id,
       nome: r.getStringValue('nome'),
       categoria: r.getStringValue('categoria'),
+      caracteristica: r.getStringValue('caracteristica'),
       marca: r.getStringValue('marca'),
       fornecedor: r.getStringValue('fornecedor'),
       embalagem: r.getStringValue('embalagem'),
@@ -101,6 +109,7 @@ class ConsumivelInput {
   const ConsumivelInput({
     required this.nome,
     this.categoria = 'Limpeza',
+    this.caracteristica = '',
     this.marca = '',
     this.fornecedor = '',
     this.embalagem = '',
@@ -112,6 +121,7 @@ class ConsumivelInput {
 
   final String nome;
   final String categoria;
+  final String caracteristica;
   final String marca;
   final String fornecedor;
   final String embalagem;
@@ -123,6 +133,7 @@ class ConsumivelInput {
   factory ConsumivelInput.fromModel(Consumivel c) => ConsumivelInput(
     nome: c.nome,
     categoria: c.categoria,
+    caracteristica: c.caracteristica,
     marca: c.marca,
     fornecedor: c.fornecedor,
     embalagem: c.embalagem,
@@ -137,6 +148,7 @@ class ConsumivelInput {
     'categoria': categoria.trim().isEmpty
         ? 'Outro'
         : capitalizarInicial(categoria.trim()),
+    'caracteristica': caracteristica.trim(),
     'marca': marca.trim(),
     'fornecedor': fornecedor.trim(),
     'embalagem': embalagem.trim(),

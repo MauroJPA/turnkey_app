@@ -1019,6 +1019,22 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Numa receita com várias linhas (a última perto do fundo do ecrã): os botões "⇄"/📌 da última linha
       ficam visíveis e tocáveis — não ficam escondidos atrás do botão "+ Item".
 
+## 54. Característica em todo o lado, stock para Bebida/Revenda/Limpeza, buscas sem acentos
+
+- [ ] Rever fatura: numa linha de ingrediente ou de embalagem, ao ligar a um existente, a lista mostra a
+      característica junto ao nome (ex.: "Café em grão gold" e "Café em grão bio" aparecem distintos, não os
+      dois só como "Rioba · 1 kg"). Escreve sem acento/maiúsculas na busca — encontra à mesma.
+- [ ] Limpeza e insumos → Novo produto: ganhou o campo "Característica (opcional)". Preenche, grava, e a lista
+      mostra "Nome Característica" no título. A pesquisa do ecrã também ignora acentos.
+- [ ] Rever fatura, numa linha de Bebida/Revenda/Limpeza a criar um produto novo: também tem o campo
+      "Característica"; o seletor de produto existente mostra a característica e a busca ignora acentos.
+- [ ] Rever fatura, linha de Bebida: escolhe ação "Stock" ou "Preço + Stock" (antes só havia Preço/Por rever/
+      Ignorar) — aparece o campo "Comprado" (unidades). Aplica com, por exemplo, 24 unidades e €12 de preço.
+- [ ] Depois de aplicar: em Inventário → aba "Material da loja", a Bebida aparece com 24 un e valor €12 (ou
+      seja, €0,50/unidade — o preço gravado no produto é o total ÷ quantidade, não os €12 inteiros).
+- [ ] O campo de preço nessas linhas chama-se "Preço da compra" com a nota "o total pago, não o preço de 1
+      unidade".
+
 ---
 
 ## Notas / ajustes pedidos
