@@ -34,12 +34,11 @@ class _EscolherDestinoState extends ConsumerState<_EscolherDestino> {
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
     final produtos = ref.watch(produtosIngredienteProvider).valueOrNull ?? [];
-    final q = _q.trim().toLowerCase();
     final itens = [
       for (final i in widget.todos)
         if (i.id != widget.origem.id &&
             i.origem != OrigemIngrediente.fabricoProprio &&
-            (q.isEmpty || i.nome.toLowerCase().contains(q)))
+            i.correspondeABusca(_q))
           i,
     ];
     return SizedBox(

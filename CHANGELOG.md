@@ -2,6 +2,13 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.29.1 — 2026-09-29 — Procurar ingrediente ignora acentos e olha à característica
+
+- A pesquisa de ingredientes (Ingredientes, escolher ingrediente numa receita/ficha/lista de compras/fatura,
+  juntar ingredientes) passa a **ignorar acentuação** ("acucar" encontra "Açúcar") e a **procurar também na
+  característica e na marca**, não só no nome — antes só a lista de Ingredientes fazia isto; os outros sítios
+  só olhavam ao nome exato, sem acentos.
+
 ## 1.29.0 — 2026-09-29 — Selecionar vários ingredientes para juntar
 
 - Em **Ingredientes**, o menu (⋮) ganha "Selecionar ingredientes para juntar": entra num modo de seleção

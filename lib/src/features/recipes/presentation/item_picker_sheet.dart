@@ -65,8 +65,11 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
   String _q = '';
 
   Future<PickedItem?> _askQty(
-      PickedKind kind, String id, String nome,
-      {String unidade = 'g'}) async {
+    PickedKind kind,
+    String id,
+    String nome, {
+    String unidade = 'g',
+  }) async {
     if (widget.apenasVincular) {
       return PickedItem(kind: kind, id: id, nome: nome, quantidadeG: 0);
     }
@@ -84,12 +87,12 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
             labelText: kind == PickedKind.kit
                 ? 'Kits por unidade de produto'
                 : ehEmb
-                    ? 'Peças por unidade de produto'
-                    : switch (unidade) {
-                        'ml' => 'Mililitros (ml)',
-                        'un' => 'Unidades',
-                        _ => 'Gramas',
-                      },
+                ? 'Peças por unidade de produto'
+                : switch (unidade) {
+                    'ml' => 'Mililitros (ml)',
+                    'un' => 'Unidades',
+                    _ => 'Gramas',
+                  },
           ),
           onSubmitted: (_) => Navigator.pop(
             ctx,
@@ -135,10 +138,7 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
                     value: PickedKind.embalagem,
                     label: Text('Embalagens'),
                   ),
-                  ButtonSegment(
-                    value: PickedKind.kit,
-                    label: Text('Kits'),
-                  ),
+                  ButtonSegment(value: PickedKind.kit, label: Text('Kits')),
                 ],
                 selected: {_kind},
                 onSelectionChanged: (s) => setState(() => _kind = s.first),
@@ -174,9 +174,11 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
                       value: kits,
                       data: (all) {
                         final items = all
-                            .where((k) => k.nome
-                                .toLowerCase()
-                                .contains(_q.toLowerCase()))
+                            .where(
+                              (k) => k.nome.toLowerCase().contains(
+                                _q.toLowerCase(),
+                              ),
+                            )
                             .toList();
                         if (items.isEmpty) {
                           return const Center(
@@ -191,10 +193,12 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
                             for (final k in items)
                               ListTile(
                                 title: Text(k.nome),
-                                subtitle: Text([
-                                  if (k.descricao.isNotEmpty) k.descricao,
-                                  '≈ € ${k.custoUnitario.toStringAsFixed(4)}/un',
-                                ].join(' · ')),
+                                subtitle: Text(
+                                  [
+                                    if (k.descricao.isNotEmpty) k.descricao,
+                                    '≈ € ${k.custoUnitario.toStringAsFixed(4)}/un',
+                                  ].join(' · '),
+                                ),
                                 onTap: () async {
                                   final r = await _askQty(
                                     PickedKind.kit,
@@ -215,9 +219,11 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
                       value: embalagens,
                       data: (all) {
                         final items = all
-                            .where((e) => e.nome
-                                .toLowerCase()
-                                .contains(_q.toLowerCase()))
+                            .where(
+                              (e) => e.nome.toLowerCase().contains(
+                                _q.toLowerCase(),
+                              ),
+                            )
                             .toList();
                         if (items.isEmpty) {
                           return const Center(
@@ -232,10 +238,12 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
                             for (final e in items)
                               ListTile(
                                 title: Text(e.nome),
-                                subtitle: Text([
-                                  if (e.tipo.isNotEmpty) e.tipo,
-                                  '≈ € ${e.custoUnidade.toStringAsFixed(4)}/un',
-                                ].join(' · ')),
+                                subtitle: Text(
+                                  [
+                                    if (e.tipo.isNotEmpty) e.tipo,
+                                    '≈ € ${e.custoUnidade.toStringAsFixed(4)}/un',
+                                  ].join(' · '),
+                                ),
                                 onTap: () async {
                                   final r = await _askQty(
                                     PickedKind.embalagem,
@@ -256,9 +264,7 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
                       value: ingredientes,
                       data: (all) {
                         final items = all
-                            .where((i) => i.nome
-                                .toLowerCase()
-                                .contains(_q.toLowerCase()))
+                            .where((i) => i.correspondeABusca(_q))
                             .toList();
                         return ListView(
                           children: [
@@ -291,11 +297,13 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
                       value: receitas,
                       data: (all) {
                         final items = all
-                            .where((r) =>
-                                r.id != widget.excludeRecipeId &&
-                                r.nome
-                                    .toLowerCase()
-                                    .contains(_q.toLowerCase()))
+                            .where(
+                              (r) =>
+                                  r.id != widget.excludeRecipeId &&
+                                  r.nome.toLowerCase().contains(
+                                    _q.toLowerCase(),
+                                  ),
+                            )
                             .toList();
                         return ListView(
                           children: [

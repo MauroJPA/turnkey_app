@@ -970,6 +970,13 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       se for engano). Receitas/fichas que usavam os ingredientes juntados continuam a funcionar.
 - [ ] Cancelar a seleção (X) não altera nada.
 
+## 51. Procurar ingrediente sem acentos e pela característica
+
+- [ ] Ingredientes: escreve "acucar" (sem acento) na pesquisa — encontra "Açúcar".
+- [ ] Escreve uma característica (ex. "T55") em vez do nome — encontra o ingrediente certo.
+- [ ] O mesmo testa em: escolher ingrediente numa receita (Item), na Lista de compras (+ Item →
+      Ingrediente), em "Juntar com outro ingrediente…" e ao ligar uma linha de fatura a um ingrediente.
+
 ---
 
 ## Notas / ajustes pedidos

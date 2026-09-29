@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pocketbase/pocketbase.dart';
 
+import '../../../core/formatting/busca.dart';
 import '../../../core/formatting/capitalizar.dart';
 import '../../../core/nutrition/nutrition.dart';
 
@@ -98,6 +99,14 @@ class Ingrediente with _$Ingrediente {
   /// "Farinha de trigo T55": o nome seguido da característica (se houver).
   String get nomeComCaracteristica =>
       caracteristica.trim().isEmpty ? nome : '$nome ${caracteristica.trim()}';
+
+  /// Este ingrediente corresponde a uma pesquisa [q]? Procura no nome, na
+  /// característica e na marca, sem distinguir maiúsculas/acentuação.
+  bool correspondeABusca(String q) {
+    final query = normalizarBusca(q);
+    return query.isEmpty ||
+        normalizarBusca('$nome $caracteristica $marca').contains(query);
+  }
 
   /// Unidade normalizada (`g`, `ml` ou `un`).
   String get un => (unidade == 'ml' || unidade == 'un') ? unidade : 'g';

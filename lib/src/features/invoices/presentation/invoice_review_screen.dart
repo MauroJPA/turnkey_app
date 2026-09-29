@@ -2084,9 +2084,7 @@ class _IngredientePickerState extends State<_IngredientePicker> {
   @override
   Widget build(BuildContext context) {
     final itens = widget.ingredientes
-        .where(
-          (i) => _q.isEmpty || i.nome.toLowerCase().contains(_q.toLowerCase()),
-        )
+        .where((i) => i.correspondeABusca(_q))
         .toList();
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.8,

@@ -724,9 +724,8 @@ class _NovoItemSheetState extends ConsumerState<_NovoItemSheet> {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('$e')),
             data: (todos) {
-              final q = _busca.text.trim().toLowerCase();
               final itens = todos
-                  .where((i) => q.isEmpty || i.nome.toLowerCase().contains(q))
+                  .where((i) => i.correspondeABusca(_busca.text))
                   .toList();
               if (itens.isEmpty) {
                 return const Center(child: Text('Sem ingredientes.'));

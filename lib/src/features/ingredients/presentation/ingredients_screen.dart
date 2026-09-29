@@ -387,12 +387,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
 
   List<Ingrediente> _filter(List<Ingrediente> all) {
     return all.where((i) {
-      final q = _query.toLowerCase();
-      final matchQ =
-          q.isEmpty ||
-          i.nome.toLowerCase().contains(q) ||
-          i.marca.toLowerCase().contains(q) ||
-          i.caracteristica.toLowerCase().contains(q);
+      final matchQ = i.correspondeABusca(_query);
       final matchF = _fornecedor == 'Todos' || i.fornecedor == _fornecedor;
       final matchR = !_soRevisao || i.precisaRevisaoInsa;
       return matchQ && matchF && matchR;
