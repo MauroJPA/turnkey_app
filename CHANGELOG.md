@@ -2,6 +2,21 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.31.0 — 2026-09-29 — Corrige falha ao aplicar faturas, trocar ingrediente na receita, prévia do logótipo
+
+- **Corrigido: "Failed to create record." ao aplicar algumas faturas.** A descrição lida da fatura (nome, código,
+  lote…) às vezes é mais comprida do que os 200 caracteres que o nome do ingrediente/embalagem aceita — o
+  "Aplicar" falhava com um erro genérico e sem indicar qual linha nem porquê. Agora: avisa antes de aplicar se
+  algum nome/característica for longo demais (para encurtar), e se mesmo assim uma linha falhar a criar, **as
+  restantes linhas prontas aplicam-se na mesma** — a linha com problema fica por rever, com o que já escreveste
+  intacto, e a app mostra exatamente qual campo falhou.
+- **Trocar o ingrediente de uma receita**: cada linha ganha um botão "⇄" para ligar a outro ingrediente ou
+  sub-receita (antes só dava para ajustar a quantidade, ou ligar quando a linha ainda estava pendente). Pede
+  confirmação (mostra o nome antigo e o novo) e mantém a quantidade. Restrito a Proprietário/Administrador —
+  Editores continuam a poder mudar a quantidade, mas não trocar o ingrediente.
+- **Prévia do logótipo em tempo real**: em Configurações → Aparência, ajustar o tamanho (ou posição/visibilidade)
+  do logótipo e do nome mostra logo uma barra de exemplo igual à app real, antes de guardar.
+
 ## 1.30.0 — 2026-09-29 — Bebidas/Revenda, tipos livres e peças compradas nas faturas
 
 - **Novos tipos ao validar faturas**: além de Ingrediente, Limpeza/insumo e Embalagem, agora também **Bebida** e

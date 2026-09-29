@@ -105,7 +105,7 @@ class HomeShell extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 12,
-        title: _marcaAppBar(context, empresa, logoUrl),
+        title: marcaAppBar(context, empresa, logoUrl),
         actions: [
           IconButton(
             tooltip: 'Configurações',
@@ -377,8 +377,10 @@ class _StatCard extends StatelessWidget {
 }
 
 /// Logótipo e/ou nome da marca na barra superior, com a posição, tamanho e
-/// visibilidade escolhidos em Configurações → Aparência.
-Widget _marcaAppBar(BuildContext context, Empresa? empresa, String logoUrl) {
+/// visibilidade escolhidos em Configurações → Aparência. Público para a
+/// pré-visualização em tempo real no ecrã de Configurações usar exatamente
+/// o mesmo desenho da barra real.
+Widget marcaAppBar(BuildContext context, Empresa? empresa, String logoUrl) {
   final mostrarLogo = (empresa?.logoVisivel ?? true) && logoUrl.isNotEmpty;
   final mostrarNome = empresa?.nomeVisivel ?? true;
   final tamanhoLogo = empresa?.logoTamanho ?? 28;

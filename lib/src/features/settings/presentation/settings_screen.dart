@@ -8,6 +8,7 @@ import '../../../app/theme/app_theme.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../dashboard/presentation/home_shell.dart' show marcaAppBar;
 import '../../pricing/data/cost_config_repository.dart';
 import '../../pricing/domain/cost_config.dart';
 import '../application/empresa_providers.dart';
@@ -101,8 +102,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
 
   static String _familiaFromNomeFicheiro(String nome) {
-    final semExtensao =
-        nome.contains('.') ? nome.substring(0, nome.lastIndexOf('.')) : nome;
+    final semExtensao = nome.contains('.')
+        ? nome.substring(0, nome.lastIndexOf('.'))
+        : nome;
     return semExtensao.replaceAll(RegExp(r'[^A-Za-z0-9]+'), ' ').trim();
   }
 
@@ -110,27 +112,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       double.tryParse(_custos[k]!.text.replaceAll(',', '.').trim()) ?? 0;
 
   CostConfig get _configFromForm => CostConfig(
-        salario: _v('salario'),
-        aluguel: _v('aluguel'),
-        impostos: _v('impostos'),
-        servicos: _v('servicos'),
-        despesasFixas: _v('despesasFixas'),
-        taxasFinanceiras: _v('taxasFinanceiras'),
-        margemLucro: _v('margemLucro'),
-      );
+    salario: _v('salario'),
+    aluguel: _v('aluguel'),
+    impostos: _v('impostos'),
+    servicos: _v('servicos'),
+    despesasFixas: _v('despesasFixas'),
+    taxasFinanceiras: _v('taxasFinanceiras'),
+    margemLucro: _v('margemLucro'),
+  );
 
   Future<void> _run(String ok, Future<void> Function() action) async {
     setState(() => _busy = true);
     try {
       await action();
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(ok)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ok)));
       }
     } on Object catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -154,12 +156,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: (empresaAsync.isLoading || configAsync.isLoading)
           ? const Center(child: CircularProgressIndicator())
           : (empresaAsync.hasError || configAsync.hasError)
-              ? Center(
-                  child: Text(
-                    '${empresaAsync.error ?? configAsync.error}',
-                  ),
-                )
-              : _form(empresaAsync.value!, configAsync.value!),
+          ? Center(child: Text('${empresaAsync.error ?? configAsync.error}'))
+          : _form(empresaAsync.value!, configAsync.value!),
     );
   }
 
@@ -178,7 +176,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             if (!_podeEditar)
               const Padding(
                 padding: EdgeInsets.only(bottom: 12),
-                child: Text('Só administradores podem alterar estas definições.'),
+                child: Text(
+                  'Só administradores podem alterar estas definições.',
+                ),
               ),
 
             // ---- Empresa ----
@@ -202,16 +202,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           child: Text('${m.code} (${m.symbol})'),
                         ),
                     ],
-                    onChanged: (v) =>
-                        setState(() => _moeda = v ?? Moeda.eur),
+                    onChanged: (v) => setState(() => _moeda = v ?? Moeda.eur),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: DropdownButtonFormField<RegraArredondamento>(
                     initialValue: _regra,
-                    decoration:
-                        const InputDecoration(labelText: 'Arredondamento'),
+                    decoration: const InputDecoration(
+                      labelText: 'Arredondamento',
+                    ),
                     items: const [
                       DropdownMenuItem(
                         value: RegraArredondamento.cima,
@@ -222,9 +222,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         child: Text('Normal'),
                       ),
                     ],
-                    onChanged: (v) => setState(
-                      () => _regra = v ?? RegraArredondamento.cima,
-                    ),
+                    onChanged: (v) =>
+                        setState(() => _regra = v ?? RegraArredondamento.cima),
                   ),
                 ),
               ],
@@ -236,16 +235,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onPressed: _busy
                     ? null
                     : () => _run('Empresa guardada.', () async {
-                          await ref
-                              .read(settingsActionsProvider)
-                              .saveEmpresa(
-                                nome: _nome.text,
-                                moeda: _moeda,
-                                regra: _regra,
-                                corMarca: _cor.text,
-                                tema: _tema,
-                              );
-                        }),
+                        await ref
+                            .read(settingsActionsProvider)
+                            .saveEmpresa(
+                              nome: _nome.text,
+                              moeda: _moeda,
+                              regra: _regra,
+                              corMarca: _cor.text,
+                              tema: _tema,
+                            );
+                      }),
                 child: const Text('Guardar empresa'),
               ),
             ),
@@ -261,6 +260,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             const SizedBox(height: 12),
             _AparenciaControls(
+              empresaBase: empresa,
               tema: _tema,
               corHex: _cor.text,
               corController: _cor,
@@ -287,67 +287,70 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onGuardar: _busy
                   ? null
                   : () => _run('Aparência guardada.', () async {
-                        await ref.read(settingsActionsProvider).saveAparencia(
-                              corMarca: _cor.text,
-                              tema: _tema,
-                              corSecundaria: _corSec.text,
-                              corFundo: _corFundo.text,
-                              corTexto: _corTexto.text,
-                              logoVisivel: _logoVisivel,
-                              logoAlinhamento: _logoAlinhamento,
-                              logoTamanho: _logoTamanho,
-                              nomeVisivel: _nomeVisivel,
-                              nomeAlinhamento: _nomeAlinhamento,
-                              nomeTamanho: _nomeTamanho,
-                              fonteFamilia: _fonteFamilia,
-                            );
-                      }),
+                      await ref
+                          .read(settingsActionsProvider)
+                          .saveAparencia(
+                            corMarca: _cor.text,
+                            tema: _tema,
+                            corSecundaria: _corSec.text,
+                            corFundo: _corFundo.text,
+                            corTexto: _corTexto.text,
+                            logoVisivel: _logoVisivel,
+                            logoAlinhamento: _logoAlinhamento,
+                            logoTamanho: _logoTamanho,
+                            nomeVisivel: _nomeVisivel,
+                            nomeAlinhamento: _nomeAlinhamento,
+                            nomeTamanho: _nomeTamanho,
+                            fonteFamilia: _fonteFamilia,
+                          );
+                    }),
               onEscolherLogo: _busy
                   ? null
                   : () => _run('Logótipo atualizado.', () async {
-                        final picked = await FilePicker.platform.pickFiles(
-                          type: FileType.image,
-                          withData: true,
-                        );
-                        final f = picked?.files.single;
-                        if (f?.bytes == null) return;
-                        await ref.read(settingsActionsProvider).definirLogo(
-                              nome: f!.name,
-                              bytes: f.bytes!.toList(),
-                            );
-                      }),
+                      final picked = await FilePicker.platform.pickFiles(
+                        type: FileType.image,
+                        withData: true,
+                      );
+                      final f = picked?.files.single;
+                      if (f?.bytes == null) return;
+                      await ref
+                          .read(settingsActionsProvider)
+                          .definirLogo(nome: f!.name, bytes: f.bytes!.toList());
+                    }),
               onRemoverLogo: _busy || !empresa.temLogo
                   ? null
                   : () => _run('Logótipo removido.', () async {
-                        await ref
-                            .read(settingsActionsProvider)
-                            .removerLogo();
-                      }),
+                      await ref.read(settingsActionsProvider).removerLogo();
+                    }),
               onEscolherFonte: _busy
                   ? null
                   : () => _run('Tipo de letra atualizado.', () async {
-                        final picked = await FilePicker.platform.pickFiles(
-                          type: FileType.custom,
-                          allowedExtensions: const ['ttf', 'otf'],
-                          withData: true,
+                      final picked = await FilePicker.platform.pickFiles(
+                        type: FileType.custom,
+                        allowedExtensions: const ['ttf', 'otf'],
+                        withData: true,
+                      );
+                      final f = picked?.files.single;
+                      if (f?.bytes == null) return;
+                      await ref
+                          .read(settingsActionsProvider)
+                          .definirFonte(
+                            nome: f!.name,
+                            bytes: f.bytes!.toList(),
+                          );
+                      if (mounted) {
+                        setState(
+                          () =>
+                              _fonteFamilia = _familiaFromNomeFicheiro(f.name),
                         );
-                        final f = picked?.files.single;
-                        if (f?.bytes == null) return;
-                        await ref.read(settingsActionsProvider).definirFonte(
-                              nome: f!.name,
-                              bytes: f.bytes!.toList(),
-                            );
-                        if (mounted) {
-                          setState(() =>
-                              _fonteFamilia = _familiaFromNomeFicheiro(f.name));
-                        }
-                      }),
+                      }
+                    }),
               onRemoverFonte: _busy || !empresa.temFontePersonalizada
                   ? null
                   : () => _run('Tipo de letra removido.', () async {
-                        await ref.read(settingsActionsProvider).removerFonte();
-                        if (mounted) setState(() => _fonteFamilia = '');
-                      }),
+                      await ref.read(settingsActionsProvider).removerFonte();
+                      if (mounted) setState(() => _fonteFamilia = '');
+                    }),
             ),
 
             const Divider(height: 40),
@@ -373,8 +376,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: TextField(
                   controller: _custos[e.key],
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: InputDecoration(
                     labelText: e.value,
                     suffixText: '%',
@@ -389,10 +393,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onPressed: _busy
                     ? null
                     : () => _run('Percentuais guardados.', () async {
-                          await ref
-                              .read(settingsActionsProvider)
-                              .saveCustos(_configFromForm);
-                        }),
+                        await ref
+                            .read(settingsActionsProvider)
+                            .saveCustos(_configFromForm);
+                      }),
                 child: const Text('Guardar percentuais'),
               ),
             ),
@@ -416,7 +420,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.label_outline),
                 title: const Text('Categorias de receitas'),
-                subtitle: const Text('Massa, recheio, cobertura — geríveis por ti'),
+                subtitle: const Text(
+                  'Massa, recheio, cobertura — geríveis por ti',
+                ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.go(Routes.categoriasReceita),
               ),
@@ -464,6 +470,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 /// nome da marca (posição/tamanho/visibilidade) e tipo de letra.
 class _AparenciaControls extends StatelessWidget {
   const _AparenciaControls({
+    required this.empresaBase,
     required this.tema,
     required this.corHex,
     required this.corController,
@@ -494,6 +501,7 @@ class _AparenciaControls extends StatelessWidget {
     required this.onRemoverFonte,
   });
 
+  final Empresa empresaBase;
   final TemaApp tema;
   final String corHex;
   final TextEditingController corController;
@@ -538,12 +546,44 @@ class _AparenciaControls extends StatelessWidget {
     ),
   ];
 
+  /// A mesma [Empresa] gravada, mas com o que está a ser ajustado agora
+  /// (ainda por guardar) — para a pré-visualização mostrar exatamente a
+  /// barra superior real, em tempo real.
+  Empresa get _previewEmpresa => empresaBase.copyWith(
+    logoOculto: !logoVisivel,
+    logoAlinhamento: logoAlinhamento,
+    logoTamanho: logoTamanho,
+    nomeOculto: !nomeVisivel,
+    nomeAlinhamento: nomeAlinhamento,
+    nomeTamanho: nomeTamanho,
+  );
+
   @override
   Widget build(BuildContext context) {
     final corAtual = AppTheme.parseHex(corHex);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Text('Pré-visualização', style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Theme.of(context).dividerColor),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: AppBar(
+            automaticallyImplyLeading: false,
+            titleSpacing: 12,
+            title: marcaAppBar(context, _previewEmpresa, logoUrl),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Atualiza-se ao vivo — a barra real só muda depois de guardares.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 16),
         Text('Modo', style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: 6),
         SegmentedButton<TemaApp>(
@@ -566,7 +606,8 @@ class _AparenciaControls extends StatelessWidget {
               _Amostra(
                 cor: p.cor,
                 nome: p.nome,
-                ativa: corAtual != null &&
+                ativa:
+                    corAtual != null &&
                     (corAtual.toARGB32() & 0xFFFFFF) ==
                         (p.cor.toARGB32() & 0xFFFFFF),
                 onTap: () => onCor(AppTheme.toHex(p.cor)),
@@ -593,7 +634,8 @@ class _AparenciaControls extends StatelessWidget {
                 controller: corSecController,
                 decoration: const InputDecoration(
                   labelText: 'Cor secundária (hex)',
-                  helperText: 'Vazio = derivada automaticamente da cor de destaque',
+                  helperText:
+                      'Vazio = derivada automaticamente da cor de destaque',
                 ),
               ),
               const SizedBox(height: 10),
@@ -676,8 +718,10 @@ class _AparenciaControls extends StatelessWidget {
             onSelectionChanged: (s) => onLogoAlinhamento(s.first),
           ),
           const SizedBox(height: 10),
-          Text('Tamanho: ${logoTamanho.round()} px',
-              style: Theme.of(context).textTheme.bodySmall),
+          Text(
+            'Tamanho: ${logoTamanho.round()} px',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
           Slider(
             value: logoTamanho,
             min: 16,
@@ -705,8 +749,10 @@ class _AparenciaControls extends StatelessWidget {
             onSelectionChanged: (s) => onNomeAlinhamento(s.first),
           ),
           const SizedBox(height: 10),
-          Text('Tamanho: ${nomeTamanho.round()} px',
-              style: Theme.of(context).textTheme.bodySmall),
+          Text(
+            'Tamanho: ${nomeTamanho.round()} px',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
           Slider(
             value: nomeTamanho,
             min: 14,

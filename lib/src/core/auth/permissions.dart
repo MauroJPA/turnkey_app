@@ -18,6 +18,12 @@ enum Papel {
   /// Criar/editar/apagar ingredientes, receitas e fichas técnicas.
   bool get canEditBusiness => this != Papel.viewer;
 
+  /// Trocar o ingrediente (ou sub-receita) ligado a uma linha da receita —
+  /// mais sensível do que só ajustar a quantidade, porque muda a composição,
+  /// o custo e os alergénios da receita.
+  bool get canSwapRecipeIngredient =>
+      this == Papel.owner || this == Papel.admin;
+
   /// Editar as configurações de custo e a personalização da empresa.
   bool get canEditConfig => this == Papel.owner || this == Papel.admin;
 
@@ -28,9 +34,9 @@ enum Papel {
   bool get isOwner => this == Papel.owner;
 
   String get label => switch (this) {
-        Papel.owner => 'Proprietário',
-        Papel.admin => 'Administrador',
-        Papel.editor => 'Editor',
-        Papel.viewer => 'Leitura',
-      };
+    Papel.owner => 'Proprietário',
+    Papel.admin => 'Administrador',
+    Papel.editor => 'Editor',
+    Papel.viewer => 'Leitura',
+  };
 }

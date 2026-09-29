@@ -1048,6 +1048,43 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       );
       return;
     }
+    // A descrição lida da fatura pode vir muito longa (código, lote,
+    // validade…) — maior do que o campo `nome`/`caracteristica` aceita, o que
+    // faz o "Aplicar" falhar com um erro genérico do servidor. Avisa antes.
+    final nomeLongo = aAplicar.firstWhereOrNull(
+      (l) =>
+          (l.criarNovo || l.renomear) &&
+          l.nome.text.trim().length > (l.tipo.ehConsumivel ? 250 : 200),
+    );
+    if (nomeLongo != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'O nome "${nomeLongo.nome.text.trim()}" é longo demais '
+            '(máximo ${nomeLongo.tipo.ehConsumivel ? 250 : 200} caracteres). '
+            'Encurta-o antes de aplicar.',
+          ),
+        ),
+      );
+      return;
+    }
+    final caracteristicaLonga = aAplicar.firstWhereOrNull(
+      (l) =>
+          l.criarNovo &&
+          !l.tipo.ehConsumivel &&
+          l.caracteristica.text.trim().length > 200,
+    );
+    if (caracteristicaLonga != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'A característica de "${caracteristicaLonga.nome.text.trim()}" é '
+            'longa demais (máximo 200 caracteres). Encurta-a antes de aplicar.',
+          ),
+        ),
+      );
+      return;
+    }
     final semUnidade = aAplicar.where(
       (l) => l.tipo == TipoLinha.ingrediente && l.problemaUnidade != null,
     );
@@ -1125,22 +1162,30 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       final ids = <_LinhaState, String?>{};
       final consIds = <_LinhaState, String?>{};
       final embIds = <_LinhaState, String?>{};
+      // Uma linha que falhe a criar (ex.: nome longo demais) não pode travar
+      // as restantes — fica por rever (os dados já escritos na linha não se
+      // perdem) e as outras linhas prontas aplicam-se na mesma.
+      final falhas = <String>[];
       for (final l in aAplicar) {
         if (l.tipo.ehConsumivel) {
           if (l.criarNovo) {
-            // o preço e o nome da fatura ficam ao aplicar (no servidor)
-            final novo = await ref
-                .read(consumivelActionsProvider)
-                .criar(
-                  ConsumivelInput(
-                    nome: l.nome.text.trim(),
-                    categoria: l.categoria.text,
-                    marca: l.marca.text.trim(),
-                    fornecedor: forn,
-                    exigeFds: exigeFdsPorOmissaoPara(l.categoria.text),
-                  ),
-                );
-            consIds[l] = novo.id;
+            try {
+              // o preço e o nome da fatura ficam ao aplicar (no servidor)
+              final novo = await ref
+                  .read(consumivelActionsProvider)
+                  .criar(
+                    ConsumivelInput(
+                      nome: l.nome.text.trim(),
+                      categoria: l.categoria.text,
+                      marca: l.marca.text.trim(),
+                      fornecedor: forn,
+                      exigeFds: exigeFdsPorOmissaoPara(l.categoria.text),
+                    ),
+                  );
+              consIds[l] = novo.id;
+            } on Object catch (e) {
+              falhas.add('"${l.nome.text.trim()}": ${mensagemAmigavel(e)}');
+            }
           } else {
             consIds[l] = l.cons?.id;
           }
@@ -1149,25 +1194,30 @@ class _RevisaoState extends ConsumerState<_Revisao> {
         switch (l.tipo) {
           case TipoLinha.embalagem:
             if (l.criarNovo) {
-              // o preço e o nome da fatura ficam ao aplicar (no servidor)
-              final novo = await ref
-                  .read(embalagemActionsProvider)
-                  .criar(
-                    EmbalagemInput(
-                      nome: l.nome.text.trim(),
-                      tipo: l.tipoEmbalagemSel.text.trim().isEmpty
-                          ? 'Outro'
-                          : l.tipoEmbalagemSel.text.trim(),
-                      caracteristica: l.caracteristica.text.trim(),
-                      uso: l.usoEmbalagemSel,
-                      formatosCookieIds: l.formatosCookieSel.toList(),
-                      rendeUnidades: l.usoEmbalagemSel == UsoEmbalagem.multiplo
-                          ? l.quantidadeMultiplo.toDouble()
-                          : 1,
-                      fornecedor: forn,
-                    ),
-                  );
-              embIds[l] = novo.id;
+              try {
+                // o preço e o nome da fatura ficam ao aplicar (no servidor)
+                final novo = await ref
+                    .read(embalagemActionsProvider)
+                    .criar(
+                      EmbalagemInput(
+                        nome: l.nome.text.trim(),
+                        tipo: l.tipoEmbalagemSel.text.trim().isEmpty
+                            ? 'Outro'
+                            : l.tipoEmbalagemSel.text.trim(),
+                        caracteristica: l.caracteristica.text.trim(),
+                        uso: l.usoEmbalagemSel,
+                        formatosCookieIds: l.formatosCookieSel.toList(),
+                        rendeUnidades:
+                            l.usoEmbalagemSel == UsoEmbalagem.multiplo
+                            ? l.quantidadeMultiplo.toDouble()
+                            : 1,
+                        fornecedor: forn,
+                      ),
+                    );
+                embIds[l] = novo.id;
+              } on Object catch (e) {
+                falhas.add('"${l.nome.text.trim()}": ${mensagemAmigavel(e)}');
+              }
             } else {
               embIds[l] = l.embalagemSel?.id;
             }
@@ -1177,40 +1227,48 @@ class _RevisaoState extends ConsumerState<_Revisao> {
             break; // tratado acima (ehConsumivel)
           case TipoLinha.ingrediente:
             if (l.criarNovo) {
-              final novo = await repo.create(
-                IngredienteInput(
-                  nome: l.nome.text.trim(),
-                  caracteristica: l.caracteristica.text.trim(),
-                  unidade: l.unidadeIng,
-                  // o preço e a marca ficam no produto de compra, criado ao
-                  // aplicar (só numa linha "só stock" é que o preço vai já
-                  // no ingrediente)
-                  preco: l.acao == AcaoFatura.stock ? l.precoV : 0,
-                  gramasEmbalagem: l.acao == AcaoFatura.stock
-                      ? (l.embNaUnidade ?? 0)
-                      : 0,
-                  origem: OrigemIngrediente.comprado,
-                ),
-              );
-              ids[l] = novo.id;
+              try {
+                final novo = await repo.create(
+                  IngredienteInput(
+                    nome: l.nome.text.trim(),
+                    caracteristica: l.caracteristica.text.trim(),
+                    unidade: l.unidadeIng,
+                    // o preço e a marca ficam no produto de compra, criado ao
+                    // aplicar (só numa linha "só stock" é que o preço vai já
+                    // no ingrediente)
+                    preco: l.acao == AcaoFatura.stock ? l.precoV : 0,
+                    gramasEmbalagem: l.acao == AcaoFatura.stock
+                        ? (l.embNaUnidade ?? 0)
+                        : 0,
+                    origem: OrigemIngrediente.comprado,
+                  ),
+                );
+                ids[l] = novo.id;
+              } on Object catch (e) {
+                falhas.add('"${l.nome.text.trim()}": ${mensagemAmigavel(e)}');
+              }
             } else if (l.renomear && l.ingrediente != null) {
               final ing = l.ingrediente!;
-              await repo.update(
-                ing.id,
-                IngredienteInput(
-                  nome: l.nome.text.trim(),
-                  caracteristica: ing.caracteristica,
-                  marca: ing.marca,
-                  fornecedor: forn.isNotEmpty ? forn : ing.fornecedor,
-                  preco: ing.preco,
-                  gramasEmbalagem: ing.gramasEmbalagem,
-                  disponivel: ing.disponivel,
-                  origem: ing.origem,
-                  unidade: ing.un,
-                  gramasUnidade: ing.gramasUnidade,
-                ),
-              );
-              ids[l] = ing.id;
+              try {
+                await repo.update(
+                  ing.id,
+                  IngredienteInput(
+                    nome: l.nome.text.trim(),
+                    caracteristica: ing.caracteristica,
+                    marca: ing.marca,
+                    fornecedor: forn.isNotEmpty ? forn : ing.fornecedor,
+                    preco: ing.preco,
+                    gramasEmbalagem: ing.gramasEmbalagem,
+                    disponivel: ing.disponivel,
+                    origem: ing.origem,
+                    unidade: ing.un,
+                    gramasUnidade: ing.gramasUnidade,
+                  ),
+                );
+                ids[l] = ing.id;
+              } on Object catch (e) {
+                falhas.add('"${l.nome.text.trim()}": ${mensagemAmigavel(e)}');
+              }
             } else {
               ids[l] = l.ingrediente?.id;
             }
@@ -1254,12 +1312,41 @@ class _RevisaoState extends ConsumerState<_Revisao> {
           ),
         ),
       );
+      if (falhas.isNotEmpty && mounted) {
+        await showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Algumas linhas não aplicaram'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'As restantes linhas prontas já foram aplicadas. Estas '
+                    'ficam por rever — o que já preenchiste continua aqui, '
+                    'corrige e tenta aplicar de novo:',
+                  ),
+                  const SizedBox(height: 8),
+                  for (final f in falhas) Text('• $f'),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Entendi'),
+              ),
+            ],
+          ),
+        );
+      }
       final usados = {
         for (final id in consIds.values)
           if (id != null) id,
       };
       if (usados.isNotEmpty) await _avisarFdsEmFalta(usados);
-      if (mounted && context.canPop()) context.pop();
+      if (falhas.isEmpty && mounted && context.canPop()) context.pop();
     } on Object catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(

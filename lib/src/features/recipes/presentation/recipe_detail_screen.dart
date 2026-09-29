@@ -36,6 +36,8 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
   bool _busy = false;
 
   bool get _podeEditar => ref.read(currentPapelProvider).canEditBusiness;
+  bool get _podeTrocarIngrediente =>
+      ref.read(currentPapelProvider).canSwapRecipeIngredient;
 
   Future<bool> _run(Future<void> Function() action) async {
     setState(() => _busy = true);
@@ -174,7 +176,21 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
       excludeRecipeId: widget.recipeId,
       apenasVincular: true,
     );
-    if (picked == null) return;
+    if (picked == null || !mounted) return;
+    // Um item já ligado tem algo a perder ao trocar (produto fixado,
+    // % da receita…) — os pendentes não, por isso só confirma aqui.
+    if (!item.pendente) {
+      final ok = await confirmDialog(
+        context,
+        titulo: 'Trocar ingrediente',
+        mensagem:
+            'Troca "${item.nome}" por "${picked.nome}" nesta receita? '
+            'A quantidade (${quantidadeParaTexto(item.quantidadeG, item.unidade)}) '
+            'mantém-se.',
+        confirmar: 'Trocar',
+      );
+      if (!ok) return;
+    }
     await _run(
       () => ref
           .read(recipeActionsProvider)
@@ -338,22 +354,33 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
               onPressed: _podeEditar ? () => _vincular(item) : null,
               child: const Text('Ligar'),
             )
-          : (item.subReceitaId != null
-                ? const Icon(Icons.link, size: 16)
-                : (podeEscolher
-                      ? IconButton(
-                          tooltip: 'Escolher o produto de compra',
-                          icon: Icon(
-                            fixado != null
-                                ? Icons.push_pin
-                                : Icons.push_pin_outlined,
-                            size: 20,
-                          ),
-                          onPressed: _podeEditar
-                              ? () => _escolherProduto(item, produtos)
-                              : null,
-                        )
-                      : null)),
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (item.subReceitaId != null)
+                  const Padding(
+                    padding: EdgeInsets.only(right: 4),
+                    child: Icon(Icons.link, size: 16),
+                  )
+                else if (podeEscolher)
+                  IconButton(
+                    tooltip: 'Escolher o produto de compra',
+                    icon: Icon(
+                      fixado != null ? Icons.push_pin : Icons.push_pin_outlined,
+                      size: 20,
+                    ),
+                    onPressed: _podeEditar
+                        ? () => _escolherProduto(item, produtos)
+                        : null,
+                  ),
+                if (_podeTrocarIngrediente)
+                  IconButton(
+                    tooltip: 'Trocar ingrediente/sub-receita',
+                    icon: const Icon(Icons.swap_horiz, size: 20),
+                    onPressed: () => _vincular(item),
+                  ),
+              ],
+            ),
       onTap: _podeEditar ? () => _editQty(item) : null,
     );
 

@@ -996,6 +996,25 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       "Criar" — o formato fica criado e já selecionado nessa linha; confirma depois em Configurações →
       Formatos de cookie que apareceu (com o peso a zero/1 g, por preencher).
 
+## 53. Falha ao aplicar faturas, trocar ingrediente na receita, prévia do logótipo
+
+- [ ] Rever fatura: numa linha "Criar novo" (ingrediente/embalagem), escreve um nome com mais de 200
+      caracteres (cola um texto grande) e toca "Aplicar" — a app avisa antes de tentar gravar, sem deixar
+      chegar ao servidor ("O nome … é longo demais…").
+- [ ] Com várias linhas prontas e uma delas a falhar (nome longo, ou qualquer outro erro do servidor):
+      confirma que **as outras linhas aplicam-se na mesma** (preços/stock atualizados) e só a linha com
+      problema fica por rever — o texto que já tinhas escrito nela continua lá, não se perde.
+- [ ] O aviso de erro nomeia o campo problemático (ex. `"nome": Must be no more than 200 character(s).`), não
+      só "Failed to create record.".
+- [ ] Abrir uma receita: cada linha de ingrediente/sub-receita tem um ícone "⇄" — toca, escolhe outro
+      ingrediente, confirma no diálogo ("Troca X por Y…") — a linha muda de ingrediente mantendo a
+      quantidade e o custo recalcula.
+- [ ] Com um utilizador **Editor** (não admin/owner): o ícone "⇄" não aparece nas linhas da receita (só
+      consegue ajustar a quantidade, tocando na linha).
+- [ ] Configurações → Aparência: mexe no slider "Tamanho" do logótipo (ou da posição/visibilidade) — a barra
+      de "Pré-visualização" no topo da secção atualiza imediatamente, com o logótipo/nome reais, antes de
+      tocar em "Guardar aparência".
+
 ---
 
 ## Notas / ajustes pedidos
