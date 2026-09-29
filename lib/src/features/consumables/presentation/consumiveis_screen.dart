@@ -51,7 +51,7 @@ class ConsumiveisScreen extends ConsumerStatefulWidget {
 
 class _ConsumiveisScreenState extends ConsumerState<ConsumiveisScreen> {
   String _pesquisa = '';
-  CategoriaConsumivel? _categoria;
+  String? _categoria;
   bool _soPendentes = false;
 
   static final List<SortOption<(Consumivel, EstadoFds)>> _sortOptions = [
@@ -116,7 +116,7 @@ class _ConsumiveisScreenState extends ConsumerState<ConsumiveisScreen> {
       linhas.add(
         [
           c(x.nome),
-          c(x.categoria.label),
+          c(x.categoria),
           c(x.marca),
           c(x.fornecedor),
           x.exigeFds ? 'Sim' : 'Não',
@@ -184,13 +184,21 @@ class _ConsumiveisScreenState extends ConsumerState<ConsumiveisScreen> {
               icon: Icons.cleaning_services_outlined,
               titulo: 'Sem produtos',
               mensagem:
-                  'Produtos de limpeza, desinfeção e outros insumos, com as '
-                  'fichas de dados de segurança e outros documentos '
-                  'anexados, prontos para a fiscalização.',
+                  'Produtos de limpeza, desinfeção e insumos (com fichas de '
+                  'dados de segurança) e também bebidas ou outra revenda '
+                  '(com preço de venda) — tudo o que compras sem ser para as '
+                  'receitas.',
             );
           }
           int pendentes = 0;
           final linhas = <(Consumivel, EstadoFds)>[];
+          final categoriasEmUso =
+              todos
+                  .map((x) => x.categoria)
+                  .where((c) => c.isNotEmpty)
+                  .toSet()
+                  .toList()
+                ..sort();
           for (final x in todos) {
             final e = estadoFds(x, docs.where((d) => d.consumivelId == x.id));
             if (e == EstadoFds.falta || e == EstadoFds.antiga) pendentes++;
@@ -235,9 +243,9 @@ class _ConsumiveisScreenState extends ConsumerState<ConsumiveisScreen> {
                       selected: _soPendentes,
                       onSelected: (v) => setState(() => _soPendentes = v),
                     ),
-                    for (final c in CategoriaConsumivel.values)
+                    for (final c in categoriasEmUso)
                       FilterChip(
-                        label: Text(c.label),
+                        label: Text(c),
                         selected: _categoria == c,
                         onSelected: (v) =>
                             setState(() => _categoria = v ? c : null),
@@ -262,9 +270,11 @@ class _ConsumiveisScreenState extends ConsumerState<ConsumiveisScreen> {
                             title: Text(x.nome),
                             subtitle: Text(
                               [
-                                x.categoria.label,
+                                x.categoria,
                                 if (x.marca.isNotEmpty) x.marca,
                                 if (x.fornecedor.isNotEmpty) x.fornecedor,
+                                if (x.temPrecoVenda)
+                                  'venda € ${x.precoVenda.toStringAsFixed(2)}',
                                 '$nDocs doc.',
                               ].join(' · '),
                             ),

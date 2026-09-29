@@ -1,27 +1,27 @@
 import 'package:pocketbase/pocketbase.dart';
 
+import '../../../core/formatting/busca.dart';
 import '../../../core/formatting/capitalizar.dart';
 
-enum CategoriaConsumivel {
-  limpeza('limpeza', 'Limpeza'),
-  desinfecao('desinfecao', 'Desinfeção'),
-  higiene('higiene', 'Higiene'),
-  insumo('insumo', 'Insumo'),
-  outro('outro', 'Outro');
+/// Categorias sugeridas ao escrever — não é uma lista fechada: qualquer
+/// texto novo fica disponível para a empresa a partir daí (como marca/
+/// fornecedor). "Bebida"/"Revenda" são para produtos comprados para vender
+/// ao cliente (não entram nas receitas nem exigem ficha de segurança).
+const kCategoriasConsumivelPadrao = <String>[
+  'Limpeza',
+  'Desinfeção',
+  'Higiene',
+  'Insumo',
+  'Bebida',
+  'Revenda',
+  'Outro',
+];
 
-  const CategoriaConsumivel(this.api, this.label);
-  final String api;
-  final String label;
-
-  /// Limpeza e desinfeção levam ficha de dados de segurança por omissão.
-  bool get exigeFdsPorOmissao =>
-      this == CategoriaConsumivel.limpeza ||
-      this == CategoriaConsumivel.desinfecao;
-
-  static CategoriaConsumivel fromApi(String s) => values.firstWhere(
-    (c) => c.api == s,
-    orElse: () => CategoriaConsumivel.outro,
-  );
+/// Limpeza e desinfeção levam ficha de dados de segurança por omissão; o
+/// resto (incluindo Bebida/Revenda) não.
+bool exigeFdsPorOmissaoPara(String categoria) {
+  final c = normalizarBusca(categoria);
+  return c == 'limpeza' || c == 'desinfecao';
 }
 
 enum TipoDocumento {
@@ -43,11 +43,12 @@ class Consumivel {
   const Consumivel({
     required this.id,
     required this.nome,
-    this.categoria = CategoriaConsumivel.limpeza,
+    this.categoria = 'Limpeza',
     this.marca = '',
     this.fornecedor = '',
     this.embalagem = '',
     this.preco = 0,
+    this.precoVenda = 0,
     this.precoAtualizadoEm,
     this.exigeFds = true,
     this.notas = '',
@@ -56,11 +57,14 @@ class Consumivel {
 
   final String id;
   final String nome;
-  final CategoriaConsumivel categoria;
+  final String categoria;
   final String marca;
   final String fornecedor;
   final String embalagem;
   final double preco;
+
+  /// Preço a que se vende ao cliente (Bebidas/Revenda) — 0 se não se aplica.
+  final double precoVenda;
   final DateTime? precoAtualizadoEm;
   final bool exigeFds;
   final String notas;
@@ -68,16 +72,19 @@ class Consumivel {
   /// Descrições de fatura (normalizadas) já associadas a este item.
   final List<String> nomesFatura;
 
+  bool get temPrecoVenda => precoVenda > 0;
+
   factory Consumivel.fromRecord(RecordModel r) {
     final nomes = r.data['nomes_fatura'];
     return Consumivel(
       id: r.id,
       nome: r.getStringValue('nome'),
-      categoria: CategoriaConsumivel.fromApi(r.getStringValue('categoria')),
+      categoria: r.getStringValue('categoria'),
       marca: r.getStringValue('marca'),
       fornecedor: r.getStringValue('fornecedor'),
       embalagem: r.getStringValue('embalagem'),
       preco: r.getDoubleValue('preco'),
+      precoVenda: r.getDoubleValue('preco_venda'),
       precoAtualizadoEm: DateTime.tryParse(
         r.getStringValue('preco_atualizado_em'),
       ),
@@ -93,21 +100,23 @@ class Consumivel {
 class ConsumivelInput {
   const ConsumivelInput({
     required this.nome,
-    this.categoria = CategoriaConsumivel.limpeza,
+    this.categoria = 'Limpeza',
     this.marca = '',
     this.fornecedor = '',
     this.embalagem = '',
     this.preco = 0,
+    this.precoVenda = 0,
     this.exigeFds = true,
     this.notas = '',
   });
 
   final String nome;
-  final CategoriaConsumivel categoria;
+  final String categoria;
   final String marca;
   final String fornecedor;
   final String embalagem;
   final double preco;
+  final double precoVenda;
   final bool exigeFds;
   final String notas;
 
@@ -118,17 +127,21 @@ class ConsumivelInput {
     fornecedor: c.fornecedor,
     embalagem: c.embalagem,
     preco: c.preco,
+    precoVenda: c.precoVenda,
     exigeFds: c.exigeFds,
     notas: c.notas,
   );
 
   Map<String, dynamic> toBody() => {
     'nome': capitalizarInicial(nome.trim()),
-    'categoria': categoria.api,
+    'categoria': categoria.trim().isEmpty
+        ? 'Outro'
+        : capitalizarInicial(categoria.trim()),
     'marca': marca.trim(),
     'fornecedor': fornecedor.trim(),
     'embalagem': embalagem.trim(),
     'preco': preco,
+    'preco_venda': precoVenda,
     'exige_fds': exigeFds,
     'notas': notas.trim(),
     'deletado': false,

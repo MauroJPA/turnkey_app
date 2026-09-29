@@ -209,7 +209,9 @@ const Map<HelpTopic, HelpEntry> helpContent = {
     titulo: 'Rever fatura',
     paragrafos: [
       'Confere cada linha que a IA leu. A imagem da fatura fica visível (ao lado, em ecrã grande; por cima, no telemóvel — toca para ampliar; "Ocultar fatura" dá mais espaço às linhas). PDF abre à parte.',
+      'Cada linha tem 5 tipos: Ingrediente, Embalagem, Limpeza / insumo, Bebida e Revenda (estes três últimos ficam todos em "Limpeza e insumos" — só muda a categoria sugerida). Escolhe o que a linha é antes de a ligar.',
       'Toca em "Ingrediente" para ligar a linha ao ingrediente certo (já vem pré-escolhido pelo nome mais parecido) ou escolhe "Criar ingrediente novo".',
+      'Numa linha de Embalagem: o "Tipo" e, numa linha de Bebida/Revenda, a "Categoria" são texto livre — escreve um novo se o que precisas não estiver nas sugestões. "Peças compradas" (só embalagens) já vem preenchido pela quantidade que a IA leu (ex. rolo de 500 adesivos) — antes tinhas de corrigir isto depois em Embalagens. Em "Formatos de cookie" da embalagem, "+ Novo formato" cria um formato só com o nome (completa o peso depois em Configurações → Formatos de cookie).',
       'Se o ingrediente da fatura é o mesmo que já tens com outro nome (ex.: a fatura diz "Limão cal 3/4" e tu tens "Limão siciliano"), marca "Passar a chamar-se…": o ingrediente é renomeado e a mudança aplica-se a todas as receitas e fichas que o usam.',
       '"Comprado" é a quantidade que entra no stock; "Preço embalagem" e "Embalagem" atualizam o preço por grama do ingrediente.',
       'Ação por linha: Preço (só atualiza o preço), Stock (só dá entrada), Preço + Stock, ou Ignorar (ex.: uma linha duplicada — a IA por vezes lê a mesma linha duas vezes).',
@@ -318,6 +320,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Caixas, sacos, saquetas, adesivos, fita… — tudo o que embala o produto.',
       'Preço da compra + quantas peças vêm nessa compra → custo por peça.',
       '"Uma peça embala quantas unidades?": um saco embala 1; uma caixa de 6 embala 6. O custo por unidade de produto divide-se por esse número.',
+      'Tipo (Caixa, Saco, Saqueta…): escreve um novo a qualquer momento se o que precisas não estiver na lista — não é fixo.',
       'Característica (opcional) e Uso: "Individual" (1 cookie por embalagem) ou "Múltiplo" — escolhe a quantidade (2, 3, 4, 5, 6, 8, 10 ou 12) num toque. Podes também dizer para que Formatos de cookie serve cada embalagem.',
       'Na ficha técnica, adiciona a embalagem como uma linha (tipo "Embalagem") e o custo entra no total do produto — sem afetar o peso nem a informação nutricional.',
       '"+" cria; toque edita; toque e segure apaga. O botão de ordenar (seta) organiza as peças por Nome ou Custo por unidade.',
@@ -327,12 +330,14 @@ const Map<HelpTopic, HelpEntry> helpContent = {
   HelpTopic.consumiveis: (
     titulo: 'Limpeza e insumos',
     paragrafos: [
-      'Produtos de limpeza, desinfeção e outros insumos que não entram nas receitas mas exigem documentação.',
+      'Produtos de limpeza, desinfeção e insumos que exigem documentação, e também Bebidas ou outra Revenda — o que compras para vender ao cliente, não para as receitas. A categoria decide se pede ficha de segurança (Limpeza/Desinfeção pedem por omissão; Bebida/Revenda não).',
+      'Categoria: texto livre — escreve uma nova (ex.: "Sobremesas") sempre que precisares, não é uma lista fechada.',
+      '"Preço de venda" (opcional): para Bebidas/Revenda vendidas ao cliente — dá para veres a margem. Fica em branco nos produtos que não se vendem (limpeza, insumos).',
       'Em cada produto anexas a ficha de dados de segurança (FDS) que o fornecedor te dá, a ficha técnica e certificados. Ficam organizados e abrem com um toque, prontos para uma fiscalização.',
       'O estado mostra "Falta FDS" se o produto exige a ficha e não tem nenhuma, e "FDS antiga" quando a última tem mais de 3 anos (pede ao fornecedor a versão mais recente, se existir).',
-      'O filtro "A precisar de FDS" lista só o que falta tratar. O ícone de copiar junta o registo de todos os produtos (CSV) para colar numa folha de cálculo.',
+      'O filtro "A precisar de FDS" lista só o que falta tratar; os chips de categoria filtram por Limpeza/Bebida/Revenda/etc. O ícone de copiar junta o registo de todos os produtos (CSV) para colar numa folha de cálculo.',
       'O botão de ordenar (seta) organiza por Nome ou Estado FDS.',
-      'Nas faturas, as linhas de limpeza/insumos podem ser ligadas a estes produtos: o preço fica registado e, se já tiverem documentos, não é preciso pedi-los outra vez.',
+      'Nas faturas, as linhas de limpeza/insumos/bebidas/revenda podem ser ligadas a estes produtos: o preço fica registado e, se já tiverem documentos, não é preciso pedi-los outra vez.',
     ],
   ),
   HelpTopic.formatos: (

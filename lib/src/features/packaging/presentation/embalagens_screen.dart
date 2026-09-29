@@ -365,9 +365,11 @@ class _EmbalagemFormState extends ConsumerState<_EmbalagemForm> {
   late final _rende = TextEditingController(
     text: widget.existente == null ? '1' : _s(widget.existente!.rendeUnidades),
   );
-  late String _tipo = widget.existente?.tipo.isNotEmpty == true
-      ? widget.existente!.tipo
-      : 'Caixa';
+  late final _tipo = TextEditingController(
+    text: widget.existente?.tipo.isNotEmpty == true
+        ? widget.existente!.tipo
+        : 'Caixa',
+  );
   late UsoEmbalagem? _uso = widget.existente?.uso;
   late final Set<String> _formatos = {...?widget.existente?.formatosCookieIds};
 
@@ -378,7 +380,15 @@ class _EmbalagemFormState extends ConsumerState<_EmbalagemForm> {
 
   @override
   void dispose() {
-    for (final c in [_nome, _caracteristica, _forn, _preco, _pecas, _rende]) {
+    for (final c in [
+      _nome,
+      _caracteristica,
+      _forn,
+      _preco,
+      _pecas,
+      _rende,
+      _tipo,
+    ]) {
       c.dispose();
     }
     super.dispose();
@@ -390,7 +400,7 @@ class _EmbalagemFormState extends ConsumerState<_EmbalagemForm> {
       context,
       EmbalagemInput(
         nome: _nome.text,
-        tipo: _tipo,
+        tipo: _tipo.text.trim().isEmpty ? 'Outro' : _tipo.text.trim(),
         caracteristica: _caracteristica.text,
         uso: _uso,
         formatosCookieIds: _formatos.toList(),
@@ -435,14 +445,11 @@ class _EmbalagemFormState extends ConsumerState<_EmbalagemForm> {
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _tipo,
-              decoration: const InputDecoration(labelText: 'Tipo'),
-              items: [
-                for (final t in kTiposEmbalagem)
-                  DropdownMenuItem(value: t, child: Text(t)),
-              ],
-              onChanged: (v) => setState(() => _tipo = v ?? 'Caixa'),
+            AutocompleteTextField(
+              controller: _tipo,
+              options: ref.watch(tiposEmbalagemConhecidosProvider),
+              labelText: 'Tipo',
+              helperText: 'Escreve um tipo novo se não estiver na lista.',
             ),
             const SizedBox(height: 12),
             TextField(

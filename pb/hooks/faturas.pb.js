@@ -135,6 +135,7 @@ routerAdd(
         const q = Number(l.quantidadeG || 0);
         const pu = Number(l.precoUnitario || 0);
         const emb = Number(l.embalagemG || 0);
+        const pecas = Number(l.pecasCompradas || 0);
 
         // O que ficou realmente gravado nesta linha (marca/fornecedor e, para
         // ingredientes, QUAL produto de compra) — guarda-se em `faturas_itens`
@@ -171,7 +172,9 @@ routerAdd(
             }
             if (pu > 0 && (acao === 'preco' || acao === 'ambos')) {
               embReg.set('preco_compra', pu);
-              embReg.set('unidades_compra', 1);
+              // se a pessoa não indicou quantas peças veio a compra, mantém o
+              // que já lá estava em vez de forçar 1 (que quase nunca é certo).
+              if (pecas > 0) embReg.set('unidades_compra', pecas);
               precos++;
             }
             tx.save(embReg);

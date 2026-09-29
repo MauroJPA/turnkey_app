@@ -22,6 +22,7 @@ import '../../consumables/presentation/consumiveis_screen.dart'
     show apresentaEstadoFds;
 import '../../consumables/presentation/consumivel_sheet.dart';
 import '../../cookie_formats/application/cookie_format_providers.dart';
+import '../../cookie_formats/domain/cookie_format.dart';
 import '../../ingredients/application/ingredients_providers.dart';
 import '../../ingredients/data/ingredient_product_repository.dart';
 import '../../ingredients/data/ingredient_repository.dart';
@@ -340,19 +341,78 @@ double? _converter(double v, String de, String para, {double densidade = 1}) {
 String _normNome(String s) =>
     s.toLowerCase().trim().replaceAll(RegExp(r'\s+'), ' ');
 
-/// A que ficha se liga uma linha de fatura.
-enum TipoLinha { ingrediente, consumivel, embalagem }
+/// A que ficha se liga uma linha de fatura. Limpeza/insumo, bebida e revenda
+/// gravam-se todas em `consumiveis` (só muda a categoria sugerida) — dá para
+/// mudar de uma para outra sem perder o que já estava escrito.
+enum TipoLinha {
+  ingrediente,
+  embalagem,
+  limpezaInsumo,
+  bebida,
+  revenda;
+
+  bool get ehConsumivel =>
+      this == limpezaInsumo || this == bebida || this == revenda;
+
+  /// Categoria sugerida ao mudar para este tipo (só para os consumíveis).
+  String get categoriaPreset => switch (this) {
+    limpezaInsumo => 'Limpeza',
+    bebida => 'Bebida',
+    revenda => 'Revenda',
+    _ => '',
+  };
+
+  String get label => switch (this) {
+    ingrediente => 'Ingrediente',
+    embalagem => 'Embalagem',
+    limpezaInsumo => 'Limpeza / insumo',
+    bebida => 'Bebida',
+    revenda => 'Revenda',
+  };
+
+  /// Rótulo do seletor "escolher produto…" para este tipo.
+  String get pickerLabel => switch (this) {
+    bebida => 'Bebida',
+    revenda => 'Produto de revenda',
+    _ => 'Produto de limpeza / insumo',
+  };
+}
+
+/// A qual dos 3 segmentos "consumível" pertence uma categoria já gravada —
+/// para saber qual realçar ao reabrir uma linha já ligada a um produto.
+/// A IA ainda sugere a categoria em chaves antigas (limpeza/desinfecao/…);
+/// converte para o rótulo que a app mostra.
+String _rotuloCategoriaIa(String v) {
+  const rotulos = {
+    'limpeza': 'Limpeza',
+    'desinfecao': 'Desinfeção',
+    'higiene': 'Higiene',
+    'insumo': 'Insumo',
+    'outro': 'Outro',
+  };
+  final chave = v.trim().toLowerCase();
+  return rotulos[chave] ?? (v.trim().isEmpty ? 'Limpeza' : v.trim());
+}
+
+TipoLinha _tipoConsumivelDe(String categoria) {
+  final c = normalizarNome(categoria);
+  if (c == 'bebida') return TipoLinha.bebida;
+  if (c == 'revenda') return TipoLinha.revenda;
+  return TipoLinha.limpezaInsumo;
+}
 
 /// Tipo inicial de uma linha: o que já estava decidido numa ronda anterior
 /// (se houver) manda; senão, o que a IA sugeriu.
 TipoLinha _tipoInicial(FaturaLinhaIa ia, ItemFaturaAnterior? anterior) {
   if (anterior != null) {
     if (anterior.embalagemId != null) return TipoLinha.embalagem;
-    if (anterior.consumivelId != null) return TipoLinha.consumivel;
+    if (anterior.consumivelId != null) {
+      return TipoLinha.limpezaInsumo; // a categoria real vem do `cons` ligado
+    }
     if (anterior.ingredienteId != null) return TipoLinha.ingrediente;
   }
   if (ia.embalagem) return TipoLinha.embalagem;
-  if (ia.consumivel) return TipoLinha.consumivel;
+  if (ia.consumivel) return TipoLinha.limpezaInsumo;
   return TipoLinha.ingrediente;
 }
 
@@ -386,16 +446,26 @@ class _LinhaState {
     required bool isLista,
     this.anterior,
   }) : aplicadaAnterior = anterior?.aplicado ?? false,
-       tipo = _tipoInicial(ia, anterior),
+       tipo = consMatch != null && _tipoInicial(ia, anterior).ehConsumivel
+           ? _tipoConsumivelDe(consMatch.categoria)
+           : _tipoInicial(ia, anterior),
        cons = consMatch,
        embalagemSel = embMatch,
-       categoria = CategoriaConsumivel.values.firstWhere(
-         (c) => c.api == ia.categoriaConsumivel,
-         orElse: () => CategoriaConsumivel.limpeza,
+       categoria = TextEditingController(
+         text: consMatch != null
+             ? consMatch.categoria
+             : _rotuloCategoriaIa(ia.categoriaConsumivel),
        ),
-       tipoEmbalagemSel = kTiposEmbalagem.contains(ia.tipoEmbalagem)
-           ? ia.tipoEmbalagem
-           : 'Caixa',
+       tipoEmbalagemSel = TextEditingController(
+         text: ia.tipoEmbalagem.trim().isNotEmpty
+             ? ia.tipoEmbalagem.trim()
+             : 'Caixa',
+       ),
+       pecas = TextEditingController(
+         text: (ia.quantidade ?? 0) > 0 && ia.embalagem
+             ? _fmtNum(ia.quantidade!)
+             : '',
+       ),
        ingrediente = match?.ingrediente,
        produto = match?.produto,
        marca = TextEditingController(
@@ -467,17 +537,24 @@ class _LinhaState {
   /// ou uma embalagem (caixa, saco, adesivo…).
   TipoLinha tipo;
 
-  /// Produto de limpeza/insumo ligado (null se vai criar um novo).
+  /// Produto de limpeza/insumo/bebida/revenda ligado (null se vai criar um novo).
   Consumivel? cons;
 
-  /// Categoria do consumível a criar.
-  CategoriaConsumivel categoria;
+  /// Categoria do consumível a criar/atualizar — texto livre (sugestões em
+  /// `kCategoriasConsumivelPadrao`), preenchida com o preset do [tipo]
+  /// escolhido mas editável.
+  final TextEditingController categoria;
 
   /// Embalagem ligada (null se vai criar uma nova).
   Embalagem? embalagemSel;
 
-  /// Tipo da embalagem nova a criar (`kTiposEmbalagem`).
-  String tipoEmbalagemSel;
+  /// Tipo da embalagem nova a criar — texto livre (sugestões em
+  /// `kTiposEmbalagem`).
+  final TextEditingController tipoEmbalagemSel;
+
+  /// Peças compradas nesta linha (só embalagens) — ex.: "500" num rolo de
+  /// 500 adesivos. Fica em `embalagens.unidades_compra` ao aplicar.
+  final TextEditingController pecas;
 
   /// Para que serve a embalagem nova (opcional).
   UsoEmbalagem? usoEmbalagemSel;
@@ -582,11 +659,13 @@ class _LinhaState {
 
   bool get temAlvo =>
       criarNovo ||
-      switch (tipo) {
-        TipoLinha.consumivel => cons != null,
-        TipoLinha.embalagem => embalagemSel != null,
-        TipoLinha.ingrediente => ingrediente != null,
-      };
+      (tipo.ehConsumivel
+          ? cons != null
+          : switch (tipo) {
+              TipoLinha.embalagem => embalagemSel != null,
+              TipoLinha.ingrediente => ingrediente != null,
+              _ => false,
+            });
 
   LinhaAAplicar toAplicar(
     String? ingredienteId, {
@@ -602,6 +681,7 @@ class _LinhaState {
     precoUnitario: _n(preco),
     totalLinha: ia.total ?? 0,
     embalagemG: embNaUnidade ?? 0,
+    pecasCompradas: tipo == TipoLinha.embalagem ? _n(pecas) : 0,
     // removida pela pessoa (duplicada…): manda sempre como "Ignorar", nunca
     // o que estivesse escolhido antes de a remover.
     acao: removida ? AcaoFatura.ignorar : acao,
@@ -725,15 +805,23 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       l.produto = null;
       l.cons = null;
       l.embalagemSel = null;
-      switch (tipo) {
-        case TipoLinha.consumivel:
-          l.cons = _matchConsumivel(l.ia);
-        case TipoLinha.embalagem:
-          l.embalagemSel = _matchEmbalagem(l.ia);
-        case TipoLinha.ingrediente:
-          final m = _matchIngrediente(l.ia);
-          l.ingrediente = m?.ingrediente;
-          l.produto = m?.produto;
+      if (tipo.ehConsumivel) {
+        final m = _matchConsumivel(l.ia);
+        l.cons = m;
+        l.categoria.text = m?.categoria ?? tipo.categoriaPreset;
+      } else {
+        switch (tipo) {
+          case TipoLinha.embalagem:
+            l.embalagemSel = _matchEmbalagem(l.ia);
+          case TipoLinha.ingrediente:
+            final m = _matchIngrediente(l.ia);
+            l.ingrediente = m?.ingrediente;
+            l.produto = m?.produto;
+          case TipoLinha.limpezaInsumo:
+          case TipoLinha.bebida:
+          case TipoLinha.revenda:
+            break; // tratado acima (ehConsumivel)
+        }
       }
       if (l.temAlvo &&
           (l.acao == AcaoFatura.ignorar || l.acao == AcaoFatura.pendente)) {
@@ -746,6 +834,65 @@ class _RevisaoState extends ConsumerState<_Revisao> {
         l.acao = AcaoFatura.preco;
       }
     });
+  }
+
+  /// Cria um formato de cookie novo (só o nome) e liga-o logo à embalagem
+  /// desta linha — para quando ainda não existe ou não se conhece o peso
+  /// exato; o peso completa-se depois em Formatos de cookie.
+  Future<void> _criarFormatoRapido(_LinhaState l) async {
+    final ctrl = TextEditingController();
+    final nome = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Novo formato de cookie'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: ctrl,
+              autofocus: true,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(labelText: 'Nome'),
+              onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Fica criado só com o nome — completa o peso depois em '
+              'Configurações → Formatos de cookie.',
+              style: Theme.of(ctx).textTheme.bodySmall,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('Criar'),
+          ),
+        ],
+      ),
+    );
+    if (nome == null || nome.isEmpty || !mounted) return;
+    try {
+      await ref
+          .read(cookieFormatActionsProvider)
+          // massa_g exige >= 1 no esquema — 1 é só um marcador até a pessoa
+          // preencher o peso real em Formatos de cookie.
+          .criar(FormatoInput(nome: nome, massaG: 1));
+      final formatos = await ref.read(formatosAtivosProvider.future);
+      final criado = formatos.where((f) => f.nome == nome).lastOrNull;
+      if (criado != null) setState(() => l.formatosCookieSel.add(criado.id));
+    } on Object catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
+      }
+    }
   }
 
   /// Remove uma linha da revisão (duplicada, lida a mais pela IA…): some da
@@ -914,7 +1061,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
         .where((l) => l.criarNovo && l.tipo == TipoLinha.ingrediente)
         .length;
     final novosCons = aAplicar
-        .where((l) => l.criarNovo && l.tipo == TipoLinha.consumivel)
+        .where((l) => l.criarNovo && l.tipo.ehConsumivel)
         .length;
     final novosEmb = aAplicar
         .where((l) => l.criarNovo && l.tipo == TipoLinha.embalagem)
@@ -955,7 +1102,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
               'antiga do que a última atualização desse ingrediente.',
         if (novos > 0) 'Cria $novos ingrediente(s) novo(s).',
         if (novosCons > 0)
-          'Cria $novosCons produto(s) de limpeza/insumos novo(s).',
+          'Cria $novosCons produto(s) de limpeza/insumos/revenda novo(s).',
         if (novosEmb > 0) 'Cria $novosEmb embalagem(ns) nova(s).',
         if (renomes > 0)
           'Renomeia $renomes ingrediente(s) — muda em todas as receitas e '
@@ -979,25 +1126,27 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       final consIds = <_LinhaState, String?>{};
       final embIds = <_LinhaState, String?>{};
       for (final l in aAplicar) {
+        if (l.tipo.ehConsumivel) {
+          if (l.criarNovo) {
+            // o preço e o nome da fatura ficam ao aplicar (no servidor)
+            final novo = await ref
+                .read(consumivelActionsProvider)
+                .criar(
+                  ConsumivelInput(
+                    nome: l.nome.text.trim(),
+                    categoria: l.categoria.text,
+                    marca: l.marca.text.trim(),
+                    fornecedor: forn,
+                    exigeFds: exigeFdsPorOmissaoPara(l.categoria.text),
+                  ),
+                );
+            consIds[l] = novo.id;
+          } else {
+            consIds[l] = l.cons?.id;
+          }
+          continue;
+        }
         switch (l.tipo) {
-          case TipoLinha.consumivel:
-            if (l.criarNovo) {
-              // o preço e o nome da fatura ficam ao aplicar (no servidor)
-              final novo = await ref
-                  .read(consumivelActionsProvider)
-                  .criar(
-                    ConsumivelInput(
-                      nome: l.nome.text.trim(),
-                      categoria: l.categoria,
-                      marca: l.marca.text.trim(),
-                      fornecedor: forn,
-                      exigeFds: l.categoria.exigeFdsPorOmissao,
-                    ),
-                  );
-              consIds[l] = novo.id;
-            } else {
-              consIds[l] = l.cons?.id;
-            }
           case TipoLinha.embalagem:
             if (l.criarNovo) {
               // o preço e o nome da fatura ficam ao aplicar (no servidor)
@@ -1006,7 +1155,9 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                   .criar(
                     EmbalagemInput(
                       nome: l.nome.text.trim(),
-                      tipo: l.tipoEmbalagemSel,
+                      tipo: l.tipoEmbalagemSel.text.trim().isEmpty
+                          ? 'Outro'
+                          : l.tipoEmbalagemSel.text.trim(),
                       caracteristica: l.caracteristica.text.trim(),
                       uso: l.usoEmbalagemSel,
                       formatosCookieIds: l.formatosCookieSel.toList(),
@@ -1020,6 +1171,10 @@ class _RevisaoState extends ConsumerState<_Revisao> {
             } else {
               embIds[l] = l.embalagemSel?.id;
             }
+          case TipoLinha.limpezaInsumo:
+          case TipoLinha.bebida:
+          case TipoLinha.revenda:
+            break; // tratado acima (ehConsumivel)
           case TipoLinha.ingrediente:
             if (l.criarNovo) {
               final novo = await repo.create(
@@ -1090,7 +1245,8 @@ class _RevisaoState extends ConsumerState<_Revisao> {
               if (res.precosIgnorados > 0)
                 '${res.precosIgnorados} preço(s) mantidos (fatura mais antiga)',
               if (novos > 0) '$novos novo(s)',
-              if (novosCons > 0) '$novosCons produto(s) de limpeza/insumos',
+              if (novosCons > 0)
+                '$novosCons produto(s) de limpeza/insumos/revenda',
               if (novosEmb > 0) '$novosEmb embalagem(ns)',
               if (renomes > 0) '$renomes renomeado(s)',
               if (res.pendentes > 0) '${res.pendentes} por rever',
@@ -1446,7 +1602,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
         onTap: () => _escolherConsumivel(l),
         child: InputDecorator(
           decoration: InputDecoration(
-            labelText: 'Produto de limpeza / insumo',
+            labelText: l.tipo.pickerLabel,
             isDense: true,
             suffixIcon: const Icon(Icons.arrow_drop_down),
             helperText: l.criarNovo ? 'Vai criar um produto novo' : null,
@@ -1470,22 +1626,16 @@ class _RevisaoState extends ConsumerState<_Revisao> {
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 8),
-        DropdownButtonFormField<CategoriaConsumivel>(
-          key: ValueKey('${identityHashCode(l)}_${l.categoria.name}'),
-          initialValue: l.categoria,
-          decoration: const InputDecoration(
-            labelText: 'Categoria',
-            isDense: true,
-          ),
-          items: [
-            for (final c in CategoriaConsumivel.values)
-              DropdownMenuItem(value: c, child: Text(c.label)),
-          ],
-          onChanged: (c) => setState(() => l.categoria = c ?? l.categoria),
+        AutocompleteTextField(
+          controller: l.categoria,
+          options: ref.watch(categoriasConsumivelConhecidasProvider),
+          labelText: 'Categoria',
+          isDense: true,
+          onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 4),
         Text(
-          l.categoria.exigeFdsPorOmissao
+          exigeFdsPorOmissaoPara(l.categoria.text)
               ? 'Vai ficar a pedir a ficha de dados de segurança.'
               : 'Não pede ficha de dados de segurança (podes mudar depois).',
           style: Theme.of(context).textTheme.bodySmall,
@@ -1553,16 +1703,12 @@ class _RevisaoState extends ConsumerState<_Revisao> {
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          key: ValueKey('${identityHashCode(l)}_${l.tipoEmbalagemSel}'),
-          initialValue: l.tipoEmbalagemSel,
-          decoration: const InputDecoration(labelText: 'Tipo', isDense: true),
-          items: [
-            for (final t in kTiposEmbalagem)
-              DropdownMenuItem(value: t, child: Text(t)),
-          ],
-          onChanged: (t) =>
-              setState(() => l.tipoEmbalagemSel = t ?? l.tipoEmbalagemSel),
+        AutocompleteTextField(
+          controller: l.tipoEmbalagemSel,
+          options: ref.watch(tiposEmbalagemConhecidosProvider),
+          labelText: 'Tipo',
+          isDense: true,
+          onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 8),
         TextField(
@@ -1618,39 +1764,36 @@ class _RevisaoState extends ConsumerState<_Revisao> {
         ref
             .watch(formatosAtivosProvider)
             .maybeWhen(
-              data: (formatos) => formatos.isEmpty
-                  ? Text(
-                      'Sem formatos de cookie criados ainda.',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    )
-                  : Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        for (final fmt in formatos)
-                          FilterChip(
-                            label: Text(fmt.nome),
-                            visualDensity: VisualDensity.compact,
-                            selected: l.formatosCookieSel.contains(fmt.id),
-                            onSelected: (v) => setState(() {
-                              if (v) {
-                                l.formatosCookieSel.add(fmt.id);
-                              } else {
-                                l.formatosCookieSel.remove(fmt.id);
-                              }
-                            }),
-                          ),
-                      ],
+              data: (formatos) => Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final fmt in formatos)
+                    FilterChip(
+                      label: Text(fmt.nome),
+                      visualDensity: VisualDensity.compact,
+                      selected: l.formatosCookieSel.contains(fmt.id),
+                      onSelected: (v) => setState(() {
+                        if (v) {
+                          l.formatosCookieSel.add(fmt.id);
+                        } else {
+                          l.formatosCookieSel.remove(fmt.id);
+                        }
+                      }),
                     ),
+                  ActionChip(
+                    avatar: const Icon(Icons.add, size: 16),
+                    label: const Text('Novo formato'),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => _criarFormatoRapido(l),
+                  ),
+                ],
+              ),
               orElse: () => const SizedBox.shrink(),
             ),
         const SizedBox(height: 4),
         Text(
-          l.usoEmbalagemSel == UsoEmbalagem.multiplo
-              ? 'Em branco serve para qualquer formato. Depois confirma em '
-                    'Embalagens o custo por unidade.'
-              : 'Em branco serve para qualquer formato. Depois ajusta em '
-                    'Embalagens quantas peças rendem por unidade de produto.',
+          'Em branco serve para qualquer formato.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
@@ -1659,11 +1802,13 @@ class _RevisaoState extends ConsumerState<_Revisao> {
 
   /// Nome do ingrediente/consumível/embalagem a que uma linha (já aplicada
   /// ou não) ficou ligada, para mostrar no resumo.
-  String? _destinoNome(_LinhaState l) => switch (l.tipo) {
-    TipoLinha.ingrediente => l.ingrediente?.nome,
-    TipoLinha.consumivel => l.cons?.nome,
-    TipoLinha.embalagem => l.embalagemSel?.nome,
-  };
+  String? _destinoNome(_LinhaState l) => l.tipo.ehConsumivel
+      ? l.cons?.nome
+      : switch (l.tipo) {
+          TipoLinha.ingrediente => l.ingrediente?.nome,
+          TipoLinha.embalagem => l.embalagemSel?.nome,
+          _ => null,
+        };
 
   Future<void> _corrigirLinha(_LinhaState l) async {
     final ant = l.anterior;
@@ -1793,30 +1938,21 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  SegmentedButton<TipoLinha>(
-                    showSelectedIcon: false,
-                    style: const ButtonStyle(
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    segments: const [
-                      ButtonSegment(
-                        value: TipoLinha.ingrediente,
-                        label: Text('Ingrediente'),
-                      ),
-                      ButtonSegment(
-                        value: TipoLinha.consumivel,
-                        label: Text('Limpeza / insumo'),
-                      ),
-                      ButtonSegment(
-                        value: TipoLinha.embalagem,
-                        label: Text('Embalagem'),
-                      ),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      for (final t in TipoLinha.values)
+                        ChoiceChip(
+                          label: Text(t.label),
+                          visualDensity: VisualDensity.compact,
+                          selected: l.tipo == t,
+                          onSelected: (_) => _mudarTipo(l, t),
+                        ),
                     ],
-                    selected: {l.tipo},
-                    onSelectionChanged: (v) => _mudarTipo(l, v.first),
                   ),
                   const SizedBox(height: 6),
-                  if (l.tipo == TipoLinha.consumivel)
+                  if (l.tipo.ehConsumivel)
                     ..._blocoConsumivel(l)
                   else if (l.tipo == TipoLinha.embalagem)
                     ..._blocoEmbalagem(l)
@@ -1947,14 +2083,34 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                         Expanded(child: _campoComprado(l)),
                         const SizedBox(width: 8),
                       ],
+                      if (l.tipo == TipoLinha.embalagem) ...[
+                        Expanded(
+                          child: TextField(
+                            controller: l.pecas,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            decoration: const InputDecoration(
+                              labelText: 'Peças compradas',
+                              isDense: true,
+                              helperText: 'ex.: 500 (rolo de 500 adesivos)',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
                       Expanded(
                         child: TextField(
                           controller: l.preco,
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
-                          decoration: const InputDecoration(
-                            labelText: 'Preço embalagem',
+                          decoration: InputDecoration(
+                            labelText: switch (l.tipo) {
+                              TipoLinha.ingrediente => 'Preço embalagem',
+                              TipoLinha.embalagem => 'Preço da peça',
+                              _ => 'Preço',
+                            },
                             prefixText: '€ ',
                             isDense: true,
                           ),
@@ -2186,7 +2342,7 @@ class _ConsumivelPickerState extends State<_ConsumivelPicker> {
                 title: Text(itens[i].nome),
                 subtitle: Text(
                   [
-                    itens[i].categoria.label,
+                    itens[i].categoria,
                     if (itens[i].marca.isNotEmpty) itens[i].marca,
                   ].join(' · '),
                 ),

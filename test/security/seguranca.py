@@ -1330,12 +1330,12 @@ def teste_faturas_pendente_embalagem():
                       'fornecedor': 'Fornecedor Embalagens', 'data_fatura': '2026-09-21 00:00:00.000Z',
                       'dados_ia': {'linhas': [{'descricao': 'Caixa take-away 20x20', 'quantidade': 100, 'unidade': 'un'}]}}, su)
     fid2 = f2['id']
-    linhaE = {'index': 0, 'embalagemId': eid, 'acao': 'preco', 'precoUnitario': 0.42, 'descricaoFatura': 'Caixa take-away 20x20'}
+    linhaE = {'index': 0, 'embalagemId': eid, 'acao': 'preco', 'precoUnitario': 0.42, 'pecasCompradas': 100, 'descricaoFatura': 'Caixa take-away 20x20'}
     st, r3, _ = call('POST', f'/api/gc_turnkey/faturas/{fid2}/aplicar', {'linhas': [linhaE]}, t)
     check(st == 200 and r3.get('precos') == 1 and r3.get('pendentes') == 0, 'aplicar a linha de embalagem', f'{st} {str(r3)[:160]}')
     e2 = call('GET', f'/api/collections/embalagens/records/{eid}', tok=t)[1]
-    check(abs(e2.get('preco_compra', 0) - 0.42) < 1e-6 and e2.get('unidades_compra') == 1 and e2.get('fornecedor') == 'Fornecedor Embalagens',
-          'a embalagem fica com o preço por peça e o fornecedor da fatura', str(e2)[:160])
+    check(abs(e2.get('preco_compra', 0) - 0.42) < 1e-6 and e2.get('unidades_compra') == 100 and e2.get('fornecedor') == 'Fornecedor Embalagens',
+          'a embalagem fica com o preço, as peças compradas e o fornecedor da fatura', str(e2)[:160])
     check('caixa take-away' in json.dumps(e2.get('nomes_fatura', [])).lower(), 'o nome da fatura ficou aprendido na embalagem', str(e2.get('nomes_fatura'))[:120])
 
     # isolamento: uma embalagem de outra empresa não é tocada

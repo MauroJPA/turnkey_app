@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/consumables/application/consumivel_providers.dart';
+import '../../features/consumables/domain/consumivel.dart';
 import '../../features/ingredients/application/ingredients_providers.dart';
 import '../../features/ingredients/data/ingredient_product_repository.dart';
 import '../../features/packaging/application/embalagem_providers.dart';
+import '../../features/packaging/domain/embalagem.dart';
 import '../pocketbase/pb_client.dart';
 
 List<String> _ordenados(Iterable<String> valores) {
@@ -45,6 +47,28 @@ final fornecedoresConhecidosProvider = Provider.autoDispose<List<String>>((
     for (final c in consumiveis) c.fornecedor,
     for (final e in embalagens) e.fornecedor,
   ]);
+});
+
+/// Categorias de consumível já usadas na empresa + as sugeridas por omissão
+/// (Limpeza, Bebida, Revenda…) — para sugerir ao escrever, sem impedir uma
+/// categoria nova.
+final categoriasConsumivelConhecidasProvider =
+    Provider.autoDispose<List<String>>((ref) {
+      final consumiveis =
+          ref.watch(consumiveisListProvider).valueOrNull ?? const [];
+      return _ordenados([
+        ...kCategoriasConsumivelPadrao,
+        for (final c in consumiveis) c.categoria,
+      ]);
+    });
+
+/// Tipos de embalagem já usados na empresa + os sugeridos por omissão
+/// (Caixa, Saco…) — para sugerir ao escrever, sem impedir um tipo novo.
+final tiposEmbalagemConhecidosProvider = Provider.autoDispose<List<String>>((
+  ref,
+) {
+  final embalagens = ref.watch(embalagensListProvider).valueOrNull ?? const [];
+  return _ordenados([...kTiposEmbalagem, for (final e in embalagens) e.tipo]);
 });
 
 /// Tipo de valor a juntar: `marca` (produtos de compra + consumíveis) ou

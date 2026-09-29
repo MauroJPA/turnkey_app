@@ -2,6 +2,25 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.30.0 — 2026-09-29 — Bebidas/Revenda, tipos livres e peças compradas nas faturas
+
+- **Novos tipos ao validar faturas**: além de Ingrediente, Limpeza/insumo e Embalagem, agora também **Bebida** e
+  **Revenda** — para produtos comprados para vender ao cliente (não usados nas receitas). Gravam-se na mesma
+  coleção de "Limpeza e insumos" (não pedem ficha de segurança) e ganham um **preço de venda** opcional, para
+  dar para ver a margem — editável em Limpeza e insumos.
+- **Tipo de embalagem e categoria de consumível deixam de ser listas fixas**: escreve um novo (ex.: "Frasco",
+  "Bebida") sempre que o que precisas não estiver nas sugestões — tanto ao rever uma fatura como em
+  Embalagens/Limpeza e insumos diretamente.
+- **Peças compradas nas embalagens, direto na fatura**: uma linha de embalagem ganha o campo "Peças compradas"
+  (pré-preenchido com a quantidade que a IA leu, ex. "rolo de 500 adesivos") — antes ficava sempre gravado como
+  1 peça e tinhas de corrigir à mão depois em Embalagens. Corrigido também no servidor (o valor já não fica
+  preso em 1 quando não se indica nada).
+- **Criar formato de cookie sem sair da fatura**: ao ligar uma linha a uma embalagem nova, "+ Novo formato"
+  cria um formato só com o nome (o peso completa-se depois em Configurações → Formatos de cookie) e liga-o logo.
+- Testado manualmente de ponta a ponta: fatura com uma linha de embalagem (peças + tipo + formato novo) e uma
+  de bebida (categoria + preço) — confirmado no servidor que a embalagem fica com `tipo`, `unidades_compra` e
+  `formatos_cookie` corretos.
+
 ## 1.29.1 — 2026-09-29 — Procurar ingrediente ignora acentos e olha à característica
 
 - A pesquisa de ingredientes (Ingredientes, escolher ingrediente numa receita/ficha/lista de compras/fatura,

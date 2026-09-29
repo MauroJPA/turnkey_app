@@ -977,6 +977,25 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] O mesmo testa em: escolher ingrediente numa receita (Item), na Lista de compras (+ Item →
       Ingrediente), em "Juntar com outro ingrediente…" e ao ligar uma linha de fatura a um ingrediente.
 
+## 52. Bebidas/Revenda, tipos livres e peças compradas nas faturas
+
+- [ ] Rever fatura: uma linha mostra 5 chips — **Ingrediente, Embalagem, Limpeza / insumo, Bebida, Revenda**.
+- [ ] Escolher **Bebida** (ou Revenda) numa linha sem correspondência: "Criar produto novo" já vem com a
+      **Categoria** pré-preenchida ("Bebida"/"Revenda") e "Não pede ficha de dados de segurança".
+- [ ] Em **Limpeza e insumos**, abrir esse produto: tem um campo **Preço de venda** (opcional) — preenche e
+      grava; a lista passa a mostrar "venda € X" nesse item.
+- [ ] Em **Limpeza e insumos** → Novo produto → campo Categoria: escreve uma categoria que não existe (ex.
+      "Sobremesas") — grava sem erro e passa a sugerir-se da próxima vez.
+- [ ] Numa linha de **Embalagem** nova: o campo **Tipo** aceita escrever um valor novo (ex. "Frasco") além das
+      sugestões (Caixa, Saco, Saqueta, Adesivo, Fita, Cartão, Outro).
+- [ ] A mesma coisa em **Embalagens → Nova embalagem**: o campo Tipo é texto livre com sugestões.
+- [ ] Linha de embalagem: o campo **"Peças compradas"** aparece só para Embalagem, normalmente já vem
+      preenchido com a quantidade que a IA leu (ex. "500" num rolo de adesivos). Aplicar e confirmar em
+      Embalagens que "peças na compra" ficou com esse número (não com 1).
+- [ ] Em "Formatos de cookie (opcional)" de uma embalagem nova: toca "+ Novo formato", escreve só um nome,
+      "Criar" — o formato fica criado e já selecionado nessa linha; confirma depois em Configurações →
+      Formatos de cookie que apareceu (com o peso a zero/1 g, por preencher).
+
 ---
 
 ## Notas / ajustes pedidos

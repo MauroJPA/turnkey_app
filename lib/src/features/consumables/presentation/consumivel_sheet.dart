@@ -64,9 +64,13 @@ class _ConsumivelSheetState extends ConsumerState<ConsumivelSheet> {
   late final _preco = TextEditingController(
     text: (_atual?.preco ?? 0) > 0 ? '${_atual!.preco}' : '',
   );
+  late final _precoVenda = TextEditingController(
+    text: (_atual?.precoVenda ?? 0) > 0 ? '${_atual!.precoVenda}' : '',
+  );
   late final _notas = TextEditingController(text: _atual?.notas ?? '');
-  late CategoriaConsumivel _categoria =
-      _atual?.categoria ?? CategoriaConsumivel.limpeza;
+  late final _categoria = TextEditingController(
+    text: _atual?.categoria ?? 'Limpeza',
+  );
   late bool _exigeFds = _atual?.exigeFds ?? true;
   bool _busy = false;
   String? _erro;
@@ -76,7 +80,16 @@ class _ConsumivelSheetState extends ConsumerState<ConsumivelSheet> {
 
   @override
   void dispose() {
-    for (final c in [_nome, _marca, _fornecedor, _embalagem, _preco, _notas]) {
+    for (final c in [
+      _nome,
+      _marca,
+      _fornecedor,
+      _embalagem,
+      _preco,
+      _precoVenda,
+      _notas,
+      _categoria,
+    ]) {
       c.dispose();
     }
     super.dispose();
@@ -84,6 +97,8 @@ class _ConsumivelSheetState extends ConsumerState<ConsumivelSheet> {
 
   double get _precoV =>
       double.tryParse(_preco.text.replaceAll(',', '.').trim()) ?? 0;
+  double get _precoVendaV =>
+      double.tryParse(_precoVenda.text.replaceAll(',', '.').trim()) ?? 0;
 
   Future<void> _guardar() async {
     if (_nome.text.trim().isEmpty) {
@@ -97,11 +112,12 @@ class _ConsumivelSheetState extends ConsumerState<ConsumivelSheet> {
     try {
       final input = ConsumivelInput(
         nome: _nome.text,
-        categoria: _categoria,
+        categoria: _categoria.text,
         marca: _marca.text,
         fornecedor: _fornecedor.text,
         embalagem: _embalagem.text,
         preco: _precoV,
+        precoVenda: _precoVendaV,
         exigeFds: _exigeFds,
         notas: _notas.text,
       );
@@ -258,20 +274,18 @@ class _ConsumivelSheetState extends ConsumerState<ConsumivelSheet> {
               decoration: const InputDecoration(labelText: 'Nome'),
             ),
             const SizedBox(height: 8),
-            DropdownButtonFormField<CategoriaConsumivel>(
-              initialValue: _categoria,
-              decoration: const InputDecoration(labelText: 'Categoria'),
-              items: [
-                for (final c in CategoriaConsumivel.values)
-                  DropdownMenuItem(value: c, child: Text(c.label)),
-              ],
-              onChanged: ler
-                  ? null
-                  : (v) => setState(() {
-                      if (v == null) return;
-                      _categoria = v;
-                      if (_atual == null) _exigeFds = v.exigeFdsPorOmissao;
-                    }),
+            AutocompleteTextField(
+              controller: _categoria,
+              options: ref.watch(categoriasConsumivelConhecidasProvider),
+              readOnly: ler,
+              labelText: 'Categoria',
+              helperText:
+                  'Escreve uma nova se a que precisas não estiver na lista '
+                  '(ex.: Bebida, Revenda).',
+              helperMaxLines: 2,
+              onChanged: (v) => setState(() {
+                if (_atual == null) _exigeFds = exigeFdsPorOmissaoPara(v);
+              }),
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
@@ -317,10 +331,27 @@ class _ConsumivelSheetState extends ConsumerState<ConsumivelSheet> {
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    decoration: const InputDecoration(labelText: 'Preço (€)'),
+                    decoration: const InputDecoration(
+                      labelText: 'Preço de compra (€)',
+                    ),
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _precoVenda,
+              readOnly: ler,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Preço de venda (€, opcional)',
+                helperText:
+                    'Para produtos revendidos ao cliente (Bebidas, Revenda…) '
+                    '— dá para ver a margem.',
+                helperMaxLines: 2,
+              ),
             ),
             const SizedBox(height: 8),
             TextField(

@@ -49,16 +49,18 @@ void main() {
     const embalagem = Consumivel(
       id: 'c1',
       nome: 'Luvas',
-      categoria: CategoriaConsumivel.insumo,
+      categoria: 'Insumo',
       exigeFds: false,
     );
     expect(estadoFds(embalagem, const [], agora: hoje), EstadoFds.naoExige);
   });
 
   test('categorias: limpeza e desinfeção exigem FDS por omissão', () {
-    expect(CategoriaConsumivel.limpeza.exigeFdsPorOmissao, isTrue);
-    expect(CategoriaConsumivel.desinfecao.exigeFdsPorOmissao, isTrue);
-    expect(CategoriaConsumivel.insumo.exigeFdsPorOmissao, isFalse);
-    expect(CategoriaConsumivel.fromApi('???'), CategoriaConsumivel.outro);
+    expect(exigeFdsPorOmissaoPara('Limpeza'), isTrue);
+    expect(exigeFdsPorOmissaoPara('Desinfeção'), isTrue);
+    expect(exigeFdsPorOmissaoPara('desinfecao'), isTrue);
+    expect(exigeFdsPorOmissaoPara('Insumo'), isFalse);
+    expect(exigeFdsPorOmissaoPara('Bebida'), isFalse);
+    expect(exigeFdsPorOmissaoPara('Revenda'), isFalse);
   });
 }
