@@ -389,12 +389,21 @@ Widget marcaAppBar(BuildContext context, Empresa? empresa, String logoUrl) {
       ? null
       : ClipRRect(
           borderRadius: BorderRadius.circular(6),
-          child: Image.network(
-            logoUrl,
-            width: tamanhoLogo,
-            height: tamanhoLogo,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          // Logótipos não são todos quadrados (ex.: uma marca larga tipo
+          // wordmark) — em vez de forçar um quadrado e cortar as pontas
+          // (BoxFit.cover), mede-se pela altura e mantém-se a proporção
+          // (BoxFit.contain), com um teto de largura para não estourar a
+          // barra com um logótipo muito largo.
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: tamanhoLogo * 4),
+            child: SizedBox(
+              height: tamanhoLogo,
+              child: Image.network(
+                logoUrl,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
           ),
         );
   final texto = !mostrarNome

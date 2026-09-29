@@ -313,6 +313,10 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
               child: d.itens.isEmpty
                   ? const Center(child: Text('Sem linhas. Usa "Item".'))
                   : ListView.separated(
+                      // O último item não pode ficar escondido atrás do FAB
+                      // "+ Item" — os botões de trocar/escolher produto dele
+                      // ficavam por baixo, impossíveis de tocar.
+                      padding: const EdgeInsets.only(bottom: 88),
                       itemCount: d.itens.length,
                       separatorBuilder: (_, __) => const Divider(height: 1),
                       itemBuilder: (_, i) => _itemTile(

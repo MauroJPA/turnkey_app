@@ -2,6 +2,15 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.31.1 — 2026-09-29 — Logótipo largo sem cortar, botão "+ Item" já não tapa a última linha
+
+- **Corrigido: logótipos não quadrados ficavam cortados** na barra superior (e na prévia nova). Um logótipo tipo
+  "wordmark" (mais largo do que alto) era forçado a caber num quadrado e as pontas desapareciam. Agora mede-se
+  pela altura escolhida e mantém-se a proporção da imagem (nunca corta, só reduz um bocadinho se for
+  invulgarmente largo) — a app ajusta o enquadramento sozinha, não é preciso recortar a imagem antes de enviar.
+- **Corrigido: o botão "+ Item" (receitas) tapava os botões da última linha** (trocar ingrediente/escolher
+  produto), impossíveis de tocar. A lista agora reserva espaço no fundo para o botão.
+
 ## 1.31.0 — 2026-09-29 — Corrige falha ao aplicar faturas, trocar ingrediente na receita, prévia do logótipo
 
 - **Corrigido: "Failed to create record." ao aplicar algumas faturas.** A descrição lida da fatura (nome, código,

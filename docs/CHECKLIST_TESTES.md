@@ -1014,6 +1014,10 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Configurações → Aparência: mexe no slider "Tamanho" do logótipo (ou da posição/visibilidade) — a barra
       de "Pré-visualização" no topo da secção atualiza imediatamente, com o logótipo/nome reais, antes de
       tocar em "Guardar aparência".
+- [ ] Com um logótipo **largo** (tipo nome escrito, não quadrado): aparece **completo** na barra superior e
+      na Pré-visualização, sem cortar as pontas (nem na app real nem na prévia).
+- [ ] Numa receita com várias linhas (a última perto do fundo do ecrã): os botões "⇄"/📌 da última linha
+      ficam visíveis e tocáveis — não ficam escondidos atrás do botão "+ Item".
 
 ---
 
