@@ -19,6 +19,7 @@ import '../../ingredients/domain/produto_ingrediente.dart';
 import '../../production/presentation/agenda_line_sheet.dart';
 import '../application/recipes_providers.dart';
 import '../domain/recipe_item.dart';
+import 'auto_link_pendentes_sheet.dart';
 import 'item_picker_sheet.dart';
 import 'nutricao_receita_sheet.dart';
 import 'procedimento_sheet.dart';
@@ -307,7 +308,18 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
               MaterialBanner(
                 content: const Text('Há linhas por ligar a um ingrediente.'),
                 leading: const Icon(Icons.link_off),
-                actions: const [SizedBox.shrink()],
+                actions: [
+                  TextButton(
+                    onPressed: _podeEditar
+                        ? () => ligarPendentesAutomaticamente(
+                            context,
+                            ref,
+                            widget.recipeId,
+                          )
+                        : null,
+                    child: const Text('Ligar automaticamente'),
+                  ),
+                ],
               ),
             const Divider(height: 1),
             Expanded(

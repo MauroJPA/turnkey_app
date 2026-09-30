@@ -179,4 +179,21 @@ class RecipeActions {
     await _items.remove(itemId);
     _refreshDetail(recipeId);
   }
+
+  /// Liga vários itens pendentes de uma vez (ligação automática por nome) —
+  /// só atualiza as listas no fim, não a cada linha.
+  Future<void> vincularVarios(
+    String recipeId,
+    List<({String itemId, String? ingredienteId, String? subReceitaId})>
+    ligacoes,
+  ) async {
+    for (final l in ligacoes) {
+      await _items.vincular(
+        l.itemId,
+        ingredienteId: l.ingredienteId,
+        subReceitaId: l.subReceitaId,
+      );
+    }
+    _refreshDetail(recipeId);
+  }
 }

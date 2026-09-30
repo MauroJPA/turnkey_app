@@ -14,6 +14,7 @@ import '../../../core/widgets/sort_menu_button.dart';
 import '../../../core/widgets/swipe_to_delete.dart';
 import '../application/recipes_providers.dart';
 import '../domain/recipe.dart';
+import 'auto_link_pendentes_sheet.dart';
 import 'receitas_import_sheet.dart';
 import 'recipe_form_sheet.dart';
 
@@ -297,9 +298,22 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
           ],
         ],
       ),
-      trailing: r.publicarComoIngrediente
-          ? const Icon(Icons.link, size: 18)
-          : const Icon(Icons.chevron_right),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (temPendencias && _podeEditar)
+            IconButton(
+              tooltip: 'Ligar automaticamente pelo nome',
+              icon: const Icon(Icons.auto_fix_high),
+              onPressed: _busy
+                  ? null
+                  : () => ligarPendentesAutomaticamente(context, ref, r.id),
+            ),
+          r.publicarComoIngrediente
+              ? const Icon(Icons.link, size: 18)
+              : const Icon(Icons.chevron_right),
+        ],
+      ),
       onTap: () => context.go('${Routes.recipes}/${r.id}'),
       onLongPress: _podeEditar
           ? () => _run(() => ref.read(recipeActionsProvider).duplicate(r.id))

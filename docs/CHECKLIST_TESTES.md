@@ -1075,6 +1075,26 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Preenche pelo menos um valor de nutrição (ex.: açúcares) e toca "Guardar" — grava normalmente, o
       diálogo fecha e o produto aparece com "Nutrição própria (… kcal)" na lista.
 
+## 58. Ligar automaticamente ingredientes por ligar, pelo nome
+
+- [ ] Numa receita com pelo menos uma linha "por ligar" cujo nome bate **exatamente** (ignorando
+      acentos/maiúsculas) com o nome de um ingrediente existente: na lista de Receitas, aparece um ícone de
+      varinha (🪄) ao lado dessa receita. Toca nele — a linha liga-se sozinha, sem pedir nada, e a lista
+      atualiza (preço deixa de estar a vermelho, se não houver mais pendências).
+- [ ] O mesmo botão, dentro do ecrã da receita, aparece como "Ligar automaticamente" no aviso "Há linhas por
+      ligar a um ingrediente" — faz o mesmo.
+- [ ] Numa receita com uma linha pendente **parecida mas não igual** a um ingrediente (ex.: "Farinha T55
+      Makro 25kg" vs. "Farinha de trigo T55"): ao tocar em "Ligar automaticamente" abre uma lista "Rever
+      ligações" com essa linha já marcada e a sugestão pré-preenchida ("Vai ligar a…"). Desmarca a caixa —
+      fica de fora. Toca "Trocar" — abre o seletor normal de ingrediente/receita para escolheres outro.
+- [ ] Uma linha pendente sem nenhuma correspondência (nome totalmente diferente de qualquer ingrediente)
+      aparece na lista de revisão com "Sem sugestão — escolhe manualmente" a vermelho e a caixa desmarcada e
+      desabilitada, até tocares "Escolher" e escolheres uma manualmente.
+- [ ] Toca "Ligar selecionados" com pelo menos uma linha marcada — liga só essas; as desmarcadas continuam
+      pendentes (preço a vermelho se ainda houver alguma). Fecha a lista sem tocar no botão — nada é ligado.
+- [ ] Numa receita sem nenhuma linha pendente, o ícone de varinha não aparece na lista de Receitas.
+- [ ] O "Ligar" manual de sempre (por linha, dentro da receita) continua a funcionar como antes.
+
 ---
 
 ## Notas / ajustes pedidos

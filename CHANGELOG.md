@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.36.0 — 2026-09-30 — Ligar automaticamente ingredientes por ligar, pelo nome
+
+- **Receitas com linhas "por ligar"** (ex.: importadas antes de teres o ingrediente cadastrado) ganham um botão
+  **"Ligar automaticamente"** — na lista de Receitas (ícone de varinha, só aparece quando há pendências) e
+  dentro da receita (no aviso "Há linhas por ligar"). Compara o nome de cada linha pendente com os
+  ingredientes existentes: nomes **exatamente iguais** (ignorando acentos/maiúsculas) ligam-se sozinhos, sem
+  precisar de confirmar; para os restantes, abre uma lista para reveres a melhor sugestão (ou escolheres outro
+  ingrediente/sub-receita) e confirmares antes de aplicar. Nada é ligado sem passares pela revisão, exceto os
+  nomes idênticos.
+- Pensado para depois de importar receitas em massa e teres de ligar dezenas de linhas repetidas uma a uma —
+  agora as que já batem certo com um ingrediente existente ficam resolvidas com um clique.
+
 ## 1.35.0 — 2026-09-30 — Erro de nutrição do produto sempre visível
 
 - **Ingrediente → "Produtos de compra" → editar um produto → "Nutrição própria do produto":** ao tentar
