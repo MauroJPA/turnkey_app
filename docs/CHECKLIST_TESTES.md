@@ -1095,6 +1095,25 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Numa receita sem nenhuma linha pendente, o ícone de varinha não aparece na lista de Receitas.
 - [ ] O "Ligar" manual de sempre (por linha, dentro da receita) continua a funcionar como antes.
 
+## 59. Importar uma receita por foto/print (IA) ou lista simples
+
+- [ ] Receitas → ícone de importar → abre com o modo **"Uma receita"** já selecionado (ao lado de "Várias
+      (CSV avançado)"). Escreve um nome, escolhe uma categoria (chips), escreve a lista de ingredientes no
+      formato simples (`ingrediente` + tab/`;`/`,` + `quantidade`, uma linha por ingrediente, sem cabeçalho) e
+      toca "Importar" — cria a receita, liga os ingredientes que já existem pelo nome e deixa pendentes os que
+      não existem (como no CSV).
+- [ ] Sem nome, ou sem categoria escolhida, ou sem nenhum ingrediente válido na lista: "Importar" mostra o
+      erro certo (nome/categoria em falta, ou "sem nenhum ingrediente válido") sem criar nada.
+- [ ] "Escolher imagem" (ou tocar na área "Toca aqui e cola uma imagem" e colar com **Ctrl+V** um print/foto)
+      com a chave de IA configurada no servidor: pré-preenche o nome, a categoria (se corresponder a uma
+      categoria ativa) e a lista de ingredientes — revê/corrige antes de "Importar" como sempre.
+- [ ] Sem a chave de IA configurada no servidor: "Escolher imagem"/colar mostra "IA não configurada" (não
+      rebenta, não apaga o que já tinhas escrito).
+- [ ] Colar **texto** normal (Ctrl+V) dentro do campo "Nome da receita" ou da caixa de ingredientes continua a
+      funcionar normalmente — só a área "Toca aqui e cola uma imagem", quando tem o foco, intercepta o Ctrl+V.
+- [ ] O modo **"Várias (CSV avançado)"** continua igual: colar/escolher ficheiro CSV com 4 colunas
+      (nome, categoria, ingrediente, quantidade) por linha, várias receitas de uma vez.
+
 ---
 
 ## Notas / ajustes pedidos

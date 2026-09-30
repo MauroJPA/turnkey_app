@@ -111,11 +111,12 @@ tem de incluir a hora completa (`00:00:00.000Z` no início do intervalo,
 
 Hooks: `onboarding.pb.js` (semeia `configuracoes_custo` + `formatos_cookie`),
 `guards.pb.js`, `cost_cascade.pb.js`, `team.pb.js`, `inventario.pb.js`,
-`faturas.pb.js`, `nutricao.pb.js`, `admin.pb.js` (+ `cascade.js`, que exporta
-`runCascade` — agora também calcula/cacheia `nutri` de receitas/fichas e a união
-de alergénios —, `explodeCompras`, `explodeProducao`, `explodeComprasDe`,
-`aplicarMovimento`, `carregarProducao`, `resolverFicha`; + `ai.js`, que exporta
-`analisarImagemIA({ tarefa: 'fatura' | 'rotulo' })`).
+`faturas.pb.js`, `nutricao.pb.js`, `receitas_ia.pb.js`, `admin.pb.js` (+
+`cascade.js`, que exporta `runCascade` — agora também calcula/cacheia `nutri`
+de receitas/fichas e a união de alergénios —, `explodeCompras`,
+`explodeProducao`, `explodeComprasDe`, `aplicarMovimento`, `carregarProducao`,
+`resolverFicha`; + `ai.js`, que exporta
+`analisarImagemIA({ tarefa: 'fatura' | 'rotulo' | 'receita' })`).
 
 `dev_autoverify.pb.js`: **só em dev** — com `GC_TURNKEY_DEV=1` no ambiente, as
 contas `users` novas ficam logo `verified` (não é preciso email/SMTP para
@@ -212,6 +213,7 @@ O ficheiro carregado é guardado com um nome no formato **`FT-NOMEFORNECEDOR-DDM
 | Método | Rota | Efeito |
 |---|---|---|
 | `POST` | `/api/gc_turnkey/ingredientes/{id}/rotulo` | body `{ imagem: <base64>, mime }`. Via `ai.js` lê o rótulo (foto/PDF) → preenche `nutri_*` + `nutri_base`/`nutri_densidade` + `nutri_origem='rotulo'` + os 14 alergénios (canonizados) no ingrediente e grava (a cascata nutricional dispara sozinha). `503` sem chave, `400` sem imagem, `502` erro da IA. |
+| `POST` | `/api/gc_turnkey/receitas/ler-imagem` | body `{ imagem: <base64>, mime }`. Via `ai.js` (`tarefa:'receita'`) lê um print/foto de uma lista de ingredientes → `{ provider, nome, categoria, ingredientes:[{nome,quantidade_g}] }`. **Só leitura, não grava nada** — a app (`receitas_import_sheet.dart`, modo "Uma receita") usa o resultado para pré-preencher o formulário, a pessoa revê/corrige e confirma com "Importar" como sempre. `503` sem chave, `400` sem imagem, `502` erro da IA. |
 | `POST` | `/api/gc_turnkey/ingredientes/auto-insa` | body `{ ids?: string[], dryRun?: bool }`. Emparelha cada ingrediente (sem `ids`: os da empresa **sem** nutrição) com `ingredientes_referencia` por semelhança de nome (recall+precision de tokens + bónus de palavra-cabeça/prefixo/nome exato). Vencedor destacado (`best≥0.8` e margem `≥0.2`) → grava `nutri_*` + `alergenios` + `nutri_origem='insa'`. Caso contrário → `nutri_origem='insa_revisao'` (não estraga `manual`/`rotulo`/`insa`) e devolve os 6 candidatos mais próximos. `dryRun` não escreve. Resposta `{ aplicados, total, resultados:[{ ingredienteId, nome, estado:'preenchido'|'revisao'|'sem_candidato', referencia?, candidatos:[{id,nome,grupo,score,nutri,alergenios}] }] }`. |
 
 A **nutrição de receitas e fichas é calculada em cascata** (`cascade.js`), como o custo: `receitas.nutri` = valores por 100 g de mistura crua (+ `por100g_cozido` com a perda); `fichas_tecnicas.nutri` = por 100 g de **produto acabado** (a água que sai a cozer não tem calorias — muda o peso) + `por_unidade`, e a **união dos alergénios** de toda a árvore.

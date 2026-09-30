@@ -98,3 +98,60 @@ ReceitaCsvParseResult parseReceitasCsv(String content) {
 
   return ReceitaCsvParseResult(receitas: grupos.values.toList(), erros: erros);
 }
+
+class IngredientesSimplesParseResult {
+  IngredientesSimplesParseResult({
+    List<ReceitaCsvLinha>? linhas,
+    List<String>? erros,
+  }) : linhas = linhas ?? [],
+       erros = erros ?? [];
+
+  final List<ReceitaCsvLinha> linhas;
+  final List<String> erros;
+}
+
+/// Lê "ingrediente, quantidade_g" por linha (2 colunas, sem nome/categoria —
+/// usados à parte, num campo próprio) — para importar uma única receita.
+/// Mesmas regras de delimitador/número que [parseReceitasCsv]; cabeçalho
+/// ("ingrediente"/"ingredientes") opcional.
+IngredientesSimplesParseResult parseIngredientesSimples(String content) {
+  final normalized = content
+      .replaceAll('\r\n', '\n')
+      .replaceAll('\r', '\n')
+      .trim();
+  if (normalized.isEmpty) return IngredientesSimplesParseResult();
+
+  final primeiraLinha = normalized.split('\n').first;
+  final rows = CsvToListConverter(
+    fieldDelimiter: _delimitador(primeiraLinha),
+    eol: '\n',
+    shouldParseNumbers: false,
+    allowInvalid: true,
+  ).convert(normalized);
+
+  final linhas = <ReceitaCsvLinha>[];
+  final erros = <String>[];
+
+  for (var i = 0; i < rows.length; i++) {
+    final row = rows[i];
+    if (row.every((c) => _clean(c).isEmpty)) continue;
+    if (row.length < 2) {
+      erros.add('Linha ${i + 1}: faltam colunas ("${row.join(' | ')}").');
+      continue;
+    }
+    final ingrediente = _clean(row[0]);
+    if (i == 0) {
+      final p = ingrediente.toLowerCase();
+      if (p == 'ingrediente' || p == 'ingredientes') continue; // cabeçalho
+    }
+    final qtd = _parseNum(_clean(row[row.length - 1]));
+
+    if (ingrediente.isEmpty || qtd == null || qtd <= 0) {
+      erros.add('Linha ${i + 1}: dados inválidos ("${row.join(' | ')}").');
+      continue;
+    }
+    linhas.add(ReceitaCsvLinha(ingrediente: ingrediente, quantidadeG: qtd));
+  }
+
+  return IngredientesSimplesParseResult(linhas: linhas, erros: erros);
+}

@@ -3,7 +3,7 @@
 // Análise de imagens por IA — camada com FORNECEDOR selecionável.
 //
 //   analisarImagemIA({ imagemBase64, mime, tarefa, isLista })
-//     tarefa: 'fatura' (por omissão) | 'rotulo'
+//     tarefa: 'fatura' (por omissão) | 'rotulo' | 'receita'
 //     -> { ok: true,  dados, lista, provider }       (JSON já parseado; para faturas,
 //                                                    `lista` tem uma entrada por fatura do ficheiro)
 //     -> { ok: false, code, message, raw? }          (503 sem chave; 502 rede/IA/JSON)
@@ -52,6 +52,29 @@ function analisarImagemIA(opts) {
       'de ingredientes contém (costumam vir a NEGRITO); em "alergenios_tracos" ' +
       'os de "pode conter". null quando um valor não aparece.';
     instrucao = 'Lê o rótulo. Só JSON.';
+  } else if (tarefa === 'receita') {
+    sistema =
+      'És um extrator de RECEITAS de uma padaria/pastelaria em Portugal, a ' +
+      'partir de uma imagem (print de folha de cálculo, foto de caderno, ' +
+      'lista escrita à mão, etc.). Responde APENAS com JSON válido, sem ' +
+      'texto à volta e sem cercas de código. Formato: {"nome": string|null, ' +
+      '"categoria": "Massa"|"Cobertura"|"Recheio"|"Outra"|null, ' +
+      '"ingredientes": [{"nome": string, "quantidade_g": number}]}. ' +
+      '"nome" é o nome da receita, se aparecer na imagem (título, nome da ' +
+      'aba/folha, cabeçalho) — null se não aparecer claramente. "categoria": ' +
+      '"Massa" para massas base; "Cobertura" para coberturas e glaceados; ' +
+      '"Recheio" para recheios, brigadeiros, ganaches, mousses, geleias, ' +
+      'compotas e cremes; "Outra" nos restantes casos ou se não for claro. ' +
+      'Cada entrada de "ingredientes" é um ingrediente com a quantidade em ' +
+      'GRAMAS: converte kg (×1000); líquidos comuns em ml/L (água, leite, ' +
+      'natas, claras) contam 1 g por ml se não houver outra indicação; ' +
+      'unidades como "3 ovos" ou "2 folhas de gelatina" converte para um ' +
+      'peso plausível em gramas (ex.: ovo ≈ 50 g cada). Ignora linhas de ' +
+      'cabeçalho ("Ingredientes", "Quantidade (g)", etc.), linhas vazias, e ' +
+      'colunas de percentagem/custo que não sejam a quantidade. Mantém o ' +
+      'nome do ingrediente tal como escrito na imagem (não traduzas nem ' +
+      'reescrevas).';
+    instrucao = 'Lê o nome da receita e a lista de ingredientes da imagem. Só JSON.';
   } else {
     sistema =
       'És um extrator de dados de ' +

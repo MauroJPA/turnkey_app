@@ -2,6 +2,21 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.37.0 — 2026-09-30 — Importar uma receita por foto/print (IA) ou lista simples
+
+- **Receitas → "Importar receitas"** ganha um novo modo **"Uma receita"** (ao lado do CSV avançado de sempre):
+  escreves o nome, escolhes a categoria, e colas/escreves a lista de ingredientes num formato simples — só
+  "ingrediente" + "quantidade em gramas" por linha, sem repetir nome/categoria em cada linha.
+- **Preenchimento automático por IA**: no modo "Uma receita", "Escolher imagem" (ou colar com **Ctrl+V** um
+  print da folha de cálculo/foto de uma lista) manda a imagem para o servidor, que usa a mesma IA já usada nas
+  faturas e nos rótulos nutricionais para ler o nome da receita, a categoria e a lista de ingredientes —
+  **pré-preenche o formulário para reveres e corrigires antes de importar** (nunca aplica sem confirmares,
+  como em toda a app). Precisa da chave de IA configurada no servidor (`GEMINI_API_KEY`/`ANTHROPIC_API_KEY`,
+  ver `pb/README.md`) — sem ela, mostra "IA não configurada".
+- Ingredientes sem correspondência (nome novo) ficam pendentes, tal como no CSV — usa "Ligar automaticamente"
+  (v1.36.0) para resolver depois os que baterem certo com um ingrediente existente.
+- O modo "Várias (CSV avançado)" de sempre continua igual, para quem já tem várias receitas numa folha só.
+
 ## 1.36.0 — 2026-09-30 — Ligar automaticamente ingredientes por ligar, pelo nome
 
 - **Receitas com linhas "por ligar"** (ex.: importadas antes de teres o ingrediente cadastrado) ganham um botão
