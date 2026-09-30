@@ -1114,6 +1114,21 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] O modo **"Várias (CSV avançado)"** continua igual: colar/escolher ficheiro CSV com 4 colunas
       (nome, categoria, ingrediente, quantidade) por linha, várias receitas de uma vez.
 
+## 60. Nota no email à contabilidade + assunto automático
+
+- [ ] Faturas → ícone de pasta (contabilidade) → preenche o email e escreve algo em "Nota para a
+      contabilidade (opcional)" → "Enviar por email" — se o envio for bem-sucedido (SMTP configurado no
+      servidor), o campo de nota fica vazio a seguir.
+- [ ] Com o campo de nota vazio, "Enviar por email" continua a funcionar como antes (a nota é mesmo
+      opcional).
+- [ ] Se o envio falhar (ex.: SMTP não configurado no servidor), aparece a mensagem amigável "Não foi
+      possível enviar o email (SMTP configurado no servidor?)." — sem nenhum erro técnico bruto do servidor
+      de email — e o texto da nota **não** desaparece (continua lá para tentares de novo).
+- [ ] O assunto do email (se conseguires confirmar com SMTP real) identifica a app ("GC Turnkey") e o nome da
+      empresa — não é preciso escrever/configurar assunto nenhum.
+- [ ] `pb/DEPLOY.md` → secção "Email para a contabilidade (SMTP)" explica como configurar o remetente
+      "noreply" e o SMTP na Admin UI do PocketBase (Settings → Mail settings).
+
 ---
 
 ## Notas / ajustes pedidos

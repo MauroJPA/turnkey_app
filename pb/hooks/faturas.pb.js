@@ -649,7 +649,9 @@ routerAdd(
 // confirmadas, ou só as de um intervalo, por email — para a contabilidade.
 // Se vier `email` no pedido, fica gravado em `empresas.email_contabilidade`
 // para a próxima vez (e para o cron mensal passar a usar este, em vez de só
-// a variável de ambiente do servidor).
+// a variável de ambiente do servidor). `nota` (opcional) é texto livre que
+// se junta ao corpo do email, só neste envio (não é gravado). O assunto é
+// sempre gerado pela app: identifica-se e diz de que empresa são as faturas.
 routerAdd(
   'POST',
   '/api/gc_turnkey/faturas/enviar-contabilidade',
@@ -693,6 +695,7 @@ routerAdd(
       ate: body.ate,
       email: email,
       rotulo: rotulo,
+      nota: body.nota,
     });
 
     return e.json(200, resultado);

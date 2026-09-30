@@ -32,6 +32,7 @@ class _SheetState extends ConsumerState<_Sheet> {
   _Periodo _periodo = _Periodo.mes;
   Future<List<Map<String, dynamic>>>? _fut;
   final _email = TextEditingController();
+  final _nota = TextEditingController();
   bool _enviando = false;
   bool _baixando = false;
 
@@ -49,6 +50,7 @@ class _SheetState extends ConsumerState<_Sheet> {
   @override
   void dispose() {
     _email.dispose();
+    _nota.dispose();
     super.dispose();
   }
 
@@ -108,8 +110,14 @@ class _SheetState extends ConsumerState<_Sheet> {
       final i = _intervalo;
       final r = await ref
           .read(invoiceRepositoryProvider)
-          .enviarContabilidade(de: i.de, ate: i.ate, email: email);
+          .enviarContabilidade(
+            de: i.de,
+            ate: i.ate,
+            email: email,
+            nota: _nota.text,
+          );
       if (!mounted) return;
+      _nota.clear();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -328,6 +336,18 @@ class _SheetState extends ConsumerState<_Sheet> {
                         ),
                       ),
                       const SizedBox(height: 8),
+                      TextField(
+                        controller: _nota,
+                        minLines: 1,
+                        maxLines: 3,
+                        decoration: const InputDecoration(
+                          labelText: 'Nota para a contabilidade (opcional)',
+                          hintText: 'Ex.: falta a fatura da EDP, chega depois',
+                          isDense: true,
+                          prefixIcon: Icon(Icons.sticky_note_2_outlined),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
@@ -378,9 +398,10 @@ class _SheetState extends ConsumerState<_Sheet> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'O email também fica guardado para o envio mensal '
-                        'automático (dia 1, requer SMTP configurado no '
-                        'servidor).',
+                        'O assunto do email é gerado automaticamente '
+                        '(identifica a app e a empresa). O email fica '
+                        'guardado para o envio mensal automático (dia 1, '
+                        'requer SMTP configurado no servidor).',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],

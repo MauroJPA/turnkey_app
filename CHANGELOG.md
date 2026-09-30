@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.38.0 — 2026-09-30 — Nota no email à contabilidade + assunto automático
+
+- **Faturas → "Enviar por email" (contabilidade)** ganha um campo opcional **"Nota para a contabilidade"**
+  (ex.: "falta a fatura da EDP, chega depois") que aparece no corpo do email quando preenchido. Fica em branco
+  depois de um envio bem-sucedido; se o envio falhar, o texto não se perde.
+- O **assunto do email** passa a ser sempre gerado automaticamente pela app — identifica-se ("GC Turnkey") e
+  diz a empresa a que pertencem as faturas — deixa de depender de configuração nenhuma.
+- Corrigido: um envio falhado (ex.: SMTP não configurado no servidor) já não mostra o erro técnico bruto do
+  servidor de email na interface — só a mensagem amigável, tal como o resto da app.
+- **`pb/DEPLOY.md`/`pb/README.md`**: documentado (era um buraco) como configurar o remetente "noreply" e o SMTP
+  — é tudo na **Admin UI do PocketBase → Settings → Mail settings**, não há variável de ambiente nossa para isto.
+
 ## 1.37.0 — 2026-09-30 — Importar uma receita por foto/print (IA) ou lista simples
 
 - **Receitas → "Importar receitas"** ganha um novo modo **"Uma receita"** (ao lado do CSV avançado de sempre):

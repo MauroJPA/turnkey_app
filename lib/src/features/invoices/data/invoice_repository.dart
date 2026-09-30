@@ -457,12 +457,15 @@ class InvoiceRepository {
 
   /// Envia por email as faturas confirmadas do intervalo ([de]/[ate] em
   /// falta = todas) para a contabilidade. Se [email] vier preenchido, fica
-  /// gravado para a próxima vez (e para o cron mensal). Devolve quantas
-  /// faturas foram enviadas e o total.
+  /// gravado para a próxima vez (e para o cron mensal). [nota] (opcional) é
+  /// texto livre que se junta ao corpo deste email (não é gravado). O
+  /// assunto é sempre gerado pela app (identifica-se e diz a empresa).
+  /// Devolve quantas faturas foram enviadas e o total.
   Future<({int quantidade, double total})> enviarContabilidade({
     String? de,
     String? ate,
     required String email,
+    String? nota,
   }) async {
     final res = await _pb.send(
       '/api/gc_turnkey/faturas/enviar-contabilidade',
@@ -471,6 +474,7 @@ class InvoiceRepository {
         if (de != null) 'de': de,
         if (ate != null) 'ate': ate,
         'email': email,
+        if (nota != null && nota.trim().isNotEmpty) 'nota': nota.trim(),
       },
     );
     final m = res as Map;

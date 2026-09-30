@@ -156,14 +156,18 @@ Sem chave de IA a fatura fica em `nova` para revisão manual. O painel inicial
 mostra "Faturas por rever" quando há faturas `nova`/`analisada`.
 
 **Envio ao contabilista** — a app tem, em Faturas → ícone de pasta, um email
-configurável (`empresas.email_contabilidade`) e um botão "Enviar por email"
+configurável (`empresas.email_contabilidade`), uma **nota opcional** (texto
+livre, só para aquele envio, não é gravada) e um botão "Enviar por email"
 (todas as faturas confirmadas, ou só um período), além de "Baixar ZIP"
-(zipado no browser, a partir dos ficheiros individuais). Lógica partilhada em
-`faturas_export.js`. Também há um **cron mensal** (`faturas_contab.pb.js`,
-`0 8 1 * *`) que faz o mesmo envio sozinho, do mês anterior — usa
-`empresas.email_contabilidade` se estiver definido, senão a variável de
-ambiente `GC_TURNKEY_CONTAB_EMAIL` (mantida por compatibilidade). Requer SMTP
-configurado no Admin UI em qualquer dos casos.
+(zipado no browser, a partir dos ficheiros individuais). O **assunto** é
+sempre gerado pela app ("GC Turnkey — Faturas de \<empresa\> · …"), nunca
+escrito à mão. Lógica partilhada em `faturas_export.js`. Também há um **cron
+mensal** (`faturas_contab.pb.js`, `0 8 1 * *`) que faz o mesmo envio sozinho,
+do mês anterior (sem nota) — usa `empresas.email_contabilidade` se estiver
+definido, senão a variável de ambiente `GC_TURNKEY_CONTAB_EMAIL` (mantida por
+compatibilidade). Requer **SMTP configurado na Admin UI** (Settings → Mail
+settings — é ali que se define o "remetente"/noreply; ver `DEPLOY.md`) em
+qualquer dos casos.
 
 **Sincronização com o Vendus** (`vendus.pb.js`/`vendus_core.js`, F-FIN-6):
 
@@ -198,7 +202,7 @@ Auth `users` não-viewer (ou superuser); só agem sobre a empresa do autor.
 | `POST` | `/api/gc_turnkey/faturas/{id}/analisar` | body `{ imagem: <base64>, mime }`. Via `ai.js` (`GC_TURNKEY_AI_PROVIDER`: `gemini` por omissão, ou `anthropic`) envia a imagem/PDF ao modelo de visão com um prompt que extrai `{ fornecedor, data, numero, total, iva, moeda, linhas:[{descricao, quantidade, unidade, preco_unitario, total, embalagem_g}] }`. Grava em `faturas.dados_ia`, `estado='analisada'`, pré-preenche `fornecedor/numero/total/iva/data_fatura` se vazios. Devolve `{ estado, provider, dados }`. Sem a chave do provider ativo → `503` (não mexe na fatura). Erro de rede/IA/JSON → `estado='erro'`, `dados_ia.erro`, `502`. **Dedup**: se já existir outra `faturas` (`tipo='fatura'`, `estado!='erro'`) da mesma empresa com o mesmo fornecedor + número (ou, sem número, mesmo fornecedor + data + total), marca `estado='erro'`, `dados_ia.duplicada_de=<id>` e devolve `409`. |
 | `POST` | `/api/gc_turnkey/faturas/{id}/aplicar` | body `{ linhas:[{ ingredienteId?, descricaoFatura, quantidadeG, precoUnitario, totalLinha, embalagemG, acao }] }` (`acao` ∈ `preco\|stock\|ambos\|ignorar`). Numa transação: apaga `faturas_itens` anteriores; por linha com ingrediente e `acao≠ignorar` — `preco/ambos` → **só** atualiza `ingredientes.preco` (+`gramas_embalagem`) quando `data_fatura` (ou `created`) ≥ `ingredientes.preco_atualizado_em` (uma fatura antiga não estraga um preço mais recente); ao atualizar, carimba `preco_atualizado_em` com a **data da fatura**; dispara a cascata de custos. `stock/ambos` → `cascade.aplicarMovimento(+quantidadeG, 'compra', notas:'Fatura <nº>')` (sempre, mesmo com fatura antiga). Recria `faturas_itens`, `faturas.estado='confirmada'` → `{ precos, precosIgnorados, movimentos }`. |
 | `GET` | `/api/gc_turnkey/faturas/export?de=&ate=` | faturas `confirmada` no intervalo (em falta = todas) → `{ faturas:[{ id, fornecedor, dataFatura, numero, total, iva, nomeFicheiro, ficheiroUrl, linhas:[...] }] }`. `nomeFicheiro` = `FT-NOMEFORNECEDOR-DDMMAAAA.ext` (nome canónico p/ contabilidade). A app usa isto para montar o ZIP no browser (baixa cada `ficheiroUrl` e junta). |
-| `POST` | `/api/gc_turnkey/faturas/enviar-contabilidade` | body `{ de?, ate?, email? }` (`de`/`ate` em falta = todas as faturas confirmadas). Envia por email (SMTP do Admin UI) com os ficheiros em anexo + `resumo.csv`. Se vier `email`, grava-o em `empresas.email_contabilidade` para a próxima vez (e para o cron mensal). `400` sem faturas no período ou sem email configurado. → `{ quantidade, total }`. |
+| `POST` | `/api/gc_turnkey/faturas/enviar-contabilidade` | body `{ de?, ate?, email?, nota? }` (`de`/`ate` em falta = todas as faturas confirmadas). Envia por email (SMTP do Admin UI) com os ficheiros em anexo + `resumo.csv`; assunto gerado pela app. Se vier `email`, grava-o em `empresas.email_contabilidade` para a próxima vez (e para o cron mensal). `nota` (opcional) é texto livre só deste envio, não é gravado. `400` sem faturas no período ou sem email configurado. → `{ quantidade, total }`. |
 
 O ficheiro carregado é guardado com um nome no formato **`FT-NOMEFORNECEDOR-DDMMAAAA`** (data da fatura). O PocketBase normaliza (minúsculas, `_`, sufixo aleatório) ao gravar; o nome canónico exacto para a contabilidade vem no campo `nomeFicheiro` do `/export`.
 

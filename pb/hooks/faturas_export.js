@@ -19,6 +19,17 @@ function slug(s) {
   return out || 'FORNECEDOR';
 }
 
+// Escapa a nota (texto livre da pessoa) antes de a pôr no HTML do email —
+// nunca confiar em texto livre dentro de HTML.
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/\n/g, '<br>');
+}
+
 // Nome canónico para a contabilidade: FT-NOMEFORNECEDOR-DDMMAAAA.ext
 function nomeExport(f) {
   const d = String(f.getString('data_fatura') || '').substring(0, 10);
@@ -44,10 +55,13 @@ function faturasConfirmadas(app, empresaId, de, ate) {
 
 // Monta e envia o email com o resumo CSV + ficheiros em anexo. Lança
 // BadRequestError com uma mensagem amigável se não houver nada para enviar,
-// email nenhum, ou o SMTP falhar. Devolve { quantidade, total }.
+// email nenhum, ou o SMTP falhar. `opts.nota`, se vier, é uma nota livre da
+// pessoa que se junta ao corpo do email (ex.: "falta a fatura da EDP").
+// Devolve { quantidade, total }.
 function enviarEmailContabilidade(app, empresaId, opts) {
   opts = opts || {};
   const email = String(opts.email || '').trim();
+  const nota = String(opts.nota || '').trim();
   if (!email) {
     throw new BadRequestError('Configura o email da contabilidade primeiro.');
   }
@@ -99,19 +113,25 @@ function enviarEmailContabilidade(app, empresaId, opts) {
     'resumo.csv',
   );
 
+  const nomeEmpresa = emp.getString('nome');
   const meta = app.settings().meta;
   const msg = new MailerMessage({
     from: {
       address: meta.senderAddress,
-      name: meta.senderName || emp.getString('nome'),
+      name: meta.senderName || nomeEmpresa,
     },
     to: [{ address: email }],
+    // Assunto sempre gerado pela app: identifica-se (GC Turnkey) e diz de
+    // que empresa são as faturas — a contabilidade pode ter várias empresas.
     subject:
-      'Faturas ' + rotulo + ' — ' + emp.getString('nome') +
-      ' (' + recs.length + ', total ' + totalGeral.toFixed(2) + ')',
+      'GC Turnkey — Faturas de ' + nomeEmpresa + ' · ' + rotulo +
+      ' (' + recs.length + ' fatura(s), total ' + totalGeral.toFixed(2) + ')',
     html:
-      '<p>Seguem as <b>' + recs.length + '</b> faturas confirmadas (' + rotulo +
-      '), total ' + totalGeral.toFixed(2) + '.</p>' +
+      '<p>Envio automático da aplicação <b>GC Turnkey</b> — faturas ' +
+      'confirmadas de <b>' + escapeHtml(nomeEmpresa) + '</b> (' + rotulo + ').</p>' +
+      '<p>Seguem <b>' + recs.length + '</b> faturas, total ' +
+      totalGeral.toFixed(2) + '.</p>' +
+      (nota ? '<p><b>Nota:</b> ' + escapeHtml(nota) + '</p>' : '') +
       '<p>Resumo em <code>resumo.csv</code>; ficheiros em anexo.</p>',
     attachments: anexos,
   });
@@ -119,8 +139,9 @@ function enviarEmailContabilidade(app, empresaId, opts) {
   try {
     app.newMailClient().send(msg);
   } catch (err) {
+    console.log('[contab] falha ao enviar email: ' + err);
     throw new BadRequestError(
-      'Não foi possível enviar o email (SMTP configurado no servidor?): ' + err,
+      'Não foi possível enviar o email (SMTP configurado no servidor?)',
     );
   }
 

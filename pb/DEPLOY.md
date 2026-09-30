@@ -79,6 +79,27 @@ O Mini PC corre **PocketBase v0.40.4** (mínimo seguro: 0.39.7). Confirma:
      `curl -X POST http://127.0.0.1:8090/api/gc_turnkey/faturas/x/analisar` →
      deve dar `401` (falta auth), **não** `503`. Um `503` = chave não carregada.
 
+   **Email para a contabilidade (SMTP):** o botão "Enviar por email" (Faturas →
+   ícone de pasta) e o cron mensal (dia 1) usam o **Mailer do próprio
+   PocketBase** — não há nenhuma variável de ambiente nossa para isto, é
+   tudo na **Admin UI**:
+   - Abre `http://<servidor>:8090/_/` → **Settings → Mail settings**.
+   - **Sender name** / **Sender address**: o nome/email que aparece como
+     remetente — é aqui que se configura o "noreply" (ex.: nome
+     `Gookie Cookies`, endereço `noreply@teudominio.pt`). Se o "Sender name"
+     ficar vazio, a app usa o nome da empresa.
+   - **SMTP**: liga "Use SMTP" e preenche host/porta/utilizador/password do
+     teu servidor de email (Gmail com password de aplicação, SendGrid,
+     Mailgun, o SMTP do teu domínio, etc.). Testa com o botão "Send test
+     email" da própria Admin UI.
+   - Sem SMTP configurado, o botão "Enviar por email" e o cron mensal falham
+     com uma mensagem clara ("Não foi possível enviar o email — SMTP
+     configurado no servidor?"); o resto da app (incluindo "Baixar ZIP")
+     continua a funcionar na mesma.
+   - O **assunto** do email é sempre gerado pela app (nunca escrito à mão):
+     identifica-se ("GC Turnkey") e diz a empresa a que pertencem as
+     faturas — não depende de nenhuma configuração.
+
    **Segredos por empresa (token do Vendus):** exigem `GC_TURNKEY_ENC_KEY` (32 caracteres,
    `pb\gerar-chave-cifra.ps1 -Gravar`) — ver `docs/SEGURANCA.md`. O token de cada empresa
    guarda-se na app (Configurações → Integrações), cifrado; `VENDUS_API_KEY` só serve de recurso
