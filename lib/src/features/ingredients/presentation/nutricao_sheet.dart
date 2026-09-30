@@ -41,6 +41,7 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
   final _prot = TextEditingController();
   final _sal = TextEditingController();
   final _dens = TextEditingController();
+  final _aditivos = TextEditingController();
   String _base = '100g';
   late Set<String> _alerg;
   late Set<String> _tracos;
@@ -72,6 +73,7 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
     _temFoto = i.temNutriFoto;
     _fotoNome = i.nutriFoto;
     _irrelevante = i.nutriIrrelevante;
+    _aditivos.text = i.aditivos;
     if (!i.temNutri || i.precisaRevisaoInsa) {
       _sugestoes =
           ref.read(ingredientActionsProvider).sugestoesInsa(i.id);
@@ -107,7 +109,7 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
   @override
   void dispose() {
     for (final c in [
-      _kcal, _lip, _sat, _hc, _ac, _fib, _prot, _sal, _dens,
+      _kcal, _lip, _sat, _hc, _ac, _fib, _prot, _sal, _dens, _aditivos,
     ]) {
       c.dispose();
     }
@@ -334,6 +336,7 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
                 _tracos.where((t) => !_alerg.contains(t)).toList(),
             origem: _origem == 'insa' || _origem == 'rotulo' ? _origem : 'manual',
             nutriIrrelevante: _irrelevante,
+            aditivos: _aditivos.text,
           );
       if (mounted) Navigator.pop(context);
     } on Object catch (e) {
@@ -587,6 +590,27 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
                 style: Theme.of(context).textTheme.labelLarge),
             const SizedBox(height: 4),
             _chips(_tracos, (n) => setState(() => _tracos = n)),
+            const SizedBox(height: 14),
+            Text('Aditivos', style: Theme.of(context).textTheme.labelLarge),
+            const SizedBox(height: 4),
+            Text(
+              'Texto livre para a declaração de ingredientes do produto '
+              'final (ex.: "Corante: E122, E110 (pode ter efeitos negativos '
+              'na atividade e atenção das crianças)."). Independente da '
+              'nutrição — aparece sempre, mesmo em quantidade residual.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _aditivos,
+              minLines: 1,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                hintText: 'Corante: E122, E110 (pode ter efeitos…)',
+                isDense: true,
+                border: OutlineInputBorder(),
+              ),
+            ),
             const SizedBox(height: 14),
             _fotoSeccao(),
             if (origemTxt.isNotEmpty) ...[

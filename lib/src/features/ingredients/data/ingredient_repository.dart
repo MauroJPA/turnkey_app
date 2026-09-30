@@ -198,6 +198,7 @@ class IngredientRepository implements IngredientWriter {
     required List<String> alergeniosTracos,
     String origem = 'manual',
     bool nutriIrrelevante = false,
+    String? aditivos,
   }) async {
     final rec = await _c.update(
       id,
@@ -210,6 +211,7 @@ class IngredientRepository implements IngredientWriter {
         'nutri_irrelevante': nutriIrrelevante,
         'alergenios': alergenios,
         'alergenios_tracos': alergeniosTracos,
+        if (aditivos != null) 'aditivos': aditivos.trim(),
       },
     );
     return Ingrediente.fromRecord(rec);

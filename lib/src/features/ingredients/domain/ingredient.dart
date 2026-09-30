@@ -82,6 +82,12 @@ class Ingrediente with _$Ingrediente {
     @Default(<String>[]) List<String> alergenios,
     @Default(<String>[]) List<String> alergeniosTracos,
 
+    /// Declaração de aditivos deste ingrediente, em texto livre (ex.:
+    /// "Corante: E122, E110 (pode ter efeitos negativos na atividade e
+    /// atenção das crianças)."), para entrar na lista de ingredientes do
+    /// produto final — independente da nutrição/quantidade usada.
+    @Default('') String aditivos,
+
     /// Nome do ficheiro da foto da tabela nutricional (rótulo), se houver.
     @Default('') String nutriFoto,
 
@@ -179,6 +185,7 @@ class Ingrediente with _$Ingrediente {
       nutriIrrelevante: r.getBoolValue('nutri_irrelevante'),
       alergenios: lista('alergenios'),
       alergeniosTracos: lista('alergenios_tracos'),
+      aditivos: r.getStringValue('aditivos'),
       nutriFoto: r.getStringValue('nutri_foto'),
       nomeRotulo: r.getStringValue('nome_rotulo'),
       receitaEspelhoId: r.getStringValue('receita_espelho').isEmpty

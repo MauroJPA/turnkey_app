@@ -1161,6 +1161,20 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Um ingrediente com valores normais (não marcado) continua, como sempre, a aparecer em "valores
       incompletos" se ficar com tudo a zero — o interruptor não afeta ingredientes que não o tenham ativo.
 
+## 63. Declaração de aditivos na lista de ingredientes do produto
+
+- [ ] Ingredientes → abre a nutrição de um ingrediente (ex.: um corante) → escreve no campo "Aditivos" algo
+      tipo `Corante: E122, E110 (pode ter efeitos negativos na atividade e atenção das crianças).` →
+      "Guardar".
+- [ ] Usa esse ingrediente numa receita que entra num produto (ficha técnica) → abre o Produto → na secção
+      "Ingredientes" (Completa e Resumida), o nome do ingrediente aparece seguido do texto dos aditivos entre
+      parênteses retos (ex.: `Corante Vermelho E120 [Corante: E122, E110 (...). ]`).
+- [ ] O mesmo texto aparece na etiqueta impressa e no texto copiado ("Copiar"), sem precisares de repetir
+      nada à mão.
+- [ ] Um ingrediente sem nada escrito em "Aditivos" continua a aparecer normalmente, sem parênteses retos a
+      mais.
+- [ ] Marcar "Sem valor nutricional relevante" não esconde os aditivos — os dois campos são independentes.
+
 ---
 
 ## Notas / ajustes pedidos

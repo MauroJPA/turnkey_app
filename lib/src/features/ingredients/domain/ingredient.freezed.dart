@@ -37,6 +37,7 @@ mixin _$Ingrediente {
   bool get nutriIrrelevante => throw _privateConstructorUsedError;
   List<String> get alergenios => throw _privateConstructorUsedError;
   List<String> get alergeniosTracos => throw _privateConstructorUsedError;
+  String get aditivos => throw _privateConstructorUsedError;
 
   /// Nome do ficheiro da foto da tabela nutricional (rótulo), se houver.
   String get nutriFoto => throw _privateConstructorUsedError;
@@ -83,6 +84,7 @@ abstract class $IngredienteCopyWith<$Res> {
     bool nutriIrrelevante,
     List<String> alergenios,
     List<String> alergeniosTracos,
+    String aditivos,
     String nutriFoto,
     String nomeRotulo,
     String? receitaEspelhoId,
@@ -125,6 +127,7 @@ class _$IngredienteCopyWithImpl<$Res, $Val extends Ingrediente>
     Object? nutriIrrelevante = null,
     Object? alergenios = null,
     Object? alergeniosTracos = null,
+    Object? aditivos = null,
     Object? nutriFoto = null,
     Object? nomeRotulo = null,
     Object? receitaEspelhoId = freezed,
@@ -209,6 +212,10 @@ class _$IngredienteCopyWithImpl<$Res, $Val extends Ingrediente>
                 ? _value.alergeniosTracos
                 : alergeniosTracos // ignore: cast_nullable_to_non_nullable
                       as List<String>,
+            aditivos: null == aditivos
+                ? _value.aditivos
+                : aditivos // ignore: cast_nullable_to_non_nullable
+                      as String,
             nutriFoto: null == nutriFoto
                 ? _value.nutriFoto
                 : nutriFoto // ignore: cast_nullable_to_non_nullable
@@ -264,6 +271,7 @@ abstract class _$$IngredienteImplCopyWith<$Res>
     bool nutriIrrelevante,
     List<String> alergenios,
     List<String> alergeniosTracos,
+    String aditivos,
     String nutriFoto,
     String nomeRotulo,
     String? receitaEspelhoId,
@@ -305,6 +313,7 @@ class __$$IngredienteImplCopyWithImpl<$Res>
     Object? nutriIrrelevante = null,
     Object? alergenios = null,
     Object? alergeniosTracos = null,
+    Object? aditivos = null,
     Object? nutriFoto = null,
     Object? nomeRotulo = null,
     Object? receitaEspelhoId = freezed,
@@ -389,6 +398,10 @@ class __$$IngredienteImplCopyWithImpl<$Res>
             ? _value._alergeniosTracos
             : alergeniosTracos // ignore: cast_nullable_to_non_nullable
                   as List<String>,
+        aditivos: null == aditivos
+            ? _value.aditivos
+            : aditivos // ignore: cast_nullable_to_non_nullable
+                  as String,
         nutriFoto: null == nutriFoto
             ? _value.nutriFoto
             : nutriFoto // ignore: cast_nullable_to_non_nullable
@@ -437,6 +450,7 @@ class _$IngredienteImpl extends _Ingrediente {
     this.nutriIrrelevante = false,
     final List<String> alergenios = const <String>[],
     final List<String> alergeniosTracos = const <String>[],
+    this.aditivos = '',
     this.nutriFoto = '',
     this.nomeRotulo = '',
     this.receitaEspelhoId,
@@ -513,6 +527,10 @@ class _$IngredienteImpl extends _Ingrediente {
     return EqualUnmodifiableListView(_alergeniosTracos);
   }
 
+  @override
+  @JsonKey()
+  final String aditivos;
+
   /// Nome do ficheiro da foto da tabela nutricional (rótulo), se houver.
   @override
   @JsonKey()
@@ -535,7 +553,7 @@ class _$IngredienteImpl extends _Ingrediente {
 
   @override
   String toString() {
-    return 'Ingrediente(id: $id, nome: $nome, caracteristica: $caracteristica, marca: $marca, fornecedor: $fornecedor, preco: $preco, gramasEmbalagem: $gramasEmbalagem, precoAtualizadoEm: $precoAtualizadoEm, disponivel: $disponivel, origem: $origem, deletado: $deletado, nutri: $nutri, nutriBase: $nutriBase, nutriDensidade: $nutriDensidade, nutriOrigem: $nutriOrigem, nutriAtualizadoEm: $nutriAtualizadoEm, nutriIrrelevante: $nutriIrrelevante, alergenios: $alergenios, alergeniosTracos: $alergeniosTracos, nutriFoto: $nutriFoto, nomeRotulo: $nomeRotulo, receitaEspelhoId: $receitaEspelhoId, unidade: $unidade, gramasUnidade: $gramasUnidade)';
+    return 'Ingrediente(id: $id, nome: $nome, caracteristica: $caracteristica, marca: $marca, fornecedor: $fornecedor, preco: $preco, gramasEmbalagem: $gramasEmbalagem, precoAtualizadoEm: $precoAtualizadoEm, disponivel: $disponivel, origem: $origem, deletado: $deletado, nutri: $nutri, nutriBase: $nutriBase, nutriDensidade: $nutriDensidade, nutriOrigem: $nutriOrigem, nutriAtualizadoEm: $nutriAtualizadoEm, nutriIrrelevante: $nutriIrrelevante, alergenios: $alergenios, alergeniosTracos: $alergeniosTracos, aditivos: $aditivos, nutriFoto: $nutriFoto, nomeRotulo: $nomeRotulo, receitaEspelhoId: $receitaEspelhoId, unidade: $unidade, gramasUnidade: $gramasUnidade)';
   }
 
   @override
@@ -579,6 +597,8 @@ class _$IngredienteImpl extends _Ingrediente {
               other._alergeniosTracos,
               _alergeniosTracos,
             ) &&
+            (identical(other.aditivos, aditivos) ||
+                other.aditivos == aditivos) &&
             (identical(other.nutriFoto, nutriFoto) ||
                 other.nutriFoto == nutriFoto) &&
             (identical(other.nomeRotulo, nomeRotulo) ||
@@ -612,6 +632,7 @@ class _$IngredienteImpl extends _Ingrediente {
     nutriIrrelevante,
     const DeepCollectionEquality().hash(_alergenios),
     const DeepCollectionEquality().hash(_alergeniosTracos),
+    aditivos,
     nutriFoto,
     nomeRotulo,
     receitaEspelhoId,
@@ -649,6 +670,7 @@ abstract class _Ingrediente extends Ingrediente {
     final bool nutriIrrelevante,
     final List<String> alergenios,
     final List<String> alergeniosTracos,
+    final String aditivos,
     final String nutriFoto,
     final String nomeRotulo,
     final String? receitaEspelhoId,
@@ -695,6 +717,8 @@ abstract class _Ingrediente extends Ingrediente {
   List<String> get alergenios;
   @override
   List<String> get alergeniosTracos;
+  @override
+  String get aditivos;
 
   /// Nome do ficheiro da foto da tabela nutricional (rótulo), se houver.
   @override

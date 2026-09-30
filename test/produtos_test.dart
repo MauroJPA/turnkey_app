@@ -37,6 +37,51 @@ void main() {
       expect(l.textoSimples, 'Chocolate (LEITE, SOJA), Ovo');
     });
 
+    test('aditivos aparecem entre parênteses retos após o nome', () {
+      final l = ListaIngredientes.de(const [
+        IngredienteRotulo(nome: 'farinha de trigo', gramas: 500, alergenios: ['Glúten']),
+        IngredienteRotulo(
+          nome: 'Corante Vermelho',
+          gramas: 2,
+          aditivos: 'Corante: E122, E110 (pode ter efeitos negativos na '
+              'atividade e atenção das crianças). Conservante: E211.',
+        ),
+      ]);
+      expect(
+        l.textoSimples,
+        'Farinha de trigo (GLÚTEN), Corante Vermelho '
+        '[Corante: E122, E110 (pode ter efeitos negativos na atividade e '
+        'atenção das crianças). Conservante: E211.]',
+      );
+    });
+
+    test('mesmo ingrediente em duas linhas: aditivos não se repetem', () {
+      final l = ListaIngredientes.de(const [
+        IngredienteRotulo(nome: 'Corante', gramas: 1, aditivos: 'Corante: E122.'),
+        IngredienteRotulo(nome: 'corante', gramas: 1, aditivos: 'Corante: E122.'),
+      ]);
+      expect(l.itens.single.aditivos, 'Corante: E122.');
+    });
+
+    test('sem aditivos: nada extra no texto', () {
+      final l = ListaIngredientes.de(const [
+        IngredienteRotulo(nome: 'Sal', gramas: 5),
+      ]);
+      expect(l.textoSimples, 'Sal');
+    });
+
+    test('aditivos sobrevivem à versão resumida', () {
+      final l = ListaIngredientes.de(const [
+        IngredienteRotulo(
+          nome: 'Corante Vermelho E120',
+          gramas: 2,
+          nomeRotulo: 'Corante',
+          aditivos: 'Corante: E122, E110.',
+        ),
+      ]).resumida();
+      expect(l.textoSimples, 'Corante [Corante: E122, E110.]');
+    });
+
     test('ignora linhas sem nome ou sem peso; empate por nome', () {
       final l = ListaIngredientes.de(const [
         IngredienteRotulo(nome: '', gramas: 10),

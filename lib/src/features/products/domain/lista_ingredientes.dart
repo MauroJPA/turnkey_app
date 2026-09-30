@@ -7,6 +7,7 @@ class IngredienteRotulo {
     this.alergenios = const [],
     this.marca = '',
     this.nomeRotulo = '',
+    this.aditivos = '',
   });
 
   /// Nome completo, como está no ingrediente (pode ter %, marca, "congelado").
@@ -17,6 +18,11 @@ class IngredienteRotulo {
 
   /// Nome curto/genérico escolhido para a lista resumida (opcional).
   final String nomeRotulo;
+
+  /// Declaração de aditivos deste ingrediente, em texto livre (ex.: "Corante:
+  /// E122, E110 (pode ter efeitos negativos na atividade e atenção das
+  /// crianças)."). Entra sempre na lista — não depende da quantidade usada.
+  final String aditivos;
 
   /// Nome para a lista **completa**: o nome do ingrediente e, se a marca ainda
   /// não estiver lá, acrescenta-se no fim.
@@ -62,6 +68,7 @@ class ListaIngredientes {
           alergenios: [...b.alergenios],
           marca: b.marca,
           nomeRotulo: b.nomeRotulo,
+          aditivos: b.aditivos,
         );
       } else {
         porNome[chave] = IngredienteRotulo(
@@ -70,6 +77,7 @@ class ListaIngredientes {
           alergenios: {...atual.alergenios, ...b.alergenios}.toList(),
           marca: atual.marca,
           nomeRotulo: atual.nomeRotulo,
+          aditivos: _juntarAditivos(atual.aditivos, b.aditivos),
         );
       }
     }
@@ -81,6 +89,17 @@ class ListaIngredientes {
       final c = b.gramas.compareTo(a.gramas);
       return c != 0 ? c : a.nome.toLowerCase().compareTo(b.nome.toLowerCase());
     });
+
+  /// Junta duas declarações de aditivos ao somar ingredientes com o mesmo
+  /// nome/grupo — nunca perde nenhuma (a obrigação de declarar não depende
+  /// da quantidade), evitando repetir se forem iguais.
+  static String _juntarAditivos(String a, String b) {
+    final x = a.trim();
+    final y = b.trim();
+    if (x.isEmpty) return y;
+    if (y.isEmpty || x == y) return x;
+    return '$x $y';
+  }
 
   /// Todos os alergénios presentes nos ingredientes.
   Set<String> get alergenios => {for (final i in itens) ...i.alergenios};
@@ -103,11 +122,13 @@ class ListaIngredientes {
               nome: curto,
               gramas: i.gramas,
               alergenios: [...i.alergenios],
+              aditivos: i.aditivos,
             )
           : IngredienteRotulo(
               nome: atual.nome,
               gramas: atual.gramas + i.gramas,
               alergenios: {...atual.alergenios, ...i.alergenios}.toList(),
+              aditivos: _juntarAditivos(atual.aditivos, i.aditivos),
             );
     }
     return ListaIngredientes(
@@ -144,6 +165,9 @@ class ListaIngredientes {
         nome: '$base $texto',
         gramas: idx.fold(0.0, (s, i) => s + l[i].gramas),
         alergenios: {for (final i in idx) ...l[i].alergenios}.toList(),
+        aditivos: idx
+            .map((i) => l[i].aditivos)
+            .fold('', _juntarAditivos),
       );
       remover.addAll(idx.skip(1));
     }
@@ -188,6 +212,10 @@ class ListaIngredientes {
           out.add(SegmentoTexto(fora[j].toUpperCase(), negrito: true));
         }
         out.add(const SegmentoTexto(')'));
+      }
+      final aditivos = it.aditivos.trim();
+      if (aditivos.isNotEmpty) {
+        out.add(SegmentoTexto(' [$aditivos]'));
       }
     }
     return out;

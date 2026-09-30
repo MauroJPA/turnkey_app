@@ -32,6 +32,7 @@ final produtoIngredientesProvider = FutureProvider.autoDispose
             }.toList(),
             marca: porId[c.ingredienteId]?.marca ?? '',
             nomeRotulo: porId[c.ingredienteId]?.nomeRotulo ?? '',
+            aditivos: porId[c.ingredienteId]?.aditivos ?? '',
           ),
       ]);
     });

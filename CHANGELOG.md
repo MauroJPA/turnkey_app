@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.41.0 — 2026-09-30 — Declaração de aditivos na lista de ingredientes do produto
+
+- **Ingredientes → Nutrição e alergénios** ganha um campo de texto livre **"Aditivos"**, para a declaração de
+  aditivos que tem de constar na lista de ingredientes do produto final (ex.: `Corante: E122, E110 (pode ter
+  efeitos negativos na atividade e atenção das crianças). Conservante: E211.`). É independente da nutrição —
+  aparece mesmo que o ingrediente esteja marcado como "sem valor nutricional relevante" e seja usado em
+  quantidade residual, porque a obrigação de declarar aditivos não depende da quantidade.
+- Esse texto passa a aparecer automaticamente, entre parênteses retos a seguir ao nome do ingrediente, na
+  **lista de ingredientes do produto** (ecrã do Produto, etiqueta impressa, texto para copiar) — nas versões
+  Completa e Resumida.
+
 ## 1.40.0 — 2026-09-30 — Ingrediente "sem valor nutricional relevante" (corante, aroma…)
 
 - **Ingredientes → Nutrição e alergénios** ganha um interruptor **"Sem valor nutricional relevante"**, para

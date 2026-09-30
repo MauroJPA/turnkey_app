@@ -148,6 +148,7 @@ class IngredientActions {
     required List<String> alergeniosTracos,
     String origem = 'manual',
     bool nutriIrrelevante = false,
+    String? aditivos,
   }) async {
     await _repo.definirNutricao(
       id,
@@ -158,6 +159,7 @@ class IngredientActions {
       alergeniosTracos: alergeniosTracos,
       origem: origem,
       nutriIrrelevante: nutriIrrelevante,
+      aditivos: aditivos,
     );
     _refresh();
   }
