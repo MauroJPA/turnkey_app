@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.39.0 — 2026-09-30 — Importar vários custos fixos/variáveis e equipamentos colando texto
+
+- **Custos fixos e Equipamentos** ganham o mesmo tipo de importação em lote que já existia para
+  Ingredientes/Receitas: o botão "Importar" abre agora uma folha para **colar texto direto da folha de
+  cálculo** (Ctrl+V normal, sem clipboard especial) — uma linha por registo, colunas separadas por tab, `;`
+  ou `,` (deteção automática) — ou continuar a escolher um ficheiro CSV como antes.
+- **Custos fixos**: `nome, valor, dia de pagamento, notas` (as duas últimas opcionais) — ex.:
+  `Energia\t€140,00\t31\tnotas`. Todos entram como "Fixo"; muda o tipo depois na app se algum for variável.
+- **Equipamentos**: `nome, custo de compra, vida útil (anos), notas` (a última opcional) — ex.:
+  `Computador\t€500,00\t3`.
+- Em ambos, linhas em branco no meio do texto colado são ignoradas.
+
 ## 1.38.0 — 2026-09-30 — Nota no email à contabilidade + assunto automático
 
 - **Faturas → "Enviar por email" (contabilidade)** ganha um campo opcional **"Nota para a contabilidade"**

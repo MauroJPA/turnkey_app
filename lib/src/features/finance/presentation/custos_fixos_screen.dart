@@ -10,11 +10,10 @@ import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_actions.dart';
-import '../../import_csv/domain/import_result.dart';
-import '../application/custos_fixos_import_service.dart';
 import '../application/custos_fixos_providers.dart';
 import '../domain/custo_fixo.dart';
 import 'custo_fixo_form_sheet.dart';
+import 'custos_fixos_import_sheet.dart';
 
 class CustosFixosScreen extends ConsumerStatefulWidget {
   const CustosFixosScreen({super.key});
@@ -45,42 +44,6 @@ class _CustosFixosScreenState extends ConsumerState<CustosFixosScreen> {
       await ref.read(custosFixosActionsProvider).arquivar(c.id);
     } else {
       await ref.read(custosFixosActionsProvider).restaurar(c.id);
-    }
-  }
-
-  Future<void> _importarCsv() async {
-    try {
-      final resultado = await ref
-          .read(custosFixosImportServiceProvider)
-          .pickAndImport();
-      if (!mounted) return;
-      await showDialog<void>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Importação de custos'),
-          content: Text(
-            resultado.semErros
-                ? resultado.resumo
-                : '${resultado.resumo}\n\n'
-                      '${resultado.erros.take(10).join('\n')}'
-                      '${resultado.erros.length > 10 ? '\n…' : ''}',
-          ),
-          actions: [
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Ok'),
-            ),
-          ],
-        ),
-      );
-    } on ImportCancelled {
-      // nada escolhido — ignora
-    } on Object catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('$e')));
-      }
     }
   }
 
@@ -122,9 +85,9 @@ class _CustosFixosScreenState extends ConsumerState<CustosFixosScreen> {
           ),
           if (podeEditar)
             IconButton(
-              tooltip: 'Importar CSV',
+              tooltip: 'Importar',
               icon: const Icon(Icons.upload_file_outlined),
-              onPressed: _importarCsv,
+              onPressed: () => showImportarCustosFixosSheet(context),
             ),
           IconButton(
             tooltip: _arquivados ? 'Ocultar arquivados' : 'Ver arquivados',

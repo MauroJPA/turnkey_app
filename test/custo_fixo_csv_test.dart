@@ -51,4 +51,27 @@ Internet,abc
     final r = parseCustosFixosCsv(csv);
     expect(r.itens.single.diaPagamento, isNull);
   });
+
+  test('texto colado com tab (folha de cálculo) e notas na 4ª coluna', () {
+    const texto = 'Energia\t€140,00\t31\tnotas de teste';
+    final r = parseCustosFixosCsv(texto);
+    expect(r.erros, isEmpty);
+    expect(r.itens.single.nome, 'Energia');
+    expect(r.itens.single.valorMensal, closeTo(140, 0.001));
+    expect(r.itens.single.diaPagamento, 31);
+    expect(r.itens.single.notas, 'notas de teste');
+  });
+
+  test('delimitador ";" também funciona e notas fica vazia sem 4ª coluna', () {
+    const texto = 'Renda;850;1';
+    final r = parseCustosFixosCsv(texto);
+    expect(r.itens.single.notas, isEmpty);
+  });
+
+  test('linhas em branco no meio do texto colado são ignoradas', () {
+    const texto = 'Energia\t140\n\nInternet\t69\n';
+    final r = parseCustosFixosCsv(texto);
+    expect(r.itens, hasLength(2));
+    expect(r.erros, isEmpty);
+  });
 }

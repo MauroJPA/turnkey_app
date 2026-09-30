@@ -1129,6 +1129,24 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] `pb/DEPLOY.md` → secção "Email para a contabilidade (SMTP)" explica como configurar o remetente
       "noreply" e o SMTP na Admin UI do PocketBase (Settings → Mail settings).
 
+## 61. Importar vários custos fixos/variáveis e equipamentos colando texto
+
+- [ ] Custos fixos → ícone de importar (upload) → abre a folha "Importar custos fixos/variáveis". Cola
+      várias linhas direto de uma folha de cálculo (Ctrl+V normal no campo de texto), uma por custo:
+      `nome, valor, dia de pagamento, notas` — ex. `Energia\t€140,00\t31\tnotas` — e toca "Importar": cria
+      todos os custos como "Fixo", com o dia de pagamento e a nota certos.
+- [ ] O mesmo com apenas `nome, valor` (sem dia de pagamento nem nota) continua a funcionar — os dois
+      últimos campos são opcionais.
+- [ ] "Escolher ficheiro CSV" continua a funcionar como antes (preenche o campo de texto com o conteúdo do
+      ficheiro, revês antes de "Importar").
+- [ ] Equipamentos → ícone de importar → folha "Importar equipamentos". Cola várias linhas
+      `nome, custo de compra, vida útil (anos), notas` (a nota é opcional) — ex.: os 6 equipamentos de
+      exemplo (Computador, Vitrine, Forno, Máquina de café, Máquina de chá, Loiças) — e toca "Importar":
+      cria todos com a depreciação mensal calculada corretamente.
+- [ ] Em ambas as folhas, uma linha em branco no meio do texto colado não estraga a importação (é
+      ignorada), e linhas com dados inválidos (nome ou valor em falta) aparecem na lista de erros sem travar
+      as linhas válidas.
+
 ---
 
 ## Notas / ajustes pedidos

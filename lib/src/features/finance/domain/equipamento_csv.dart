@@ -26,25 +26,38 @@ double? _parseNum(Object? v) {
 
 String _clean(Object? v) => v.toString().replaceAll('"', '').trim();
 
-/// Lê um CSV de equipamentos — colunas `nome, custo, vida_util_anos` (uma
-/// eventual 4ª coluna, ex. custo mensal já calculado, é ignorada — o custo
-/// mensal calcula-se sempre a partir das duas primeiras). `€` e vírgula
-/// decimal tolerados; cabeçalho opcional, detetado se a 1ª célula for
-/// "nome"/"equipamento"/"custo".
+/// Tab (colar da folha de cálculo), depois `;`, depois `,`.
+String _delimitador(String primeiraLinha) {
+  if (primeiraLinha.contains('\t')) return '\t';
+  if (primeiraLinha.contains(';')) return ';';
+  return ',';
+}
+
+/// Lê um CSV (ou texto colado) de equipamentos — colunas
+/// `nome, custo, vida_util_anos, notas` (a última é opcional). `€` e vírgula
+/// decimal tolerados; delimitador tab/`;`/`,` detetado automaticamente;
+/// cabeçalho opcional, detetado se a 1ª célula for "nome"/"equipamento"/"custo".
 EquipamentoCsvParseResult parseEquipamentosCsv(String content) {
-  final normalized = content.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
-  final rows = const CsvToListConverter(
-    fieldDelimiter: ',',
+  final normalized = content
+      .replaceAll('\r\n', '\n')
+      .replaceAll('\r', '\n')
+      .trim();
+  if (normalized.isEmpty) return EquipamentoCsvParseResult();
+
+  final primeiraLinha = normalized.split('\n').first;
+  final rows = CsvToListConverter(
+    fieldDelimiter: _delimitador(primeiraLinha),
     eol: '\n',
     shouldParseNumbers: false,
     allowInvalid: true,
-  ).convert(normalized.trim());
+  ).convert(normalized);
 
   final itens = <EquipamentoInput>[];
   final erros = <String>[];
 
   for (var i = 0; i < rows.length; i++) {
     final row = rows[i];
+    if (row.every((c) => _clean(c).isEmpty)) continue;
     if (row.length < 3) continue;
     final primeira = _clean(row[0]).toLowerCase();
     if (i == 0 &&
@@ -57,6 +70,7 @@ EquipamentoCsvParseResult parseEquipamentosCsv(String content) {
     final nome = _clean(row[0]);
     final custo = _parseNum(row[1]);
     final vidaUtil = _parseNum(row[2]);
+    final notas = row.length > 3 ? _clean(row[3]) : '';
 
     if (nome.isEmpty ||
         custo == null ||
@@ -68,7 +82,12 @@ EquipamentoCsvParseResult parseEquipamentosCsv(String content) {
     }
 
     itens.add(
-      EquipamentoInput(nome: nome, custo: custo, vidaUtilAnos: vidaUtil),
+      EquipamentoInput(
+        nome: nome,
+        custo: custo,
+        vidaUtilAnos: vidaUtil,
+        notas: notas,
+      ),
     );
   }
 

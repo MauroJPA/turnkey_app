@@ -19,14 +19,18 @@ class CustosFixosImportService {
   final Ref _ref;
 
   Future<ImportResult> pickAndImport() async {
+    return importCsv(await pickCsv());
+  }
+
+  Future<String> pickCsv() async {
     final picked = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['csv'],
+      allowedExtensions: ['csv', 'txt', 'tsv'],
       withData: true,
     );
     final bytes = picked?.files.single.bytes;
     if (bytes == null) throw const ImportCancelled();
-    return importCsv(_decode(bytes));
+    return _decode(bytes);
   }
 
   String _decode(List<int> bytes) {

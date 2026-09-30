@@ -26,24 +26,40 @@ double? _parseNum(Object? v) {
 
 String _clean(Object? v) => v.toString().replaceAll('"', '').trim();
 
-/// Lê um CSV de custos fixos — colunas `nome, valor_mensal, dia_pagamento`
-/// (a 3ª é opcional; `€` e vírgula decimal tolerados; cabeçalho opcional,
-/// detetado se a 1ª célula for "nome"/"tipo"/"custo"). Cada linha entra
-/// como um custo do tipo "fixo" — o tipo pode ser mudado depois na app.
+/// Tab (colar da folha de cálculo), depois `;`, depois `,`.
+String _delimitador(String primeiraLinha) {
+  if (primeiraLinha.contains('\t')) return '\t';
+  if (primeiraLinha.contains(';')) return ';';
+  return ',';
+}
+
+/// Lê um CSV (ou texto colado) de custos fixos — colunas
+/// `nome, valor_mensal, dia_pagamento, notas` (as duas últimas são
+/// opcionais; `€` e vírgula decimal tolerados; delimitador tab/`;`/`,`
+/// detetado automaticamente; cabeçalho opcional, detetado se a 1ª célula for
+/// "nome"/"tipo"/"custo"). Cada linha entra como um custo do tipo "fixo" — o
+/// tipo pode ser mudado depois na app.
 CustoFixoCsvParseResult parseCustosFixosCsv(String content) {
-  final normalized = content.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
-  final rows = const CsvToListConverter(
-    fieldDelimiter: ',',
+  final normalized = content
+      .replaceAll('\r\n', '\n')
+      .replaceAll('\r', '\n')
+      .trim();
+  if (normalized.isEmpty) return CustoFixoCsvParseResult();
+
+  final primeiraLinha = normalized.split('\n').first;
+  final rows = CsvToListConverter(
+    fieldDelimiter: _delimitador(primeiraLinha),
     eol: '\n',
     shouldParseNumbers: false,
     allowInvalid: true,
-  ).convert(normalized.trim());
+  ).convert(normalized);
 
   final itens = <CustoFixoInput>[];
   final erros = <String>[];
 
   for (var i = 0; i < rows.length; i++) {
     final row = rows[i];
+    if (row.every((c) => _clean(c).isEmpty)) continue;
     if (row.length < 2) continue;
     final primeira = _clean(row[0]).toLowerCase();
     if (i == 0 &&
@@ -54,6 +70,7 @@ CustoFixoCsvParseResult parseCustosFixosCsv(String content) {
     final nome = _clean(row[0]);
     final valor = _parseNum(row[1]);
     final dia = row.length > 2 ? int.tryParse(_clean(row[2])) : null;
+    final notas = row.length > 3 ? _clean(row[3]) : '';
 
     if (nome.isEmpty || valor == null || valor <= 0) {
       erros.add('Linha ${i + 1}: dados inválidos ("${row.join(', ')}").');
@@ -66,6 +83,7 @@ CustoFixoCsvParseResult parseCustosFixosCsv(String content) {
         tipo: TipoCusto.fixo,
         valorMensal: valor,
         diaPagamento: (dia != null && dia >= 1 && dia <= 31) ? dia : null,
+        notas: notas,
       ),
     );
   }
