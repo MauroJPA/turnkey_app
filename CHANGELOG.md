@@ -2,6 +2,16 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.40.0 — 2026-09-30 — Ingrediente "sem valor nutricional relevante" (corante, aroma…)
+
+- **Ingredientes → Nutrição e alergénios** ganha um interruptor **"Sem valor nutricional relevante"**, para
+  corantes, aromas e afins usados em quantidade residual. Antes, deixar tudo a zero fazia o sistema tratar o
+  ingrediente como "dados em falta" para sempre (em Receitas e Fichas Técnicas); agora, com o interruptor
+  ativo, conta como **zero confirmado** — desaparece da lista "por preencher" sem precisares de inventar um
+  valor simbólico.
+- Ao ativar o interruptor, os campos numéricos ficam desativados (já não fazem sentido).
+- Na lista de Ingredientes, estes ficam com um ícone próprio (🚫) distinto de "sem nutrição".
+
 ## 1.39.0 — 2026-09-30 — Importar vários custos fixos/variáveis e equipamentos colando texto
 
 - **Custos fixos e Equipamentos** ganham o mesmo tipo de importação em lote que já existia para

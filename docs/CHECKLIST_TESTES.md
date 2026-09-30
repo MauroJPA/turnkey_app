@@ -1147,6 +1147,20 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       ignorada), e linhas com dados inválidos (nome ou valor em falta) aparecem na lista de erros sem travar
       as linhas válidas.
 
+## 62. Ingrediente "sem valor nutricional relevante" (corante, aroma…)
+
+- [ ] Ingredientes → abre a nutrição de um ingrediente (ex.: um corante ou aroma) → liga o interruptor
+      "Sem valor nutricional relevante" → os campos numéricos (Energia, Lípidos, etc.) ficam desativados
+      (cinzentos, não aceitam escrita) → "Guardar".
+- [ ] Na lista de Ingredientes, esse ingrediente passa a mostrar um ícone próprio (🚫), diferente do de "sem
+      nutrição".
+- [ ] Usa esse ingrediente numa receita (ou numa ficha técnica, diretamente) — a declaração nutricional dessa
+      receita/ficha NÃO o lista em "valores incompletos" / "por preencher", mesmo ele tendo tudo a zero.
+- [ ] Desliga o interruptor outra vez e preenche valores normais — volta a funcionar como um ingrediente
+      normal (fica "por preencher" se ficar tudo a zero, como seria de esperar).
+- [ ] Um ingrediente com valores normais (não marcado) continua, como sempre, a aparecer em "valores
+      incompletos" se ficar com tudo a zero — o interruptor não afeta ingredientes que não o tenham ativo.
+
 ---
 
 ## Notas / ajustes pedidos

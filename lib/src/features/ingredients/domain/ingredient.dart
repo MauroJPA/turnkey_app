@@ -23,7 +23,11 @@ enum FonteNutri {
   manual,
 
   /// Introduzida à mão / lida por IA, COM foto da tabela nutricional anexada.
-  comFoto;
+  comFoto,
+
+  /// Marcado como sem valor nutricional relevante (ex.: corante, aroma) — o
+  /// contributo é tratado como zero confirmado, não como dados em falta.
+  irrelevante;
 
   String get label => switch (this) {
     FonteNutri.vazia => 'sem nutrição',
@@ -31,6 +35,7 @@ enum FonteNutri {
     FonteNutri.insa => 'da tabela INSA',
     FonteNutri.manual => 'preenchida à mão',
     FonteNutri.comFoto => 'à mão + foto do rótulo',
+    FonteNutri.irrelevante => 'sem valor nutricional relevante',
   };
 }
 
@@ -69,6 +74,11 @@ class Ingrediente with _$Ingrediente {
     @Default(1) double nutriDensidade,
     @Default('') String nutriOrigem,
     DateTime? nutriAtualizadoEm,
+
+    /// Sem valor nutricional relevante (ex.: corante, aroma, usados em
+    /// quantidade residual) — trata o contributo como zero confirmado em vez
+    /// de dados em falta na declaração nutricional das receitas/fichas.
+    @Default(false) bool nutriIrrelevante,
     @Default(<String>[]) List<String> alergenios,
     @Default(<String>[]) List<String> alergeniosTracos,
 
@@ -116,8 +126,9 @@ class Ingrediente with _$Ingrediente {
       origem == OrigemIngrediente.fabricoProprio &&
       (receitaEspelhoId?.isNotEmpty ?? false);
 
-  /// `true` se tem pelo menos os valores nutricionais principais.
-  bool get temNutri => !nutri.vazio;
+  /// `true` se tem pelo menos os valores nutricionais principais, ou está
+  /// marcado como sem valor nutricional relevante (zero confirmado).
+  bool get temNutri => !nutri.vazio || nutriIrrelevante;
 
   /// Tem foto da tabela nutricional (rótulo) anexada.
   bool get temNutriFoto => nutriFoto.isNotEmpty;
@@ -128,6 +139,7 @@ class Ingrediente with _$Ingrediente {
 
   /// Estado da nutrição para mostrar na lista (ver [FonteNutri]).
   FonteNutri get fonteNutri {
+    if (nutriIrrelevante) return FonteNutri.irrelevante;
     if (precisaRevisaoInsa) return FonteNutri.porRever;
     if (!temNutri) return FonteNutri.vazia;
     if (nutriOrigem == 'insa') return FonteNutri.insa;
@@ -164,6 +176,7 @@ class Ingrediente with _$Ingrediente {
       nutriAtualizadoEm: nutriData.isEmpty
           ? null
           : DateTime.tryParse(nutriData),
+      nutriIrrelevante: r.getBoolValue('nutri_irrelevante'),
       alergenios: lista('alergenios'),
       alergeniosTracos: lista('alergenios_tracos'),
       nutriFoto: r.getStringValue('nutri_foto'),

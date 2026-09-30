@@ -8,6 +8,7 @@ Ingrediente _i({
   Nutrientes nutri = const Nutrientes(),
   String origem = '',
   String foto = '',
+  bool irrelevante = false,
 }) =>
     Ingrediente(
       id: 'x',
@@ -15,6 +16,7 @@ Ingrediente _i({
       nutri: nutri,
       nutriOrigem: origem,
       nutriFoto: foto,
+      nutriIrrelevante: irrelevante,
     );
 
 void main() {
@@ -66,5 +68,19 @@ void main() {
   test('temNutriFoto', () {
     expect(_i(foto: 'x.png').temNutriFoto, isTrue);
     expect(_i().temNutriFoto, isFalse);
+  });
+
+  test('irrelevante: sem valores mas marcado como sem valor nutricional '
+      'relevante conta como completo, não como vazio', () {
+    final i = _i(irrelevante: true);
+    expect(i.fonteNutri, FonteNutri.irrelevante);
+    expect(i.temNutri, isTrue);
+  });
+
+  test('irrelevante ganha a qualquer outra origem', () {
+    expect(
+      _i(nutri: _valores, origem: 'insa', irrelevante: true).fonteNutri,
+      FonteNutri.irrelevante,
+    );
   });
 }

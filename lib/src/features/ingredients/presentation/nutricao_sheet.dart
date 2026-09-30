@@ -45,6 +45,7 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
   late Set<String> _alerg;
   late Set<String> _tracos;
   bool _busy = false;
+  bool _irrelevante = false;
   String _origem = '';
   DateTime? _atualizado;
   late bool _temFoto;
@@ -70,6 +71,7 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
     _atualizado = i.nutriAtualizadoEm;
     _temFoto = i.temNutriFoto;
     _fotoNome = i.nutriFoto;
+    _irrelevante = i.nutriIrrelevante;
     if (!i.temNutri || i.precisaRevisaoInsa) {
       _sugestoes =
           ref.read(ingredientActionsProvider).sugestoesInsa(i.id);
@@ -331,6 +333,7 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
             alergeniosTracos:
                 _tracos.where((t) => !_alerg.contains(t)).toList(),
             origem: _origem == 'insa' || _origem == 'rotulo' ? _origem : 'manual',
+            nutriIrrelevante: _irrelevante,
           );
       if (mounted) Navigator.pop(context);
     } on Object catch (e) {
@@ -340,8 +343,14 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
     }
   }
 
-  Widget _campo(String label, TextEditingController c, String suf) => TextField(
+  Widget _campo(
+    String label,
+    TextEditingController c,
+    String suf, {
+    bool enabled = true,
+  }) => TextField(
         controller: c,
+        enabled: enabled,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         decoration: InputDecoration(
           labelText: label,
@@ -520,17 +529,35 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
             ),
             if (_sugestoes != null && !_sugestoesFechadas) _sugestoesInsa(),
             const SizedBox(height: 12),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Sem valor nutricional relevante'),
+              subtitle: const Text(
+                'Ex.: corante, aroma — usado em quantidade residual. '
+                'Conta como zero confirmado, não como dados em falta.',
+              ),
+              value: _irrelevante,
+              onChanged: (v) => setState(() => _irrelevante = v),
+            ),
+            const SizedBox(height: 4),
             SegmentedButton<String>(
               segments: const [
                 ButtonSegment(value: '100g', label: Text('por 100 g')),
                 ButtonSegment(value: '100ml', label: Text('por 100 ml')),
               ],
               selected: {_base},
-              onSelectionChanged: (s) => setState(() => _base = s.first),
+              onSelectionChanged: _irrelevante
+                  ? null
+                  : (s) => setState(() => _base = s.first),
             ),
             if (_base == '100ml') ...[
               const SizedBox(height: 8),
-              _campo('Densidade (converte ml → g)', _dens, 'g/ml'),
+              _campo(
+                'Densidade (converte ml → g)',
+                _dens,
+                'g/ml',
+                enabled: !_irrelevante,
+              ),
             ],
             const SizedBox(height: 12),
             GridView.count(
@@ -541,14 +568,14 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
               crossAxisSpacing: 8,
               childAspectRatio: 5.2,
               children: [
-                _campo('Energia', _kcal, 'kcal'),
-                _campo('Lípidos', _lip, 'g'),
-                _campo('  dos quais saturados', _sat, 'g'),
-                _campo('Hidratos de carbono', _hc, 'g'),
-                _campo('  dos quais açúcares', _ac, 'g'),
-                _campo('Fibra', _fib, 'g'),
-                _campo('Proteínas', _prot, 'g'),
-                _campo('Sal', _sal, 'g'),
+                _campo('Energia', _kcal, 'kcal', enabled: !_irrelevante),
+                _campo('Lípidos', _lip, 'g', enabled: !_irrelevante),
+                _campo('  dos quais saturados', _sat, 'g', enabled: !_irrelevante),
+                _campo('Hidratos de carbono', _hc, 'g', enabled: !_irrelevante),
+                _campo('  dos quais açúcares', _ac, 'g', enabled: !_irrelevante),
+                _campo('Fibra', _fib, 'g', enabled: !_irrelevante),
+                _campo('Proteínas', _prot, 'g', enabled: !_irrelevante),
+                _campo('Sal', _sal, 'g', enabled: !_irrelevante),
               ],
             ),
             const SizedBox(height: 12),

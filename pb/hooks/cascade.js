@@ -446,7 +446,7 @@ function runCascade(app, kind, rootId) {
           continue;
         }
         const n100 = nutriIngPor100(ing);
-        if (vazioN(n100)) {
+        if (vazioN(n100) && !ing.getBool('nutri_irrelevante')) {
           completoF = false;
           semDadosF.push({ id: ingRel, nome: ing.getString('nome') || ingRel });
         }
@@ -690,7 +690,7 @@ function runCascade(app, kind, rootId) {
         }
         const nl = nutriLinha(item, ing);
         const n100 = nl.n100;
-        if (vazioN(n100)) {
+        if (vazioN(n100) && !ing.getBool('nutri_irrelevante')) {
           completoN = false;
           semDadosN.push({ id: ingRel, nome: nl.nome });
         }

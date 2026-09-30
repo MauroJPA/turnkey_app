@@ -46,6 +46,8 @@ onRecordAfterUpdateSuccess((e) => {
     if (
       !mudou &&
       (e.record.getString('nutri_base') !== before.getString('nutri_base') ||
+        e.record.getBool('nutri_irrelevante') !==
+          before.getBool('nutri_irrelevante') ||
         lst(e.record, 'alergenios') !== lst(before, 'alergenios') ||
         lst(e.record, 'alergenios_tracos') !==
           lst(before, 'alergenios_tracos'))

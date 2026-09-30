@@ -34,6 +34,7 @@ mixin _$Ingrediente {
   double get nutriDensidade => throw _privateConstructorUsedError;
   String get nutriOrigem => throw _privateConstructorUsedError;
   DateTime? get nutriAtualizadoEm => throw _privateConstructorUsedError;
+  bool get nutriIrrelevante => throw _privateConstructorUsedError;
   List<String> get alergenios => throw _privateConstructorUsedError;
   List<String> get alergeniosTracos => throw _privateConstructorUsedError;
 
@@ -79,6 +80,7 @@ abstract class $IngredienteCopyWith<$Res> {
     double nutriDensidade,
     String nutriOrigem,
     DateTime? nutriAtualizadoEm,
+    bool nutriIrrelevante,
     List<String> alergenios,
     List<String> alergeniosTracos,
     String nutriFoto,
@@ -120,6 +122,7 @@ class _$IngredienteCopyWithImpl<$Res, $Val extends Ingrediente>
     Object? nutriDensidade = null,
     Object? nutriOrigem = null,
     Object? nutriAtualizadoEm = freezed,
+    Object? nutriIrrelevante = null,
     Object? alergenios = null,
     Object? alergeniosTracos = null,
     Object? nutriFoto = null,
@@ -194,6 +197,10 @@ class _$IngredienteCopyWithImpl<$Res, $Val extends Ingrediente>
                 ? _value.nutriAtualizadoEm
                 : nutriAtualizadoEm // ignore: cast_nullable_to_non_nullable
                       as DateTime?,
+            nutriIrrelevante: null == nutriIrrelevante
+                ? _value.nutriIrrelevante
+                : nutriIrrelevante // ignore: cast_nullable_to_non_nullable
+                      as bool,
             alergenios: null == alergenios
                 ? _value.alergenios
                 : alergenios // ignore: cast_nullable_to_non_nullable
@@ -254,6 +261,7 @@ abstract class _$$IngredienteImplCopyWith<$Res>
     double nutriDensidade,
     String nutriOrigem,
     DateTime? nutriAtualizadoEm,
+    bool nutriIrrelevante,
     List<String> alergenios,
     List<String> alergeniosTracos,
     String nutriFoto,
@@ -294,6 +302,7 @@ class __$$IngredienteImplCopyWithImpl<$Res>
     Object? nutriDensidade = null,
     Object? nutriOrigem = null,
     Object? nutriAtualizadoEm = freezed,
+    Object? nutriIrrelevante = null,
     Object? alergenios = null,
     Object? alergeniosTracos = null,
     Object? nutriFoto = null,
@@ -368,6 +377,10 @@ class __$$IngredienteImplCopyWithImpl<$Res>
             ? _value.nutriAtualizadoEm
             : nutriAtualizadoEm // ignore: cast_nullable_to_non_nullable
                   as DateTime?,
+        nutriIrrelevante: null == nutriIrrelevante
+            ? _value.nutriIrrelevante
+            : nutriIrrelevante // ignore: cast_nullable_to_non_nullable
+                  as bool,
         alergenios: null == alergenios
             ? _value._alergenios
             : alergenios // ignore: cast_nullable_to_non_nullable
@@ -421,6 +434,7 @@ class _$IngredienteImpl extends _Ingrediente {
     this.nutriDensidade = 1,
     this.nutriOrigem = '',
     this.nutriAtualizadoEm,
+    this.nutriIrrelevante = false,
     final List<String> alergenios = const <String>[],
     final List<String> alergeniosTracos = const <String>[],
     this.nutriFoto = '',
@@ -477,6 +491,9 @@ class _$IngredienteImpl extends _Ingrediente {
   final String nutriOrigem;
   @override
   final DateTime? nutriAtualizadoEm;
+  @override
+  @JsonKey()
+  final bool nutriIrrelevante;
   final List<String> _alergenios;
   @override
   @JsonKey()
@@ -518,7 +535,7 @@ class _$IngredienteImpl extends _Ingrediente {
 
   @override
   String toString() {
-    return 'Ingrediente(id: $id, nome: $nome, caracteristica: $caracteristica, marca: $marca, fornecedor: $fornecedor, preco: $preco, gramasEmbalagem: $gramasEmbalagem, precoAtualizadoEm: $precoAtualizadoEm, disponivel: $disponivel, origem: $origem, deletado: $deletado, nutri: $nutri, nutriBase: $nutriBase, nutriDensidade: $nutriDensidade, nutriOrigem: $nutriOrigem, nutriAtualizadoEm: $nutriAtualizadoEm, alergenios: $alergenios, alergeniosTracos: $alergeniosTracos, nutriFoto: $nutriFoto, nomeRotulo: $nomeRotulo, receitaEspelhoId: $receitaEspelhoId, unidade: $unidade, gramasUnidade: $gramasUnidade)';
+    return 'Ingrediente(id: $id, nome: $nome, caracteristica: $caracteristica, marca: $marca, fornecedor: $fornecedor, preco: $preco, gramasEmbalagem: $gramasEmbalagem, precoAtualizadoEm: $precoAtualizadoEm, disponivel: $disponivel, origem: $origem, deletado: $deletado, nutri: $nutri, nutriBase: $nutriBase, nutriDensidade: $nutriDensidade, nutriOrigem: $nutriOrigem, nutriAtualizadoEm: $nutriAtualizadoEm, nutriIrrelevante: $nutriIrrelevante, alergenios: $alergenios, alergeniosTracos: $alergeniosTracos, nutriFoto: $nutriFoto, nomeRotulo: $nomeRotulo, receitaEspelhoId: $receitaEspelhoId, unidade: $unidade, gramasUnidade: $gramasUnidade)';
   }
 
   @override
@@ -552,6 +569,8 @@ class _$IngredienteImpl extends _Ingrediente {
                 other.nutriOrigem == nutriOrigem) &&
             (identical(other.nutriAtualizadoEm, nutriAtualizadoEm) ||
                 other.nutriAtualizadoEm == nutriAtualizadoEm) &&
+            (identical(other.nutriIrrelevante, nutriIrrelevante) ||
+                other.nutriIrrelevante == nutriIrrelevante) &&
             const DeepCollectionEquality().equals(
               other._alergenios,
               _alergenios,
@@ -590,6 +609,7 @@ class _$IngredienteImpl extends _Ingrediente {
     nutriDensidade,
     nutriOrigem,
     nutriAtualizadoEm,
+    nutriIrrelevante,
     const DeepCollectionEquality().hash(_alergenios),
     const DeepCollectionEquality().hash(_alergeniosTracos),
     nutriFoto,
@@ -626,6 +646,7 @@ abstract class _Ingrediente extends Ingrediente {
     final double nutriDensidade,
     final String nutriOrigem,
     final DateTime? nutriAtualizadoEm,
+    final bool nutriIrrelevante,
     final List<String> alergenios,
     final List<String> alergeniosTracos,
     final String nutriFoto,
@@ -668,6 +689,8 @@ abstract class _Ingrediente extends Ingrediente {
   String get nutriOrigem;
   @override
   DateTime? get nutriAtualizadoEm;
+  @override
+  bool get nutriIrrelevante;
   @override
   List<String> get alergenios;
   @override

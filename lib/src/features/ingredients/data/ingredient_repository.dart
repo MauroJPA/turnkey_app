@@ -197,6 +197,7 @@ class IngredientRepository implements IngredientWriter {
     required List<String> alergenios,
     required List<String> alergeniosTracos,
     String origem = 'manual',
+    bool nutriIrrelevante = false,
   }) async {
     final rec = await _c.update(
       id,
@@ -206,6 +207,7 @@ class IngredientRepository implements IngredientWriter {
         'nutri_densidade': densidade,
         'nutri_origem': origem,
         'nutri_atualizado_em': DateTime.now().toUtc().toIso8601String(),
+        'nutri_irrelevante': nutriIrrelevante,
         'alergenios': alergenios,
         'alergenios_tracos': alergeniosTracos,
       },

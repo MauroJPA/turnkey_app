@@ -782,6 +782,10 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                   FonteNutri.insa => (Icons.menu_book, cs.primary),
                   FonteNutri.manual => (Icons.edit_note, cs.secondary),
                   FonteNutri.comFoto => (Icons.photo_camera, cs.tertiary),
+                  FonteNutri.irrelevante => (
+                    Icons.block_outlined,
+                    Theme.of(context).disabledColor,
+                  ),
                 };
                 return IconButton(
                   tooltip: 'Nutrição: ${i.fonteNutri.label}',
