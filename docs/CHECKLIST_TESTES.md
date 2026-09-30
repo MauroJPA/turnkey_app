@@ -1064,6 +1064,17 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] O envio mensal automático (dia 1, cron do servidor) continua a funcionar — usa o email guardado na app
       se existir, senão a variável de ambiente antiga (`GC_TURNKEY_CONTAB_EMAIL`), documentado em `pb/README.md`.
 
+## 57. Erro de nutrição do produto sempre visível
+
+- [ ] Ingredientes → abre um ingrediente → "Produtos de compra" → toca num produto para editar.
+- [ ] Expande "Nutrição própria do produto", liga "Usar estes valores", deixa todos os campos vazios (0) e
+      toca "Guardar" — o diálogo desce sozinho e mostra "Preenche a nutrição do produto, ou desliga
+      'Nutrição própria'." bem visível (não fica escondido no fundo).
+- [ ] Apaga o nome, ou a embalagem/preço, e toca "Guardar" — o mesmo acontece: erro visível, sem precisar de
+      arrastar o scroll à mão.
+- [ ] Preenche pelo menos um valor de nutrição (ex.: açúcares) e toca "Guardar" — grava normalmente, o
+      diálogo fecha e o produto aparece com "Nutrição própria (… kcal)" na lista.
+
 ---
 
 ## Notas / ajustes pedidos

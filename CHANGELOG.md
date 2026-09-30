@@ -2,6 +2,16 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.35.0 — 2026-09-30 — Erro de nutrição do produto sempre visível
+
+- **Ingrediente → "Produtos de compra" → editar um produto → "Nutrição própria do produto":** ao tentar
+  guardar com "Usar estes valores" ligado mas todos os valores vazios (ou nome/embalagem/preço em falta), a
+  mensagem de erro aparecia no fundo de um formulário longo — muitas vezes fora da vista, sem dar para ver
+  scroll para baixo. Parecia que o "Guardar" não fazia nada. Agora, sempre que aparece um erro, o diálogo
+  desce sozinho até à mensagem ficar visível.
+- Não havia nenhuma falha real a gravar (confirmado com testes diretos ao servidor) — o valor já ficava bem
+  guardado sempre que a validação passava. O problema era só a mensagem de erro ficar escondida.
+
 ## 1.34.0 — 2026-09-30 — Email configurável e ZIP para a contabilidade
 
 - **Faturas → "Para a contabilidade"** (ícone de pasta) ganha: um **email configurável** na própria app (fica

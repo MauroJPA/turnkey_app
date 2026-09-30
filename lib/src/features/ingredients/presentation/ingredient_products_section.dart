@@ -144,6 +144,7 @@ class _ProdutoDialogState extends ConsumerState<_ProdutoDialog> {
   bool _lendo = false;
   bool _busy = false;
   String? _erro;
+  final _scroll = ScrollController();
 
   static TextEditingController _ctrl(double? v) =>
       TextEditingController(text: (v == null || v == 0) ? '' : _n(v));
@@ -229,21 +230,35 @@ class _ProdutoDialogState extends ConsumerState<_ProdutoDialog> {
     for (final c in [_kcal, _lip, _sat, _hc, _ac, _fib, _prot, _sal, _dens]) {
       c.dispose();
     }
+    _scroll.dispose();
     super.dispose();
+  }
+
+  /// Mostra o erro e desloca o diálogo até ele — sem isto, um erro de
+  /// validação podia ficar escondido fora da vista (o diálogo é alto e a
+  /// pessoa podia estar a meio do preenchimento), parecendo que "não salva".
+  void _mostrarErro(String msg) {
+    setState(() => _erro = msg);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scroll.hasClients) return;
+      _scroll.animateTo(
+        _scroll.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   Future<void> _guardar() async {
     if (_nome.text.trim().isEmpty || _num(_emb) <= 0 || _num(_preco) <= 0) {
-      setState(
-        () => _erro =
-            'Indica o nome, o tamanho da embalagem (${widget.ingrediente.un}) e o preço.',
+      _mostrarErro(
+        'Indica o nome, o tamanho da embalagem (${widget.ingrediente.un}) e o preço.',
       );
       return;
     }
     if (_nutriPropria && _nutrientes().vazio) {
-      setState(
-        () => _erro =
-            'Preenche a nutrição do produto, ou desliga "Nutrição própria".',
+      _mostrarErro(
+        'Preenche a nutrição do produto, ou desliga "Nutrição própria".',
       );
       return;
     }
@@ -285,9 +300,7 @@ class _ProdutoDialogState extends ConsumerState<_ProdutoDialog> {
       }
       if (mounted) Navigator.pop(context, true);
     } on Object {
-      if (mounted) {
-        setState(() => _erro = 'Não foi possível guardar. Tenta de novo.');
-      }
+      if (mounted) _mostrarErro('Não foi possível guardar. Tenta de novo.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -349,6 +362,7 @@ class _ProdutoDialogState extends ConsumerState<_ProdutoDialog> {
     return AlertDialog(
       title: Text(widget.existente == null ? 'Novo produto' : 'Editar produto'),
       content: SingleChildScrollView(
+        controller: _scroll,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
