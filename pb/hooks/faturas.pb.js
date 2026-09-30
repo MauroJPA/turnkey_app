@@ -604,40 +604,10 @@ routerAdd(
     const de = q.de || '0001-01-01';
     const ate = q.ate || '9999-12-31';
     const app = e.app;
+    const fexp = require(`${__hooks}/faturas_export.js`);
 
-    const recs = app.findRecordsByFilter(
-      'faturas',
-      "empresa = {:e} && estado = 'confirmada' && apagada != true && data_fatura >= {:de} && data_fatura <= {:ate}",
-      '-data_fatura',
-      0,
-      0,
-      { e: empresaId, de: de, ate: ate },
-    );
+    const recs = fexp.faturasConfirmadas(app, empresaId, de, ate);
     const base = app.settings().meta.appURL || '';
-
-    // Nome canónico para a contabilidade: FT-NOMEFORNECEDOR-DDMMAAAA.ext
-    const ACC = {
-      Á: 'A', À: 'A', Ã: 'A', Â: 'A', Ä: 'A',
-      É: 'E', È: 'E', Ê: 'E', Ë: 'E',
-      Í: 'I', Ì: 'I', Î: 'I', Ï: 'I',
-      Ó: 'O', Ò: 'O', Õ: 'O', Ô: 'O', Ö: 'O',
-      Ú: 'U', Ù: 'U', Û: 'U', Ü: 'U', Ç: 'C',
-    };
-    const slug = (s) => {
-      let out = String(s || '').toUpperCase();
-      for (const k in ACC) out = out.split(k).join(ACC[k]);
-      out = out.replace(/[^A-Z0-9]/g, '').slice(0, 40);
-      return out || 'FORNECEDOR';
-    };
-    const nomeExport = (f) => {
-      const d = String(f.getString('data_fatura') || '').substring(0, 10); // YYYY-MM-DD
-      const ddmmaaaa =
-        d.length === 10 ? d.slice(8, 10) + d.slice(5, 7) + d.slice(0, 4) : '';
-      const fich = f.getString('ficheiro');
-      const dot = fich.lastIndexOf('.');
-      const ext = dot > -1 ? fich.slice(dot).toLowerCase() : '.pdf';
-      return 'FT-' + slug(f.getString('fornecedor')) + '-' + ddmmaaaa + ext;
-    };
 
     const out = [];
     for (const f of recs) {
@@ -656,7 +626,7 @@ routerAdd(
         numero: f.getString('numero'),
         total: f.getFloat('total'),
         iva: f.getFloat('iva'),
-        nomeFicheiro: nomeExport(f),
+        nomeFicheiro: fexp.nomeExport(f),
         ficheiroUrl:
           base + '/api/files/faturas/' + f.id + '/' + f.getString('ficheiro'),
         linhas: linhas.map((l) => ({
@@ -670,6 +640,62 @@ routerAdd(
       });
     }
     return e.json(200, { faturas: out });
+  },
+  $apis.requireAuth('users', '_superusers'),
+);
+
+// --- POST /api/gc_turnkey/faturas/enviar-contabilidade --------------------
+// Envio sob pedido (além do cron mensal automático): todas as faturas
+// confirmadas, ou só as de um intervalo, por email — para a contabilidade.
+// Se vier `email` no pedido, fica gravado em `empresas.email_contabilidade`
+// para a próxima vez (e para o cron mensal passar a usar este, em vez de só
+// a variável de ambiente do servidor).
+routerAdd(
+  'POST',
+  '/api/gc_turnkey/faturas/enviar-contabilidade',
+  (e) => {
+    const auth = e.auth;
+    const isSuper =
+      auth && auth.collection() && auth.collection().name === '_superusers';
+    const body = e.requestInfo().body || {};
+    let empresaId = body.empresa || '';
+    if (!isSuper) {
+      if (!auth || auth.collection().name !== 'users') {
+        throw new ForbiddenError('Autenticação necessária.');
+      }
+      if (auth.getString('papel') === 'viewer') {
+        throw new ForbiddenError('Sem permissão.');
+      }
+      empresaId = auth.getString('empresa');
+    }
+    if (!empresaId) throw new BadRequestError('empresa em falta.');
+
+    const app = e.app;
+    const fexp = require(`${__hooks}/faturas_export.js`);
+    const emailNovo = String(body.email || '').trim();
+
+    const emp = app.findRecordById('empresas', empresaId);
+    const email = emailNovo || emp.getString('email_contabilidade');
+    // Grava a preferência mesmo que o envio abaixo venha a falhar (ex.: sem
+    // faturas nesse intervalo) — não faz sentido perder o que a pessoa já
+    // escreveu por causa de um período vazio.
+    if (emailNovo && emailNovo !== emp.getString('email_contabilidade')) {
+      emp.set('email_contabilidade', emailNovo);
+      app.save(emp);
+    }
+
+    const rotulo =
+      body.de || body.ate
+        ? String(body.de || '…') + ' a ' + String(body.ate || '…')
+        : 'todas';
+    const resultado = fexp.enviarEmailContabilidade(app, empresaId, {
+      de: body.de,
+      ate: body.ate,
+      email: email,
+      rotulo: rotulo,
+    });
+
+    return e.json(200, resultado);
   },
   $apis.requireAuth('users', '_superusers'),
 );

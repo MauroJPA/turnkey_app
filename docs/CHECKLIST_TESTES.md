@@ -1046,6 +1046,24 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       receita e, ao voltar atrás, na lista).
 - [ ] Uma receita sem linhas pendentes mostra o preço na cor normal, sem "⚠", em ambos os sítios.
 
+## 56. Email configurável e ZIP para a contabilidade
+
+- [ ] Faturas → ícone de pasta (canto superior): abre sem erro (mesmo em modo de desenvolvimento/debug).
+- [ ] Alternador "Um mês" / "Todas": "Um mês" mostra a navegação ‹ mês/ano › como antes; "Todas" some com a
+      navegação e mostra todas as faturas confirmadas (de sempre).
+- [ ] Campo "Email da contabilidade": a primeira vez fica vazio; escreve um email, toca "Enviar por email" —
+      mesmo que o SMTP não esteja configurado no servidor (erro amigável esperado), o email fica guardado.
+      Fecha e reabre a folha (ou a app): o email continua preenchido.
+- [ ] Com SMTP configurado no servidor (ver `docs/DEPLOY.md`) e pelo menos uma fatura confirmada no período:
+      "Enviar por email" manda um email com os PDFs/imagens em anexo + `resumo.csv`, e mostra quantas faturas
+      e o total numa mensagem de confirmação.
+- [ ] "Baixar ZIP": com faturas no período, descarrega `faturas-AAAA-MM.zip` (ou `faturas-todas.zip` em
+      "Todas") com os ficheiros dentro, nomeados `FT-FORNECEDOR-DDMMAAAA.ext`. Sem faturas no período, mostra
+      "Nenhuma fatura confirmada neste período" em vez de descarregar um ZIP vazio.
+- [ ] "Copiar resumo (CSV)" continua a funcionar como antes, em ambos os modos de período.
+- [ ] O envio mensal automático (dia 1, cron do servidor) continua a funcionar — usa o email guardado na app
+      se existir, senão a variável de ambiente antiga (`GC_TURNKEY_CONTAB_EMAIL`), documentado em `pb/README.md`.
+
 ---
 
 ## Notas / ajustes pedidos

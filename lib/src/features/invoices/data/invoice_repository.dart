@@ -406,15 +406,16 @@ class InvoiceRepository {
     return (m['atualizadas'] as num?)?.toInt() ?? 0;
   }
 
-  /// Faturas confirmadas no intervalo (para o contabilista). Cada item tem
-  /// `fornecedor`, `dataFatura`, `numero`, `total`, `iva`, `nomeFicheiro`,
-  /// `ficheiroUrl`, `linhas`.
+  /// Faturas confirmadas no intervalo ([de]/[ate] em falta = todas), para a
+  /// contabilidade. Cada item tem `fornecedor`, `dataFatura`, `numero`,
+  /// `total`, `iva`, `nomeFicheiro`, `ficheiroUrl`, `linhas`.
   Future<List<Map<String, dynamic>>> exportContabilidade({
-    required String de,
-    required String ate,
+    String? de,
+    String? ate,
   }) async {
+    final q = [if (de != null) 'de=$de', if (ate != null) 'ate=$ate'];
     final res = await _pb.send(
-      '/api/gc_turnkey/faturas/export?de=$de&ate=$ate',
+      '/api/gc_turnkey/faturas/export${q.isEmpty ? '' : '?${q.join('&')}'}',
       method: 'GET',
     );
     final list = (res as Map)['faturas'];
@@ -446,5 +447,36 @@ class InvoiceRepository {
     if (url.isEmpty) return url;
     final t = await _pb.files.getToken();
     return '$url${url.contains('?') ? '&' : '?'}token=$t';
+  }
+
+  /// Email da contabilidade já guardado (`''` se nunca foi definido).
+  Future<String> emailContabilidadeAtual() async {
+    final r = await _pb.collection('empresas').getOne(_empresaId);
+    return r.getStringValue('email_contabilidade');
+  }
+
+  /// Envia por email as faturas confirmadas do intervalo ([de]/[ate] em
+  /// falta = todas) para a contabilidade. Se [email] vier preenchido, fica
+  /// gravado para a próxima vez (e para o cron mensal). Devolve quantas
+  /// faturas foram enviadas e o total.
+  Future<({int quantidade, double total})> enviarContabilidade({
+    String? de,
+    String? ate,
+    required String email,
+  }) async {
+    final res = await _pb.send(
+      '/api/gc_turnkey/faturas/enviar-contabilidade',
+      method: 'POST',
+      body: {
+        if (de != null) 'de': de,
+        if (ate != null) 'ate': ate,
+        'email': email,
+      },
+    );
+    final m = res as Map;
+    return (
+      quantidade: (m['quantidade'] as num?)?.toInt() ?? 0,
+      total: (m['total'] as num?)?.toDouble() ?? 0,
+    );
   }
 }

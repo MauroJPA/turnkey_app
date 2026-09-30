@@ -2,6 +2,19 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.34.0 — 2026-09-30 — Email configurável e ZIP para a contabilidade
+
+- **Faturas → "Para a contabilidade"** (ícone de pasta) ganha: um **email configurável** na própria app (fica
+  guardado, também serve para o envio mensal automático), um botão **"Enviar por email"** (todas as faturas
+  confirmadas, ou só as de um mês — sob pedido, não só o dia 1 automático), e um botão **"Baixar ZIP"** com
+  todos os ficheiros das faturas do período escolhido. Alternador "Um mês" / "Todas" no topo escolhe o período.
+- Antes, o email do contabilista só dava para configurar por variável de ambiente no servidor
+  (`GC_TURNKEY_CONTAB_EMAIL`) e o único envio era o cron automático do dia 1. Isso continua a funcionar (usa o
+  email da app se estiver definido, senão a variável de ambiente).
+- Corrigido de caminho: o ecrã "Para a contabilidade" tinha um erro que rebentava sempre que abria em modo de
+  desenvolvimento (`setState` com uma `Future` por engano) — nunca dava para ver em testes, só sobrevivia por
+  o modo de produção ignorar esse tipo de erro silenciosamente. Apanhado e corrigido ao testar esta função.
+
 ## 1.33.0 — 2026-09-29 — Preço a vermelho quando a receita tem linhas por ligar
 
 - **Receitas com linhas por ligar a um ingrediente/sub-receita** agora mostram o preço a **vermelho, com um
