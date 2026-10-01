@@ -96,7 +96,7 @@ VendaCsvParseResult parseVendasCsv(String content, List<FichaTecnica> fichas) {
       continue;
     }
 
-    final ficha = melhorMatchFicha(produto, fichas);
+    final ficha = fichaParaVenda(produto, fichas);
     final chave = ymd(data);
     (porDia[chave] ??= []).add(
       VendaItemInput(

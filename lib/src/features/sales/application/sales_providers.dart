@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/sales_repository.dart';
+import '../domain/produto_nao_identificado.dart';
 import '../domain/venda.dart';
 
 /// Vendas dos últimos [dias] (por omissão, 90 — histórico recente para a
@@ -22,13 +23,39 @@ final vendaByIdProvider =
   return ref.watch(salesRepositoryProvider).getById(id);
 });
 
+/// Linhas de venda sem produto identificado, agrupadas por descrição exata —
+/// para o ecrã "Produtos não identificados".
+final produtosNaoIdentificadosProvider =
+    FutureProvider.autoDispose<List<ProdutoNaoIdentificado>>((ref) async {
+  final itens = await ref.watch(salesRepositoryProvider).itensSemFicha();
+  return agruparSemFicha(itens);
+});
+
 final salesActionsProvider = Provider<SalesActions>(SalesActions.new);
 
 class SalesActions {
   SalesActions(this._ref);
   final Ref _ref;
 
-  void _refresh() => _ref.invalidate(salesListProvider);
+  void _refresh() {
+    _ref.invalidate(salesListProvider);
+    _ref.invalidate(produtosNaoIdentificadosProvider);
+    _ref.invalidate(vendaItensProvider);
+  }
+
+  /// Liga todas as linhas de venda com [descricao] (ainda sem ficha) a
+  /// [fichaId] — retroativo, e passa a reconhecer sozinho futuras
+  /// importações com a mesma descrição. Devolve quantas linhas foram ligadas.
+  Future<int> ligarProduto({
+    required String descricao,
+    required String fichaId,
+  }) async {
+    final n = await _ref
+        .read(salesRepositoryProvider)
+        .ligarProduto(descricao: descricao, fichaId: fichaId);
+    _refresh();
+    return n;
+  }
 
   Future<Venda> criar({
     required DateTime data,

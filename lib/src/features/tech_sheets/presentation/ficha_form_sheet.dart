@@ -8,18 +8,25 @@ import '../domain/tech_sheet.dart';
 Future<FichaInput?> showFichaFormSheet(
   BuildContext context, {
   FichaTecnica? existente,
+
+  /// Nome a pré-preencher ao criar uma ficha nova (ignorado se [existente]
+  /// estiver definido) — ex.: a partir da descrição de uma linha de venda
+  /// sem produto identificado.
+  String nomeInicial = '',
 }) {
   return showModalBottomSheet<FichaInput>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (_) => _FichaFormSheet(existente: existente),
+    builder: (_) =>
+        _FichaFormSheet(existente: existente, nomeInicial: nomeInicial),
   );
 }
 
 class _FichaFormSheet extends ConsumerStatefulWidget {
-  const _FichaFormSheet({this.existente});
+  const _FichaFormSheet({this.existente, this.nomeInicial = ''});
   final FichaTecnica? existente;
+  final String nomeInicial;
 
   @override
   ConsumerState<_FichaFormSheet> createState() => _FichaFormSheetState();
@@ -27,7 +34,9 @@ class _FichaFormSheet extends ConsumerStatefulWidget {
 
 class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
   final _formKey = GlobalKey<FormState>();
-  late final _nome = TextEditingController(text: widget.existente?.nome ?? '');
+  late final _nome = TextEditingController(
+    text: widget.existente?.nome ?? widget.nomeInicial,
+  );
   late final _categoria =
       TextEditingController(text: widget.existente?.categoria ?? '');
   late String _formatoId = widget.existente?.formatoId ?? '';

@@ -62,6 +62,11 @@ class FichaTecnica with _$FichaTecnica {
     @Default(0) int validadeDias,
     @Default('') String conservacao,
     @Default(<String, dynamic>{}) Map<String, dynamic> nutriRaw,
+
+    /// Descrições de linhas de venda já ligadas manualmente a este produto
+    /// (normalizadas), para reconhecer sozinho a mesma descrição em
+    /// importações futuras — ver `fichaParaVenda`.
+    @Default(<String>[]) List<String> nomesVenda,
   }) = _FichaTecnica;
 
   const FichaTecnica._();
@@ -101,6 +106,10 @@ class FichaTecnica with _$FichaTecnica {
       nutriRaw: rawNutri is Map
           ? Map<String, dynamic>.from(rawNutri)
           : const <String, dynamic>{},
+      nomesVenda: switch (r.data['nomes_venda']) {
+        final List v => v.map((e) => '$e').toList(),
+        _ => const <String>[],
+      },
     );
   }
 }

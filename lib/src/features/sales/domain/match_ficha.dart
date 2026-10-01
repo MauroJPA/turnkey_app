@@ -50,3 +50,24 @@ FichaTecnica? melhorMatchFicha(
   }
   return melhorScore >= minScore ? melhor : null;
 }
+
+/// Como o servidor compara descrições de venda já ligadas manualmente a uma
+/// ficha (`nomesVenda`): mesma normalização de `_normalizar`, espaços simples.
+String normalizarDescricaoVenda(String s) =>
+    _normalizar(s).replaceAll(RegExp(r'\s+'), ' ').trim();
+
+/// Ficha técnica para uma descrição de linha de venda — por ordem:
+/// 1) esta descrição já foi ligada manualmente a uma ficha antes (aprendido
+///    em `fichas_tecnicas.nomes_venda`, ver "ligar produto" em Vendas);
+/// 2) semelhança de palavras com o nome/categoria da ficha (`melhorMatchFicha`).
+FichaTecnica? fichaParaVenda(
+  String descricaoVenda,
+  List<FichaTecnica> todas, {
+  double minScore = 0.34,
+}) {
+  final desc = normalizarDescricaoVenda(descricaoVenda);
+  for (final f in todas) {
+    if (f.nomesVenda.contains(desc)) return f;
+  }
+  return melhorMatchFicha(descricaoVenda, todas, minScore: minScore);
+}

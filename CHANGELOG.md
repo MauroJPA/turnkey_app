@@ -2,6 +2,20 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.42.0 — 2026-10-01 — Ligar produtos não identificados nas vendas (retroativo + aprende sozinho)
+
+- **Vendas → ícone "Produtos não identificados"** (novo): lista as descrições de vendas (Vendus/CSV) que
+  não foram associadas a nenhum produto, agrupadas e ordenadas por valor total — com o nº de linhas e de
+  unidades de cada uma.
+- Toca numa descrição para **ligar a um produto já existente** (escolhe da lista) ou **criar um produto
+  novo** (nome pré-preenchido com a descrição, revê antes de criar). A ligação:
+  - corrige **de uma vez todas as vendas passadas** com essa descrição exata (não só a mais recente);
+  - fica "aprendida" no produto — a próxima importação CSV ou sincronização Vendus com a mesma descrição
+    liga-se sozinha, sem precisares de repetir a correção.
+- Isto resolve de vez descrições com acentos/erros do POS (ex.: "Gookie Belèm do pàra.") que nunca batiam
+  certo com o nome do produto — e melhora a precisão do Painel financeiro/DRE, que já avisava destas vendas
+  sem conseguir calcular a margem.
+
 ## 1.41.1 — 2026-10-01 — Corrigido: "Adicionar" num kit de embalagens dizia "cria as peças primeiro"
 
 - **Embalagens → Kits → editar um kit → "Adicionar"** podia mostrar "Cria primeiro as embalagens no

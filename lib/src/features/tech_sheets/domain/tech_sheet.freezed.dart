@@ -29,6 +29,7 @@ mixin _$FichaTecnica {
   int get validadeDias => throw _privateConstructorUsedError;
   String get conservacao => throw _privateConstructorUsedError;
   Map<String, dynamic> get nutriRaw => throw _privateConstructorUsedError;
+  List<String> get nomesVenda => throw _privateConstructorUsedError;
 
   /// Create a copy of FichaTecnica
   /// with the given fields replaced by the non-null parameter values.
@@ -57,6 +58,7 @@ abstract class $FichaTecnicaCopyWith<$Res> {
     int validadeDias,
     String conservacao,
     Map<String, dynamic> nutriRaw,
+    List<String> nomesVenda,
   });
 }
 
@@ -87,6 +89,7 @@ class _$FichaTecnicaCopyWithImpl<$Res, $Val extends FichaTecnica>
     Object? validadeDias = null,
     Object? conservacao = null,
     Object? nutriRaw = null,
+    Object? nomesVenda = null,
   }) {
     return _then(
       _value.copyWith(
@@ -138,6 +141,10 @@ class _$FichaTecnicaCopyWithImpl<$Res, $Val extends FichaTecnica>
                 ? _value.nutriRaw
                 : nutriRaw // ignore: cast_nullable_to_non_nullable
                       as Map<String, dynamic>,
+            nomesVenda: null == nomesVenda
+                ? _value.nomesVenda
+                : nomesVenda // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
           )
           as $Val,
     );
@@ -166,6 +173,7 @@ abstract class _$$FichaTecnicaImplCopyWith<$Res>
     int validadeDias,
     String conservacao,
     Map<String, dynamic> nutriRaw,
+    List<String> nomesVenda,
   });
 }
 
@@ -195,6 +203,7 @@ class __$$FichaTecnicaImplCopyWithImpl<$Res>
     Object? validadeDias = null,
     Object? conservacao = null,
     Object? nutriRaw = null,
+    Object? nomesVenda = null,
   }) {
     return _then(
       _$FichaTecnicaImpl(
@@ -246,6 +255,10 @@ class __$$FichaTecnicaImplCopyWithImpl<$Res>
             ? _value._nutriRaw
             : nutriRaw // ignore: cast_nullable_to_non_nullable
                   as Map<String, dynamic>,
+        nomesVenda: null == nomesVenda
+            ? _value._nomesVenda
+            : nomesVenda // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
       ),
     );
   }
@@ -267,7 +280,9 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
     this.validadeDias = 0,
     this.conservacao = '',
     final Map<String, dynamic> nutriRaw = const <String, dynamic>{},
+    final List<String> nomesVenda = const <String>[],
   }) : _nutriRaw = nutriRaw,
+       _nomesVenda = nomesVenda,
        super._();
 
   @override
@@ -310,9 +325,18 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
     return EqualUnmodifiableMapView(_nutriRaw);
   }
 
+  final List<String> _nomesVenda;
+  @override
+  @JsonKey()
+  List<String> get nomesVenda {
+    if (_nomesVenda is EqualUnmodifiableListView) return _nomesVenda;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_nomesVenda);
+  }
+
   @override
   String toString() {
-    return 'FichaTecnica(id: $id, nome: $nome, categoria: $categoria, custoProduto: $custoProduto, pesoProduto: $pesoProduto, precoVenda: $precoVenda, deletado: $deletado, formatoId: $formatoId, descricao: $descricao, validadeDias: $validadeDias, conservacao: $conservacao, nutriRaw: $nutriRaw)';
+    return 'FichaTecnica(id: $id, nome: $nome, categoria: $categoria, custoProduto: $custoProduto, pesoProduto: $pesoProduto, precoVenda: $precoVenda, deletado: $deletado, formatoId: $formatoId, descricao: $descricao, validadeDias: $validadeDias, conservacao: $conservacao, nutriRaw: $nutriRaw, nomesVenda: $nomesVenda)';
   }
 
   @override
@@ -337,7 +361,8 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
             (identical(other.descricao, descricao) || other.descricao == descricao) &&
             (identical(other.validadeDias, validadeDias) || other.validadeDias == validadeDias) &&
             (identical(other.conservacao, conservacao) || other.conservacao == conservacao) &&
-            const DeepCollectionEquality().equals(other._nutriRaw, _nutriRaw));
+            const DeepCollectionEquality().equals(other._nutriRaw, _nutriRaw) &&
+            const DeepCollectionEquality().equals(other._nomesVenda, _nomesVenda));
   }
 
   @override
@@ -355,6 +380,7 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
     validadeDias,
     conservacao,
     const DeepCollectionEquality().hash(_nutriRaw),
+    const DeepCollectionEquality().hash(_nomesVenda),
   );
 
   /// Create a copy of FichaTecnica
@@ -380,6 +406,7 @@ abstract class _FichaTecnica extends FichaTecnica {
     final int validadeDias,
     final String conservacao,
     final Map<String, dynamic> nutriRaw,
+    final List<String> nomesVenda,
   }) = _$FichaTecnicaImpl;
   const _FichaTecnica._() : super._();
 
@@ -407,6 +434,8 @@ abstract class _FichaTecnica extends FichaTecnica {
   String get conservacao;
   @override
   Map<String, dynamic> get nutriRaw;
+  @override
+  List<String> get nomesVenda;
 
   /// Create a copy of FichaTecnica
   /// with the given fields replaced by the non-null parameter values.

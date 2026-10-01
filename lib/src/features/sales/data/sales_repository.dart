@@ -102,6 +102,32 @@ class SalesRepository {
 
   Future<void> remover(String id) => _vendas.delete(id);
 
+  /// Todas as linhas de venda da empresa (qualquer período) ainda sem ficha
+  /// técnica associada — base do ecrã "Produtos não identificados".
+  Future<List<VendaItem>> itensSemFicha() async {
+    final recs = await _itens.getFullList(
+      filter: 'empresa = "$_empresaId" && ficha = ""',
+    );
+    return recs.map(VendaItem.fromRecord).toList();
+  }
+
+  /// Liga [descricao] (texto exato de uma linha de venda sem produto) a
+  /// [fichaId]: atualiza todas as linhas passadas com essa descrição e ainda
+  /// sem ficha, e o servidor "aprende" a descrição para a reconhecer sozinho
+  /// em futuras importações (CSV/Vendus). Devolve quantas linhas foram ligadas.
+  Future<int> ligarProduto({
+    required String descricao,
+    required String fichaId,
+  }) async {
+    final res = await _pb.send(
+      '/api/gc_turnkey/vendas/ligar-produto',
+      method: 'POST',
+      body: {'descricao': descricao, 'fichaId': fichaId},
+    );
+    final m = res as Map;
+    return (m['ligadas'] as num?)?.toInt() ?? 0;
+  }
+
   /// Traz vendas novas do Vendus, emparelhando cada linha com a ficha
   /// técnica pelo nome — servidor faz tudo (a API KEY nunca chega à app);
   /// ver `pb/hooks/vendus.pb.js`.

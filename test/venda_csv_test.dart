@@ -59,6 +59,24 @@ data,produto,quantidade,preco_unitario
     expect(r.totalNaoIdentificados, 1);
   });
 
+  test('descrição já aprendida (nomes_venda) liga mesmo sem semelhança de '
+      'nome nenhuma', () {
+    final comAprendido = [
+      ...fichas,
+      FichaTecnica(
+        id: 'f9',
+        nome: 'Gookie Belém do Pará',
+        custoProduto: 2,
+        nomesVenda: const ['gookie belem do para.'],
+      ),
+    ];
+    const csv = '2026-09-01,Gookie Belèm do pàra.,1,5.00';
+    final r = parseVendasCsv(csv, comAprendido);
+    final item = r.grupos.single.itens.single;
+    expect(item.fichaId, 'f9');
+    expect(item.custoUnitarioSnapshot, 2);
+  });
+
   test('linha com dados inválidos vai para erros, não trava o resto', () {
     const csv = '''
 2026-09-01,Brownie,1,3.00

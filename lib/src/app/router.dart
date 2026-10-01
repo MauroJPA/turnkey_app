@@ -33,6 +33,7 @@ import '../features/products/presentation/produtos_screen.dart';
 import '../features/recipe_categories/presentation/recipe_categories_screen.dart';
 import '../features/recipes/presentation/recipe_detail_screen.dart';
 import '../features/recipes/presentation/recipes_screen.dart';
+import '../features/sales/presentation/produtos_nao_identificados_screen.dart';
 import '../features/sales/presentation/sales_screen.dart';
 import '../features/sales/presentation/venda_detail_screen.dart';
 import '../features/schedule/presentation/plan_detail_screen.dart';
@@ -157,6 +158,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'analise',
                 builder: (_, __) => const AnaliseVendasScreen(),
+              ),
+              GoRoute(
+                path: 'nao-identificados',
+                builder: (_, __) => const ProdutosNaoIdentificadosScreen(),
               ),
               GoRoute(
                 path: ':id',

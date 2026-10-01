@@ -1184,6 +1184,22 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Sem nenhuma peça criada (empresa nova ou todas apagadas), "Adicionar" mostra corretamente o aviso para
       criar peças primeiro.
 
+## 65. Ligar produtos não identificados nas vendas (retroativo + aprende sozinho)
+
+- [ ] Vendas → ícone "Produtos não identificados" (interrogação) → abre a lista de descrições sem produto,
+      ordenada por valor total — com nº de linhas e quantidade de cada uma.
+- [ ] Toca numa descrição → "Ligar a um produto já existente" → escolhe uma ficha técnica → confirma que
+      aparece "Ligado a '...' — N linha(s) de venda atualizada(s)." e a descrição desaparece da lista.
+- [ ] Abre uma venda antiga que tinha essa descrição por identificar — o ícone já mostra o visto verde
+      (`temFicha`) em vez do "?" vermelho.
+- [ ] Toca noutra descrição → "Criar produto novo" → abre a folha "Nova ficha técnica" já com o nome
+      pré-preenchido com a descrição (podes editar antes de criar) → "Criar" → liga automaticamente a todas
+      as linhas com essa descrição, tal como o fluxo de produto existente.
+- [ ] Importa de novo um CSV de vendas (ou corre a sincronização Vendus) com a mesma descrição já ligada
+      antes — liga-se sozinha ao produto certo, sem aparecer outra vez em "Produtos não identificados".
+- [ ] Sem nenhuma linha por identificar, o ecrã mostra "Nada por identificar — todas as vendas têm produto
+      associado."
+
 ---
 
 ## Notas / ajustes pedidos

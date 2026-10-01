@@ -180,6 +180,17 @@ function melhorMatchFicha(descricaoVenda, fichas, minScore) {
   return melhorScore >= minScore ? melhor : null;
 }
 
+// Por ordem: 1) descrição já ligada manualmente antes (nomes_venda, ver
+// vendas_ligar_produto.js); 2) semelhança de palavras (melhorMatchFicha).
+function fichaParaVenda(descricaoVenda, fichas, minScore) {
+  var desc = normalizar(descricaoVenda).replace(/\s+/g, ' ').trim();
+  for (var i = 0; i < fichas.length; i++) {
+    var nomes = fichas[i].nomesVenda || [];
+    if (nomes.indexOf(desc) !== -1) return fichas[i];
+  }
+  return melhorMatchFicha(descricaoVenda, fichas, minScore);
+}
+
 // Cria a `venda`+`vendas_itens` de um documento (já com os `itens`
 // completos, vindos de buscarDetalheDocumento). Devolve quantos itens
 // ficaram sem ficha, para o resumo final.
@@ -205,7 +216,7 @@ function importarDocumento(app, empresaId, doc, itens, fichas) {
       var amounts = it.amounts || {};
       var precoUnit = Number(amounts.gross_unit || 0);
       var totalLinha = Number(amounts.gross_total || qtd * precoUnit);
-      var match = melhorMatchFicha(titulo, fichas, 0.34);
+      var match = fichaParaVenda(titulo, fichas, 0.34);
       if (!match) semFicha++;
 
       var item = new Record(tx.findCollectionByNameOrId('vendas_itens'));
@@ -275,11 +286,17 @@ function sincronizarEmpresa(app, empresaId, opts) {
     { e: empresaId },
   );
   var fichas = fichasRecs.map(function (f) {
+    var nomesVenda = [];
+    try {
+      var v = JSON.parse(f.getString('nomes_venda') || '[]');
+      if (Array.isArray(v)) nomesVenda = v;
+    } catch (_) {}
     return {
       id: f.id,
       nome: f.getString('nome'),
       categoria: f.getString('categoria'),
       custoProduto: f.getFloat('custo_produto'),
+      nomesVenda: nomesVenda,
     };
   });
 

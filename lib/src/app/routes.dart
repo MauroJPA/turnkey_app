@@ -18,6 +18,7 @@ abstract class Routes {
   static const sales = '/vendas';
   static const encomendas = '/encomendas';
   static const analiseVendas = '/vendas/analise';
+  static const vendasNaoIdentificadas = '/vendas/nao-identificados';
   static const painelFinanceiro = '/financeiro';
   static const dre = '/financeiro/dre';
   static const custosFixos = '/financeiro/custos-fixos';
