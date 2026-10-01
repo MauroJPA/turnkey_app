@@ -59,7 +59,13 @@ class _KitEditorSheetState extends ConsumerState<_KitEditorSheet> {
   }
 
   Future<void> _adicionarLinha() async {
-    final embs = ref.read(embalagensListProvider).valueOrNull ?? const [];
+    List<Embalagem> embs;
+    try {
+      embs = await ref.read(embalagensListProvider.future);
+    } on Object {
+      embs = const [];
+    }
+    if (!mounted) return;
     if (embs.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

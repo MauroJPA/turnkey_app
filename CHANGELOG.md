@@ -2,6 +2,13 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.41.1 — 2026-10-01 — Corrigido: "Adicionar" num kit de embalagens dizia "cria as peças primeiro"
+
+- **Embalagens → Kits → editar um kit → "Adicionar"** podia mostrar "Cria primeiro as embalagens no
+  separador 'Peças'", mesmo havendo peças criadas — acontecia se o editor do kit abrisse sem a lista de
+  peças já ter sido carregada nessa sessão (o pedido não esperava a resposta do servidor, lia uma lista
+  ainda vazia). Agora espera sempre a lista real antes de decidir se está vazia.
+
 ## 1.41.0 — 2026-09-30 — Declaração de aditivos na lista de ingredientes do produto
 
 - **Ingredientes → Nutrição e alergénios** ganha um campo de texto livre **"Aditivos"**, para a declaração de

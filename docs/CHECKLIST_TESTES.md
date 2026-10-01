@@ -1175,6 +1175,15 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       mais.
 - [ ] Marcar "Sem valor nutricional relevante" não esconde os aditivos — os dois campos são independentes.
 
+## 64. Kit de embalagens: "Adicionar" já não diz "cria as peças primeiro" por engano
+
+- [ ] Com peças já criadas em Embalagens → Peças, vai a Embalagens → Kits → abre (ou cria) um kit → toca
+      "Adicionar" **logo ao abrir a app** (sem teres visitado a aba Peças nesta sessão) — abre a lista para
+      escolher a peça normalmente, sem mostrar "Cria primeiro as embalagens no separador 'Peças'".
+- [ ] Escolhe uma peça, define a quantidade, guarda — entra na lista do kit e o custo por unidade atualiza.
+- [ ] Sem nenhuma peça criada (empresa nova ou todas apagadas), "Adicionar" mostra corretamente o aviso para
+      criar peças primeiro.
+
 ---
 
 ## Notas / ajustes pedidos
