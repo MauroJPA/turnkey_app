@@ -175,7 +175,7 @@ class _SalesScreenState extends ConsumerState<SalesScreen> {
           ),
           IconButton(
             tooltip: 'Produtos não identificados',
-            icon: const Icon(Icons.help_outline),
+            icon: const Icon(Icons.link_off),
             onPressed: () => context.push(Routes.vendasNaoIdentificadas),
           ),
           SortMenuButton<Venda>(

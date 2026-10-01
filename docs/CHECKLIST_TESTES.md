@@ -1199,6 +1199,19 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       antes — liga-se sozinha ao produto certo, sem aparecer outra vez em "Produtos não identificados".
 - [ ] Sem nenhuma linha por identificar, o ecrã mostra "Nada por identificar — todas as vendas têm produto
       associado."
+- [ ] O ícone no AppBar de Vendas é diferente do ícone de Ajuda (interrogação) — não se confundem.
+
+## 66. Avisos de preço/nutrição em falta na Ficha Técnica
+
+- [ ] Abre uma Ficha Técnica cujo ingrediente usado (direto ou dentro de uma massa/sub-receita) não tem
+      preço definido — aparece logo no topo, antes de "Massa"/"Recheio"/etc., um aviso **vermelho** "Preço
+      em falta — o custo fica errado" com o nome do ingrediente.
+- [ ] Na mesma ficha, um ingrediente sem tabela nutricional mostra um aviso **amarelo** "Nutrição em falta"
+      com o nome do ingrediente — toca nele e abre a Declaração nutricional, já pronta para corrigir em
+      cascata.
+- [ ] Corrige o preço (ou a nutrição) desse ingrediente em Ingredientes e volta à Ficha Técnica — o aviso
+      correspondente desaparece sozinho.
+- [ ] Numa ficha com tudo completo, nenhum dos dois avisos aparece.
 
 ---
 

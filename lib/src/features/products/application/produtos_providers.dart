@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../ingredients/application/ingredients_providers.dart';
 import '../../ingredients/data/ingredient_product_repository.dart';
+import '../../ingredients/domain/ingredient.dart';
 import '../../mise_en_place/data/mep_repository.dart';
 import '../domain/lista_ingredientes.dart';
 
@@ -35,4 +36,26 @@ final produtoIngredientesProvider = FutureProvider.autoDispose
             aditivos: porId[c.ingredienteId]?.aditivos ?? '',
           ),
       ]);
+    });
+
+/// Ingredientes usados nesta ficha — direta ou indiretamente, via
+/// sub-receitas/massas de fabrico próprio — que ainda não têm preço
+/// definido (custo 0): o custo real da ficha fica incompleto/errado
+/// enquanto algum destes não for corrigido.
+final fichaIngredientesSemPrecoProvider = FutureProvider.autoDispose
+    .family<List<Ingrediente>, String>((ref, fichaId) async {
+      final plano = await ref
+          .watch(mepRepositoryProvider)
+          .planoFicha(fichaId, 1);
+      final todos = await ref.watch(ingredientsListProvider(false).future);
+      final porId = {for (final i in todos) i.id: i};
+      final vistos = <String>{};
+      final semPreco = <Ingrediente>[];
+      for (final c in plano.comprar) {
+        final ing = porId[c.ingredienteId];
+        if (ing != null && ing.custoPorGrama <= 0 && vistos.add(ing.id)) {
+          semPreco.add(ing);
+        }
+      }
+      return semPreco;
     });

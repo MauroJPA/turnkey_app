@@ -12,6 +12,7 @@ import '../../../core/widgets/history_sheet.dart';
 import '../../cookie_formats/application/cookie_format_providers.dart';
 import '../../pricing/data/cost_config_repository.dart';
 import '../../pricing/domain/cost_config.dart';
+import '../../products/application/produtos_providers.dart';
 import '../../recipes/presentation/item_picker_sheet.dart';
 import '../application/tech_sheets_providers.dart';
 import '../domain/tech_sheet.dart';
@@ -262,6 +263,32 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
                 onEditarPreco: _busy ? null : () => _editarPreco(d.ficha),
               ),
               const Divider(height: 1),
+              Consumer(
+                builder: (context, ref, _) {
+                  final semPreco = ref.watch(
+                    fichaIngredientesSemPrecoProvider(widget.fichaId),
+                  );
+                  return _AvisoIncompleto(
+                    cor: Theme.of(context).colorScheme.errorContainer,
+                    corTexto: Theme.of(context).colorScheme.onErrorContainer,
+                    icone: Icons.euro_outlined,
+                    titulo: 'Preço em falta — o custo fica errado',
+                    itens: semPreco.valueOrNull?.map((i) => i.nome).toList() ??
+                        const [],
+                  );
+                },
+              ),
+              _AvisoIncompleto(
+                cor: Colors.amber.shade100,
+                corTexto: Colors.amber.shade900,
+                icone: Icons.local_dining_outlined,
+                titulo: 'Nutrição em falta',
+                itens: d.ficha.nutri.completo
+                    ? const []
+                    : [for (final sd in d.ficha.nutri.semDados) sd.nome],
+                onTap: () =>
+                    showDeclaracaoNutricionalSheet(context, ficha: d.ficha),
+              ),
               for (final slot in SlotFicha.values)
                 _SlotSection(
                   slot: slot,
@@ -424,6 +451,72 @@ class _Header extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Aviso de dados em falta numa ficha (preço ou nutrição de algum
+/// ingrediente, direto ou via sub-receita/massa) — some sozinho se [itens]
+/// estiver vazio.
+class _AvisoIncompleto extends StatelessWidget {
+  const _AvisoIncompleto({
+    required this.cor,
+    required this.corTexto,
+    required this.icone,
+    required this.titulo,
+    required this.itens,
+    this.onTap,
+  });
+
+  final Color cor;
+  final Color corTexto;
+  final IconData icone;
+  final String titulo;
+  final List<String> itens;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    if (itens.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: Material(
+        color: cor,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(icone, color: corTexto, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        titulo,
+                        style: TextStyle(
+                          color: corTexto,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        itens.join(', '),
+                        style: TextStyle(color: corTexto),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

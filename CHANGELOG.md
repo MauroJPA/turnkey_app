@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.43.0 — 2026-10-01 — Avisos de preço/nutrição em falta na Ficha Técnica
+
+- **Ficha Técnica → ecrã de edição** (Peso/Custo/Preço de venda) ganha dois avisos logo no topo, quando
+  algum ingrediente usado — direto ou dentro de uma massa/sub-receita — ainda não está completo:
+  - 🔴 **"Preço em falta"** (vermelho) — lista os ingredientes sem preço definido; o custo da ficha fica
+    incompleto/errado enquanto isto não for corrigido.
+  - 🟡 **"Nutrição em falta"** (amarelo) — lista os ingredientes sem tabela nutricional; toca para abrir a
+    Declaração nutricional e corrigir em cascata (mesmo mecanismo que já existia, agora também visível sem
+    teres de abrir essa folha para descobrir que falta algo).
+- Corrigido: o ícone novo de "Produtos não identificados" (Vendas) usava o mesmo ícone do botão de Ajuda da
+  página — trocado para um ícone próprio.
+
 ## 1.42.0 — 2026-10-01 — Ligar produtos não identificados nas vendas (retroativo + aprende sozinho)
 
 - **Vendas → ícone "Produtos não identificados"** (novo): lista as descrições de vendas (Vendus/CSV) que
