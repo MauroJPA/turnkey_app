@@ -9,6 +9,7 @@ import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../../core/widgets/pendencia_aviso.dart';
 import '../../../core/widgets/sort_menu_button.dart';
 import '../../../core/widgets/swipe_to_delete.dart';
 import '../../cookie_formats/application/cookie_format_providers.dart';
@@ -207,6 +208,7 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
                 ],
               ),
             ),
+          if (!_trash) _avisoPrecoEmFalta(listAsync.valueOrNull),
           Expanded(
             child: AsyncValueView<List<FichaTecnica>>(
               value: listAsync,
@@ -247,6 +249,60 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
                   ),
                 );
               },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Faixa vermelha no topo da lista com as fichas cujo custo está incompleto
+  /// (linhas por ligar ou ingredientes sem preço, em qualquer nível).
+  Widget _avisoPrecoEmFalta(List<FichaTecnica>? todas) {
+    final afetadas = [
+      for (final f in todas ?? const <FichaTecnica>[])
+        if (f.custoSemDados.isNotEmpty) f,
+    ];
+    if (afetadas.isEmpty) return const SizedBox.shrink();
+    final cs = Theme.of(context).colorScheme;
+    final n = afetadas.length;
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: cs.errorContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.euro_outlined, size: 18, color: cs.onErrorContainer),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  n == 1
+                      ? 'Preço em falta em 1 ficha — o custo fica errado'
+                      : 'Preço em falta em $n fichas — o custo fica errado',
+                  style: TextStyle(
+                    color: cs.onErrorContainer,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  afetadas.map((f) => f.nome).join(', '),
+                  style: TextStyle(color: cs.onErrorContainer),
+                ),
+                Text(
+                  'Abre a ficha para ver o que falta (ingrediente sem preço '
+                  'ou por ligar).',
+                  style: TextStyle(color: cs.onErrorContainer, fontSize: 12),
+                ),
+              ],
             ),
           ),
         ],
@@ -312,15 +368,34 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
       if (f.categoria.isNotEmpty) f.categoria,
       if (formatoNome != null && formatoNome.isNotEmpty) formatoNome,
       if (f.pesoProduto > 0) '${f.pesoProduto.toStringAsFixed(0)} g',
-      'custo ${fmt(f.custoProduto)}',
     ].join(' · ');
 
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final semPreco = f.custoSemDados.isNotEmpty;
 
     final tile = ListTile(
       title: Text(f.nome),
-      subtitle: Text(subtitle),
+      subtitle: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(subtitle.isEmpty ? 'custo ' : '$subtitle · custo '),
+          Text(
+            fmt(f.custoProduto),
+            style: semPreco
+                ? TextStyle(color: cs.error, fontWeight: FontWeight.bold)
+                : null,
+          ),
+          if (semPreco) ...[
+            const SizedBox(width: 2),
+            PendenciaAviso(
+              mensagem:
+                  'Este custo não é definitivo: falta o preço (ou a ligação '
+                  'a um ingrediente) de ${f.custoSemDados.map((x) => x.nome).join(', ')}.',
+            ),
+          ],
+        ],
+      ),
       trailing: SizedBox(
         width: 104,
         child: Column(

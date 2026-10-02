@@ -1223,6 +1223,14 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Liga as linhas por ligar a ingredientes com preço → o aviso desaparece sozinho.
 - [ ] Ficha completa: nenhum aviso.
 
+## 68. Preço em falta na lista de Fichas Técnicas
+
+- [ ] ~1 minuto depois de atualizar o servidor, abre **Fichas Técnicas**: as fichas cuja massa tem linhas
+      por ligar ou ingredientes sem preço (ex.: Bali) aparecem numa faixa **vermelha** no topo.
+- [ ] Nessas fichas, o custo aparece a vermelho com ⚠; tocar no ⚠ diz o que falta.
+- [ ] Liga/dá preço ao que falta → a faixa e o ⚠ desaparecem.
+- [ ] Sem nenhuma ficha incompleta, não há faixa.
+
 ---
 
 ## Notas / ajustes pedidos

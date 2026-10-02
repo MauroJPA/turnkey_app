@@ -2,6 +2,14 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.44.1 — 2026-10-02 — Preço em falta visível na lista de Fichas Técnicas
+
+- **Fichas Técnicas (lista)**: faixa **vermelha** no topo com as fichas cujo custo está incompleto
+  (ex.: "Bali"), e em cada ficha afetada o custo fica a vermelho com ⚠ (toca para ver o que falta) — igual
+  ao que já existia na lista de Receitas.
+- O servidor passa a **preencher sozinho** os novos dados de custo das receitas/fichas existentes, 1 minuto
+  depois de arrancar após a atualização — já não é preciso chamar `admin/recompute` à mão.
+
 ## 1.44.0 — 2026-10-02 — Aviso de preço em falta apanha linhas por ligar e massas/sub-receitas
 
 - **Corrigido**: o aviso vermelho "Preço em falta" da Ficha Técnica não aparecia quando a massa tinha
