@@ -10,6 +10,7 @@ import '../../../core/widgets/help_actions.dart';
 import '../application/resumo_financeiro_providers.dart';
 import '../domain/periodo.dart';
 import '../domain/resumo_financeiro.dart';
+import 'seletor_periodo.dart';
 
 class PainelFinanceiroScreen extends ConsumerStatefulWidget {
   const PainelFinanceiroScreen({super.key});
@@ -46,16 +47,9 @@ class _PainelFinanceiroScreenState
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: SegmentedButton<Periodo>(
-              segments: [
-                for (final p in Periodo.presets())
-                  ButtonSegment(value: p, label: Text(p.label)),
-              ],
-              selected: {_periodo},
-              onSelectionChanged: (s) => setState(() => _periodo = s.first),
-            ),
+          SeletorPeriodo(
+            periodo: _periodo,
+            onChanged: (p) => setState(() => _periodo = p),
           ),
           Expanded(
             child: AsyncValueView<ComparacaoFinanceira>(

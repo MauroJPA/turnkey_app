@@ -2,6 +2,23 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.46.0 — 2026-10-02 — Períodos claros nos números financeiros (semana dom–sáb, mês inteiro, histórico)
+
+- **Números mágicos, Painel financeiro, DRE e Análise de vendas** passam a usar o mesmo seletor de período:
+  - **Semana**: de **domingo a sábado**, ignora o mês (pode atravessar dois meses).
+  - **Mês**: do **dia 1 ao último dia** do mês.
+  - As **datas exatas** aparecem sempre (ex.: *01/10/2026 – 31/10/2026*), e quando o período ainda está a
+    decorrer diz-se que é contado inteiro.
+- O período é sempre **completo** (a semana toda, o mês todo), por isso o mínimo/custos do período **já não
+  mudam de um dia para o outro** — só o "vendido" vai subindo. Antes a semana ia de segunda até hoje e o mês
+  do dia 1 até hoje, e o mínimo era proporcional aos dias passados.
+- **Histórico**: setas ‹ › para qualquer semana ou mês anterior (não só o mês passado), toque nas datas para
+  saltar para um dia, e botão "voltar a hoje".
+- A comparação com o "período anterior" usa agora a semana anterior, ou o **mês civil anterior** (antes era
+  "o mesmo nº de dias antes").
+- Uma semana pesa sempre 7/30,44 de um mês nos custos fixos (antes variava com o mês onde caía).
+- Corrigido: contagem de dias de um período errada em semanas que incluem a mudança de hora.
+
 ## 1.45.0 — 2026-10-02 — Subnome nas fichas + etiquetas térmicas em tamanhos padrão
 
 - **Ficha técnica → Editar**: novo campo **Subnome** (ex.: Carolina do Sul → *Red Velvet*). O campo

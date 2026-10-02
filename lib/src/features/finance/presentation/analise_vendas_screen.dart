@@ -10,6 +10,7 @@ import '../../../core/widgets/help_actions.dart';
 import '../application/analise_vendas_providers.dart';
 import '../domain/analise_vendas.dart';
 import '../domain/periodo.dart';
+import 'seletor_periodo.dart';
 
 /// Sabores mais vendidos, margem real por ficha técnica e tendência face ao
 /// período anterior — a análise de vendas do painel financeiro.
@@ -40,16 +41,9 @@ class _AnaliseVendasScreenState extends ConsumerState<AnaliseVendasScreen> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: SegmentedButton<Periodo>(
-              segments: [
-                for (final p in Periodo.presets())
-                  ButtonSegment(value: p, label: Text(p.label)),
-              ],
-              selected: {_periodo},
-              onSelectionChanged: (s) => setState(() => _periodo = s.first),
-            ),
+          SeletorPeriodo(
+            periodo: _periodo,
+            onChanged: (p) => setState(() => _periodo = p),
           ),
           Expanded(
             child: AsyncValueView<AnaliseVendas>(

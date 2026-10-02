@@ -1244,6 +1244,18 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Pré-visualizar: nome, subnome (mais pequeno), característica e peso cabem na frente, sem cortes.
 - [ ] Uma ficha com etiqueta guardada de uma versão anterior abre com o tamanho padrão mais próximo.
 
+## 70. Períodos dos números financeiros
+
+- [ ] Números mágicos → "Semana": mostra de domingo a sábado (ex.: *27/09/2026 – 03/10/2026*) e a
+      indicação "ainda a decorrer — o período é contado inteiro".
+- [ ] "Mês": mostra do dia 1 ao último dia (ex.: *01/10/2026 – 31/10/2026*).
+- [ ] O "Mínimo para o período inteiro" não muda de um dia para o outro; só o "Vendido até hoje".
+- [ ] As setas ‹ › andam semana a semana / mês a mês, para trás (todos os meses) e para a frente até ao
+      período atual; o ícone de hoje volta ao período atual; tocar nas datas abre um calendário.
+- [ ] Uma semana que cruza dois meses (ex.: 27/09 – 03/10) fica como uma única semana.
+- [ ] Painel financeiro, DRE e Análise de vendas têm o mesmo seletor e os mesmos períodos.
+- [ ] A seta de comparação com o período anterior compara com a semana anterior / o mês anterior.
+
 ---
 
 ## Notas / ajustes pedidos

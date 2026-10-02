@@ -12,6 +12,7 @@ import '../../settings/application/empresa_providers.dart';
 import '../application/resumo_financeiro_providers.dart';
 import '../domain/periodo.dart';
 import '../domain/resumo_financeiro.dart';
+import 'seletor_periodo.dart';
 
 /// DRE (Demonstração de Resultados do Exercício) simplificada — a mesma
 /// [ResumoFinanceiro] do painel financeiro, apresentada no formato de
@@ -56,16 +57,9 @@ class _DreScreenState extends ConsumerState<DreScreen> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: SegmentedButton<Periodo>(
-              segments: [
-                for (final p in Periodo.presets())
-                  ButtonSegment(value: p, label: Text(p.label)),
-              ],
-              selected: {_periodo},
-              onSelectionChanged: (s) => setState(() => _periodo = s.first),
-            ),
+          SeletorPeriodo(
+            periodo: _periodo,
+            onChanged: (p) => setState(() => _periodo = p),
           ),
           Expanded(
             child: AsyncValueView<ResumoFinanceiro>(

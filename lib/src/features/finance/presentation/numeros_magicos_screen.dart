@@ -10,6 +10,7 @@ import '../../../core/widgets/help_actions.dart';
 import '../application/numeros_magicos_providers.dart';
 import '../domain/numeros_magicos.dart';
 import '../domain/periodo.dart';
+import 'seletor_periodo.dart';
 
 /// "Números mágicos": a partir de quanto vendido tudo já está pago e o
 /// resto é lucro. Junta custos reais (fixos, variáveis, depreciação de
@@ -41,16 +42,9 @@ class _NumerosMagicosScreenState extends ConsumerState<NumerosMagicosScreen> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: SegmentedButton<Periodo>(
-              segments: [
-                for (final p in Periodo.presets())
-                  ButtonSegment(value: p, label: Text(p.label)),
-              ],
-              selected: {_periodo},
-              onSelectionChanged: (s) => setState(() => _periodo = s.first),
-            ),
+          SeletorPeriodo(
+            periodo: _periodo,
+            onChanged: (p) => setState(() => _periodo = p),
           ),
           Expanded(
             child: AsyncValueView<NumerosMagicos>(
@@ -155,9 +149,22 @@ class _NumerosMagicosScreenState extends ConsumerState<NumerosMagicosScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text('${n.periodo.label}: como vai indo', style: tt.titleMedium),
+                  const SizedBox(height: 2),
+                  Text(
+                    'De ${n.periodo.intervaloTexto.replaceFirst(' – ', ' a ')} '
+                    '(${n.periodo.dias} dias)',
+                    style: tt.bodySmall,
+                  ),
                   const SizedBox(height: 8),
-                  _linha(context, 'Vendido no período', fmt(n.receitaPeriodo)),
-                  _linha(context, 'Mínimo para este período',
+                  _linha(
+                    context,
+                    n.periodo.contem(DateTime.now()) &&
+                            n.periodo.ate.isAfter(DateTime.now())
+                        ? 'Vendido até hoje'
+                        : 'Vendido no período',
+                    fmt(n.receitaPeriodo),
+                  ),
+                  _linha(context, 'Mínimo para o período inteiro',
                       fmt(n.vendaMinimaDoPeriodo!)),
                   const Divider(height: 20),
                   _linha(
