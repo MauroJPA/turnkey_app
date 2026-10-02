@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.48.2 — 2026-10-02 — Backup manual: verifica o espaço e limita o número de cópias
+
+- **`gc_turnkey.sh backup-agora`** (servidor):
+  - antes de parar o servidor, **verifica se há espaço em disco** para a cópia; se não houver, avisa e **não
+    mexe em nada** (o servidor continua a funcionar);
+  - depois de um backup bem sucedido, **guarda só os últimos 5** backups manuais (configurável com
+    `GC_TURNKEY_BACKUPS_MANTER=N` no `.env`) — cada um tem o tamanho dos dados e enchiam o disco.
+  - o espaço é medido no disco onde a cópia é escrita, por isso `backups-manuais` pode ser um atalho para
+    outro disco maior (ver `docs/SERVIDOR_LINUX.md`).
+- Sem alterações na app nem na base de dados.
+
 ## 1.48.1 — 2026-10-02 — Backup que falha já não deixa o servidor parado
 
 - **Corrigido (servidor, `gc_turnkey.sh backup-agora`)**: o backup pára o servidor para copiar `data/`; se a

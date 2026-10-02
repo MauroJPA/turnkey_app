@@ -133,6 +133,16 @@ cmd_backup_agora() {
   precisa_docker
   mkdir -p backups-manuais
   local f="backups-manuais/gc_turnkey-dados-$(date +%Y%m%d-%H%M%S).tar.gz"
+  # Antes de parar o servidor: há espaço? (a cópia comprimida nunca é maior que
+  # os dados, por isso esse é o limite — com folga de 100 MB). Mede-se o disco
+  # onde a cópia é ESCRITA: `backups-manuais` pode ser um atalho (ln -s) para
+  # outro disco maior.
+  local usado_kb livre_kb
+  usado_kb=$(du -sk data | cut -f1)
+  livre_kb=$(df -Pk backups-manuais | awk 'NR==2{print $4}')
+  if [ "$livre_kb" -lt $((usado_kb + 102400)) ]; then
+    erro "Sem espaço em disco para o backup: precisa de ~$((usado_kb / 1024)) MB e só há $((livre_kb / 1024)) MB livres. O servidor NÃO foi parado. Apaga backups manuais antigos (ls -lh backups-manuais) ou liberta espaço (docker image prune -f)."
+  fi
   msg "A parar o servidor para copiar ficheiros coerentes ..."
   docker compose stop gc_turnkey
   # O servidor TEM de voltar a arrancar mesmo que a cópia falhe (disco cheio,
@@ -146,6 +156,16 @@ cmd_backup_agora() {
     erro "A cópia de segurança FALHOU (o servidor foi arrancado de novo). Verifica o espaço em disco ('df -h .') e as permissões de ./data."
   fi
   msg "Feito: $f ($(du -h "$f" | cut -f1)). Guarda também o .env (segredos)."
+  # Guarda só os últimos N backups manuais (por omissão 5): cada um tem o
+  # tamanho dos dados e, sem isto, enchem o disco.
+  local manter="${GC_TURNKEY_BACKUPS_MANTER:-$(valor_env GC_TURNKEY_BACKUPS_MANTER)}"
+  manter="${manter:-5}"
+  local apagados
+  apagados=$(ls -1t backups-manuais/gc_turnkey-dados-*.tar.gz 2>/dev/null | tail -n +"$((manter + 1))" || true)
+  if [ -n "$apagados" ]; then
+    echo "$apagados" | xargs -r rm -f
+    msg "Apagados backups manuais antigos (ficam os últimos $manter): $(echo "$apagados" | wc -l)."
+  fi
 }
 
 cmd_restaurar() {

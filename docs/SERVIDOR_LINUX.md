@@ -169,6 +169,11 @@ bash gc_turnkey.sh estado
 
 Se o `backup-agora` falhar (mensagem "A cópia de segurança FALHOU"), a atualização pára **sem mexer na app**
 e o servidor volta a arrancar sozinho (v1.48.1+; em versões anteriores ficava parado: `bash gc_turnkey.sh iniciar`).
+Se o disco do servidor for pequeno e houver outro maior (ex.: `/home`), guarda lá os backups manuais:
+`mkdir -p /home/UTILIZADOR/gc_turnkey-backups && mv backups-manuais/* /home/UTILIZADOR/gc_turnkey-backups/ &&
+rmdir backups-manuais && ln -s /home/UTILIZADOR/gc_turnkey-backups backups-manuais`.
+Cada backup manual (`backups-manuais/`) tem o tamanho dos dados; desde a v1.48.2 o `backup-agora` verifica o
+espaço antes de parar o servidor e guarda só os últimos 5 (`GC_TURNKEY_BACKUPS_MANTER=N` no `.env` muda o número).
 Causas habituais: disco cheio (`df -h .`) ou ficheiros de `data/` que o teu utilizador não consegue ler
 (`ls -la data | head`; corrige o dono com `sudo chown -R "$USER" data`, ou corre o backup com `sudo`).
 
