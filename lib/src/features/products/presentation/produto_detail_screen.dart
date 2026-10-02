@@ -53,6 +53,7 @@ class ProdutoDetailScreen extends ConsumerWidget {
   ) {
     final n = f.nutri;
     final b = StringBuffer()..writeln(f.nome.toUpperCase());
+    if (f.subnome.trim().isNotEmpty) b.writeln(f.subnome.trim());
     if (f.descricao.trim().isNotEmpty) b.writeln(f.descricao.trim());
     b.writeln();
     if (lista != null && !lista.vazia) {
@@ -264,6 +265,14 @@ class _CorpoState extends State<_Corpo> {
             ),
           ),
         Text(ficha.nome, style: tt.headlineSmall),
+        if (ficha.subnome.trim().isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              ficha.subnome.trim(),
+              style: tt.titleMedium?.copyWith(color: cs.primary),
+            ),
+          ),
         if (ficha.descricao.trim().isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 4),

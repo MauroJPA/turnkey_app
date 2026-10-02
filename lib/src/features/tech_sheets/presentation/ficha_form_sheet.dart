@@ -37,18 +37,24 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
   late final _nome = TextEditingController(
     text: widget.existente?.nome ?? widget.nomeInicial,
   );
-  late final _categoria =
-      TextEditingController(text: widget.existente?.categoria ?? '');
+  late final _categoria = TextEditingController(
+    text: widget.existente?.categoria ?? '',
+  );
   late String _formatoId = widget.existente?.formatoId ?? '';
-  late final _descricao =
-      TextEditingController(text: widget.existente?.descricao ?? '');
+  late final _subnome = TextEditingController(
+    text: widget.existente?.subnome ?? '',
+  );
+  late final _descricao = TextEditingController(
+    text: widget.existente?.descricao ?? '',
+  );
   late final _validade = TextEditingController(
     text: (widget.existente?.validadeDias ?? 0) > 0
         ? '${widget.existente!.validadeDias}'
         : '',
   );
-  late final _conservacao =
-      TextEditingController(text: widget.existente?.conservacao ?? '');
+  late final _conservacao = TextEditingController(
+    text: widget.existente?.conservacao ?? '',
+  );
 
   /// '' = sem escolha, uma das [conservacoesPadrao], ou [_outro] (texto livre).
   static const _outro = '__outro';
@@ -62,6 +68,7 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
   void dispose() {
     _nome.dispose();
     _categoria.dispose();
+    _subnome.dispose();
     _descricao.dispose();
     _validade.dispose();
     _conservacao.dispose();
@@ -76,6 +83,7 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
         nome: _nome.text,
         categoria: _categoria.text,
         formatoId: _formatoId,
+        subnome: _subnome.text,
         descricao: _descricao.text,
         validadeDias: int.tryParse(_validade.text.trim()) ?? 0,
         conservacao: _conservacaoSel == _outro
@@ -89,8 +97,9 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
   Widget build(BuildContext context) {
     final editar = widget.existente != null;
     final formatos = ref.watch(formatosProvider).valueOrNull ?? const [];
-    final visiveis =
-        formatos.where((f) => f.ativo || f.id == _formatoId).toList();
+    final visiveis = formatos
+        .where((f) => f.ativo || f.id == _formatoId)
+        .toList();
     final valor = visiveis.any((f) => f.id == _formatoId) ? _formatoId : '';
 
     return Padding(
@@ -126,12 +135,24 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
               ),
             ),
             const SizedBox(height: 12),
+            TextFormField(
+              controller: _subnome,
+              maxLength: 60,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(
+                labelText: 'Subnome (opcional)',
+                helperText:
+                    'Ex.: Red Velvet. Pode ir na etiqueta, por baixo '
+                    'do nome.',
+              ),
+            ),
             DropdownButtonFormField<String>(
               initialValue: valor,
               isExpanded: true,
               decoration: const InputDecoration(
                 labelText: 'Formato do cookie (opcional)',
-                helperText: 'Mini, Recheado, Simples… define o peso por '
+                helperText:
+                    'Mini, Recheado, Simples… define o peso por '
                     'unidade e liga este produto à produção.',
                 helperMaxLines: 2,
               ),
@@ -153,8 +174,12 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
               maxLines: 3,
               textCapitalization: TextCapitalization.sentences,
               decoration: const InputDecoration(
-                labelText: 'Descrição (opcional)',
-                helperText: 'Curta: aparece por baixo do nome na etiqueta.',
+                labelText: 'Característica (opcional)',
+                helperText:
+                    'Curta: aparece por baixo do nome na etiqueta. '
+                    'Ex.: Brigadeiro de queijo creme e compota de frutos '
+                    'vermelhos.',
+                helperMaxLines: 2,
               ),
             ),
             TextFormField(

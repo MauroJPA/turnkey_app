@@ -59,6 +59,10 @@ class FichaTecnica with _$FichaTecnica {
     @Default(false) bool deletado,
     @Default('') String formatoId,
     @Default('') String descricao,
+
+    /// Segundo nome do produto (ex.: "Red Velvet" em "Carolina do Sul"); pode
+    /// ir na etiqueta, por baixo do nome.
+    @Default('') String subnome,
     @Default(0) int validadeDias,
     @Default('') String conservacao,
     @Default(<String, dynamic>{}) Map<String, dynamic> nutriRaw,
@@ -110,6 +114,7 @@ class FichaTecnica with _$FichaTecnica {
       deletado: r.getBoolValue('deletado'),
       formatoId: r.getStringValue('formato'),
       descricao: r.getStringValue('descricao'),
+      subnome: r.getStringValue('subnome'),
       validadeDias: r.getIntValue('validade_dias'),
       conservacao: r.getStringValue('conservacao'),
       nutriRaw: rawNutri is Map
@@ -147,6 +152,7 @@ class FichaInput {
     this.categoria = '',
     this.formatoId = '',
     this.descricao = '',
+    this.subnome = '',
     this.validadeDias = 0,
     this.conservacao = '',
   });
@@ -160,6 +166,9 @@ class FichaInput {
   /// Descrição curta (aparece na etiqueta), prazo de validade em dias a
   /// contar do fabrico (0 = não definido) e modo de conservação.
   final String descricao;
+
+  /// Segundo nome (opcional) — ver [FichaTecnica.subnome].
+  final String subnome;
   final int validadeDias;
   final String conservacao;
 
@@ -168,6 +177,7 @@ class FichaInput {
     'categoria': categoria.trim(),
     'formato': formatoId,
     'descricao': descricao.trim(),
+    'subnome': subnome.trim(),
     'validade_dias': validadeDias,
     'conservacao': conservacao.trim(),
   };

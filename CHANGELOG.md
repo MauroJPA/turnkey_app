@@ -2,6 +2,22 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.45.0 — 2026-10-02 — Subnome nas fichas + etiquetas térmicas em tamanhos padrão
+
+- **Ficha técnica → Editar**: novo campo **Subnome** (ex.: Carolina do Sul → *Red Velvet*). O campo
+  "Descrição" passa a chamar-se **Característica** (ex.: "Brigadeiro de queijo creme e compota de frutos
+  vermelhos").
+- O subnome aparece na **página do produto** e, ao imprimir, há um interruptor **"Imprimir o subnome"**
+  (por baixo do nome, em letra mais pequena que o nome e maior que a característica).
+- **Etiquetas**: deixa de haver medidas livres. Escolhe-se um **tamanho padrão de etiqueta térmica**
+  (50 × 80 — preferido, 50 × 100, 60 × 80, 60 × 100, 75 × 100). A **frente** (nome, subnome,
+  característica e peso) tem **15 mm por omissão (mínimo) até 25 mm**; a parte de baixo, com a informação
+  legal, fica com o resto.
+- A app mede o texto e sugere: "Frente de X mm" se a frente não chega, e o **menor tamanho padrão** onde
+  tudo cabe (tenta sempre 50 × 80 primeiro).
+- Definições de etiqueta antigas (medidas livres) são convertidas para o tamanho padrão mais próximo.
+- Nova migration `1790840000_fichas_subnome.js`.
+
 ## 1.44.1 — 2026-10-02 — Preço em falta visível na lista de Fichas Técnicas
 
 - **Fichas Técnicas (lista)**: faixa **vermelha** no topo com as fichas cujo custo está incompleto

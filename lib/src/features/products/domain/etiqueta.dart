@@ -20,6 +20,53 @@ enum EtiquetaData {
   final String texto;
 }
 
+/// Altura da frente (nome, subnome, característica e peso): mínimo e máximo.
+/// O resto da etiqueta, depois da dobra, leva a informação legal.
+const frenteMinMm = 15;
+const frenteMaxMm = 25;
+
+/// Tamanho de etiqueta térmica (medidas padrão do mercado, largura × altura).
+class TamanhoEtiqueta {
+  const TamanhoEtiqueta(this.larguraMm, this.alturaMm);
+  final int larguraMm;
+  final int alturaMm;
+
+  String get label => '$larguraMm × $alturaMm mm';
+
+  @override
+  bool operator ==(Object other) =>
+      other is TamanhoEtiqueta &&
+      other.larguraMm == larguraMm &&
+      other.alturaMm == alturaMm;
+
+  @override
+  int get hashCode => Object.hash(larguraMm, alturaMm);
+}
+
+/// Tamanhos permitidos, do mais pequeno para o maior. O primeiro (50 × 80) é o
+/// predefinido e o que se tenta usar sempre que a informação cabe.
+const tamanhosEtiqueta = [
+  TamanhoEtiqueta(50, 80),
+  TamanhoEtiqueta(50, 100),
+  TamanhoEtiqueta(60, 80),
+  TamanhoEtiqueta(60, 100),
+  TamanhoEtiqueta(75, 100),
+];
+
+/// Aproxima uma medida qualquer (ex.: guardada por uma versão antiga) a um
+/// tamanho padrão: o igual; senão o da mesma largura com altura suficiente
+/// mais próxima; senão o predefinido.
+TamanhoEtiqueta tamanhoPadrao(int larguraMm, int alturaMm) {
+  for (final t in tamanhosEtiqueta) {
+    if (t.larguraMm == larguraMm && t.alturaMm == alturaMm) return t;
+  }
+  final mesmaLargura = [
+    for (final t in tamanhosEtiqueta)
+      if (t.larguraMm == larguraMm && t.alturaMm >= alturaMm) t,
+  ];
+  return mesmaLargura.isEmpty ? tamanhosEtiqueta.first : mesmaLargura.first;
+}
+
 /// Definições de impressão guardadas por produto: são o predefinido da
 /// próxima vez. Não inclui o que muda a cada impressão (data, lote, cópias).
 class EtiquetaPrefs {
@@ -29,9 +76,10 @@ class EtiquetaPrefs {
     this.tipoData = EtiquetaData.preferencia,
     this.imprimirDatas = true,
     this.mostrarE = false,
+    this.mostrarSubnome = false,
     this.larguraMm = 50,
-    this.alturaFrenteMm = 25,
-    this.alturaCorpoMm = 55,
+    this.alturaTotalMm = 80,
+    this.alturaFrenteMm = frenteMinMm,
   });
 
   final bool resumida;
@@ -39,9 +87,18 @@ class EtiquetaPrefs {
   final EtiquetaData tipoData;
   final bool imprimirDatas;
   final bool mostrarE;
+
+  /// Imprime o subnome da ficha por baixo do nome.
+  final bool mostrarSubnome;
+
+  /// Tamanho da etiqueta (um dos [tamanhosEtiqueta]).
   final int larguraMm;
+  final int alturaTotalMm;
+
+  /// Entre [frenteMinMm] e [frenteMaxMm]; a parte de baixo ocupa o resto.
   final int alturaFrenteMm;
-  final int alturaCorpoMm;
+
+  TamanhoEtiqueta get tamanho => TamanhoEtiqueta(larguraMm, alturaTotalMm);
 
   factory EtiquetaPrefs.fromJson(Object? raw) {
     if (raw is! Map) return const EtiquetaPrefs();
@@ -49,6 +106,20 @@ class EtiquetaPrefs {
         valores.firstWhere((e) => e.name == v, orElse: () => def);
     int mm(Object? v, int def, int min, int max) =>
         v is num ? v.round().clamp(min, max) : def;
+    // Versões antigas guardavam frente + corpo livres; passam ao padrão mais
+    // próximo.
+    final largura = raw['larguraMm'] is num
+        ? (raw['larguraMm'] as num).round()
+        : 50;
+    final total = raw['alturaTotalMm'] is num
+        ? (raw['alturaTotalMm'] as num).round()
+        : (raw['alturaCorpoMm'] is num
+              ? (raw['alturaCorpoMm'] as num).round() +
+                    (raw['alturaFrenteMm'] is num
+                        ? (raw['alturaFrenteMm'] as num).round()
+                        : 25)
+              : 80);
+    final tamanho = tamanhoPadrao(largura, total);
     return EtiquetaPrefs(
       resumida: raw['resumida'] == true,
       modoNutri: porNome(
@@ -63,9 +134,15 @@ class EtiquetaPrefs {
       ),
       imprimirDatas: raw['imprimirDatas'] != false,
       mostrarE: raw['mostrarE'] == true,
-      larguraMm: mm(raw['larguraMm'], 50, 30, 120),
-      alturaFrenteMm: mm(raw['alturaFrenteMm'], 25, 15, 80),
-      alturaCorpoMm: mm(raw['alturaCorpoMm'], 55, 30, 150),
+      mostrarSubnome: raw['mostrarSubnome'] == true,
+      larguraMm: tamanho.larguraMm,
+      alturaTotalMm: tamanho.alturaMm,
+      alturaFrenteMm: mm(
+        raw['alturaFrenteMm'],
+        frenteMinMm,
+        frenteMinMm,
+        frenteMaxMm,
+      ),
     );
   }
 
@@ -75,17 +152,20 @@ class EtiquetaPrefs {
     'tipoData': tipoData.name,
     'imprimirDatas': imprimirDatas,
     'mostrarE': mostrarE,
+    'mostrarSubnome': mostrarSubnome,
     'larguraMm': larguraMm,
+    'alturaTotalMm': alturaTotalMm,
     'alturaFrenteMm': alturaFrenteMm,
-    'alturaCorpoMm': alturaCorpoMm,
   };
 }
 
-/// Tudo o que entra numa etiqueta (por omissão 50 × 80 mm: 25 mm de frente, nome e
-/// descrição) e 55 mm depois da dobra (informação legal).
+/// Tudo o que entra numa etiqueta (por omissão 50 × 80 mm: 15 mm de frente —
+/// nome, subnome, característica e peso — e 65 mm depois da dobra, com a
+/// informação legal).
 class EtiquetaDados {
   const EtiquetaDados({
     required this.nome,
+    this.subnome = '',
     this.descricao = '',
     this.ingredientes,
     this.resumida = false,
@@ -103,11 +183,16 @@ class EtiquetaDados {
     this.copias = 1,
     this.imprimirDatas = true,
     this.larguraMm = 50,
-    this.alturaFrenteMm = 25,
-    this.alturaCorpoMm = 55,
+    this.alturaTotalMm = 80,
+    this.alturaFrenteMm = frenteMinMm,
   });
 
   final String nome;
+
+  /// Segundo nome, por baixo do nome; vazio = não se imprime.
+  final String subnome;
+
+  /// Característica do produto (campo "descrição" da ficha).
   final String descricao;
   final ListaIngredientes? ingredientes;
   final bool resumida;
@@ -137,13 +222,14 @@ class EtiquetaDados {
   /// Largura da etiqueta.
   final int larguraMm;
 
-  /// Altura da frente (nome, descrição e peso), até à dobra.
+  /// Altura total da etiqueta.
+  final int alturaTotalMm;
+
+  /// Altura da frente (nome, subnome, característica e peso), até à dobra.
   final int alturaFrenteMm;
 
-  /// Altura da parte de baixo (depois da dobra).
-  final int alturaCorpoMm;
-
-  int get alturaTotalMm => alturaFrenteMm + alturaCorpoMm;
+  /// Altura da parte de baixo (depois da dobra): o que sobra.
+  int get alturaCorpoMm => alturaTotalMm - alturaFrenteMm;
 
   DateTime get validade => fabrico.add(Duration(days: validadeDias));
 }
@@ -266,7 +352,7 @@ String _etiquetaHtml(EtiquetaDados d, {required bool repetida}) {
   }
   return '''
 <div class="etq${repetida ? ' rep' : ''}">
-<section class="topo"><h1>${_esc(d.nome)}</h1>${d.descricao.trim().isEmpty ? '' : '<p class="desc">${_esc(d.descricao.trim())}</p>'}${d.pesoLiquidoG > 0 ? '<p class="peso">Peso líquido: ${_g(d.pesoLiquidoG, casas: 0)} g${d.mostrarE ? ' ℮' : ''}</p>' : ''}</section>
+<section class="topo"><h1>${_esc(d.nome)}</h1>${d.subnome.trim().isEmpty ? '' : '<p class="sub">${_esc(d.subnome.trim())}</p>'}${d.descricao.trim().isEmpty ? '' : '<p class="desc">${_esc(d.descricao.trim())}</p>'}${d.pesoLiquidoG > 0 ? '<p class="peso">Peso líquido: ${_g(d.pesoLiquidoG, casas: 0)} g${d.mostrarE ? ' ℮' : ''}</p>' : ''}</section>
 <section class="corpo">
 $corpo</section>
 </div>''';
@@ -296,10 +382,11 @@ String etiquetaPagina(EtiquetaDados d, {String tokenMedicao = ''}) {
   body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #000; }
   .etq { width: ${d.larguraMm}mm; height: ${d.alturaTotalMm}mm; overflow: hidden; background: #fff; break-after: page; page-break-after: always; position: relative; }
   .etq:last-child { break-after: auto; page-break-after: auto; }
-  .topo { height: ${d.alturaFrenteMm}mm; padding: 2mm 2.5mm; overflow: hidden; text-align: center; display: flex; flex-direction: column; justify-content: center; }
-  .topo h1 { font-size: 13pt; margin: 0 0 1mm; text-transform: uppercase; line-height: 1.1; }
-  .topo .desc { font-size: 7.5pt; margin: 0; line-height: 1.2; }
-  .topo .peso { font-size: 8pt; font-weight: bold; margin: 1.2mm 0 0; }
+  .topo { height: ${d.alturaFrenteMm}mm; padding: 1.2mm 2.5mm; overflow: hidden; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+  .topo h1 { font-size: 13pt; margin: 0 0 0.6mm; text-transform: uppercase; line-height: 1.05; }
+  .topo .sub { font-size: 9pt; font-weight: bold; margin: 0 0 0.6mm; line-height: 1.1; }
+  .topo .desc { font-size: 7pt; margin: 0; line-height: 1.15; }
+  .topo .peso { font-size: 7.5pt; font-weight: bold; margin: 0.8mm 0 0; line-height: 1.1; }
   .corpo { height: ${d.alturaCorpoMm}mm; padding: 1.2mm 2.5mm; overflow: hidden; font-size: 6pt; line-height: 1.15; }
   .corpo p { margin: 0 0 0.5mm; }
   .corpo .peq { font-size: 6pt; font-style: italic; }
@@ -342,8 +429,8 @@ $etiquetas
     document.getElementById('medido').textContent = 'Mínimo medido: frente ' + Math.ceil(mm(t0)) + ' mm · parte de baixo ' + Math.ceil(mm(c0)) + ' mm.';
     var msgs = [];
     var topo = e.querySelector('.topo'), corpo = e.querySelector('.corpo');
-    if (topo.scrollHeight > topo.clientHeight + 1) msgs.push('O nome/descrição não cabe nos ${d.alturaFrenteMm} mm da frente — encurta a descrição ou aumenta a altura.');
-    if (corpo.scrollHeight > corpo.clientHeight + 1) msgs.push('A informação não cabe nos ${d.alturaCorpoMm} mm — usa a lista resumida, a nutrição linear ou aumenta a altura.');
+    if (topo.scrollHeight > topo.clientHeight + 1) msgs.push('O nome/subnome/característica não cabe nos ${d.alturaFrenteMm} mm da frente — encurta a característica ou aumenta a frente (máx. $frenteMaxMm mm).');
+    if (corpo.scrollHeight > corpo.clientHeight + 1) msgs.push('A informação não cabe nos ${d.alturaCorpoMm} mm — usa a lista resumida, a nutrição linear ou escolhe uma etiqueta maior.');
     if (msgs.length) { e.classList.add('estoira'); document.getElementById('aviso').innerHTML = '⚠ ' + msgs.join('<br>⚠ '); }
   })();
 </script>

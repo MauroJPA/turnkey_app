@@ -26,6 +26,7 @@ mixin _$FichaTecnica {
   bool get deletado => throw _privateConstructorUsedError;
   String get formatoId => throw _privateConstructorUsedError;
   String get descricao => throw _privateConstructorUsedError;
+  String get subnome => throw _privateConstructorUsedError;
   int get validadeDias => throw _privateConstructorUsedError;
   String get conservacao => throw _privateConstructorUsedError;
   Map<String, dynamic> get nutriRaw => throw _privateConstructorUsedError;
@@ -58,6 +59,7 @@ abstract class $FichaTecnicaCopyWith<$Res> {
     bool deletado,
     String formatoId,
     String descricao,
+    String subnome,
     int validadeDias,
     String conservacao,
     Map<String, dynamic> nutriRaw,
@@ -91,6 +93,7 @@ class _$FichaTecnicaCopyWithImpl<$Res, $Val extends FichaTecnica>
     Object? deletado = null,
     Object? formatoId = null,
     Object? descricao = null,
+    Object? subnome = null,
     Object? validadeDias = null,
     Object? conservacao = null,
     Object? nutriRaw = null,
@@ -135,6 +138,10 @@ class _$FichaTecnicaCopyWithImpl<$Res, $Val extends FichaTecnica>
             descricao: null == descricao
                 ? _value.descricao
                 : descricao // ignore: cast_nullable_to_non_nullable
+                      as String,
+            subnome: null == subnome
+                ? _value.subnome
+                : subnome // ignore: cast_nullable_to_non_nullable
                       as String,
             validadeDias: null == validadeDias
                 ? _value.validadeDias
@@ -185,6 +192,7 @@ abstract class _$$FichaTecnicaImplCopyWith<$Res>
     bool deletado,
     String formatoId,
     String descricao,
+    String subnome,
     int validadeDias,
     String conservacao,
     Map<String, dynamic> nutriRaw,
@@ -217,6 +225,7 @@ class __$$FichaTecnicaImplCopyWithImpl<$Res>
     Object? deletado = null,
     Object? formatoId = null,
     Object? descricao = null,
+    Object? subnome = null,
     Object? validadeDias = null,
     Object? conservacao = null,
     Object? nutriRaw = null,
@@ -262,6 +271,10 @@ class __$$FichaTecnicaImplCopyWithImpl<$Res>
             ? _value.descricao
             : descricao // ignore: cast_nullable_to_non_nullable
                   as String,
+        subnome: null == subnome
+            ? _value.subnome
+            : subnome // ignore: cast_nullable_to_non_nullable
+                  as String,
         validadeDias: null == validadeDias
             ? _value.validadeDias
             : validadeDias // ignore: cast_nullable_to_non_nullable
@@ -304,6 +317,7 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
     this.deletado = false,
     this.formatoId = '',
     this.descricao = '',
+    this.subnome = '',
     this.validadeDias = 0,
     this.conservacao = '',
     final Map<String, dynamic> nutriRaw = const <String, dynamic>{},
@@ -343,6 +357,9 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
   final String descricao;
   @override
   @JsonKey()
+  final String subnome;
+  @override
+  @JsonKey()
   final int validadeDias;
   @override
   @JsonKey()
@@ -379,7 +396,7 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
 
   @override
   String toString() {
-    return 'FichaTecnica(id: $id, nome: $nome, categoria: $categoria, custoProduto: $custoProduto, pesoProduto: $pesoProduto, precoVenda: $precoVenda, deletado: $deletado, formatoId: $formatoId, descricao: $descricao, validadeDias: $validadeDias, conservacao: $conservacao, nutriRaw: $nutriRaw, nomesVenda: $nomesVenda, custoCompleto: $custoCompleto, custoSemDados: $custoSemDados)';
+    return 'FichaTecnica(id: $id, nome: $nome, categoria: $categoria, custoProduto: $custoProduto, pesoProduto: $pesoProduto, precoVenda: $precoVenda, deletado: $deletado, formatoId: $formatoId, descricao: $descricao, subnome: $subnome, validadeDias: $validadeDias, conservacao: $conservacao, nutriRaw: $nutriRaw, nomesVenda: $nomesVenda, custoCompleto: $custoCompleto, custoSemDados: $custoSemDados)';
   }
 
   @override
@@ -401,11 +418,18 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
                 other.deletado == deletado) &&
             (identical(other.formatoId, formatoId) ||
                 other.formatoId == formatoId) &&
-            (identical(other.descricao, descricao) || other.descricao == descricao) &&
-            (identical(other.validadeDias, validadeDias) || other.validadeDias == validadeDias) &&
-            (identical(other.conservacao, conservacao) || other.conservacao == conservacao) &&
+            (identical(other.descricao, descricao) ||
+                other.descricao == descricao) &&
+            (identical(other.subnome, subnome) || other.subnome == subnome) &&
+            (identical(other.validadeDias, validadeDias) ||
+                other.validadeDias == validadeDias) &&
+            (identical(other.conservacao, conservacao) ||
+                other.conservacao == conservacao) &&
             const DeepCollectionEquality().equals(other._nutriRaw, _nutriRaw) &&
-            const DeepCollectionEquality().equals(other._nomesVenda, _nomesVenda) &&
+            const DeepCollectionEquality().equals(
+              other._nomesVenda,
+              _nomesVenda,
+            ) &&
             (identical(other.custoCompleto, custoCompleto) ||
                 other.custoCompleto == custoCompleto) &&
             const DeepCollectionEquality().equals(
@@ -426,6 +450,7 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
     deletado,
     formatoId,
     descricao,
+    subnome,
     validadeDias,
     conservacao,
     const DeepCollectionEquality().hash(_nutriRaw),
@@ -454,6 +479,7 @@ abstract class _FichaTecnica extends FichaTecnica {
     final bool deletado,
     final String formatoId,
     final String descricao,
+    final String subnome,
     final int validadeDias,
     final String conservacao,
     final Map<String, dynamic> nutriRaw,
@@ -481,6 +507,8 @@ abstract class _FichaTecnica extends FichaTecnica {
   String get formatoId;
   @override
   String get descricao;
+  @override
+  String get subnome;
   @override
   int get validadeDias;
   @override

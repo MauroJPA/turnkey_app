@@ -44,9 +44,9 @@ class _SheetState extends ConsumerState<_Sheet> {
   bool _imprimirDatas = true;
   final _copias = TextEditingController(text: '1');
   final _lote = TextEditingController();
-  final _largura = TextEditingController(text: '50');
-  final _frente = TextEditingController(text: '25');
-  final _altura = TextEditingController(text: '55');
+  bool _mostrarSubnome = false;
+  TamanhoEtiqueta _tamanho = tamanhosEtiqueta.first;
+  int _frente = frenteMinMm;
   MedidasEtiqueta? _medidas;
   String _htmlMedido = '';
   Timer? _debounce;
@@ -64,9 +64,6 @@ class _SheetState extends ConsumerState<_Sheet> {
   void dispose() {
     _copias.dispose();
     _lote.dispose();
-    _largura.dispose();
-    _frente.dispose();
-    _altura.dispose();
     _debounce?.cancel();
     _produtor.dispose();
     super.dispose();
@@ -116,6 +113,7 @@ class _SheetState extends ConsumerState<_Sheet> {
     final n = f.nutri;
     return EtiquetaDados(
       nome: f.nome,
+      subnome: _mostrarSubnome ? f.subnome : '',
       descricao: f.descricao,
       ingredientes: ref.read(produtoIngredientesProvider(f.id)).valueOrNull,
       resumida: _resumida,
@@ -132,9 +130,9 @@ class _SheetState extends ConsumerState<_Sheet> {
       lote: _lote.text,
       produtor: _produtor.text,
       copias: (int.tryParse(_copias.text.trim()) ?? 1).clamp(1, 500),
-      larguraMm: (int.tryParse(_largura.text.trim()) ?? 50).clamp(30, 120),
-      alturaFrenteMm: (int.tryParse(_frente.text.trim()) ?? 25).clamp(15, 80),
-      alturaCorpoMm: (int.tryParse(_altura.text.trim()) ?? 55).clamp(30, 150),
+      larguraMm: _tamanho.larguraMm,
+      alturaTotalMm: _tamanho.alturaMm,
+      alturaFrenteMm: _frente,
     );
   }
 
@@ -150,11 +148,13 @@ class _SheetState extends ConsumerState<_Sheet> {
     });
   }
 
-  void _usarMinimo(MedidasEtiqueta m) {
-    setState(() {
-      _frente.text = '${m.frenteMm.ceil()}';
-      _altura.text = '${m.corpoMm.ceil()}';
-    });
+  /// Menor tamanho padrão onde cabem [frente] mm de frente e [corpo] mm de
+  /// parte de baixo (`null` se nenhum chega).
+  TamanhoEtiqueta? _menorTamanhoQueCabe(int frente, int corpo) {
+    for (final t in tamanhosEtiqueta) {
+      if (t.alturaMm - frente >= corpo) return t;
+    }
+    return null;
   }
 
   @override
@@ -170,9 +170,9 @@ class _SheetState extends ConsumerState<_Sheet> {
       _tipoData = p.tipoData;
       _imprimirDatas = p.imprimirDatas;
       _mostrarE = p.mostrarE;
-      _largura.text = '${p.larguraMm}';
-      _frente.text = '${p.alturaFrenteMm}';
-      _altura.text = '${p.alturaCorpoMm}';
+      _mostrarSubnome = p.mostrarSubnome && widget.ficha.subnome.isNotEmpty;
+      _tamanho = p.tamanho;
+      _frente = p.alturaFrenteMm;
     }
     if (!_produtorCarregado && produtorGuardado.hasValue) {
       _produtorCarregado = true;
@@ -184,10 +184,20 @@ class _SheetState extends ConsumerState<_Sheet> {
     final avisos = avisosEtiqueta(dados);
     _agendarMedicao(etiquetaPagina(dados));
     final medidas = _medidas;
-    final curto =
-        medidas != null &&
-        (medidas.frenteMm > dados.alturaFrenteMm + 0.5 ||
-            medidas.corpoMm > dados.alturaCorpoMm + 0.5);
+    final frenteCurta =
+        medidas != null && medidas.frenteMm > dados.alturaFrenteMm + 0.5;
+    final corpoCurto =
+        medidas != null && medidas.corpoMm > dados.alturaCorpoMm + 0.5;
+    final curto = frenteCurta || corpoCurto;
+    // Frente mínima que serve (15–25) e o menor tamanho padrão onde tudo cabe.
+    final frenteNecessaria = medidas == null
+        ? dados.alturaFrenteMm
+        : medidas.frenteMm.ceil().clamp(frenteMinMm, frenteMaxMm);
+    final frenteExcede =
+        medidas != null && medidas.frenteMm.ceil() > frenteMaxMm;
+    final tamanhoSugerido = medidas == null
+        ? null
+        : _menorTamanhoQueCabe(frenteNecessaria, medidas.corpoMm.ceil());
 
     return Padding(
       padding: EdgeInsets.only(
@@ -204,10 +214,24 @@ class _SheetState extends ConsumerState<_Sheet> {
           ),
           const SizedBox(height: 4),
           Text(
-            'A frente (nome, descrição e peso) fica à vista; o resto, depois da '
-            'dobra, leva a informação legal. Tamanho por omissão: 50 × 80 mm '
-            '(25 + 55).',
+            'A frente (nome, subnome, característica e peso) fica à vista, com '
+            '$frenteMinMm a $frenteMaxMm mm; o resto, depois da dobra, leva a '
+            'informação legal. Tamanho preferido: 50 × 80 mm.',
             style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: _mostrarSubnome && widget.ficha.subnome.isNotEmpty,
+            onChanged: widget.ficha.subnome.isEmpty
+                ? null
+                : (v) => setState(() => _mostrarSubnome = v),
+            title: const Text('Imprimir o subnome'),
+            subtitle: Text(
+              widget.ficha.subnome.isEmpty
+                  ? 'Esta ficha não tem subnome — define-o em Editar ficha.'
+                  : 'Aparece por baixo do nome: ${widget.ficha.subnome}.',
+            ),
           ),
           if (avisos.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -303,27 +327,33 @@ class _SheetState extends ConsumerState<_Sheet> {
             decoration: const InputDecoration(labelText: 'Número de etiquetas'),
           ),
           const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final (c, l) in [
-                (_largura, 'Largura (mm)'),
-                (_frente, 'Frente (mm)'),
-                (_altura, 'Parte de baixo (mm)'),
-              ]) ...[
-                Expanded(
-                  child: TextField(
-                    controller: c,
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => setState(() {}),
-                    decoration: InputDecoration(labelText: l),
-                  ),
-                ),
-                if (c != _altura) const SizedBox(width: 8),
-              ],
+          DropdownButtonFormField<TamanhoEtiqueta>(
+            key: ValueKey('tamanho-${_tamanho.label}'),
+            initialValue: _tamanho,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Tamanho da etiqueta (térmica)',
+              helperText: 'Medidas padrão do mercado. Preferido: 50 × 80 mm.',
+            ),
+            items: [
+              for (final t in tamanhosEtiqueta)
+                DropdownMenuItem(value: t, child: Text(t.label)),
             ],
+            onChanged: (v) => setState(() => _tamanho = v ?? _tamanho),
           ),
           const SizedBox(height: 8),
+          Text(
+            'Frente: $_frente mm · parte de baixo: '
+            '${_tamanho.alturaMm - _frente} mm',
+          ),
+          Slider(
+            value: _frente.toDouble(),
+            min: frenteMinMm.toDouble(),
+            max: frenteMaxMm.toDouble(),
+            divisions: frenteMaxMm - frenteMinMm,
+            label: '$_frente mm',
+            onChanged: (v) => setState(() => _frente = v.round()),
+          ),
           Card(
             color: curto ? cs.errorContainer : cs.surfaceContainerHighest,
             child: Padding(
@@ -333,31 +363,67 @@ class _SheetState extends ConsumerState<_Sheet> {
                 children: [
                   Text(
                     medidas == null
-                        ? 'A calcular o tamanho mínimo…'
-                        : 'Mínimo recomendado com estes dados e '
-                              '${dados.larguraMm} mm de largura: frente '
+                        ? 'A calcular o espaço necessário…'
+                        : 'Com estes dados é preciso: frente '
                               '${medidas.frenteMm.ceil()} mm + parte de baixo '
-                              '${medidas.corpoMm.ceil()} mm '
-                              '(${dados.larguraMm} × '
-                              '${medidas.frenteMm.ceil() + medidas.corpoMm.ceil()} mm).',
+                              '${medidas.corpoMm.ceil()} mm.',
                     style: TextStyle(color: curto ? cs.onErrorContainer : null),
                   ),
-                  if (curto)
+                  if (frenteExcede)
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
-                        'Com o tamanho escolhido, parte do texto fica cortada.',
+                        'O nome, subnome e característica não cabem nos '
+                        '$frenteMaxMm mm máximos da frente — encurta a '
+                        'característica ou desliga o subnome.',
+                        style: TextStyle(color: cs.onErrorContainer),
+                      ),
+                    )
+                  else if (frenteCurta)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        'A frente de $_frente mm corta o texto: precisa de '
+                        '$frenteNecessaria mm.',
                         style: TextStyle(color: cs.onErrorContainer),
                       ),
                     ),
-                  if (medidas != null)
-                    TextButton(
-                      onPressed: () => _usarMinimo(medidas),
-                      child: const Text('Usar o mínimo'),
+                  if (corpoCurto && !frenteExcede)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        tamanhoSugerido == null
+                            ? 'A informação legal não cabe em nenhum tamanho '
+                                  'disponível — usa a lista resumida ou a '
+                                  'nutrição linear.'
+                            : 'A informação não cabe em ${_tamanho.label}.',
+                        style: TextStyle(color: cs.onErrorContainer),
+                      ),
+                    ),
+                  if (medidas != null && !frenteExcede)
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        if (frenteCurta)
+                          TextButton(
+                            onPressed: () =>
+                                setState(() => _frente = frenteNecessaria),
+                            child: Text('Frente de $frenteNecessaria mm'),
+                          ),
+                        if (corpoCurto && tamanhoSugerido != null)
+                          TextButton(
+                            onPressed: () => setState(() {
+                              _tamanho = tamanhoSugerido;
+                              if (frenteCurta) _frente = frenteNecessaria;
+                            }),
+                            child: Text('Usar ${tamanhoSugerido.label}'),
+                          ),
+                      ],
                     ),
                   Text(
                     'Letra de 6 pt (já perto do mínimo legal, por isso não se '
-                    'reduz). Uma etiqueta mais estreita precisa de mais altura.',
+                    'reduz). Prefere-se sempre o tamanho mais pequeno onde '
+                    'tudo cabe.',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -416,9 +482,10 @@ class _SheetState extends ConsumerState<_Sheet> {
                   tipoData: d.tipoData,
                   imprimirDatas: d.imprimirDatas,
                   mostrarE: d.mostrarE,
+                  mostrarSubnome: _mostrarSubnome,
                   larguraMm: d.larguraMm,
+                  alturaTotalMm: d.alturaTotalMm,
                   alturaFrenteMm: d.alturaFrenteMm,
-                  alturaCorpoMm: d.alturaCorpoMm,
                 ),
               );
               abrirPaginaEtiquetas(etiquetaPagina(d));

@@ -1231,6 +1231,19 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Liga/dá preço ao que falta → a faixa e o ⚠ desaparecem.
 - [ ] Sem nenhuma ficha incompleta, não há faixa.
 
+## 69. Subnome e etiquetas em tamanhos padrão
+
+- [ ] Editar ficha: aparece "Subnome (opcional)" e o antigo "Descrição" chama-se "Característica".
+- [ ] Guarda subnome "Red Velvet" numa ficha → aparece por baixo do nome na página do produto.
+- [ ] Imprimir etiqueta: o interruptor "Imprimir o subnome" liga/desliga; sem subnome fica desativado com
+      a indicação para o definir.
+- [ ] Já não há campos de largura/altura livres: há um seletor com 50 × 80, 50 × 100, 60 × 80, 60 × 100,
+      75 × 100 e um seletor de frente entre 15 e 25 mm (por omissão 15).
+- [ ] Se o texto não cabe, o cartão sugere "Frente de X mm" e/ou "Usar 50 × 100 mm"; com 50 × 80 e tudo a
+      caber não aparece nenhum aviso.
+- [ ] Pré-visualizar: nome, subnome (mais pequeno), característica e peso cabem na frente, sem cortes.
+- [ ] Uma ficha com etiqueta guardada de uma versão anterior abre com o tamanho padrão mais próximo.
+
 ---
 
 ## Notas / ajustes pedidos
