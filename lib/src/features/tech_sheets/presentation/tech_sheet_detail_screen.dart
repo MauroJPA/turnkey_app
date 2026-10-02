@@ -12,7 +12,6 @@ import '../../../core/widgets/history_sheet.dart';
 import '../../cookie_formats/application/cookie_format_providers.dart';
 import '../../pricing/data/cost_config_repository.dart';
 import '../../pricing/domain/cost_config.dart';
-import '../../products/application/produtos_providers.dart';
 import '../../recipes/presentation/item_picker_sheet.dart';
 import '../application/tech_sheets_providers.dart';
 import '../domain/tech_sheet.dart';
@@ -263,20 +262,12 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
                 onEditarPreco: _busy ? null : () => _editarPreco(d.ficha),
               ),
               const Divider(height: 1),
-              Consumer(
-                builder: (context, ref, _) {
-                  final semPreco = ref.watch(
-                    fichaIngredientesSemPrecoProvider(widget.fichaId),
-                  );
-                  return _AvisoIncompleto(
-                    cor: Theme.of(context).colorScheme.errorContainer,
-                    corTexto: Theme.of(context).colorScheme.onErrorContainer,
-                    icone: Icons.euro_outlined,
-                    titulo: 'Preço em falta — o custo fica errado',
-                    itens: semPreco.valueOrNull?.map((i) => i.nome).toList() ??
-                        const [],
-                  );
-                },
+              _AvisoIncompleto(
+                cor: Theme.of(context).colorScheme.errorContainer,
+                corTexto: Theme.of(context).colorScheme.onErrorContainer,
+                icone: Icons.euro_outlined,
+                titulo: 'Preço em falta — o custo fica errado',
+                itens: [for (final sd in d.ficha.custoSemDados) sd.nome],
               ),
               _AvisoIncompleto(
                 cor: Colors.amber.shade100,

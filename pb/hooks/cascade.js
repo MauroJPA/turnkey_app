@@ -173,6 +173,16 @@ function runCascade(app, kind, rootId) {
     } catch (_) {}
     return typeof v === 'object' ? v : null;
   };
+  // Lê um campo `json` que guarda um ARRAY simples (ex.: custo_sem_dados,
+  // nomes_venda) — via getString(), mais fiável que lerJson() para arrays.
+  const lerArrayJson = (rec, campo) => {
+    try {
+      const v = JSON.parse(rec.getString(campo) || '[]');
+      return Array.isArray(v) ? v : [];
+    } catch (_) {
+      return [];
+    }
+  };
   // nutri (por 100 g cru) em cache de uma receita já recalculada
   const receitaNutriPor100 = (recId) => {
     let rec;
@@ -310,6 +320,8 @@ function runCascade(app, kind, rootId) {
 
     let custo = 0;
     let peso = 0;
+    let custoCompletoF = true;
+    const custoSemDadosF = [];
     for (const item of itens) {
       const qtd = fnum(item, 'quantidade_g');
       const ingRel = item.getString('ingrediente');
@@ -326,6 +338,29 @@ function runCascade(app, kind, rootId) {
         // sempre a partir do preço/gramas — o custo_por_grama do ingrediente
         // é só cache de UI e pode estar desatualizado.
         custo += ingCpg(ing) * qtd;
+        // ingrediente-espelho (massa publicada): a completude do custo é a
+        // da receita por trás, não só o preço (cacheado) do próprio espelho.
+        const espRecId =
+          ing.getString('origem') === 'fabrico_proprio'
+            ? ing.getString('receita_espelho')
+            : '';
+        if (espRecId) {
+          let espRec;
+          try {
+            espRec = app.findRecordById('receitas', espRecId);
+          } catch (_) {
+            espRec = null;
+          }
+          if (!espRec || !espRec.getBool('custo_completo')) {
+            custoCompletoF = false;
+            for (const sd of espRec ? lerArrayJson(espRec, 'custo_sem_dados') : []) {
+              custoSemDadosF.push(sd);
+            }
+          }
+        } else if (ingCpg(ing) <= 0) {
+          custoCompletoF = false;
+          custoSemDadosF.push({ id: ingRel, nome: ing.getString('nome') || ingRel });
+        }
       } else if (recRel) {
         peso += qtd;
         let rec;
@@ -335,6 +370,12 @@ function runCascade(app, kind, rootId) {
           continue;
         }
         custo += fnum(rec, 'custo_por_grama') * qtd;
+        if (!rec.getBool('custo_completo')) {
+          custoCompletoF = false;
+          for (const sd of lerArrayJson(rec, 'custo_sem_dados')) {
+            custoSemDadosF.push(sd);
+          }
+        }
       } else if (embRel) {
         // embalagem: qtd = nº de peças; NÃO conta para o peso do produto.
         let emb;
@@ -381,12 +422,20 @@ function runCascade(app, kind, rootId) {
 
     const custoAntes = fnum(ficha, 'custo_produto');
     const pesoAntes = fnum(ficha, 'peso_produto');
+    const custoSemDadosFDedup = dedupSemDados(custoSemDadosF);
+    const completoFMudou =
+      ficha.getBool('custo_completo') !== custoCompletoF ||
+      JSON.stringify(lerArrayJson(ficha, 'custo_sem_dados')) !==
+        JSON.stringify(custoSemDadosFDedup);
     if (
       Math.abs(custoAntes - custo) > EPS ||
-      Math.abs(pesoAntes - peso) > EPS
+      Math.abs(pesoAntes - peso) > EPS ||
+      completoFMudou
     ) {
       ficha.set('custo_produto', custo);
       ficha.set('peso_produto', peso);
+      ficha.set('custo_completo', custoCompletoF);
+      ficha.set('custo_sem_dados', custoSemDadosFDedup);
       app.save(ficha);
       escreverHistorico(
         'ficha',
@@ -591,6 +640,8 @@ function runCascade(app, kind, rootId) {
 
     let custo = 0;
     let peso = 0;
+    let custoCompletoN = true;
+    const custoSemDadosN = [];
     for (const item of itens) {
       const qtd = fnum(item, 'quantidade_g');
       peso += qtd * fatorPesoLinha(app, item);
@@ -605,7 +656,12 @@ function runCascade(app, kind, rootId) {
         }
         // sempre a partir do preço/gramas — o custo_por_grama do ingrediente
         // é só cache de UI e pode estar desatualizado.
-        custo += cpgLinha(item, ing) * qtd;
+        const cpg = cpgLinha(item, ing);
+        if (cpg <= 0) {
+          custoCompletoN = false;
+          custoSemDadosN.push({ id: ingRel, nome: ing.getString('nome') || ingRel });
+        }
+        custo += cpg * qtd;
       } else if (subRel) {
         recomputeReceita(subRel);
         let sub;
@@ -615,6 +671,19 @@ function runCascade(app, kind, rootId) {
           continue;
         }
         custo += fnum(sub, 'custo_por_grama') * qtd;
+        if (!sub.getBool('custo_completo')) {
+          custoCompletoN = false;
+          for (const sd of lerArrayJson(sub, 'custo_sem_dados')) {
+            custoSemDadosN.push(sd);
+          }
+        }
+      } else {
+        // linha por ligar: nem ingrediente nem sub-receita (nome_provisorio).
+        custoCompletoN = false;
+        custoSemDadosN.push({
+          id: item.id,
+          nome: item.getString('nome_provisorio') || 'ingrediente por ligar',
+        });
       }
     }
 
@@ -624,16 +693,24 @@ function runCascade(app, kind, rootId) {
 
     const custoAntes = fnum(receita, 'custo_receita');
     const pesoAntes = fnum(receita, 'rendimento_esperado');
+    const custoSemDadosDedup = dedupSemDados(custoSemDadosN);
+    const completoMudou =
+      receita.getBool('custo_completo') !== custoCompletoN ||
+      JSON.stringify(lerArrayJson(receita, 'custo_sem_dados')) !==
+        JSON.stringify(custoSemDadosDedup);
     const mudou =
       Math.abs(custoAntes - custo) > EPS ||
       Math.abs(fnum(receita, 'custo_por_grama') - cpgReceita) >
         cpgReceita * 1e-6 + 1e-9 ||
-      (!manual && Math.abs(pesoAntes - peso) > EPS);
+      (!manual && Math.abs(pesoAntes - peso) > EPS) ||
+      completoMudou;
 
     if (mudou) {
       receita.set('custo_receita', custo);
       receita.set('custo_por_grama', cpgReceita);
       if (!manual) receita.set('rendimento_esperado', peso);
+      receita.set('custo_completo', custoCompletoN);
+      receita.set('custo_sem_dados', custoSemDadosDedup);
       app.save(receita);
       escreverHistorico(
         'receita',

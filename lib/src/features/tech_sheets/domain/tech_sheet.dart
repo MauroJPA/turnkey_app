@@ -67,6 +67,15 @@ class FichaTecnica with _$FichaTecnica {
     /// (normalizadas), para reconhecer sozinho a mesma descrição em
     /// importações futuras — ver `fichaParaVenda`.
     @Default(<String>[]) List<String> nomesVenda,
+
+    /// `false` se algum ingrediente da árvore (direto ou via massa/sub-receita)
+    /// não tem preço definido — o custo calculado fica incompleto/errado.
+    @Default(true) bool custoCompleto,
+
+    /// Ingredientes (em toda a árvore) sem preço — para avisar e permitir
+    /// corrigir, tal como `nutri.semDados`.
+    @Default(<({String id, String nome})>[])
+    List<({String id, String nome})> custoSemDados,
   }) = _FichaTecnica;
 
   const FichaTecnica._();
@@ -110,8 +119,26 @@ class FichaTecnica with _$FichaTecnica {
         final List v => v.map((e) => '$e').toList(),
         _ => const <String>[],
       },
+      custoCompleto: r.getBoolValue('custo_completo'),
+      custoSemDados: _semDadosCusto(r.data['custo_sem_dados']),
     );
   }
+}
+
+List<({String id, String nome})> _semDadosCusto(Object? v) {
+  if (v is! List) return const [];
+  return v
+      .map<({String id, String nome})>((e) {
+        if (e is Map) {
+          return (
+            id: (e['id'] ?? '').toString(),
+            nome: (e['nome'] ?? '').toString(),
+          );
+        }
+        return (id: '', nome: '$e');
+      })
+      .where((x) => x.nome.isNotEmpty)
+      .toList();
 }
 
 class FichaInput {

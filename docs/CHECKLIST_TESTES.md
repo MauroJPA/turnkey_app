@@ -1213,6 +1213,16 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       correspondente desaparece sozinho.
 - [ ] Numa ficha com tudo completo, nenhum dos dois avisos aparece.
 
+## 67. Preço em falta: linhas por ligar e massas/sub-receitas
+
+- [ ] Depois de instalar, corre `POST /api/gc_turnkey/admin/recompute` uma vez (superuser/dono).
+- [ ] Ficha cuja massa tem uma linha "vínculo pendente" (ex.: Massa Bali com Farinha de Arroz, Polvilho
+      Doce, Farinha de Amêndoa por ligar) → no ecrã da Ficha aparece o aviso **vermelho** "Preço em falta"
+      com esses nomes.
+- [ ] Ingrediente sem preço dentro de uma massa/sub-receita também aparece na lista vermelha da ficha.
+- [ ] Liga as linhas por ligar a ingredientes com preço → o aviso desaparece sozinho.
+- [ ] Ficha completa: nenhum aviso.
+
 ---
 
 ## Notas / ajustes pedidos

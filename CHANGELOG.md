@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.44.0 — 2026-10-02 — Aviso de preço em falta apanha linhas por ligar e massas/sub-receitas
+
+- **Corrigido**: o aviso vermelho "Preço em falta" da Ficha Técnica não aparecia quando a massa tinha
+  linhas **por ligar** ("vínculo pendente") nem quando o ingrediente sem preço estava dentro de uma
+  massa/sub-receita (caso da ficha "Bali" / "Massa Bali").
+- A deteção passou para o servidor: receitas e fichas guardam agora `custo_completo` + `custo_sem_dados`
+  (linhas por ligar, ingredientes sem preço, através de sub-receitas e ingredientes de fabrico próprio).
+  Recalculam sozinhos a cada alteração.
+- Nova migration `1790830000_custo_completo.js`.
+- **Depois de instalar**: chama **uma vez** `POST /api/gc_turnkey/admin/recompute` (superuser/dono) para
+  preencher os dados já existentes; sem isso o aviso só aparece nas receitas/fichas que forem alteradas.
+
 ## 1.43.0 — 2026-10-01 — Avisos de preço/nutrição em falta na Ficha Técnica
 
 - **Ficha Técnica → ecrã de edição** (Peso/Custo/Preço de venda) ganha dois avisos logo no topo, quando

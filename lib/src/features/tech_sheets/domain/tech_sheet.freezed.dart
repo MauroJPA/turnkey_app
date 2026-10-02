@@ -30,6 +30,9 @@ mixin _$FichaTecnica {
   String get conservacao => throw _privateConstructorUsedError;
   Map<String, dynamic> get nutriRaw => throw _privateConstructorUsedError;
   List<String> get nomesVenda => throw _privateConstructorUsedError;
+  bool get custoCompleto => throw _privateConstructorUsedError;
+  List<({String id, String nome})> get custoSemDados =>
+      throw _privateConstructorUsedError;
 
   /// Create a copy of FichaTecnica
   /// with the given fields replaced by the non-null parameter values.
@@ -59,6 +62,8 @@ abstract class $FichaTecnicaCopyWith<$Res> {
     String conservacao,
     Map<String, dynamic> nutriRaw,
     List<String> nomesVenda,
+    bool custoCompleto,
+    List<({String id, String nome})> custoSemDados,
   });
 }
 
@@ -90,6 +95,8 @@ class _$FichaTecnicaCopyWithImpl<$Res, $Val extends FichaTecnica>
     Object? conservacao = null,
     Object? nutriRaw = null,
     Object? nomesVenda = null,
+    Object? custoCompleto = null,
+    Object? custoSemDados = null,
   }) {
     return _then(
       _value.copyWith(
@@ -145,6 +152,14 @@ class _$FichaTecnicaCopyWithImpl<$Res, $Val extends FichaTecnica>
                 ? _value.nomesVenda
                 : nomesVenda // ignore: cast_nullable_to_non_nullable
                       as List<String>,
+            custoCompleto: null == custoCompleto
+                ? _value.custoCompleto
+                : custoCompleto // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            custoSemDados: null == custoSemDados
+                ? _value.custoSemDados
+                : custoSemDados // ignore: cast_nullable_to_non_nullable
+                      as List<({String id, String nome})>,
           )
           as $Val,
     );
@@ -174,6 +189,8 @@ abstract class _$$FichaTecnicaImplCopyWith<$Res>
     String conservacao,
     Map<String, dynamic> nutriRaw,
     List<String> nomesVenda,
+    bool custoCompleto,
+    List<({String id, String nome})> custoSemDados,
   });
 }
 
@@ -204,6 +221,8 @@ class __$$FichaTecnicaImplCopyWithImpl<$Res>
     Object? conservacao = null,
     Object? nutriRaw = null,
     Object? nomesVenda = null,
+    Object? custoCompleto = null,
+    Object? custoSemDados = null,
   }) {
     return _then(
       _$FichaTecnicaImpl(
@@ -259,6 +278,14 @@ class __$$FichaTecnicaImplCopyWithImpl<$Res>
             ? _value._nomesVenda
             : nomesVenda // ignore: cast_nullable_to_non_nullable
                   as List<String>,
+        custoCompleto: null == custoCompleto
+            ? _value.custoCompleto
+            : custoCompleto // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        custoSemDados: null == custoSemDados
+            ? _value._custoSemDados
+            : custoSemDados // ignore: cast_nullable_to_non_nullable
+                  as List<({String id, String nome})>,
       ),
     );
   }
@@ -281,8 +308,12 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
     this.conservacao = '',
     final Map<String, dynamic> nutriRaw = const <String, dynamic>{},
     final List<String> nomesVenda = const <String>[],
+    this.custoCompleto = true,
+    final List<({String id, String nome})> custoSemDados =
+        const <({String id, String nome})>[],
   }) : _nutriRaw = nutriRaw,
        _nomesVenda = nomesVenda,
+       _custoSemDados = custoSemDados,
        super._();
 
   @override
@@ -335,8 +366,20 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
   }
 
   @override
+  @JsonKey()
+  final bool custoCompleto;
+  final List<({String id, String nome})> _custoSemDados;
+  @override
+  @JsonKey()
+  List<({String id, String nome})> get custoSemDados {
+    if (_custoSemDados is EqualUnmodifiableListView) return _custoSemDados;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_custoSemDados);
+  }
+
+  @override
   String toString() {
-    return 'FichaTecnica(id: $id, nome: $nome, categoria: $categoria, custoProduto: $custoProduto, pesoProduto: $pesoProduto, precoVenda: $precoVenda, deletado: $deletado, formatoId: $formatoId, descricao: $descricao, validadeDias: $validadeDias, conservacao: $conservacao, nutriRaw: $nutriRaw, nomesVenda: $nomesVenda)';
+    return 'FichaTecnica(id: $id, nome: $nome, categoria: $categoria, custoProduto: $custoProduto, pesoProduto: $pesoProduto, precoVenda: $precoVenda, deletado: $deletado, formatoId: $formatoId, descricao: $descricao, validadeDias: $validadeDias, conservacao: $conservacao, nutriRaw: $nutriRaw, nomesVenda: $nomesVenda, custoCompleto: $custoCompleto, custoSemDados: $custoSemDados)';
   }
 
   @override
@@ -362,7 +405,13 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
             (identical(other.validadeDias, validadeDias) || other.validadeDias == validadeDias) &&
             (identical(other.conservacao, conservacao) || other.conservacao == conservacao) &&
             const DeepCollectionEquality().equals(other._nutriRaw, _nutriRaw) &&
-            const DeepCollectionEquality().equals(other._nomesVenda, _nomesVenda));
+            const DeepCollectionEquality().equals(other._nomesVenda, _nomesVenda) &&
+            (identical(other.custoCompleto, custoCompleto) ||
+                other.custoCompleto == custoCompleto) &&
+            const DeepCollectionEquality().equals(
+              other._custoSemDados,
+              _custoSemDados,
+            ));
   }
 
   @override
@@ -381,6 +430,8 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
     conservacao,
     const DeepCollectionEquality().hash(_nutriRaw),
     const DeepCollectionEquality().hash(_nomesVenda),
+    custoCompleto,
+    const DeepCollectionEquality().hash(_custoSemDados),
   );
 
   /// Create a copy of FichaTecnica
@@ -407,6 +458,8 @@ abstract class _FichaTecnica extends FichaTecnica {
     final String conservacao,
     final Map<String, dynamic> nutriRaw,
     final List<String> nomesVenda,
+    final bool custoCompleto,
+    final List<({String id, String nome})> custoSemDados,
   }) = _$FichaTecnicaImpl;
   const _FichaTecnica._() : super._();
 
@@ -436,6 +489,10 @@ abstract class _FichaTecnica extends FichaTecnica {
   Map<String, dynamic> get nutriRaw;
   @override
   List<String> get nomesVenda;
+  @override
+  bool get custoCompleto;
+  @override
+  List<({String id, String nome})> get custoSemDados;
 
   /// Create a copy of FichaTecnica
   /// with the given fields replaced by the non-null parameter values.
