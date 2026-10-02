@@ -2,6 +2,15 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.48.1 — 2026-10-02 — Backup que falha já não deixa o servidor parado
+
+- **Corrigido (servidor, `gc_turnkey.sh backup-agora`)**: o backup pára o servidor para copiar `data/`; se a
+  cópia falhasse (disco cheio, permissões…), o script abortava **sem voltar a arrancar o servidor** — e a
+  atualização (`publicar-producao.sh`) parava aí, com a app em baixo e ainda na versão antiga. Agora, se a
+  cópia falha, o servidor **arranca sempre de novo**, o ficheiro parcial é apagado e o script diz que o
+  backup falhou (com a dica de verificar espaço em disco e permissões). A atualização aborta sem mexer na app.
+- Sem alterações na app nem na base de dados (mesmos conteúdos da 1.48.0).
+
 ## 1.48.0 — 2026-10-02 — Relatório geral no Painel financeiro (Excel / CSV)
 
 - **Painel financeiro → ícone "Relatório geral"** (administradores): gera um ficheiro com **uma folha por

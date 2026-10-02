@@ -167,6 +167,11 @@ bash gc_turnkey.sh atualizar                                     # reconstrói a
 bash gc_turnkey.sh estado
 ```
 
+Se o `backup-agora` falhar (mensagem "A cópia de segurança FALHOU"), a atualização pára **sem mexer na app**
+e o servidor volta a arrancar sozinho (v1.48.1+; em versões anteriores ficava parado: `bash gc_turnkey.sh iniciar`).
+Causas habituais: disco cheio (`df -h .`) ou ficheiros de `data/` que o teu utilizador não consegue ler
+(`ls -la data | head`; corrige o dono com `sudo chown -R "$USER" data`, ou corre o backup com `sudo`).
+
 Depois, o ensaio rápido: login, uma produção, uma venda. Para atualizar só o PocketBase: mudar
 `PB_VERSION` no `.env` e `bash gc_turnkey.sh atualizar` (testa antes em cópia — ver `docs/SEGURANCA.md`).
 

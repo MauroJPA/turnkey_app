@@ -135,8 +135,16 @@ cmd_backup_agora() {
   local f="backups-manuais/gc_turnkey-dados-$(date +%Y%m%d-%H%M%S).tar.gz"
   msg "A parar o servidor para copiar ficheiros coerentes ..."
   docker compose stop gc_turnkey
-  tar -czf "$f" data
+  # O servidor TEM de voltar a arrancar mesmo que a cópia falhe (disco cheio,
+  # permissões…): por isso o tar corre dentro de um "if" (o set -e não aborta
+  # aqui) e o arranque vem sempre a seguir.
+  local ok=1
+  tar -czf "$f" data || ok=0
   docker compose start gc_turnkey
+  if [ "$ok" -ne 1 ]; then
+    rm -f "$f"
+    erro "A cópia de segurança FALHOU (o servidor foi arrancado de novo). Verifica o espaço em disco ('df -h .') e as permissões de ./data."
+  fi
   msg "Feito: $f ($(du -h "$f" | cut -f1)). Guarda também o .env (segredos)."
 }
 
