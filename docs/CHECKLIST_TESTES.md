@@ -1280,6 +1280,29 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       resumo e 4–6 dicas com bolinha de prioridade; mudar de período volta ao botão inicial.
 - [ ] Um utilizador sem papel de administrador não vê o cartão de dicas.
 
+## 73. Relatório geral (Painel financeiro) e canal nas vendas
+
+- [ ] Painel financeiro (administrador) → ícone do relatório (à esquerda do da DRE) abre "Relatório geral"
+      com Período, IVA a assumir e Excel / CSV (.zip).
+- [ ] "Gerar e descarregar" (Excel) descarrega `relatorio-geral-<de>_<até>.xlsx`; abre no Excel com as folhas
+      Leia-me, Resumo mensal, 1 Vendas, 1 Equivalencia nomes, 2 Producao, 3 Custo por sabor, 3 Componentes,
+      3 Ingredientes, 3 Historico precos, 4 Despesas, 5 Plataformas, 6 Pessoal, 7 Tesouraria, 8 Eventos,
+      9 Origem clientes.
+- [ ] Em CSV (.zip): um ficheiro por folha, abre bem (acentos, vírgulas dentro de nomes entre aspas).
+- [ ] "1 Vendas": uma linha por produto vendido, com canal ("Não indicado" nas antigas), sabor oficial,
+      valor com IVA e sem IVA (com `iva_origem`).
+- [ ] Com "IVA a assumir = 23 %", as linhas sem IVA registado passam a ter valor estimado; as registadas não
+      mudam.
+- [ ] Resumo mensal: o resultado não conta compras de ingredientes e custo da matéria-prima vendida em
+      simultâneo (compras aparecem à parte).
+- [ ] "3 Custo por sabor": custo por unidade (ingredientes + embalagem), preço de venda e margem; sabores com
+      ingredientes sem preço aparecem com `custo_completo = não`.
+- [ ] Vendas → nova venda: campo "Canal de venda" (por omissão Loja física) e "Método de pagamento".
+- [ ] Detalhe da venda → "Canal": escolher Uber Eats, guardar → mostra "Canal: Uber Eats".
+- [ ] Vendas → Vendus → "Reimportar histórico" num intervalo antigo: diz quantas vendas antigas foram
+      completadas e, no relatório, passam a ter canal, hora e valor sem IVA (se o Vendus os fornecer).
+- [ ] Um utilizador sem papel de administrador não vê o ícone do relatório.
+
 ---
 
 ## Notas / ajustes pedidos

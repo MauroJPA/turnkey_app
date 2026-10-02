@@ -20,6 +20,27 @@ enum OrigemVenda {
       };
 }
 
+/// Canais de venda habituais — o campo é livre, estes são só sugestões.
+const canaisVenda = <String>[
+  'Loja física',
+  'Uber Eats',
+  'Glovo',
+  'Bolt Food',
+  'Parceria Alvalade',
+  'Revenda',
+  'Envio nacional',
+  'Eventos',
+];
+
+/// Métodos de pagamento habituais (sugestões).
+const metodosPagamento = <String>[
+  'Numerário',
+  'Multibanco',
+  'MB Way',
+  'Transferência',
+  'Plataforma de entrega',
+];
+
 String ymd(DateTime d) =>
     '${d.year.toString().padLeft(4, '0')}-'
     '${d.month.toString().padLeft(2, '0')}-'
@@ -34,6 +55,9 @@ class Venda {
     this.total = 0,
     this.numeroDocumento = '',
     this.notas = '',
+    this.canal = '',
+    this.hora = '',
+    this.metodoPagamento = '',
   });
 
   final String id;
@@ -42,6 +66,14 @@ class Venda {
   final double total;
   final String numeroDocumento;
   final String notas;
+
+  /// Canal de venda (loja física, plataforma de entrega, revenda…); vazio =
+  /// não indicado.
+  final String canal;
+
+  /// Hora da venda (HH:MM), se se conhece.
+  final String hora;
+  final String metodoPagamento;
 
   factory Venda.fromRecord(RecordModel r) {
     final s = r.getStringValue('data');
@@ -52,6 +84,9 @@ class Venda {
       total: r.getDoubleValue('total'),
       numeroDocumento: r.getStringValue('numero_documento'),
       notas: r.getStringValue('notas'),
+      canal: r.getStringValue('canal'),
+      hora: r.getStringValue('hora'),
+      metodoPagamento: r.getStringValue('metodo_pagamento'),
     );
   }
 }
@@ -68,6 +103,9 @@ class VendaItem {
     this.precoUnitario = 0,
     this.totalLinha = 0,
     this.custoUnitarioSnapshot = 0,
+    this.valorSemIva,
+    this.ivaPercent,
+    this.desconto,
   });
 
   final String id;
@@ -78,6 +116,12 @@ class VendaItem {
   final double precoUnitario;
   final double totalLinha;
   final double custoUnitarioSnapshot;
+
+  /// Valor da linha sem IVA, taxa de IVA e desconto — só quando se conhecem
+  /// (vendas do Vendus mais recentes); `null` = não indicado.
+  final double? valorSemIva;
+  final double? ivaPercent;
+  final double? desconto;
 
   bool get temFicha => fichaId != null && fichaId!.isNotEmpty;
 
@@ -92,9 +136,16 @@ class VendaItem {
       precoUnitario: r.getDoubleValue('preco_unitario'),
       totalLinha: r.getDoubleValue('total_linha'),
       custoUnitarioSnapshot: r.getDoubleValue('custo_unitario_snapshot'),
+      valorSemIva: _positivo(r.getDoubleValue('valor_sem_iva')),
+      ivaPercent: _positivo(r.getDoubleValue('iva_percent')),
+      desconto: _positivo(r.getDoubleValue('desconto')),
     );
   }
 }
+
+/// O servidor devolve 0 para um número nunca preenchido: trata-o como "não
+/// indicado".
+double? _positivo(double v) => v > 0 ? v : null;
 
 /// Uma linha a criar (formulário manual ou importação CSV) — ainda sem id.
 class VendaItemInput {

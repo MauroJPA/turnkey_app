@@ -62,6 +62,8 @@ class SalesActions {
     required OrigemVenda origem,
     String numeroDocumento = '',
     String notas = '',
+    String canal = '',
+    String metodoPagamento = '',
     required List<VendaItemInput> linhas,
   }) async {
     final v = await _ref.read(salesRepositoryProvider).criar(
@@ -69,10 +71,24 @@ class SalesActions {
           origem: origem,
           numeroDocumento: numeroDocumento,
           notas: notas,
+          canal: canal,
+          metodoPagamento: metodoPagamento,
           linhas: linhas,
         );
     _refresh();
     return v;
+  }
+
+  Future<void> definirCanal(
+    String id, {
+    required String canal,
+    String metodoPagamento = '',
+  }) async {
+    await _ref
+        .read(salesRepositoryProvider)
+        .definirCanal(id, canal: canal, metodoPagamento: metodoPagamento);
+    _ref.invalidate(vendaByIdProvider(id));
+    _refresh();
   }
 
   Future<void> remover(String id) async {
@@ -87,6 +103,7 @@ class SalesActions {
         int itensCriados,
         int itensSemFicha,
         int totalDocumentosRecebidos,
+        int vendasCompletadas,
       })> sincronizarVendus({DateTime? desde, DateTime? ate}) async {
     final r = await _ref
         .read(salesRepositoryProvider)

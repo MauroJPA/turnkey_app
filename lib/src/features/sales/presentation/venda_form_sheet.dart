@@ -7,6 +7,7 @@ import '../../tech_sheets/domain/tech_sheet.dart';
 import '../../tech_sheets/presentation/ficha_picker_sheet.dart';
 import '../application/sales_providers.dart';
 import '../domain/venda.dart';
+import 'campo_sugestoes.dart';
 
 /// Abre a folha de registo manual de uma venda (data + linhas de produto).
 /// Devolve `true` se a venda foi criada.
@@ -56,6 +57,8 @@ class _VendaFormSheetState extends ConsumerState<_VendaFormSheet> {
   final List<_Linha> _linhas = [];
   final _notas = TextEditingController();
   final _numeroDocumento = TextEditingController();
+  final _canal = TextEditingController(text: canaisVenda.first);
+  final _metodo = TextEditingController();
   bool _busy = false;
 
   @override
@@ -65,6 +68,8 @@ class _VendaFormSheetState extends ConsumerState<_VendaFormSheet> {
     }
     _notas.dispose();
     _numeroDocumento.dispose();
+    _canal.dispose();
+    _metodo.dispose();
     super.dispose();
   }
 
@@ -116,6 +121,8 @@ class _VendaFormSheetState extends ConsumerState<_VendaFormSheet> {
             origem: OrigemVenda.manual,
             numeroDocumento: _numeroDocumento.text,
             notas: _notas.text,
+            canal: _canal.text,
+            metodoPagamento: _metodo.text,
             linhas: linhasValidas
                 .map((l) => VendaItemInput(
                       fichaId: l.ficha?.id,
@@ -194,6 +201,18 @@ class _VendaFormSheetState extends ConsumerState<_VendaFormSheet> {
               ],
             ),
             const Divider(height: 28),
+            CampoSugestoes(
+              controller: _canal,
+              label: 'Canal de venda',
+              sugestoes: canaisVenda,
+            ),
+            const SizedBox(height: 10),
+            CampoSugestoes(
+              controller: _metodo,
+              label: 'Método de pagamento (opcional)',
+              sugestoes: metodosPagamento,
+            ),
+            const SizedBox(height: 10),
             TextField(
               controller: _numeroDocumento,
               decoration: const InputDecoration(

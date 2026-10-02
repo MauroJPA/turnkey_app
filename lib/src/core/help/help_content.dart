@@ -230,7 +230,8 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Ícone de importar (canto superior): carrega um ficheiro .csv com colunas data, produto, quantidade, preço. Cada linha é ligada automaticamente à ficha técnica com o nome mais parecido; sem correspondência clara, fica só com a descrição (aparece com um aviso na venda).',
       'Define o "Preço de venda" de cada produto na sua Ficha Técnica — fica disponível como sugestão ao registar vendas e mostra a margem sobre o custo.',
       'O botão de ordenar (seta) organiza por Data ou Valor; os chips por origem (Manual/CSV/Vendus, quando há mais do que uma) filtram a lista.',
-      'Toca numa venda para ver as linhas e, se precisares, apagá-la.',
+      'Toca numa venda para ver as linhas e, se precisares, apagá-la. Aí também defines o canal de venda (loja física, Uber Eats, Glovo, Bolt Food, parceria Alvalade, revenda, envio nacional, eventos…) e o método de pagamento — usados no Relatório geral do Painel financeiro para ver margens por canal. As vendas do Vendus ficam como "Loja física" por omissão e podem ser corrigidas.',
+      'As vendas do Vendus passam a guardar também a hora, o método de pagamento e o valor sem IVA de cada linha. Para preencher isto nas vendas antigas, usa "Reimportar histórico" com o intervalo que queres completar.',
     ],
   ),
   HelpTopic.analiseVendas: (
@@ -297,6 +298,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       '"Distribuição teórica" mostra, com as percentagens atuais de Configurações → Percentuais de custo, para onde o valor vendido deveria ir (matéria-prima, salário, aluguel...). É um modelo, não o dinheiro que saiu de verdade — isso são os Custos fixos, mostrados por cima.',
       'A seta ao lado de cada número compara com o período anterior (a semana anterior, ou o mês civil anterior). A Semana vai de domingo a sábado, o Mês do dia 1 ao último dia e o Ano de 1 de janeiro a 31 de dezembro; as datas exatas aparecem por cima e as setas levam-te a períodos passados.',
       'Se houver vendas sem produto identificado (ex.: de uma importação de CSV), o custo delas não é conhecido — aparece um aviso e o lucro fica sobrestimado nessa medida.',
+      'Ícone do relatório (canto superior, só administradores): gera o Relatório geral num ficheiro Excel (.xlsx, uma folha por relatório) ou em CSV (.zip), para os últimos 12 meses (ou 6, ou este ano, ou o período do painel). Inclui resumo mensal, vendas por canal e sabor, produção, custo por sabor (com histórico de preços de compra), despesas por categoria e tesouraria. As folhas que a app ainda não regista (plataformas de entrega, pessoal, eventos, origem dos clientes) vão como modelos por preencher; a folha "Leia-me" diz o que está completo. Margens são sem IVA: o valor sem IVA vem do Vendus quando existe, ou estima-se com a taxa que escolheres.',
       '"Dicas para melhorar" (só administradores): toca em "Gerar dicas com IA" e a IA lê os números do período mostrado e do anterior (receita, lucro, custos fixos e variáveis, CMV, imposto) e sugere o que atacar. Faz isto no fim de cada semana ou mês para ir melhorando. São sugestões geradas por IA — avalia antes de agir. Os fixos não se eliminam; os variáveis podem reduzir-se ou cortar-se.',
     ],
   ),

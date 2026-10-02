@@ -111,6 +111,9 @@ class _SalesScreenState extends ConsumerState<SalesScreen> {
         '${r.vendasCriadas} venda(s) nova(s)',
         if (r.duplicadasIgnoradas > 0)
           '${r.duplicadasIgnoradas} já importada(s) (ignoradas)',
+        if (r.vendasCompletadas > 0)
+          '${r.vendasCompletadas} venda(s) antiga(s) completada(s) com canal, '
+              'hora e valores sem IVA',
         if (r.itensSemFicha > 0)
           '${r.itensSemFicha} linha(s) sem produto identificado',
         if (r.vendasCriadas == 0 &&

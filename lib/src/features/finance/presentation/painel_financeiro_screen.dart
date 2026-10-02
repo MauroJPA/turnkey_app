@@ -12,6 +12,7 @@ import '../application/resumo_financeiro_providers.dart';
 import '../domain/periodo.dart';
 import '../domain/resumo_financeiro.dart';
 import 'dicas_ia_card.dart';
+import 'relatorio_geral_sheet.dart';
 import 'seletor_periodo.dart';
 
 class PainelFinanceiroScreen extends ConsumerStatefulWidget {
@@ -39,6 +40,15 @@ class _PainelFinanceiroScreenState
         ),
         title: const Text('Painel financeiro'),
         actions: [
+          if (ref.watch(currentPapelProvider).canEditConfig)
+            IconButton(
+              icon: const Icon(Icons.summarize_outlined),
+              tooltip: 'Relatório geral (Excel / CSV)',
+              onPressed: () => showRelatorioGeralSheet(
+                context,
+                periodoDoPainel: _periodo,
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.description_outlined),
             tooltip: 'Ver DRE',

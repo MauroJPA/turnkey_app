@@ -191,10 +191,98 @@ function fichaParaVenda(descricaoVenda, fichas, minScore) {
   return melhorMatchFicha(descricaoVenda, fichas, minScore);
 }
 
+// --- dados extra para o Relatório geral ------------------------------------
+//
+// Hora, método de pagamento e valores sem IVA. São lidos de forma defensiva
+// (a API do Vendus pode não os trazer): quando faltam, ficam em branco e o
+// relatório avisa que não há dados.
+
+// Canal atribuído às vendas que vêm do POS Vendus (a loja). Pode ser
+// corrigido venda a venda na app (ex.: pedido de uma plataforma de entrega
+// registado na caixa).
+var CANAL_VENDUS = 'Loja física';
+
+function extrasDocumento(doc, detalhe) {
+  var d = doc || {};
+  var det = detalhe || {};
+  var lt = String(det.local_time || d.local_time || det.system_time || d.system_time || '');
+  var hora = lt.length >= 16 ? lt.substring(11, 16) : '';
+  if (!/^\d{2}:\d{2}$/.test(hora)) hora = '';
+
+  var metodo = '';
+  var pagamentos = det.payments || d.payments;
+  if (Array.isArray(pagamentos) && pagamentos.length) {
+    var nomes = [];
+    for (var i = 0; i < pagamentos.length; i++) {
+      var pg = pagamentos[i] || {};
+      var nome = String(pg.title || pg.label || pg.name || pg.mode || pg.type || '').trim();
+      if (nome && nomes.indexOf(nome) === -1) nomes.push(nome);
+    }
+    metodo = nomes.join(' + ').substring(0, 60);
+  }
+  return { hora: hora, metodoPagamento: metodo };
+}
+
+function extrasItem(it) {
+  var a = (it && it.amounts) || {};
+  var bruto = Number(a.gross_total);
+  var liquido = Number(a.net_total);
+  var out = { valorSemIva: null, ivaPercent: null, desconto: null };
+  if (isFinite(liquido) && a.net_total !== undefined && a.net_total !== null) {
+    out.valorSemIva = Math.round(liquido * 100) / 100;
+    if (isFinite(bruto) && liquido > 0 && bruto >= liquido) {
+      out.ivaPercent = Math.round((bruto / liquido - 1) * 1000) / 10;
+    }
+  }
+  var desc = Number(it && (it.discount_amount !== undefined ? it.discount_amount : a.discount));
+  if (isFinite(desc) && desc > 0) out.desconto = Math.round(desc * 100) / 100;
+  return out;
+}
+
+// Vendas importadas antes destes campos existirem: se o documento ainda está
+// ao alcance do Vendus, preenche hora/pagamento/canal e os valores sem IVA das
+// linhas (pela ordem em que foram criadas). Nunca mexe no que já tem valor.
+function completarVendaExistente(app, vendaId, doc, detalhe) {
+  var extras = extrasDocumento(doc, detalhe);
+  var itens = Array.isArray(detalhe && detalhe.items) ? detalhe.items : [];
+  app.runInTransaction(function (tx) {
+    var venda = tx.findRecordById('vendas', vendaId);
+    if (!venda.getString('canal')) venda.set('canal', CANAL_VENDUS);
+    if (!venda.getString('hora') && extras.hora) venda.set('hora', extras.hora);
+    if (!venda.getString('metodo_pagamento') && extras.metodoPagamento) {
+      venda.set('metodo_pagamento', extras.metodoPagamento);
+    }
+    tx.save(venda);
+
+    var linhas = tx.findRecordsByFilter('vendas_itens', 'venda = {:v}', 'created', 0, 0, {
+      v: vendaId,
+    });
+    if (linhas.length !== itens.length) return; // não dá para emparelhar com segurança
+    for (var i = 0; i < linhas.length; i++) {
+      var ex = extrasItem(itens[i]);
+      var linha = linhas[i];
+      var mudou = false;
+      if (ex.valorSemIva !== null && !linha.getFloat('valor_sem_iva')) {
+        linha.set('valor_sem_iva', ex.valorSemIva);
+        mudou = true;
+      }
+      if (ex.ivaPercent !== null && !linha.getFloat('iva_percent')) {
+        linha.set('iva_percent', ex.ivaPercent);
+        mudou = true;
+      }
+      if (ex.desconto !== null && !linha.getFloat('desconto')) {
+        linha.set('desconto', ex.desconto);
+        mudou = true;
+      }
+      if (mudou) tx.save(linha);
+    }
+  });
+}
+
 // Cria a `venda`+`vendas_itens` de um documento (já com os `itens`
 // completos, vindos de buscarDetalheDocumento). Devolve quantos itens
 // ficaram sem ficha, para o resumo final.
-function importarDocumento(app, empresaId, doc, itens, fichas) {
+function importarDocumento(app, empresaId, doc, itens, fichas, detalhe) {
   var vendusId = String(doc.id != null ? doc.id : '');
   var dataDoc = String(doc.date || doc.local_time || '').substring(0, 10);
   var semFicha = 0;
@@ -207,6 +295,10 @@ function importarDocumento(app, empresaId, doc, itens, fichas) {
     venda.set('total', Number(doc.amount_gross || 0));
     venda.set('numero_documento', String(doc.number || ''));
     venda.set('vendus_id', vendusId);
+    var extrasDoc = extrasDocumento(doc, detalhe);
+    venda.set('canal', CANAL_VENDUS);
+    if (extrasDoc.hora) venda.set('hora', extrasDoc.hora);
+    if (extrasDoc.metodoPagamento) venda.set('metodo_pagamento', extrasDoc.metodoPagamento);
     tx.save(venda);
 
     for (var j = 0; j < itens.length; j++) {
@@ -228,6 +320,10 @@ function importarDocumento(app, empresaId, doc, itens, fichas) {
       item.set('preco_unitario', precoUnit);
       item.set('total_linha', totalLinha);
       item.set('custo_unitario_snapshot', match ? match.custoProduto : 0);
+      var exItem = extrasItem(it);
+      if (exItem.valorSemIva !== null) item.set('valor_sem_iva', exItem.valorSemIva);
+      if (exItem.ivaPercent !== null) item.set('iva_percent', exItem.ivaPercent);
+      if (exItem.desconto !== null) item.set('desconto', exItem.desconto);
       tx.save(item);
     }
   });
@@ -303,6 +399,7 @@ function sincronizarEmpresa(app, empresaId, opts) {
   // Pré-carrega os `vendus_id` já importados (uma query, não uma por
   // documento) para a verificação de duplicados ser instantânea.
   var jaImportados = {};
+  var porCompletar = {}; // vendus_id -> id da venda (importada antes dos campos do relatório)
   var existentesRecs = app.findRecordsByFilter(
     'vendas',
     "empresa = {:e} && vendus_id != ''",
@@ -313,9 +410,13 @@ function sincronizarEmpresa(app, empresaId, opts) {
   );
   for (var k = 0; k < existentesRecs.length; k++) {
     jaImportados[existentesRecs[k].getString('vendus_id')] = true;
+    if (!existentesRecs[k].getString('canal') && !existentesRecs[k].getString('hora')) {
+      porCompletar[existentesRecs[k].getString('vendus_id')] = existentesRecs[k].id;
+    }
   }
 
   var vendasCriadas = 0;
+  var vendasCompletadas = 0;
   var duplicadasIgnoradas = 0;
   var itensCriados = 0;
   var itensSemFicha = 0;
@@ -375,6 +476,20 @@ function sincronizarEmpresa(app, empresaId, opts) {
 
       if (jaImportados[vendusId]) {
         duplicadasIgnoradas++;
+        if (porCompletar[vendusId]) {
+          try {
+            completarVendaExistente(
+              app,
+              porCompletar[vendusId],
+              doc,
+              buscarDetalheDocumento(apiKey, vendusId),
+            );
+            vendasCompletadas++;
+          } catch (err) {
+            console.log('[vendus] não consegui completar a venda ' + vendusId + ': ' + err);
+          }
+          delete porCompletar[vendusId];
+        }
         if (dataDoc && dataDoc > maisRecente) maisRecente = dataDoc;
         continue;
       }
@@ -398,7 +513,7 @@ function sincronizarEmpresa(app, empresaId, opts) {
       }
 
       try {
-        var r = importarDocumento(app, empresaId, doc, itens, fichas);
+        var r = importarDocumento(app, empresaId, doc, itens, fichas, detalhe);
         jaImportados[vendusId] = true;
         vendasCriadas++;
         itensCriados += r.itens;
@@ -418,6 +533,7 @@ function sincronizarEmpresa(app, empresaId, opts) {
   return {
     ok: true,
     vendasCriadas: vendasCriadas,
+    vendasCompletadas: vendasCompletadas,
     duplicadasIgnoradas: duplicadasIgnoradas,
     itensCriados: itensCriados,
     itensSemFicha: itensSemFicha,
@@ -427,6 +543,8 @@ function sincronizarEmpresa(app, empresaId, opts) {
 }
 
 module.exports = {
+  extrasDocumento: extrasDocumento,
+  extrasItem: extrasItem,
   sincronizarEmpresa: sincronizarEmpresa,
   melhorMatchFicha: melhorMatchFicha,
   scoreMatchFicha: scoreMatchFicha,

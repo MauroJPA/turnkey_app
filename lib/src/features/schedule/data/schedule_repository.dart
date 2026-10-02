@@ -79,6 +79,20 @@ class ScheduleRepository {
     return recs.map(ProducaoItem.fromRecord).toList();
   }
 
+  /// Todas as linhas de produção da empresa (qualquer plano), com o id do
+  /// plano a que pertencem — para o Relatório geral.
+  Future<List<({String producaoId, ProducaoItem item})>>
+  listTodosItens() async {
+    final recs = await _itens.getFullList(
+      filter: 'empresa = "$_empresaId"',
+      expand: 'receita,formato,recheio,ficha',
+    );
+    return [
+      for (final r in recs)
+        (producaoId: r.getStringValue('producao'), item: ProducaoItem.fromRecord(r)),
+    ];
+  }
+
   Future<void> addItem(
     String planId, {
     required String receitaId,

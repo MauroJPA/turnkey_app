@@ -2,6 +2,29 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.48.0 — 2026-10-02 — Relatório geral no Painel financeiro (Excel / CSV)
+
+- **Painel financeiro → ícone "Relatório geral"** (administradores): gera um ficheiro com **uma folha por
+  relatório**, seguindo a especificação de relatórios da estratégia: Resumo mensal · 1 Vendas (por canal,
+  sabor, com e sem IVA) · 1 Equivalência de nomes · 2 Produção · 3 Custo por sabor (+ componentes,
+  ingredientes e histórico de preços de compra) · 4 Despesas por categoria · 7 Tesouraria · e modelos por
+  preencher para 5 Plataformas, 6 Pessoal, 8 Eventos e 9 Origem dos clientes. A folha **Leia-me** diz, por
+  relatório, o que está completo e o que falta.
+- Formatos: **Excel (.xlsx)** ou **CSV (.zip)** (UTF-8, vírgula; datas AAAA-MM-DD; euros com ponto).
+  Períodos: últimos 12 meses (por omissão), 6 meses, este ano ou o período do painel.
+- **IVA**: margens sem IVA. O valor sem IVA vem do Vendus quando existe; senão podes escolher uma taxa
+  (6/13/23 %) para estimar — fica sempre indicado na coluna `iva_origem` (registado / estimado /
+  desconhecido).
+- **Vendas ganham canal, hora e método de pagamento** (e por linha: valor sem IVA, taxa e desconto):
+  - definir o **canal** (Loja física, Uber Eats, Glovo, Bolt Food, Parceria Alvalade, Revenda, Envio
+    nacional, Eventos… ou outro) ao registar uma venda e, depois, no detalhe da venda;
+  - o Vendus passa a trazer **hora, método de pagamento e valor sem IVA** por linha; as vendas novas ficam
+    como "Loja física". "Reimportar histórico" **completa as vendas antigas** do Vendus (sem duplicar).
+- Nova migration `1790850000_vendas_relatorio.js`.
+- Ainda **não são registados** (vão em branco no relatório): comissão do canal, tipo de cliente,
+  sobras/desperdício/horas de produção, extratos das plataformas, horas de pessoal, saldo bancário e
+  dívidas, eventos e origem dos clientes — próximos passos se quiseres capturá-los na app.
+
 ## 1.47.0 — 2026-10-02 — IA nos custos fixos/variáveis e dicas no Painel financeiro
 
 - **Custos fixos → ícone ✨ "Organizar com IA"**: a IA lê os custos ativos e sugere, para cada um, se é

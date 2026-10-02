@@ -70,6 +70,8 @@ class SalesRepository {
     required OrigemVenda origem,
     String numeroDocumento = '',
     String notas = '',
+    String canal = '',
+    String metodoPagamento = '',
     required List<VendaItemInput> linhas,
   }) async {
     final total = linhas.fold<double>(0, (s, l) => s + l.totalLinha);
@@ -81,6 +83,8 @@ class SalesRepository {
         'total': total,
         'numero_documento': numeroDocumento.trim(),
         'notas': notas.trim(),
+        'canal': canal.trim(),
+        'metodo_pagamento': metodoPagamento.trim(),
       },
     );
     for (final l in linhas) {
@@ -101,6 +105,16 @@ class SalesRepository {
   }
 
   Future<void> remover(String id) => _vendas.delete(id);
+
+  /// Define o canal e o método de pagamento de uma venda.
+  Future<void> definirCanal(
+    String id, {
+    required String canal,
+    String metodoPagamento = '',
+  }) => _vendas.update(
+    id,
+    body: {'canal': canal.trim(), 'metodo_pagamento': metodoPagamento.trim()},
+  );
 
   /// Todas as linhas de venda da empresa (qualquer período) ainda sem ficha
   /// técnica associada — base do ecrã "Produtos não identificados".
@@ -143,6 +157,7 @@ class SalesRepository {
         int itensCriados,
         int itensSemFicha,
         int totalDocumentosRecebidos,
+        int vendasCompletadas,
       })> sincronizarVendus({DateTime? desde, DateTime? ate}) async {
     final res = await _pb.send(
       '/api/gc_turnkey/vendus/sincronizar',
@@ -160,6 +175,7 @@ class SalesRepository {
       itensSemFicha: (m['itensSemFicha'] as num?)?.toInt() ?? 0,
       totalDocumentosRecebidos:
           (m['totalDocumentosRecebidos'] as num?)?.toInt() ?? 0,
+      vendasCompletadas: (m['vendasCompletadas'] as num?)?.toInt() ?? 0,
     );
   }
 }
