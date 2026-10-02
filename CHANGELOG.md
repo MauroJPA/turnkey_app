@@ -2,6 +2,16 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.48.3 — 2026-10-02 — Corrige "Failed to create record" ao criar embalagem sem formato
+
+- **Corrigido**: ao aplicar uma fatura com uma embalagem **nova** (ex.: "Caixa para bolo") sem escolher
+  nenhum formato de cookie, a linha falhava com "Failed to create record" e ficava por rever. A regra da
+  coleção de embalagens recusava a lista de formatos vazia ("em branco serve para qualquer formato"); o
+  mesmo acontecia ao criar/editar uma embalagem sem formatos. Nova migration
+  `1790860000_embalagens_formatos_regra.js`. Um formato de outra empresa continua a ser recusado.
+- Depois de atualizar, volta a aplicar a fatura: a linha "Caixa para bolo" fica por rever com o que já
+  preenchiste — basta tocar em Aplicar outra vez.
+
 ## 1.48.2 — 2026-10-02 — Backup manual: verifica o espaço e limita o número de cópias
 
 - **`gc_turnkey.sh backup-agora`** (servidor):

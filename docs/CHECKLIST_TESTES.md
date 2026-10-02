@@ -1303,6 +1303,13 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       completadas e, no relatório, passam a ter canal, hora e valor sem IVA (se o Vendus os fornecer).
 - [ ] Um utilizador sem papel de administrador não vê o ícone do relatório.
 
+## 74. Embalagem nova sem formato
+
+- [ ] Fatura → linha de Embalagem → "Nova embalagem" (nome, tipo, sem escolher formatos de cookie) → Aplicar:
+      a embalagem é criada e a linha aplica-se (já não dá "Failed to create record").
+- [ ] Embalagens → editar uma embalagem e desmarcar todos os formatos → guarda sem erro.
+- [ ] Escolher um formato de cookie continua a funcionar.
+
 ---
 
 ## Notas / ajustes pedidos
