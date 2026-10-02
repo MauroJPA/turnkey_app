@@ -11,6 +11,8 @@ class NumerosMagicos {
     required this.impostoPercent,
     required this.cmvPercent,
     required this.receitaPeriodo,
+    this.periodoComparado,
+    this.receitaComparada = 0,
     this.diasUteisMes = 26,
   });
 
@@ -29,7 +31,22 @@ class NumerosMagicos {
   /// Receita real do [periodo] escolhido, só para comparar com o alvo.
   final double receitaPeriodo;
 
+  /// Intervalo do período anterior usado na comparação — se o período atual
+  /// ainda está a decorrer, é só o mesmo nº de dias do anterior (para comparar
+  /// o mesmo ponto); senão, o período anterior completo. `null` = sem dados.
+  final Periodo? periodoComparado;
+
+  /// Receita nesse [periodoComparado].
+  final double receitaComparada;
+
   final int diasUteisMes;
+
+  /// Variação do vendido face ao [periodoComparado], em % (`null` se não há
+  /// nada vendido nesse período para comparar).
+  double? get variacaoVendidoPercent =>
+      periodoComparado == null || receitaComparada <= 0
+      ? null
+      : (receitaPeriodo / receitaComparada - 1) * 100;
 
   double get custosReaisMensais =>
       custosFixosMensal + custosVariaveisMensal + depreciacaoMensal;
@@ -58,4 +75,23 @@ class NumerosMagicos {
   double? get faltaParaMinimo => vendaMinimaDoPeriodo == null
       ? null
       : vendaMinimaDoPeriodo! - receitaPeriodo;
+
+  /// Venda acima do mínimo do período (0 se ainda não o atingiu). Não é lucro:
+  /// cada euro vendido a mais continua a levar imposto e CMV.
+  double get vendidoAcimaDoMinimo {
+    final falta = faltaParaMinimo;
+    return falta == null || falta >= 0 ? 0 : -falta;
+  }
+
+  /// Imposto devido sobre o que se vendeu acima do mínimo.
+  double get impostoSobreExcedente =>
+      vendidoAcimaDoMinimo * impostoPercent / 100;
+
+  /// Custo da matéria-prima (CMV) dos produtos vendidos acima do mínimo.
+  double get cmvSobreExcedente => vendidoAcimaDoMinimo * cmvPercent / 100;
+
+  /// Lucro líquido do período: o que sobra do excedente depois de imposto e
+  /// CMV (os custos reais já ficaram pagos pelo mínimo).
+  double get lucroLiquidoPeriodo =>
+      vendidoAcimaDoMinimo - impostoSobreExcedente - cmvSobreExcedente;
 }

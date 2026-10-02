@@ -22,8 +22,17 @@ class SeletorPeriodo extends StatelessWidget {
 
   TipoPeriodo get _tipo => periodo.tipo ?? TipoPeriodo.semana;
 
-  Periodo _de(TipoPeriodo t, DateTime ref) =>
-      t == TipoPeriodo.mes ? Periodo.mesDe(ref) : Periodo.semanaDe(ref);
+  Periodo _de(TipoPeriodo t, DateTime ref) => switch (t) {
+    TipoPeriodo.mes => Periodo.mesDe(ref),
+    TipoPeriodo.ano => Periodo.anoDe(ref),
+    TipoPeriodo.semana => Periodo.semanaDe(ref),
+  };
+
+  String get _nomeTipo => switch (_tipo) {
+    TipoPeriodo.mes => 'mês',
+    TipoPeriodo.ano => 'ano',
+    TipoPeriodo.semana => 'semana',
+  };
 
   Future<void> _escolherData(BuildContext context) async {
     final hoje = _hoje;
@@ -33,9 +42,7 @@ class SeletorPeriodo extends StatelessWidget {
       initialDate: inicial,
       firstDate: DateTime(2020),
       lastDate: DateTime(hoje.year + 1, 12, 31),
-      helpText: _tipo == TipoPeriodo.mes
-          ? 'Escolhe um dia do mês'
-          : 'Escolhe um dia da semana',
+      helpText: 'Escolhe um dia do $_nomeTipo',
     );
     if (d != null) onChanged(_de(_tipo, d));
   }
@@ -67,6 +74,11 @@ class SeletorPeriodo extends StatelessWidget {
                 label: Text('Mês'),
                 icon: Icon(Icons.calendar_month_outlined),
               ),
+              ButtonSegment(
+                value: TipoPeriodo.ano,
+                label: Text('Ano'),
+                icon: Icon(Icons.event_note_outlined),
+              ),
             ],
             selected: {_tipo},
             onSelectionChanged: (s) =>
@@ -76,9 +88,7 @@ class SeletorPeriodo extends StatelessWidget {
           Row(
             children: [
               IconButton(
-                tooltip: _tipo == TipoPeriodo.mes
-                    ? 'Mês anterior'
-                    : 'Semana anterior',
+                tooltip: 'Anterior ($_nomeTipo)',
                 icon: const Icon(Icons.chevron_left),
                 onPressed: () => onChanged(periodo.anterior),
               ),
@@ -120,9 +130,7 @@ class SeletorPeriodo extends StatelessWidget {
                   onPressed: () => onChanged(_de(_tipo, hoje)),
                 ),
               IconButton(
-                tooltip: _tipo == TipoPeriodo.mes
-                    ? 'Mês seguinte'
-                    : 'Semana seguinte',
+                tooltip: 'Seguinte ($_nomeTipo)',
                 icon: const Icon(Icons.chevron_right),
                 onPressed: podeAvancar
                     ? () => onChanged(periodo.seguinte)

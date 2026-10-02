@@ -186,6 +186,36 @@ void main() {
     });
   });
 
+  group('anoDe (ano civil completo)', () {
+    final hoje = DateTime(2026, 10, 2);
+    test('1 de janeiro a 31 de dezembro', () {
+      final p = Periodo.anoDe(DateTime(2026, 6, 15), hoje: hoje);
+      expect(p.desde, DateTime(2026, 1, 1));
+      expect(p.ate, DateTime(2026, 12, 31));
+      expect(p.dias, 365);
+      expect(p.intervaloTexto, '01/01/2026 – 31/12/2026');
+      expect(p.label, 'Este ano');
+    });
+
+    test('ano bissexto tem 366 dias', () {
+      expect(Periodo.anoDe(DateTime(2028, 3, 1), hoje: hoje).dias, 366);
+    });
+
+    test('rótulos e navegação', () {
+      expect(Periodo.anoDe(DateTime(2025, 5, 1), hoje: hoje).label, 'Ano passado');
+      expect(Periodo.anoDe(DateTime(2024, 5, 1), hoje: hoje).label, '2024');
+      final p = Periodo.anoDe(hoje, hoje: hoje);
+      expect(p.anterior.desde, DateTime(2025, 1, 1));
+      expect(p.anterior.ate, DateTime(2025, 12, 31));
+      expect(p.seguinte.desde, DateTime(2027, 1, 1));
+    });
+
+    test('um ano pesa 12 meses nos custos mensais', () {
+      expect(Periodo.anoDe(DateTime(2026, 1, 1)).fatorProrateioMensal, 12);
+      expect(Periodo.anoDe(DateTime(2028, 1, 1)).fatorProrateioMensal, 12);
+    });
+  });
+
   group('Periodo livre', () {
     test('anterior tem a mesma duração', () {
       final p = Periodo(

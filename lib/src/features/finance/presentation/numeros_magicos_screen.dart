@@ -76,12 +76,22 @@ class _NumerosMagicosScreenState extends ConsumerState<NumerosMagicosScreen> {
                 const SizedBox(height: 8),
                 _linha(context, 'Custos fixos', fmt(n.custosFixosMensal)),
                 _linha(
-                    context, 'Custos variáveis', fmt(n.custosVariaveisMensal)),
-                _linha(context, 'Depreciação de equipamentos',
-                    fmt(n.depreciacaoMensal)),
+                  context,
+                  'Custos variáveis',
+                  fmt(n.custosVariaveisMensal),
+                ),
+                _linha(
+                  context,
+                  'Depreciação de equipamentos',
+                  fmt(n.depreciacaoMensal),
+                ),
                 const Divider(height: 20),
-                _linha(context, 'Total', fmt(n.custosReaisMensais),
-                    destaque: true),
+                _linha(
+                  context,
+                  'Total',
+                  fmt(n.custosReaisMensais),
+                  destaque: true,
+                ),
               ],
             ),
           ),
@@ -93,13 +103,21 @@ class _NumerosMagicosScreenState extends ConsumerState<NumerosMagicosScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Percentuais (Configurações → Percentuais de custo)',
-                    style: tt.titleMedium),
+                Text(
+                  'Percentuais (Configurações → Percentuais de custo)',
+                  style: tt.titleMedium,
+                ),
                 const SizedBox(height: 8),
-                _linha(context, 'Imposto',
-                    '${n.impostoPercent.toStringAsFixed(1)}%'),
-                _linha(context, 'CMV (matéria-prima)',
-                    '${n.cmvPercent.toStringAsFixed(1)}%'),
+                _linha(
+                  context,
+                  'Imposto',
+                  '${n.impostoPercent.toStringAsFixed(1)}%',
+                ),
+                _linha(
+                  context,
+                  'CMV (matéria-prima)',
+                  '${n.cmvPercent.toStringAsFixed(1)}%',
+                ),
               ],
             ),
           ),
@@ -128,15 +146,22 @@ class _NumerosMagicosScreenState extends ConsumerState<NumerosMagicosScreen> {
                   Text('Venda mínima', style: tt.titleMedium),
                   const SizedBox(height: 4),
                   Text(
-                    'Cobre os custos reais + imposto + CMV — a partir daqui, '
-                    'tudo o que vender a mais é lucro.',
+                    'Cobre os custos reais + imposto + CMV. Acima disto, cada venda '
+                    'ainda paga imposto e CMV; o resto é lucro líquido.',
                     style: tt.bodySmall,
                   ),
                   const SizedBox(height: 12),
-                  _linha(context, 'Por mês', fmt(n.vendaMinimaMensal!),
-                      destaque: true),
-                  _linha(context, 'Por dia (${n.diasUteisMes} dias)',
-                      fmt(n.vendaMinimaDiaria!)),
+                  _linha(
+                    context,
+                    'Por mês',
+                    fmt(n.vendaMinimaMensal!),
+                    destaque: true,
+                  ),
+                  _linha(
+                    context,
+                    'Por dia (${n.diasUteisMes} dias)',
+                    fmt(n.vendaMinimaDiaria!),
+                  ),
                 ],
               ),
             ),
@@ -148,7 +173,10 @@ class _NumerosMagicosScreenState extends ConsumerState<NumerosMagicosScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('${n.periodo.label}: como vai indo', style: tt.titleMedium),
+                  Text(
+                    '${n.periodo.label}: como vai indo',
+                    style: tt.titleMedium,
+                  ),
                   const SizedBox(height: 2),
                   Text(
                     'De ${n.periodo.intervaloTexto.replaceFirst(' – ', ' a ')} '
@@ -164,18 +192,83 @@ class _NumerosMagicosScreenState extends ConsumerState<NumerosMagicosScreen> {
                         : 'Vendido no período',
                     fmt(n.receitaPeriodo),
                   ),
-                  _linha(context, 'Mínimo para o período inteiro',
-                      fmt(n.vendaMinimaDoPeriodo!)),
-                  const Divider(height: 20),
                   _linha(
                     context,
-                    n.faltaParaMinimo! > 0
-                        ? 'Falta vender para bater o mínimo'
-                        : 'Já passou o mínimo — lucro puro',
-                    fmt(n.faltaParaMinimo!.abs()),
-                    destaque: true,
-                    cor: n.faltaParaMinimo! > 0 ? cs.error : cs.primary,
+                    'Mínimo para o período inteiro',
+                    fmt(n.vendaMinimaDoPeriodo!),
                   ),
+                  if (n.periodoComparado != null) ...[
+                    const Divider(height: 20),
+                    Text(
+                      'Comparação com o período anterior '
+                      '(${n.periodoComparado!.intervaloTexto})',
+                      style: tt.bodySmall,
+                    ),
+                    _linha(
+                      context,
+                      'Vendido nesse período',
+                      fmt(n.receitaComparada),
+                    ),
+                    if (n.variacaoVendidoPercent != null)
+                      _linha(
+                        context,
+                        n.variacaoVendidoPercent! >= 0
+                            ? 'Evolução do vendido'
+                            : 'Quebra do vendido',
+                        '${n.variacaoVendidoPercent! >= 0 ? '+' : ''}'
+                        '${n.variacaoVendidoPercent!.toStringAsFixed(1)}%',
+                        destaque: true,
+                        cor: n.variacaoVendidoPercent! >= 0
+                            ? cs.primary
+                            : cs.error,
+                      )
+                    else
+                      Text(
+                        'Sem vendas nesse período para comparar.',
+                        style: tt.bodySmall,
+                      ),
+                  ],
+                  const Divider(height: 20),
+                  if (n.faltaParaMinimo! > 0)
+                    _linha(
+                      context,
+                      'Falta vender para bater o mínimo',
+                      fmt(n.faltaParaMinimo!),
+                      destaque: true,
+                      cor: cs.error,
+                    )
+                  else ...[
+                    _linha(
+                      context,
+                      'Vendido acima do mínimo',
+                      fmt(n.vendidoAcimaDoMinimo),
+                    ),
+                    _linha(
+                      context,
+                      '− Imposto (${n.impostoPercent.toStringAsFixed(1)}%)',
+                      fmt(n.impostoSobreExcedente),
+                    ),
+                    _linha(
+                      context,
+                      '− CMV (${n.cmvPercent.toStringAsFixed(1)}%)',
+                      fmt(n.cmvSobreExcedente),
+                    ),
+                    const Divider(height: 20),
+                    _linha(
+                      context,
+                      'Lucro líquido do período',
+                      fmt(n.lucroLiquidoPeriodo),
+                      destaque: true,
+                      cor: cs.primary,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Já passaste o mínimo, mas o que vendes a mais ainda '
+                      'leva imposto e matéria-prima em cada produto; só o '
+                      'resto é lucro.',
+                      style: tt.bodySmall,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -201,9 +294,10 @@ class _NumerosMagicosScreenState extends ConsumerState<NumerosMagicosScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: style?.copyWith(color: cor)),
-          Text(valor,
-              style:
-                  style?.copyWith(fontWeight: FontWeight.bold, color: cor)),
+          Text(
+            valor,
+            style: style?.copyWith(fontWeight: FontWeight.bold, color: cor),
+          ),
         ],
       ),
     );

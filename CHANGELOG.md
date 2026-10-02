@@ -2,6 +2,19 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.46.1 — 2026-10-02 — Números mágicos: lucro líquido, ano e comparação
+
+- **Novo período "Ano"** (1 de janeiro a 31 de dezembro) nos Números mágicos, Painel financeiro, DRE e
+  Análise de vendas, com histórico por ano. Nos custos mensais, um ano pesa 12 meses.
+- **Comparação com o período anterior nos Números mágicos** (evolução ou quebra do vendido, em %). Se o
+  período atual ainda decorre, compara com o **mesmo nº de dias** do anterior (ex.: 1–2 de outubro vs 1–2 de
+  setembro), para a comparação ser justa.
+
+- **Corrigido**: ao passar o mínimo, "Já passou o mínimo — lucro puro" mostrava todo o excedente
+  (vendido − mínimo) como lucro. Mas cada produto vendido a mais continua a levar **imposto** e **CMV**.
+- Agora mostra: *Vendido acima do mínimo* → *− Imposto* → *− CMV* → **Lucro líquido do período** (só o
+  que sobra). Os custos reais (fixos, variáveis, depreciação) já ficaram pagos pelo mínimo.
+
 ## 1.46.0 — 2026-10-02 — Períodos claros nos números financeiros (semana dom–sáb, mês inteiro, histórico)
 
 - **Números mágicos, Painel financeiro, DRE e Análise de vendas** passam a usar o mesmo seletor de período:

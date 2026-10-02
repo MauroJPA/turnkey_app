@@ -1256,6 +1256,16 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Painel financeiro, DRE e Análise de vendas têm o mesmo seletor e os mesmos períodos.
 - [ ] A seta de comparação com o período anterior compara com a semana anterior / o mês anterior.
 
+## 71. Números mágicos: lucro líquido acima do mínimo
+
+- [ ] Com vendas acima do mínimo do período, o cartão mostra: Vendido acima do mínimo, − Imposto (%),
+      − CMV (%) e **Lucro líquido do período**.
+- [ ] Conferência: lucro líquido = excedente × (100 − imposto% − CMV%) / 100.
+- [ ] Abaixo do mínimo continua a mostrar "Falta vender para bater o mínimo" (a vermelho).
+- [ ] Seletor com **Semana / Mês / Ano**; "Ano" mostra 01/01 a 31/12 e as setas andam ano a ano.
+- [ ] Nos Números mágicos aparece "Comparação com o período anterior" com o vendido desse período e a
+      evolução/quebra em %. Num período ainda a decorrer, compara só os mesmos dias do anterior.
+
 ---
 
 ## Notas / ajustes pedidos

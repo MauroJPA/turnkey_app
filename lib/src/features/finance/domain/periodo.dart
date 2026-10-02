@@ -1,6 +1,7 @@
-/// Tipo de período "de calendário": a semana (domingo a sábado, ignora o mês)
-/// ou o mês civil (dia 1 ao último dia).
-enum TipoPeriodo { semana, mes }
+/// Tipo de período "de calendário": a semana (domingo a sábado, ignora o mês),
+/// o mês civil (dia 1 ao último dia) ou o ano civil (1 de janeiro a 31 de
+/// dezembro).
+enum TipoPeriodo { semana, mes, ano }
 
 /// Um intervalo de datas (inclusive nas duas pontas) para o painel
 /// financeiro, com o período anterior para comparação.
@@ -36,9 +37,11 @@ class Periodo {
   /// Nº de dias (inclusive). Conta em UTC para não ser afetado pela mudança
   /// de hora.
   int get dias =>
-      DateTime.utc(ate.year, ate.month, ate.day)
-          .difference(DateTime.utc(desde.year, desde.month, desde.day))
-          .inDays +
+      DateTime.utc(
+        ate.year,
+        ate.month,
+        ate.day,
+      ).difference(DateTime.utc(desde.year, desde.month, desde.day)).inDays +
       1;
 
   bool contem(DateTime d) {
@@ -55,6 +58,8 @@ class Periodo {
         return mesDe(DateTime(desde.year, desde.month - 1, 1));
       case TipoPeriodo.semana:
         return semanaDe(DateTime(desde.year, desde.month, desde.day - 1));
+      case TipoPeriodo.ano:
+        return anoDe(DateTime(desde.year - 1, 1, 1));
       case null:
         return Periodo(
           desde: DateTime(desde.year, desde.month, desde.day - dias),
@@ -71,6 +76,8 @@ class Periodo {
         return mesDe(DateTime(ate.year, ate.month + 1, 1));
       case TipoPeriodo.semana:
         return semanaDe(DateTime(ate.year, ate.month, ate.day + 1));
+      case TipoPeriodo.ano:
+        return anoDe(DateTime(ate.year + 1, 1, 1));
       case null:
         return Periodo(
           desde: DateTime(ate.year, ate.month, ate.day + 1),
@@ -82,8 +89,10 @@ class Periodo {
 
   /// Fração de um mês "médio" que este período representa — para prorratear
   /// custos fixos (que são sempre um valor *mensal*). Um mês completo dá 1.0;
-  /// uma semana dá sempre 7/30,44, esteja onde estiver no calendário.
+  /// uma semana dá sempre 7/30,44, esteja onde estiver no calendário; um ano
+  /// completo dá 12.
   double get fatorProrateioMensal {
+    if (tipo == TipoPeriodo.ano) return 12;
     if (tipo == TipoPeriodo.semana) return dias / 30.44;
     final diasMes = desde.month == ate.month
         ? DateTime(desde.year, desde.month + 1, 0).day
@@ -153,12 +162,38 @@ class Periodo {
     } else {
       label = '${_meses[inicio.month - 1]} de ${inicio.year}';
     }
-    return Periodo(desde: inicio, ate: fim, label: label, tipo: TipoPeriodo.mes);
+    return Periodo(
+      desde: inicio,
+      ate: fim,
+      label: label,
+      tipo: TipoPeriodo.mes,
+    );
+  }
+
+  /// O ano civil completo (1 de janeiro a 31 de dezembro) que contém [d].
+  static Periodo anoDe(DateTime d, {DateTime? hoje}) {
+    final h = _diaZero(hoje ?? DateTime.now());
+    final String label;
+    if (h.year == d.year) {
+      label = 'Este ano';
+    } else if (h.year - 1 == d.year) {
+      label = 'Ano passado';
+    } else {
+      label = '${d.year}';
+    }
+    return Periodo(
+      desde: DateTime(d.year, 1, 1),
+      ate: DateTime(d.year, 12, 31),
+      label: label,
+      tipo: TipoPeriodo.ano,
+    );
   }
 
   static Periodo semanaAtual() => semanaDe(DateTime.now());
 
   static Periodo mesAtual() => mesDe(DateTime.now());
+
+  static Periodo anoAtual() => anoDe(DateTime.now());
 
   static Periodo mesPassado() {
     final h = DateTime.now();

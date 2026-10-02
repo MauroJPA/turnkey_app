@@ -279,10 +279,10 @@ const Map<HelpTopic, HelpEntry> helpContent = {
   HelpTopic.numerosMagicos: (
     titulo: 'Números mágicos',
     paragrafos: [
-      'Mostra a partir de quanto vendido, por mês (e por dia), tudo já está pago — custos fixos, variáveis, depreciação dos equipamentos, imposto e o custo da matéria-prima (CMV). Tudo o que vender a mais disso é lucro.',
+      'Mostra a partir de quanto vendido, por mês (e por dia), tudo já está pago — custos fixos, variáveis, depreciação dos equipamentos, imposto e o custo da matéria-prima (CMV). A partir daí, cada euro vendido a mais continua a levar imposto e CMV; só o que sobra depois disso é lucro líquido.',
       'Os percentuais de Imposto e CMV vêm de Configurações → Percentuais de custo — muda-os lá se precisares.',
       'A "venda mínima" é sempre um valor mensal cheio; o cartão de baixo compara com o que já vendeste no período escolhido, para veres se estás perto ou longe do objetivo.',
-      'Períodos: a Semana vai de domingo a sábado (ignora o mês) e o Mês vai do dia 1 ao último dia. São sempre contados inteiros — por isso o mínimo do período não muda de um dia para o outro; só o "vendido" vai subindo. As datas exatas aparecem por baixo do nome do período; usa as setas para ver semanas/meses anteriores (toca nas datas para saltar para um dia).',
+      'Períodos: a Semana vai de domingo a sábado (ignora o mês), o Mês vai do dia 1 ao último dia e o Ano de 1 de janeiro a 31 de dezembro. São sempre contados inteiros — por isso o mínimo do período não muda de um dia para o outro; só o "vendido" vai subindo. As datas exatas aparecem por baixo do nome do período; usa as setas para ver semanas/meses anteriores (toca nas datas para saltar para um dia).',
       'Se o aviso de percentuais aparecer, é porque Imposto + CMV somam 100% ou mais — nesse caso não há venda que cubra os custos só com esses dois; revê os valores em Configurações.',
     ],
   ),
@@ -292,7 +292,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Junta as Vendas e os Custos fixos num só sítio: quanto entrou, quanto saiu e o lucro, por semana ou mês.',
       '"Custo dos produtos vendidos" é o custo real da matéria-prima do que foi vendido (guardado em cada venda no momento em que foi registada).',
       '"Distribuição teórica" mostra, com as percentagens atuais de Configurações → Percentuais de custo, para onde o valor vendido deveria ir (matéria-prima, salário, aluguel...). É um modelo, não o dinheiro que saiu de verdade — isso são os Custos fixos, mostrados por cima.',
-      'A seta ao lado de cada número compara com o período anterior (a semana anterior, ou o mês civil anterior). A Semana vai de domingo a sábado e o Mês do dia 1 ao último dia; as datas exatas aparecem por cima e as setas levam-te a períodos passados.',
+      'A seta ao lado de cada número compara com o período anterior (a semana anterior, ou o mês civil anterior). A Semana vai de domingo a sábado, o Mês do dia 1 ao último dia e o Ano de 1 de janeiro a 31 de dezembro; as datas exatas aparecem por cima e as setas levam-te a períodos passados.',
       'Se houver vendas sem produto identificado (ex.: de uma importação de CSV), o custo delas não é conhecido — aparece um aviso e o lucro fica sobrestimado nessa medida.',
     ],
   ),
@@ -300,7 +300,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
     titulo: 'DRE',
     paragrafos: [
       'DRE = Demonstração de Resultados do Exercício: o mesmo cálculo do painel financeiro, mas no formato de relatório clássico de contabilidade (receita → custo → lucro bruto → despesas → resultado).',
-      'Escolhe a semana (domingo a sábado) ou o mês (dia 1 ao último dia), navega pelas setas até ao período que queres e toca no ícone de impressão para abrir uma versão simples para imprimir ou guardar como PDF.',
+      'Escolhe a semana (domingo a sábado), o mês (dia 1 ao último dia) ou o ano, navega pelas setas até ao período que queres e toca no ícone de impressão para abrir uma versão simples para imprimir ou guardar como PDF.',
       'Se houver vendas sem produto identificado, o custo delas não entra no cálculo e aparece um aviso — o resultado fica sobrestimado nessa medida.',
     ],
   ),
