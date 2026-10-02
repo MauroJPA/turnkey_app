@@ -64,8 +64,16 @@ tar -xzf "$PACOTE" -C "$APP_DIR"
 echo "-- A atualizar (reconstrói a imagem e reinicia; migrations aplicam-se sozinhas)"
 bash gc_turnkey.sh atualizar
 
+echo "-- A esperar que o servidor responda (até 60 s)"
+PORTA_APP="$(grep -E '^GC_TURNKEY_PORTA=' .env 2>/dev/null | tail -n1 | cut -d= -f2- || true)"
+PORTA_APP="${PORTA_APP:-8091}"
+for _ in $(seq 1 30); do
+  curl -fsS "http://127.0.0.1:${PORTA_APP}/api/health" >/dev/null 2>&1 && break
+  sleep 2
+done
+
 echo "-- Estado"
-bash gc_turnkey.sh estado
+bash gc_turnkey.sh estado || echo "AVISO: o servidor ainda não respondeu — vê 'bash gc_turnkey.sh logs'." >&2
 
 rm -f "$PACOTE"
 echo
