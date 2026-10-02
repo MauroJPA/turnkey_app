@@ -102,6 +102,17 @@ class _CustoFixoFormSheetState extends State<_CustoFixoFormSheet> {
               selected: {_tipo},
               onSelectionChanged: (s) => setState(() => _tipo = s.first),
             ),
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                _tipo == TipoCusto.fixo
+                    ? 'Fixo: não dá para eliminar sem fechar ou mudar o '
+                        'negócio (renda, salários, seguros…).'
+                    : 'Variável: dá para reduzir ou cortar, por um período '
+                        'ou para sempre (marketing, subscrições, consumos…).',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _valor,

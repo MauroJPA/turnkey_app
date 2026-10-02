@@ -1266,6 +1266,20 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Nos Números mágicos aparece "Comparação com o período anterior" com o vendido desse período e a
       evolução/quebra em %. Num período ainda a decorrer, compara só os mesmos dias do anterior.
 
+## 72. IA nos custos e dicas no Painel financeiro
+
+- [ ] Custos fixos → ícone ✨: abre "Organizar com IA" e, passados alguns segundos, lista "Sugere mudar" e
+      "Já estão bem classificados", cada um com o motivo.
+- [ ] Nos variáveis aparece "Se apertar: Reduzir / Pausar / Cortar" e uma dica.
+- [ ] Desmarca uma sugestão, toca em "Aplicar N alterações" → só as marcadas mudam de Fixo/Variável e os
+      totais Fixos/Variáveis no topo atualizam.
+- [ ] Sem chave de IA no servidor: aparece uma mensagem clara (não um erro técnico) e "Tentar de novo".
+- [ ] A ajuda (?) dos Custos fixos explica o que é fixo e o que é variável e porquê.
+- [ ] Ao escolher Fixo/Variável no formulário de custo, há uma frase a explicar cada tipo.
+- [ ] Painel financeiro (como administrador): cartão "Dicas para melhorar" → "Gerar dicas com IA" mostra um
+      resumo e 4–6 dicas com bolinha de prioridade; mudar de período volta ao botão inicial.
+- [ ] Um utilizador sem papel de administrador não vê o cartão de dicas.
+
 ---
 
 ## Notas / ajustes pedidos

@@ -31,6 +31,16 @@ class CustosFixosActions {
     _refresh();
   }
 
+  /// Muda o tipo (fixo/variável) de vários custos de uma vez — usado para
+  /// aplicar as sugestões da IA que a pessoa aceitou.
+  Future<void> definirTipos(Map<String, TipoCusto> tipos) async {
+    final repo = _ref.read(custosFixosRepositoryProvider);
+    for (final e in tipos.entries) {
+      await repo.setTipo(e.key, e.value);
+    }
+    _refresh();
+  }
+
   Future<void> arquivar(String id) async {
     await _ref
         .read(custosFixosRepositoryProvider)

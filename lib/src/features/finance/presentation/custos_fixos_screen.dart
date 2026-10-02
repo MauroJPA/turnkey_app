@@ -14,6 +14,7 @@ import '../application/custos_fixos_providers.dart';
 import '../domain/custo_fixo.dart';
 import 'custo_fixo_form_sheet.dart';
 import 'custos_fixos_import_sheet.dart';
+import 'organizar_custos_ia_sheet.dart';
 
 class CustosFixosScreen extends ConsumerStatefulWidget {
   const CustosFixosScreen({super.key});
@@ -83,6 +84,12 @@ class _CustosFixosScreenState extends ConsumerState<CustosFixosScreen> {
             icon: const Icon(Icons.calculate_outlined),
             onPressed: () => context.push(Routes.numerosMagicos),
           ),
+          if (podeEditar)
+            IconButton(
+              tooltip: 'Organizar com IA (fixo / variável)',
+              icon: const Icon(Icons.auto_awesome),
+              onPressed: () => showOrganizarCustosIaSheet(context),
+            ),
           if (podeEditar)
             IconButton(
               tooltip: 'Importar',

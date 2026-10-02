@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
+import '../../../core/auth/current_user.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
@@ -10,6 +11,7 @@ import '../../../core/widgets/help_actions.dart';
 import '../application/resumo_financeiro_providers.dart';
 import '../domain/periodo.dart';
 import '../domain/resumo_financeiro.dart';
+import 'dicas_ia_card.dart';
 import 'seletor_periodo.dart';
 
 class PainelFinanceiroScreen extends ConsumerStatefulWidget {
@@ -162,6 +164,10 @@ class _PainelFinanceiroScreenState
               ),
             ),
           ),
+        ],
+        if (ref.watch(currentPapelProvider).canEditConfig) ...[
+          const SizedBox(height: 20),
+          DicasIaCard(comparacao: comp),
         ],
       ],
     );

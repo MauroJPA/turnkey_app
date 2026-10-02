@@ -260,7 +260,10 @@ const Map<HelpTopic, HelpEntry> helpContent = {
     paragrafos: [
       'Regista aqui os custos reais que saem todos os meses: aluguel, salários, seguros, subscrições, etc.',
       'Isto é diferente dos percentuais em Configurações → Percentuais de custo: aqueles só servem para sugerir o preço de venda a partir do custo de matéria-prima. Aqui é o valor real, para o painel financeiro e o DRE.',
-      '"Fixo" ou "Variável": marca se o custo é sempre o mesmo (aluguel) ou varia com o volume (ex.: comissões).',
+      'FIXO é o custo que NÃO conseguimos eliminar sem fechar ou mudar a estrutura do negócio: paga-se mesmo que não se venda nada. Exemplos: renda, salários da equipa, seguros, contabilista, licenças e taxas obrigatórias, empréstimos, internet e telefone essenciais, água/luz/gás de base. Por isso são os que têm de estar sempre cobertos.',
+      'VARIÁVEL é o custo que podemos REDUZIR ou CORTAR — por um período ou para sempre — para a empresa não quebrar, e/ou que sobe e desce com a produção e as vendas. Exemplos: marketing e publicidade, subscrições e apps não essenciais, comissões de plataformas, entregas, embalagens e consumíveis comprados conforme as vendas, formações, consumo extra de energia do forno, horas extra. Quando o dinheiro aperta, é por aqui que se começa.',
+      'Porque separar? Porque os dois pedem decisões diferentes: o fixo planeia-se e renegocia-se (e define a "venda mínima" dos Números mágicos); o variável vigia-se todos os meses e corta-se ou reduz-se quando preciso. Na dúvida, pergunta: "se for preciso, consigo cortar ou reduzir isto de forma relevante sem fechar?" — se sim, é variável; se não, é fixo.',
+      'Ícone das faíscas (✨, canto superior): a IA lê os teus custos e sugere, para cada um, se é fixo ou variável e porquê — e, nos variáveis, o que fazer se apertar (reduzir, pausar ou cortar). Tu escolhes quais sugestões aplicar; nada muda sem confirmares.',
       '"Dia de pagamento" (opcional): o dia do mês em que pagas este custo. Se estiver preenchido, aparece um aviso "Pagamentos por vir" no Início quando faltar uma semana ou menos.',
       'Ícone de nuvem/upload (canto superior): importa vários custos de uma vez a partir de um ficheiro .csv com as colunas nome, valor mensal e (opcional) dia de pagamento.',
       'Ícone da panela (canto superior): abre "Equipamentos", onde regista o forno, o balcão, os computadores… — a depreciação mensal deles entra automaticamente aqui como despesa, sem precisar de criar um custo fixo à parte.',
@@ -294,6 +297,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       '"Distribuição teórica" mostra, com as percentagens atuais de Configurações → Percentuais de custo, para onde o valor vendido deveria ir (matéria-prima, salário, aluguel...). É um modelo, não o dinheiro que saiu de verdade — isso são os Custos fixos, mostrados por cima.',
       'A seta ao lado de cada número compara com o período anterior (a semana anterior, ou o mês civil anterior). A Semana vai de domingo a sábado, o Mês do dia 1 ao último dia e o Ano de 1 de janeiro a 31 de dezembro; as datas exatas aparecem por cima e as setas levam-te a períodos passados.',
       'Se houver vendas sem produto identificado (ex.: de uma importação de CSV), o custo delas não é conhecido — aparece um aviso e o lucro fica sobrestimado nessa medida.',
+      '"Dicas para melhorar" (só administradores): toca em "Gerar dicas com IA" e a IA lê os números do período mostrado e do anterior (receita, lucro, custos fixos e variáveis, CMV, imposto) e sugere o que atacar. Faz isto no fim de cada semana ou mês para ir melhorando. São sugestões geradas por IA — avalia antes de agir. Os fixos não se eliminam; os variáveis podem reduzir-se ou cortar-se.',
     ],
   ),
   HelpTopic.dre: (

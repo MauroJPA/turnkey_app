@@ -2,6 +2,21 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.47.0 — 2026-10-02 — IA nos custos fixos/variáveis e dicas no Painel financeiro
+
+- **Custos fixos → ícone ✨ "Organizar com IA"**: a IA lê os custos ativos e sugere, para cada um, se é
+  **fixo** ou **variável**, porquê, e (nos variáveis) o que fazer se o dinheiro apertar — *reduzir*, *pausar
+  por um período* ou *cortar* — com uma dica. Escolhes quais sugestões aplicar; nada muda sem confirmares.
+- **Ajuda dos Custos fixos** reescrita: o que é fixo (não se elimina sem fechar ou mudar o negócio) e o que
+  deve ser variável (pode reduzir-se ou cortar-se, por um período ou para sempre), porquê separar, e o
+  critério de desempate. O formulário de custo também explica o tipo escolhido.
+- **Painel financeiro → "Dicas para melhorar"** (só administradores): botão "Gerar dicas com IA" que lê os
+  números do período mostrado e do anterior (receita, lucro, custos fixos/variáveis, CMV, imposto, linhas
+  sem produto) e devolve 4–6 dicas por prioridade. Pensado para usar no fim de cada semana/mês.
+- Servidor: 2 endpoints novos (`/api/gc_turnkey/financeiro/classificar-custos` e `/dicas`), só
+  owner/admin; usam o mesmo fornecedor de IA e chave das faturas (nada novo a configurar). A IA só
+  sugere — não grava.
+
 ## 1.46.1 — 2026-10-02 — Números mágicos: lucro líquido, ano e comparação
 
 - **Novo período "Ano"** (1 de janeiro a 31 de dezembro) nos Números mágicos, Painel financeiro, DRE e

@@ -45,6 +45,9 @@ class CustosFixosRepository {
   Future<CustoFixo> update(String id, CustoFixoInput input) async =>
       CustoFixo.fromRecord(await _c.update(id, body: input.toBody()));
 
+  Future<void> setTipo(String id, TipoCusto tipo) =>
+      _c.update(id, body: {'tipo': tipo.api});
+
   Future<void> setArquivado(String id, {required bool arquivado}) =>
       _c.update(id, body: {'arquivado': arquivado});
 

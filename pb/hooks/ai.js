@@ -341,4 +341,167 @@ function analisarImagemIA(opts) {
   return { ok: true, dados: dados, provider: provider };
 }
 
-module.exports = { analisarImagemIA };
+// Geração de JSON a partir de TEXTO (sem imagem) — para as sugestões de
+// organização de custos e as dicas do painel financeiro. Mesmo fornecedor e
+// as mesmas variáveis de ambiente que analisarImagemIA.
+//
+//   gerarJsonIA({ sistema, instrucao })
+//     -> { ok: true,  dados, provider }
+//     -> { ok: false, code, message, raw? }   (503 sem chave; 502 rede/IA/JSON)
+function gerarJsonIA(opts) {
+  var sistema = (opts && opts.sistema) || '';
+  var instrucao = (opts && opts.instrucao) || '';
+  if (!instrucao) return { ok: false, code: 400, message: 'Falta o pedido para a IA.' };
+
+  var provider = ($os.getenv('GC_TURNKEY_AI_PROVIDER') || 'gemini').toLowerCase().trim();
+
+  var http = function (req) {
+    try {
+      return { resp: $http.send(req) };
+    } catch (err) {
+      return { erro: 'Falha de rede.' };
+    }
+  };
+  var httpErro = function (resp) {
+    if (resp.statusCode >= 200 && resp.statusCode < 300) return null;
+    if (resp.json && resp.json.error && resp.json.error.message) {
+      return resp.json.error.message;
+    }
+    return 'HTTP ' + resp.statusCode;
+  };
+  var transitorio = function (c) {
+    return c === 429 || c === 500 || c === 502 || c === 503 || c === 504;
+  };
+
+  var pedirGemini = function () {
+    var key = $os.getenv('GEMINI_API_KEY') || $os.getenv('GOOGLE_API_KEY');
+    if (!key) return { code: 503, message: 'IA não configurada (falta GEMINI_API_KEY).' };
+    var base =
+      $os.getenv('GC_TURNKEY_GEMINI_URL') ||
+      'https://generativelanguage.googleapis.com/v1beta/models/';
+    var modelos = [$os.getenv('GC_TURNKEY_AI_MODEL') || 'gemini-3.6-flash'];
+    var reserva = ($os.getenv('GC_TURNKEY_AI_MODEL_FALLBACK') || 'gemini-3.5-flash,gemini-3.5-flash-lite').split(',');
+    for (var k = 0; k < reserva.length; k++) {
+      var nome = reserva[k].trim();
+      if (nome && modelos.indexOf(nome) === -1) modelos.push(nome);
+    }
+    var esperas = [3000, 8000];
+    var cfg = $os.getenv('GC_TURNKEY_AI_ESPERAS');
+    if (cfg) {
+      esperas = cfg.split(',').map(function (x) { return parseInt(x, 10) || 0; });
+    }
+    var corpo = JSON.stringify({
+      system_instruction: { parts: [{ text: sistema }] },
+      contents: [{ role: 'user', parts: [{ text: instrucao }] }],
+      generationConfig: { temperature: 0.4, response_mime_type: 'application/json' },
+    });
+    var out;
+    for (var m = 0; m < modelos.length; m++) {
+      for (var tt = 0; tt <= esperas.length; tt++) {
+        out = http({
+          url: base + modelos[m] + ':generateContent',
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
+          body: corpo,
+          timeout: 120,
+        });
+        if (out.erro) {
+          if (tt < esperas.length) sleep(esperas[tt]);
+          continue;
+        }
+        var c = out.resp.statusCode;
+        if (c === 404) break;
+        if (!transitorio(c)) break;
+        if (tt < esperas.length) sleep(esperas[tt]);
+      }
+      if (!out.erro) {
+        var cs = out.resp.statusCode;
+        if (cs !== 404 && !transitorio(cs)) break;
+      }
+    }
+    if (out.erro) return { code: 502, message: out.erro };
+    var msg = httpErro(out.resp);
+    if (msg) {
+      if (transitorio(out.resp.statusCode)) {
+        return {
+          code: 502,
+          message:
+            'A IA (Google Gemini) está sobrecarregada neste momento. Tenta de novo daqui a uns minutos.',
+        };
+      }
+      return { code: 502, message: 'A IA respondeu com erro: ' + msg };
+    }
+    var texto = '';
+    try {
+      var cands = (out.resp.json && out.resp.json.candidates) || [];
+      var parts = (cands[0] && cands[0].content && cands[0].content.parts) || [];
+      for (var i = 0; i < parts.length; i++) if (parts[i].text) texto += parts[i].text;
+    } catch (_) {}
+    return { texto: texto };
+  };
+
+  var pedirAnthropic = function () {
+    var key = $os.getenv('ANTHROPIC_API_KEY');
+    if (!key) return { code: 503, message: 'IA não configurada (falta ANTHROPIC_API_KEY).' };
+    var model = $os.getenv('GC_TURNKEY_AI_MODEL') || 'claude-sonnet-5';
+    var out = http({
+      url: 'https://api.anthropic.com/v1/messages',
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: model,
+        max_tokens: 4000,
+        system: sistema,
+        messages: [{ role: 'user', content: [{ type: 'text', text: instrucao }] }],
+      }),
+      timeout: 120,
+    });
+    if (out.erro) return { code: 502, message: out.erro };
+    var msg = httpErro(out.resp);
+    if (msg) return { code: 502, message: 'A IA respondeu com erro: ' + msg };
+    var texto = '';
+    try {
+      var parts = (out.resp.json && out.resp.json.content) || [];
+      for (var i = 0; i < parts.length; i++) {
+        if (parts[i].type === 'text') texto += parts[i].text;
+      }
+    } catch (_) {}
+    return { texto: texto };
+  };
+
+  var r;
+  switch (provider) {
+    case 'gemini':
+    case 'google':
+      r = pedirGemini();
+      break;
+    case 'anthropic':
+    case 'claude':
+      r = pedirAnthropic();
+      break;
+    default:
+      return {
+        ok: false,
+        code: 503,
+        message: 'GC_TURNKEY_AI_PROVIDER desconhecido: "' + provider + '".',
+      };
+  }
+  if (r.code) return { ok: false, code: r.code, message: r.message };
+
+  var texto = (r.texto || '').trim();
+  var m = texto.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (m) texto = m[1].trim();
+  var dados;
+  try {
+    dados = JSON.parse(texto);
+  } catch (_) {
+    return { ok: false, code: 502, message: 'A IA não devolveu JSON válido.', raw: texto };
+  }
+  return { ok: true, dados: dados, provider: provider };
+}
+
+module.exports = { analisarImagemIA, gerarJsonIA };

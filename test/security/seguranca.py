@@ -505,6 +505,8 @@ ROTAS = [
     ('PATCH', '/api/gc_turnkey/team/members/{users}'),
     ('POST', '/api/gc_turnkey/vendus/sincronizar'),
     ('POST', '/api/gc_turnkey/ingredientes/juntar'),
+    ('POST', '/api/gc_turnkey/financeiro/classificar-custos'),
+    ('POST', '/api/gc_turnkey/financeiro/dicas'),
 ]
 
 
@@ -537,6 +539,11 @@ def teste_endpoints():
     for quem in ('viewerA', 'editorA'):
         s, _, _ = call('POST', '/api/gc_turnkey/admin/recompute', {}, tok[quem])
         check(s == 403, f'admin/recompute: {quem} recusado', f'status {s}')
+    # IA do financeiro: só owner/admin (os custos também só são visíveis para eles)
+    for quem in ('viewerA', 'editorA'):
+        for rota in ('classificar-custos', 'dicas'):
+            s, _, _ = call('POST', f'/api/gc_turnkey/financeiro/{rota}', {}, tok[quem])
+            check(s == 403, f'financeiro/{rota}: {quem} recusado', f'status {s}')
     s, _, _ = call('POST', '/api/gc_turnkey/admin/recompute', {'empresa': empresas['B']}, tok['adminA'])
     s2, r2, _ = call('POST', '/api/gc_turnkey/admin/recompute', {'empresa': empresas['B']}, tok['adminA'])
     check(s in (200, 400), 'admin/recompute: admin de A só afeta a própria empresa (ignora o corpo)')
