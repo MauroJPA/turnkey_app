@@ -6,7 +6,7 @@ explícitos → `git branch -f develop main` → `git tag vX.Y.Z`). No fim: `pow
 e dar ao Mauro o SHA-256 + comando de publicação.
 
 1. ~~1.67.0 — Formatos de cookie e categorias de receita sem páginas próprias~~ (feito).
-2. **1.68.0 — Finanças simplificadas + página Contabilidade.** Nova página "Contabilidade" (faturação, IVA,
+2. **1.68.0 — Finanças simplificadas + página Contabilidade.** *(trabalho a meio, guardado em `docs/wip/`: `1.68.0-contabilidade.patch` (aplicar com `git apply`) + `contabilidade_screen.dart.txt` (copiar para `lib/src/features/finance/presentation/contabilidade_screen.dart`). Falta: rotas no `router.dart` (usar `ContabilidadeScreen(secao: …)` em painelFinanceiro/dre/custosFixos/equipamentos/numerosMagicos + nova `Routes.relatorios`), `HelpTopic.contabilidade`, catálogo (uma só entrada «Contabilidade»; sai custosFixos/equipamentos/numerosMagicos; Início usa `acessivel('financeiro')` nos pagamentos), testes `navegacao_test`, docs.)* Nova página "Contabilidade" (faturação, IVA,
    números da empresa, relatório geral, compras do período, DRE) e simplificar Painel financeiro / Custos fixos /
    Equipamentos / Números mágicos / DRE / Análise de vendas (menos páginas soltas, tudo a poucos toques).
 3. **1.69.0 — Revisão final de interface**: alinhamentos de texto e botões, tamanhos, consistência (pedido do
