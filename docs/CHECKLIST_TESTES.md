@@ -1521,6 +1521,19 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       detalhe (concluir, editar, lista de compras) como antes.
 - [ ] `/#/mise-en-place` e `/#/mise-en-place?receita=<id>` levam ao Produzir.
 
+## 92. Relatório HACCP formal
+
+- [ ] HACCP → Registos: escolher um período (ex. "Este mês") e um tipo (ex. "Temperatura") mostra só esses registos.
+- [ ] "Gerar relatório": abre o relatório (A4) com o número `HACCP-AAAA-0001`; a seguinte emissão é `…-0002`.
+- [ ] O relatório tem: operador, período, resumo com cobertura, quadro por controlo com limite crítico e mín/máx/média,
+      não conformidades com a ação corretiva, enquadramento legal, campos de assinatura, código de integridade e
+      número/páginas no rodapé; guardar em PDF funciona.
+- [ ] "Todos os tipos" traz uma secção por tipo; um tipo só traz apenas esse.
+- [ ] Linhas não conformes aparecem destacadas; uma já resolvida diz "Resolvida".
+- [ ] Hoje → "Relatório de hoje" emite um relatório do dia.
+- [ ] Mudar um registo depois da emissão e voltar a gerar dá outro código de integridade.
+- [ ] Equipa e cartões: o botão diz "Adicionar pessoa" e a Equipa continua a aparecer sozinha.
+
 ---
 
 ## Notas / ajustes pedidos

@@ -2,6 +2,27 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.66.0 — 2026-10-04 — Relatório HACCP formal, por período e por tipo
+
+- **HACCP → Registos → "Gerar relatório"**: cria o relatório formal de um período — **hoje, 7 dias, este mês, mês
+  passado, 90 dias ou ano** — e de um **tipo de controlo** (temperatura, limpeza, pragas, manutenção, outros) ou de
+  **todos**. Na aba **Hoje** há o atalho **"Relatório de hoje"**. Abre pronto a imprimir ou guardar em **PDF (A4)**.
+- Cada relatório tem **número sequencial por empresa e ano** (`HACCP-2026-0007`), que fica registado na emissão
+  (quem, quando, período, tipo, nº de registos e de não conformidades).
+- Conteúdo: identificação do **operador/estabelecimento** (a mesma das etiquetas), período, emitido por/quando;
+  **resumo** (registos, conformes, não conformidades, por resolver, **cobertura**: feitos face aos esperados);
+  **um quadro por controlo** agrupado por tipo (frequência, local, **limite crítico**, mínimo/máximo/média,
+  data e hora, valor, conforme, quem registou, ação corretiva); **lista de não conformidades e ações corretivas**;
+  **enquadramento legal** (Reg. (CE) n.º 852/2004, Reg. (CE) n.º 178/2002, DL n.º 113/2006); campos de **assinatura**
+  (elaborado por / verificado pelo responsável HACCP); **código de integridade** que muda se qualquer registo mudar;
+  número do documento e paginação em todas as páginas.
+- O relatório é um **registo dos controlos**; a sua aceitação como prova depende do **plano HACCP do estabelecimento**
+  (perigos, pontos críticos, limites), que o responsável deve validar. Convém confirmar o modelo com a vossa
+  consultora/o vosso técnico de segurança alimentar.
+- Equipa e cartões: o botão de juntar pessoas sem conta passa a dizer **"Adicionar pessoa"** (a Equipa continua a
+  aparecer sozinha).
+- Migration `1790950000_haccp_relatorios.js` (coleção `haccp_relatorios`: não se altera depois de emitida).
+
 ## 1.65.0 — 2026-10-04 — Produção numa só página: Produzir, Mise en place e Agenda
 
 Três páginas mostravam o mesmo plano de produção. Passam a **uma só, "Produção"**, com duas secções:

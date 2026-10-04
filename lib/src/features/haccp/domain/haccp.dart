@@ -1,6 +1,5 @@
 import 'package:pocketbase/pocketbase.dart';
 
-import '../../../core/printing/html_escape.dart';
 
 /// O que um controlo de segurança alimentar vigia.
 enum TipoControlo {
@@ -469,78 +468,3 @@ List<ControloInput> controlosHabituais() => [
         'Escrever o número do lote (receção de matérias-primas ou produção).',
   ),
 ];
-
-// ---------------------------------------------------------------------------
-// relatório para imprimir / guardar em PDF
-// ---------------------------------------------------------------------------
-
-String _dmy(DateTime d) =>
-    '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
-String _hm(DateTime d) =>
-    '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
-
-String _n(double v) =>
-    (v == v.roundToDouble() ? '${v.toInt()}' : v.toStringAsFixed(1)).replaceAll(
-      '.',
-      ',',
-    );
-
-/// HTML do registo HACCP de um período, por controlo, para imprimir ou
-/// guardar como PDF (auditoria).
-String haccpRelatorioHtml({
-  required String empresa,
-  required String periodo,
-  required List<ControloHaccp> controlos,
-  required List<RegistoHaccp> registos,
-}) {
-  final b = StringBuffer();
-  final nc = naoConformidadesAbertas(registos);
-  b.writeln('<h1>Registos de segurança alimentar (HACCP)</h1>');
-  b.writeln(
-    '<p class="sub">${escaparHtml(empresa)} · $periodo · '
-    '${registos.length} registo(s)</p>',
-  );
-  if (nc.isNotEmpty) {
-    b.writeln(
-      '<p class="aviso"><b>${nc.length} não conformidade(s) por '
-      'resolver.</b></p>',
-    );
-  }
-  for (final c in controlos) {
-    final meus = [
-      for (final r in registos)
-        if (r.controloId == c.id) r,
-    ]..sort((a, b) => a.dataHora.compareTo(b.dataHora));
-    if (meus.isEmpty) continue;
-    b.writeln(
-      '<h2>${escaparHtml(c.nome)}</h2>'
-      '<p class="sub">${escaparHtml(c.tipo.label)} · ${escaparHtml(c.periodicidadeTexto)}'
-      '${c.limitesTexto.isEmpty ? '' : ' · limites ${escaparHtml(c.limitesTexto)}'}'
-      '${c.local.isEmpty ? '' : ' · ${escaparHtml(c.local)}'}</p>',
-    );
-    b.writeln(
-      '<table><tr><th>Data</th><th>Hora</th>'
-      '${c.medeValor ? '<th>Valor</th>' : ''}'
-      '<th>Conforme</th><th>Quem</th><th>Notas / ação corretiva</th></tr>',
-    );
-    for (final r in meus) {
-      final notas = [
-        if (r.notas.isNotEmpty) r.notas,
-        if (r.acaoCorretiva.isNotEmpty) 'Ação: ${r.acaoCorretiva}',
-        if (r.proximoVencimento != null)
-          'Próximo: ${_dmy(r.proximoVencimento!)}',
-        if (!r.conforme) r.resolvido ? '(resolvido)' : '(por resolver)',
-      ].join(' · ');
-      b.writeln(
-        '<tr${r.conforme ? '' : ' class="nc"'}>'
-        '<td>${_dmy(r.dataHora)}</td><td>${_hm(r.dataHora)}</td>'
-        '${c.medeValor ? '<td>${r.valor == null ? '' : '${_n(r.valor!)} ${escaparHtml(c.unidade.isEmpty ? '°C' : c.unidade)}'}</td>' : ''}'
-        '<td>${r.conforme ? 'Sim' : 'Não'}</td>'
-        '<td>${escaparHtml(r.responsavel)}</td><td>${escaparHtml(notas)}</td></tr>',
-      );
-    }
-    b.writeln('</table>');
-  }
-  if (registos.isEmpty) b.writeln('<p>Sem registos neste período.</p>');
-  return b.toString();
-}

@@ -5,16 +5,15 @@ import 'package:go_router/go_router.dart';
 import '../../../app/routes.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/help/help_content.dart';
-import '../../../core/printing/print_html.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
-import '../../settings/application/empresa_providers.dart';
 import '../application/haccp_providers.dart';
 import '../domain/haccp.dart';
 import 'haccp_controlo_dialog.dart';
 import 'haccp_icones.dart';
 import 'haccp_registo_sheet.dart';
+import 'haccp_relatorio_acao.dart';
 
 String _dmy(DateTime d) =>
     '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
@@ -25,14 +24,6 @@ String _n(double v) =>
       '.',
       ',',
     );
-
-const _estiloEstadoImpressao = '''
-  h2 { font-size: 15px; margin: 18px 0 2px; }
-  table { max-width: none; }
-  th { text-align: left; }
-  tr.nc td { background: #fde8e8; }
-  p.aviso { color: #a00; font-size: 13px; }
-''';
 
 /// Segurança alimentar (HACCP): o que há para fazer hoje, os registos e os
 /// controlos (frigoríficos, limpezas, pragas, extintor…).
@@ -173,7 +164,25 @@ class _HojeTab extends ConsumerWidget {
                   ),
                 ),
             ],
-            const SizedBox(height: 12),
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () {
+                  final n = DateTime.now();
+                  final hoje = DateTime(n.year, n.month, n.day);
+                  gerarRelatorioHaccp(
+                    context,
+                    ref,
+                    tipo: null,
+                    desde: hoje,
+                    ate: hoje,
+                  );
+                },
+                icon: const Icon(Icons.description_outlined),
+                label: const Text('Relatório de hoje'),
+              ),
+            ),
             for (final s in estados)
               _CartaoControlo(status: s, podeRegistar: podeEscrever),
           ],
@@ -260,20 +269,44 @@ class _CartaoControlo extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 enum _Intervalo {
+  hoje('Hoje'),
   semana('Últimos 7 dias'),
-  mes('Últimos 30 dias'),
+  esteMes('Este mês'),
+  mesPassado('Mês passado'),
   trimestre('Últimos 90 dias'),
   ano('Último ano');
 
   const _Intervalo(this.label);
   final String label;
 
-  int get dias => switch (this) {
-    _Intervalo.semana => 6,
-    _Intervalo.mes => 29,
-    _Intervalo.trimestre => 89,
-    _Intervalo.ano => 364,
-  };
+  /// Primeiro e último dia do período.
+  ({DateTime desde, DateTime ate}) get datas {
+    final n = DateTime.now();
+    final hoje = DateTime(n.year, n.month, n.day);
+    return switch (this) {
+      _Intervalo.hoje => (desde: hoje, ate: hoje),
+      _Intervalo.semana => (
+        desde: DateTime(hoje.year, hoje.month, hoje.day - 6),
+        ate: hoje,
+      ),
+      _Intervalo.esteMes => (
+        desde: DateTime(hoje.year, hoje.month),
+        ate: hoje,
+      ),
+      _Intervalo.mesPassado => (
+        desde: DateTime(hoje.year, hoje.month - 1),
+        ate: DateTime(hoje.year, hoje.month, 0),
+      ),
+      _Intervalo.trimestre => (
+        desde: DateTime(hoje.year, hoje.month, hoje.day - 89),
+        ate: hoje,
+      ),
+      _Intervalo.ano => (
+        desde: DateTime(hoje.year, hoje.month, hoje.day - 364),
+        ate: hoje,
+      ),
+    };
+  }
 }
 
 class _RegistosTab extends ConsumerStatefulWidget {
@@ -284,22 +317,31 @@ class _RegistosTab extends ConsumerStatefulWidget {
 }
 
 class _RegistosTabState extends ConsumerState<_RegistosTab> {
-  _Intervalo _intervalo = _Intervalo.mes;
-  String? _controloId;
+  _Intervalo _intervalo = _Intervalo.esteMes;
+  TipoControlo? _tipo;
+  bool _aGerar = false;
 
-  IntervaloHaccp get _periodo {
-    final n = DateTime.now();
-    final hoje = DateTime(n.year, n.month, n.day);
-    return (
-      desde: DateTime(hoje.year, hoje.month, hoje.day - _intervalo.dias),
-      ate: hoje,
-    );
+  IntervaloHaccp get _periodo => _intervalo.datas;
+
+  Future<void> _gerar() async {
+    final p = _periodo;
+    setState(() => _aGerar = true);
+    try {
+      await gerarRelatorioHaccp(
+        context,
+        ref,
+        tipo: _tipo,
+        desde: p.desde,
+        ate: p.ate,
+      );
+    } finally {
+      if (mounted) setState(() => _aGerar = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final controlos = ref.watch(haccpTodosControlosProvider).valueOrNull ?? [];
-    final nomeEmpresa = ref.watch(currentEmpresaProvider).valueOrNull?.nome ?? '';
     final p = _periodo;
     final async = ref.watch(haccpRegistosProvider(p));
     final tt = Theme.of(context).textTheme;
@@ -308,69 +350,64 @@ class _RegistosTabState extends ConsumerState<_RegistosTab> {
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-          child: Row(
+        // período
+        SizedBox(
+          height: 52,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             children: [
-              Expanded(
-                child: DropdownButtonFormField<_Intervalo>(
-                  initialValue: _intervalo,
-                  isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Período'),
-                  items: [
-                    for (final i in _Intervalo.values)
-                      DropdownMenuItem(value: i, child: Text(i.label)),
-                  ],
-                  onChanged: (v) =>
-                      setState(() => _intervalo = v ?? _intervalo),
+              for (final i in _Intervalo.values)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    label: Text(i.label),
+                    selected: _intervalo == i,
+                    onSelected: (_) => setState(() => _intervalo = i),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: DropdownButtonFormField<String?>(
-                  initialValue: _controloId,
-                  isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Controlo'),
-                  items: [
-                    const DropdownMenuItem(value: null, child: Text('Todos')),
-                    for (final c in controlos)
-                      DropdownMenuItem(
-                        value: c.id,
-                        child: Text(c.nome, overflow: TextOverflow.ellipsis),
-                      ),
-                  ],
-                  onChanged: (v) => setState(() => _controloId = v),
-                ),
-              ),
-              IconButton(
-                tooltip: 'Imprimir / guardar em PDF',
-                icon: const Icon(Icons.print_outlined),
-                onPressed: async.valueOrNull == null
-                    ? null
-                    : () {
-                        final regs = [
-                          for (final r in async.valueOrNull!)
-                            if (_controloId == null ||
-                                r.controloId == _controloId)
-                              r,
-                        ];
-                        abrirImpressao(
-                          'HACCP — ${_dmy(p.desde)} a ${_dmy(p.ate)}',
-                          haccpRelatorioHtml(
-                            empresa: nomeEmpresa,
-                            periodo: '${_dmy(p.desde)} – ${_dmy(p.ate)}',
-                            controlos: [
-                              for (final c in controlos)
-                                if (_controloId == null || c.id == _controloId)
-                                  c,
-                            ],
-                            registos: regs,
-                          ),
-                          estiloExtra: _estiloEstadoImpressao,
-                        );
-                      },
-              ),
             ],
+          ),
+        ),
+        // tipo de controlo
+        SizedBox(
+          height: 44,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: const Text('Todos os tipos'),
+                  selected: _tipo == null,
+                  onSelected: (_) => setState(() => _tipo = null),
+                ),
+              ),
+              for (final t in TipoControlo.values)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    avatar: Icon(iconeDoControlo(t), size: 16),
+                    label: Text(t.label),
+                    selected: _tipo == t,
+                    onSelected: (_) => setState(() => _tipo = t),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+          child: FilledButton.icon(
+            onPressed: _aGerar ? null : _gerar,
+            icon: const Icon(Icons.description_outlined),
+            label: Text(
+              _aGerar
+                  ? 'A gerar…'
+                  : 'Gerar relatório (${_dmy(p.desde)}'
+                        '${p.desde == p.ate ? '' : ' a ${_dmy(p.ate)}'})',
+            ),
           ),
         ),
         Expanded(
@@ -380,7 +417,7 @@ class _RegistosTabState extends ConsumerState<_RegistosTab> {
             data: (todos) {
               final regs = [
                 for (final r in todos)
-                  if (_controloId == null || r.controloId == _controloId) r,
+                  if (_tipo == null || porId[r.controloId]?.tipo == _tipo) r,
               ];
               if (regs.isEmpty) {
                 return const Center(child: Text('Sem registos neste período.'));

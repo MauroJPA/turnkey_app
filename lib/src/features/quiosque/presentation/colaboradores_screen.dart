@@ -40,7 +40,7 @@ class ColaboradoresScreen extends ConsumerWidget {
           ? FloatingActionButton.extended(
               onPressed: () => _novo(context, ref),
               icon: const Icon(Icons.person_add_alt),
-              label: const Text('Pessoa sem conta'),
+              label: const Text('Adicionar pessoa'),
             )
           : null,
       body: AsyncValueView<List<Colaborador>>(
@@ -53,7 +53,7 @@ class ColaboradoresScreen extends ConsumerWidget {
                 padding: EdgeInsets.all(24),
                 child: Text(
                   'Ainda não há ninguém. A Equipa aparece aqui sozinha; para '
-                  'quem não tem conta, usa "Pessoa sem conta".',
+                  'quem não tem conta, usa "Adicionar pessoa".',
                   textAlign: TextAlign.center,
                 ),
               ),

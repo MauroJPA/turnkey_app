@@ -223,44 +223,4 @@ void main() {
       expect(body['usa_limite_max'], isTrue);
     },
   );
-
-  group('relatório HTML', () {
-    test('agrupa por controlo, mostra valor, e escapa texto', () {
-      final html = haccpRelatorioHtml(
-        empresa: 'Gookie <Lda>',
-        periodo: '01/10/2026 – 31/10/2026',
-        controlos: [frigo, limpeza],
-        registos: [
-          reg('frigo', DateTime(2026, 10, 2, 8, 5), valor: 3.5),
-          RegistoHaccp(
-            id: 'x',
-            controloId: 'frigo',
-            dataHora: DateTime(2026, 10, 2, 18),
-            valor: 8,
-            conforme: false,
-            responsavel: 'Ana',
-            acaoCorretiva: 'Verificar <portas>',
-          ),
-        ],
-      );
-      expect(html, contains('Gookie &lt;Lda&gt;'));
-      expect(html, contains('<h2>Frigorífico</h2>'));
-      expect(html, contains('3,5 °C'));
-      expect(html, contains('8 °C'));
-      expect(html, contains('class="nc"'));
-      expect(html, contains('Verificar &lt;portas&gt;'));
-      expect(html, contains('1 não conformidade(s) por resolver'));
-      expect(html, isNot(contains('Limpeza semanal'))); // sem registos
-    });
-
-    test('sem registos diz-se', () {
-      final html = haccpRelatorioHtml(
-        empresa: 'X',
-        periodo: 'p',
-        controlos: [frigo],
-        registos: const [],
-      );
-      expect(html, contains('Sem registos neste período.'));
-    });
-  });
 }

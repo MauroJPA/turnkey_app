@@ -102,6 +102,55 @@ class HaccpRepository {
     },
   );
 
+  /// Emite um relatório: reserva o número seguinte desta empresa e ano
+  /// (HACCP-2026-0007) e guarda o período, o tipo e a impressão digital dos
+  /// dados. Devolve o código.
+  Future<String> emitirRelatorio({
+    required String tipo,
+    required DateTime desde,
+    required DateTime ate,
+    required int registos,
+    required int naoConformidades,
+    required String integridade,
+  }) async {
+    final ano = DateTime.now().year;
+    final col = _pb.collection('haccp_relatorios');
+    for (var tentativa = 0; tentativa < 3; tentativa++) {
+      final ultimo = await col.getList(
+        perPage: 1,
+        sort: '-sequencia',
+        filter: 'empresa = "$_empresaId" && ano = $ano',
+      );
+      final seq = ultimo.items.isEmpty
+          ? 1
+          : ultimo.items.first.getIntValue('sequencia') + 1;
+      final codigo = 'HACCP-$ano-${seq.toString().padLeft(4, '0')}';
+      try {
+        await col.create(
+          body: {
+            'empresa': _empresaId,
+            'codigo': codigo,
+            'ano': ano,
+            'sequencia': seq,
+            'tipo': tipo,
+            'desde': ymd(desde),
+            'ate': ymd(ate),
+            'registos': registos,
+            'nao_conformidades': naoConformidades,
+            'integridade': integridade,
+            if (_pb.authStore.record != null)
+              'autor': _pb.authStore.record!.id,
+          },
+        );
+        return codigo;
+      } on ClientException catch (e) {
+        // outro aparelho reservou este número ao mesmo tempo: tenta o seguinte
+        if (e.statusCode != 400 || tentativa == 2) rethrow;
+      }
+    }
+    throw StateError('Não foi possível numerar o relatório.');
+  }
+
   /// Marca uma não conformidade como tratada.
   Future<void> resolver(String registoId, {String acaoCorretiva = ''}) =>
       _registos.update(
