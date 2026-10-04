@@ -190,6 +190,83 @@ void main() {
       expect(l.diferenca, -1);
     });
 
+    test('sem fecho contado, a abertura vem do que devia ter ficado ontem', () {
+      final ontem = DateTime(2026, 10, 2);
+      final movs = [
+        mov('producao', 'loja', 'f1', 24, dia: ontem),
+        mov('desperdicio', 'loja', 'f1', 2, dia: ontem, motivo: MotivoDesperdicio.queimado),
+        mov('desperdicio', 'loja', 'f1', 1, dia: ontem, motivo: MotivoDesperdicio.consumoProprio),
+      ];
+      final vendas = [
+        VendaDoLocal(localId: 'loja', data: ontem, fichaId: 'f1', quantidade: 15),
+      ];
+      final l = calcularContagemDia(
+        localId: 'loja',
+        dia: dia,
+        fichaIds: ['f1'],
+        movimentos: movs,
+        vendas: vendas,
+      ).single;
+      // 24 assados - 15 vendidos - 3 perdas = 6
+      expect(l.abertura, 6);
+      expect(l.fechoAnterior, 6);
+      expect(l.fechoAnteriorEstimado, isTrue);
+      expect(l.aberturaContada, isFalse);
+    });
+
+    test('a estimativa continua dia após dia até haver uma contagem', () {
+      final movs = [
+        mov('contagem_fecho', 'loja', 'f1', 10, dia: DateTime(2026, 9, 30)),
+        mov('producao', 'loja', 'f1', 20, dia: DateTime(2026, 10, 1)),
+        mov('producao', 'loja', 'f1', 10, dia: DateTime(2026, 10, 2)),
+      ];
+      final vendas = [
+        VendaDoLocal(localId: 'loja', data: DateTime(2026, 10, 1), fichaId: 'f1', quantidade: 25),
+        VendaDoLocal(localId: 'loja', data: DateTime(2026, 10, 2), fichaId: 'f1', quantidade: 8),
+      ];
+      final l = calcularContagemDia(
+        localId: 'loja',
+        dia: dia,
+        fichaIds: ['f1'],
+        movimentos: movs,
+        vendas: vendas,
+      ).single;
+      // 10 +20 -25 = 5 ; 5 +10 -8 = 7
+      expect(l.abertura, 7);
+      expect(l.fechoAnteriorEstimado, isTrue);
+    });
+
+    test('um fecho contado ganha à estimativa', () {
+      final movs = [
+        mov('producao', 'loja', 'f1', 24, dia: DateTime(2026, 10, 2)),
+        mov('contagem_fecho', 'loja', 'f1', 5, dia: DateTime(2026, 10, 2)),
+      ];
+      final l = calcularContagemDia(
+        localId: 'loja',
+        dia: dia,
+        fichaIds: ['f1'],
+        movimentos: movs,
+        vendas: const [],
+      ).single;
+      expect(l.abertura, 5);
+      expect(l.fechoAnteriorEstimado, isFalse);
+    });
+
+    test('a estimativa nunca fica negativa', () {
+      final movs = [mov('producao', 'loja', 'f1', 5, dia: DateTime(2026, 10, 2))];
+      final vendas = [
+        VendaDoLocal(localId: 'loja', data: DateTime(2026, 10, 2), fichaId: 'f1', quantidade: 9),
+      ];
+      final l = calcularContagemDia(
+        localId: 'loja',
+        dia: dia,
+        fichaIds: ['f1'],
+        movimentos: movs,
+        vendas: vendas,
+      ).single;
+      expect(l.abertura, 0);
+    });
+
     test('só conta o dia pedido', () {
       final movs = [
         mov('producao', 'loja', 'f1', 5, dia: DateTime(2026, 10, 2)),

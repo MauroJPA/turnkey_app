@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/routes.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/help/help_content.dart';
-import '../../../core/widgets/async_value_view.dart';
+import '../../../core/storage/prefs_locais.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../tech_sheets/application/tech_sheets_providers.dart';
@@ -15,6 +15,7 @@ import '../domain/contagem_dia.dart';
 import '../domain/local.dart';
 import '../domain/movimento_produto.dart';
 import 'contagem_rapida_sheet.dart';
+import 'contagem_rapida_view.dart';
 import 'locais_sheet.dart';
 import 'movimento_sheet.dart';
 
@@ -57,6 +58,9 @@ class _ContagemScreenState extends ConsumerState<ContagemScreen> {
   }();
   String? _localId;
   bool _soComMovimento = true;
+
+  /// `true` = botões grandes (−/+); `false` = o detalhe com todas as contas.
+  late bool _rapido = lerPref('contagem_vista') != 'detalhe';
 
   static DateTime get _hoje {
     final n = DateTime.now();
@@ -218,14 +222,75 @@ class _ContagemScreenState extends ConsumerState<ContagemScreen> {
                     ],
                   ),
                 ),
-                Expanded(
-                  child: AsyncValueView<ContagemDoDia>(
-                    value: ref.watch(
-                      contagemDoDiaProvider((localId: local.id, dia: _dia)),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: SegmentedButton<bool>(
+                      showSelectedIcon: false,
+                      segments: const [
+                        ButtonSegment(
+                          value: true,
+                          label: Text('Rápido'),
+                          icon: Icon(Icons.touch_app_outlined),
+                        ),
+                        ButtonSegment(
+                          value: false,
+                          label: Text('Detalhe'),
+                          icon: Icon(Icons.list_alt_outlined),
+                        ),
+                      ],
+                      selected: {_rapido},
+                      onSelectionChanged: (s) {
+                        guardarPref(
+                          'contagem_vista',
+                          s.first ? 'rapido' : 'detalhe',
+                        );
+                        setState(() => _rapido = s.first);
+                      },
                     ),
-                    onRetry: () => ref.invalidate(contagemDoDiaProvider),
-                    data: (c) =>
-                        _corpo(context, local, locais, fichas, nomes, c),
+                  ),
+                ),
+                Expanded(
+                  child: Builder(
+                    builder: (context) {
+                      final async = ref.watch(
+                        contagemDoDiaProvider((localId: local.id, dia: _dia)),
+                      );
+                      // ao recarregar (depois de guardar) mantém o que se vê:
+                      // só mostra o círculo quando ainda não há nada
+                      final c = async.valueOrNull;
+                      if (c == null) {
+                        if (async.hasError) {
+                          return Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('${async.error}', textAlign: TextAlign.center),
+                                const SizedBox(height: 12),
+                                OutlinedButton(
+                                  onPressed: () =>
+                                      ref.invalidate(contagemDoDiaProvider),
+                                  child: const Text('Tentar de novo'),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      return _rapido && _podeEditar
+                          ? ContagemRapidaView(
+                              key: ValueKey('rapida-${local.id}'),
+                              local: local,
+                              locais: locais,
+                              dia: _dia,
+                              fichas: fichas,
+                              contagem: c,
+                              onMudarDia: _mudarDia,
+                            )
+                          : _corpo(context, local, locais, fichas, nomes, c);
+                    },
                   ),
                 ),
               ],

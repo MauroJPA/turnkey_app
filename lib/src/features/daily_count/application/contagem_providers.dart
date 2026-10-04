@@ -5,6 +5,7 @@ import '../../sales/data/sales_repository.dart';
 import '../../tech_sheets/application/tech_sheets_providers.dart';
 import '../data/contagem_repository.dart';
 import '../domain/contagem_dia.dart';
+import '../domain/fornada.dart';
 import '../domain/local.dart';
 import '../domain/movimento_produto.dart';
 
@@ -64,7 +65,7 @@ class ContagemDoDia {
 }
 
 /// Quantos dias para trás se procura o último fecho (a abertura herda-o).
-const diasDeHistoricoContagem = 60;
+const diasDeHistoricoContagem = 14;
 
 final contagemDoDiaProvider = FutureProvider.autoDispose
     .family<ContagemDoDia, ({String localId, DateTime dia})>((ref, k) async {
@@ -75,8 +76,13 @@ final contagemDoDiaProvider = FutureProvider.autoDispose
           ate: dia,
         )).future,
       );
+      // as vendas dos dias anteriores também contam: sem fecho contado, a
+      // abertura vem do que devia ter ficado
       final vendas = await ref.watch(
-        vendasPorLocalProvider((desde: dia, ate: dia)).future,
+        vendasPorLocalProvider((
+          desde: dia.subtract(const Duration(days: diasDeHistoricoContagem)),
+          ate: dia,
+        )).future,
       );
       final fichas = await ref.watch(fichasListProvider(false).future);
       final linhas = calcularContagemDia(
@@ -94,6 +100,13 @@ final contagemDoDiaProvider = FutureProvider.autoDispose
       ].reversed.toList();
       return ContagemDoDia(linhas: linhas, registos: registos);
     });
+
+/// Fornadas no forno de um local (para os cronómetros).
+final fornadasNoFornoProvider = FutureProvider.autoDispose
+    .family<List<Fornada>, String>(
+      (ref, localId) =>
+          ref.watch(contagemRepositoryProvider).fornadasNoForno(localId),
+    );
 
 final contagemActionsProvider = Provider<ContagemActions>(ContagemActions.new);
 
@@ -159,6 +172,34 @@ class ContagemActions {
         quantidade: e.value,
       );
     }
+    _refresh();
+  }
+
+  /// Põe cookies no forno: regista os assados e arranca o cronómetro.
+  Future<void> assar({
+    required DateTime data,
+    required String localId,
+    required Map<String, double> porFicha,
+    required int duracaoMin,
+  }) async {
+    await _repo.assar(
+      data: data,
+      localId: localId,
+      porFicha: porFicha,
+      duracaoMin: duracaoMin,
+    );
+    _ref.invalidate(fornadasNoFornoProvider);
+    _refresh();
+  }
+
+  Future<void> tirarDoForno(String fornadaId) async {
+    await _repo.tirarDoForno(fornadaId);
+    _ref.invalidate(fornadasNoFornoProvider);
+  }
+
+  Future<void> cancelarFornada(Fornada f) async {
+    await _repo.cancelarFornada(f);
+    _ref.invalidate(fornadasNoFornoProvider);
     _refresh();
   }
 

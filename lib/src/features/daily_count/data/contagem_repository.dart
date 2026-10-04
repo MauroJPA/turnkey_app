@@ -2,8 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 import '../../../core/auth/current_user.dart';
+import '../../../core/formatting/pb_data_hora.dart';
 import '../../../core/pocketbase/pb_client.dart';
 import '../../sales/domain/venda.dart' show ymd;
+import '../domain/fornada.dart';
 import '../domain/local.dart';
 import '../domain/movimento_produto.dart';
 
@@ -83,7 +85,8 @@ class ContagemRepository {
     return recs.map(MovimentoProduto.fromRecord).toList();
   }
 
-  Future<void> adicionar({
+  /// Devolve o id do registo criado.
+  Future<String> adicionar({
     required DateTime data,
     required String localId,
     required String fichaId,
@@ -93,7 +96,7 @@ class ContagemRepository {
     MotivoDesperdicio? motivo,
     String notas = '',
   }) async {
-    await _mov.create(
+    final rec = await _mov.create(
       body: {
         'empresa': _empresaId,
         'data': ymd(data),
@@ -107,6 +110,7 @@ class ContagemRepository {
         if (_pb.authStore.record != null) 'autor': _pb.authStore.record!.id,
       },
     );
+    return rec.id;
   }
 
   Future<void> remover(String id) => _mov.delete(id);
@@ -142,5 +146,77 @@ class ContagemRepository {
         quantidade: quantidade,
       );
     }
+  }
+
+  // --- forno ---------------------------------------------------------------------
+
+  RecordService get _fornadas => _pb.collection('fornadas');
+
+  /// As fornadas ainda no forno neste local.
+  Future<List<Fornada>> fornadasNoForno(String localId) async {
+    final recs = await _fornadas.getFullList(
+      filter:
+          'empresa = "$_empresaId" && local = "$localId" && estado = "no_forno"',
+      sort: 'inicio',
+    );
+    return recs.map(Fornada.fromRecord).toList();
+  }
+
+  /// Põe cookies no forno: regista os assados de cada sabor (do dia [data]) e
+  /// a fornada com o seu cronómetro.
+  Future<void> assar({
+    required DateTime data,
+    required String localId,
+    required Map<String, double> porFicha,
+    required int duracaoMin,
+  }) async {
+    final ids = <String>[];
+    for (final e in porFicha.entries) {
+      if (e.value <= 0) continue;
+      ids.add(
+        await adicionar(
+          data: data,
+          localId: localId,
+          fichaId: e.key,
+          tipo: TipoMovimento.producao,
+          quantidade: e.value,
+          notas: 'Fornada',
+        ),
+      );
+    }
+    await _fornadas.create(
+      body: {
+        'empresa': _empresaId,
+        'local': localId,
+        'inicio': pbDataHora(DateTime.now()),
+        'duracao_min': duracaoMin,
+        'itens': [
+          for (final e in porFicha.entries)
+            if (e.value > 0)
+              ItemFornada(fichaId: e.key, quantidade: e.value).toJson(),
+        ],
+        'movimentos': ids,
+        'estado': EstadoFornada.noForno.api,
+        if (_pb.authStore.record != null) 'autor': _pb.authStore.record!.id,
+      },
+    );
+  }
+
+  Future<void> tirarDoForno(String fornadaId) =>
+      _fornadas.update(fornadaId, body: {'estado': EstadoFornada.tirada.api});
+
+  /// Cancela a fornada e desfaz os assados que ela registou.
+  Future<void> cancelarFornada(Fornada f) async {
+    for (final id in f.movimentoIds) {
+      try {
+        await _mov.delete(id);
+      } on ClientException catch (e) {
+        if (e.statusCode != 404) rethrow;
+      }
+    }
+    await _fornadas.update(
+      f.id,
+      body: {'estado': EstadoFornada.cancelada.api},
+    );
   }
 }

@@ -29,6 +29,7 @@ enum MotivoDesperdicio {
   quebrado('quebrado', 'Quebrado / caído'),
   erroProducao('erro_producao', 'Erro de produção'),
   degustacao('degustacao', 'Degustação / oferta'),
+  consumoProprio('consumo_proprio', 'Consumo próprio'),
   outro('outro', 'Outro');
 
   const MotivoDesperdicio(this.api, this.label);

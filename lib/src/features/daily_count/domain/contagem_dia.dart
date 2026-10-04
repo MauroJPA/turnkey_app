@@ -59,21 +59,27 @@ class LinhaContagem {
     required this.vendido,
     required this.desperdicio,
     required this.fecho,
+    this.fechoAnteriorEstimado = false,
   });
 
   final String fichaId;
 
-  /// Cookies no início do dia: a contagem de abertura, ou — se não houve — a
-  /// última contagem de fecho.
+  /// Cookies no início do dia: a contagem de abertura, ou — se não houve — o
+  /// que ficou do dia anterior (contado ou estimado pelas contas).
   final double abertura;
 
-  /// `true` se [abertura] foi contada nesse dia (e não herdada do fecho).
+  /// `true` se [abertura] foi contada nesse dia (e não herdada do dia anterior).
   final bool aberturaContada;
 
-  /// A última contagem de fecho antes deste dia (`null` se nunca houve).
+  /// O que ficou do dia anterior: a contagem de fecho, ou — se ninguém
+  /// contou — o que devia ter ficado pelas contas (assados − vendas − perdas…).
+  /// `null` se não há dias anteriores com registos.
   final double? fechoAnterior;
 
-  /// Contagem de abertura − último fecho (o que "desapareceu" de uma noite
+  /// `true` quando [fechoAnterior] não foi contado: é a estimativa da app.
+  final bool fechoAnteriorEstimado;
+
+  /// Contagem de abertura − [fechoAnterior] (o que "desapareceu" de uma noite
   /// para a manhã); `null` se não se pode comparar.
   final double? diferencaAbertura;
 
@@ -104,9 +110,25 @@ class LinhaContagem {
       fecho != null;
 }
 
+/// Totais de UM sabor num dia (para as contas do dia a dia).
+class _Dia {
+  double? abertura;
+  double? fecho;
+  double assados = 0;
+  double recebido = 0;
+  double enviado = 0;
+  double vendido = 0;
+  double desperdicio = 0;
+
+  double get saldo => assados + recebido - enviado - vendido - desperdicio;
+}
+
 /// Calcula a contagem de um [dia] num [localId], para cada ficha em
-/// [fichaIds]. [movimentos] deve incluir o histórico recente (para achar o
-/// último fecho) e as [vendas] do local nesse dia.
+/// [fichaIds]. [movimentos] e [vendas] devem incluir o histórico recente: é
+/// dele que se sabe o que ficou do dia anterior. Se ninguém contou o fecho
+/// de um dia, a app estima-o pelas contas desse dia (abertura + assados +
+/// recebidos − enviados − vendidos − perdas), para a abertura do dia seguinte
+/// já vir preenchida.
 List<LinhaContagem> calcularContagemDia({
   required String localId,
   required DateTime dia,
@@ -115,81 +137,81 @@ List<LinhaContagem> calcularContagemDia({
   required List<VendaDoLocal> vendas,
 }) {
   final d = _dia(dia);
-  final doLocal = [
-    for (final m in movimentos)
-      if (m.localId == localId || m.destinoId == localId) m,
-  ];
 
-  double soma(String ficha, bool Function(MovimentoProduto) f) => doLocal
-      .where((m) => m.fichaId == ficha && _dia(m.data) == d && f(m))
-      .fold<double>(0, (s, m) => s + m.quantidade);
+  // totais por sabor e por dia
+  final porFicha = <String, Map<DateTime, _Dia>>{};
+  _Dia acc(String ficha, DateTime data) =>
+      (porFicha[ficha] ??= {})[_dia(data)] ??= _Dia();
+
+  for (final m in movimentos) {
+    if (m.localId != localId && m.destinoId != localId) continue;
+    final a = acc(m.fichaId, m.data);
+    switch (m.tipo) {
+      case TipoMovimento.producao:
+        if (m.localId == localId) a.assados += m.quantidade;
+      case TipoMovimento.transferencia:
+        if (m.destinoId == localId) a.recebido += m.quantidade;
+        if (m.localId == localId) a.enviado += m.quantidade;
+      case TipoMovimento.desperdicio:
+        if (m.localId == localId) a.desperdicio += m.quantidade;
+      case TipoMovimento.contagemAbertura:
+        if (m.localId == localId) a.abertura = m.quantidade;
+      case TipoMovimento.contagemFecho:
+        if (m.localId == localId) a.fecho = m.quantidade;
+    }
+  }
+  for (final v in vendas) {
+    if (v.localId == localId) acc(v.fichaId, v.data).vendido += v.quantidade;
+  }
 
   final out = <LinhaContagem>[];
   for (final f in fichaIds) {
-    // último fecho ANTES deste dia
-    MovimentoProduto? fechoAnterior;
-    for (final m in doLocal) {
-      if (m.localId != localId ||
-          m.fichaId != f ||
-          m.tipo != TipoMovimento.contagemFecho ||
-          !_dia(m.data).isBefore(d)) {
+    final dias = porFicha[f] ?? const <DateTime, _Dia>{};
+
+    // o que ficou dos dias anteriores, dia a dia, por ordem
+    double? carry;
+    var estimado = false;
+    final anteriores = dias.keys.where((x) => x.isBefore(d)).toList()..sort();
+    for (final x in anteriores) {
+      final a = dias[x]!;
+      // sem contagens nem produção, ainda não há de onde partir
+      if (carry == null &&
+          a.abertura == null &&
+          a.fecho == null &&
+          a.assados == 0 &&
+          a.recebido == 0) {
         continue;
       }
-      if (fechoAnterior == null || m.data.isAfter(fechoAnterior.data)) {
-        fechoAnterior = m;
+      final ab = a.abertura ?? carry ?? 0;
+      if (a.fecho != null) {
+        carry = a.fecho;
+        estimado = false;
+      } else {
+        final fim = ab + a.saldo;
+        carry = fim < 0 ? 0 : fim;
+        estimado = true;
       }
     }
-    final aberturaMov = doLocal.cast<MovimentoProduto?>().firstWhere(
-      (m) =>
-          m!.localId == localId &&
-          m.fichaId == f &&
-          m.tipo == TipoMovimento.contagemAbertura &&
-          _dia(m.data) == d,
-      orElse: () => null,
-    );
-    final fechoMov = doLocal.cast<MovimentoProduto?>().firstWhere(
-      (m) =>
-          m!.localId == localId &&
-          m.fichaId == f &&
-          m.tipo == TipoMovimento.contagemFecho &&
-          _dia(m.data) == d,
-      orElse: () => null,
-    );
 
-    final abertura = aberturaMov?.quantidade ?? fechoAnterior?.quantidade ?? 0;
+    final hoje = dias[d];
+    final aberturaContada = hoje?.abertura != null;
+    final abertura = hoje?.abertura ?? carry ?? 0;
     out.add(
       LinhaContagem(
         fichaId: f,
         abertura: abertura,
-        aberturaContada: aberturaMov != null,
-        fechoAnterior: fechoAnterior?.quantidade,
-        diferencaAbertura: aberturaMov != null && fechoAnterior != null
-            ? aberturaMov.quantidade - fechoAnterior.quantidade
+        aberturaContada: aberturaContada,
+        fechoAnterior: carry,
+        fechoAnteriorEstimado: carry != null && estimado,
+        diferencaAbertura: aberturaContada && carry != null
+            ? hoje!.abertura! - carry
             : null,
-        assados: soma(
-          f,
-          (m) => m.localId == localId && m.tipo == TipoMovimento.producao,
-        ),
-        recebido: soma(
-          f,
-          (m) =>
-              m.tipo == TipoMovimento.transferencia && m.destinoId == localId,
-        ),
-        enviado: soma(
-          f,
-          (m) => m.tipo == TipoMovimento.transferencia && m.localId == localId,
-        ),
-        vendido: vendas
-            .where(
-              (v) =>
-                  v.localId == localId && v.fichaId == f && _dia(v.data) == d,
-            )
-            .fold<double>(0, (s, v) => s + v.quantidade),
-        desperdicio: soma(
-          f,
-          (m) => m.localId == localId && m.tipo == TipoMovimento.desperdicio,
-        ),
-        fecho: fechoMov?.quantidade,
+        assados: hoje?.assados ?? 0,
+        recebido: hoje?.recebido ?? 0,
+        enviado: hoje?.enviado ?? 0,
+        vendido: hoje?.vendido ?? 0,
+        desperdicio: hoje?.desperdicio ?? 0,
+        fecho: hoje?.fecho,
       ),
     );
   }

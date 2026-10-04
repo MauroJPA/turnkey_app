@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 import '../../../core/auth/current_user.dart';
+import '../../../core/formatting/pb_data_hora.dart';
 import '../../../core/pocketbase/pb_client.dart';
 import '../../sales/domain/venda.dart' show ymd;
 import '../domain/haccp.dart';
@@ -54,14 +55,6 @@ class HaccpRepository {
 
   // --- registos ---------------------------------------------------------------
 
-  /// Data/hora no formato do PocketBase (UTC).
-  static String _utc(DateTime local) {
-    final u = local.toUtc();
-    String d2(int n) => n.toString().padLeft(2, '0');
-    return '${u.year.toString().padLeft(4, '0')}-${d2(u.month)}-${d2(u.day)} '
-        '${d2(u.hour)}:${d2(u.minute)}:${d2(u.second)}.000Z';
-  }
-
   /// Registos entre [desde] e [ate] (dias locais, inclusive).
   Future<List<RegistoHaccp>> registos({
     required DateTime desde,
@@ -72,8 +65,8 @@ class HaccpRepository {
     final fim = DateTime(ate.year, ate.month, ate.day + 1);
     final filtros = [
       'empresa = "$_empresaId"',
-      'data_hora >= "${_utc(inicio)}"',
-      'data_hora < "${_utc(fim)}"',
+      'data_hora >= "${pbDataHora(inicio)}"',
+      'data_hora < "${pbDataHora(fim)}"',
       if (controloId != null) 'controlo = "$controloId"',
     ];
     final recs = await _registos.getFullList(
@@ -96,7 +89,7 @@ class HaccpRepository {
     body: {
       'empresa': _empresaId,
       'controlo': controloId,
-      'data_hora': _utc(dataHora),
+      'data_hora': pbDataHora(dataHora),
       if (valor != null) 'valor': valor,
       'conforme': conforme,
       'responsavel': responsavel.trim(),

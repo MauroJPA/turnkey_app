@@ -2,6 +2,28 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.54.0 — 2026-10-04 — Contagem rápida com botões − / + e forno com cronómetro
+
+- **Contagem diária → separador "Rápido"** (é o que abre por omissão; "Detalhe" tem todas as contas): cada sabor
+  numa linha, com **botão de menos, o número (que também se escreve) e botão de mais**. Três passos: **Abrir**,
+  **Dia** e **Fechar**.
+  - **Abrir**: os sabores vêm preenchidos com o que ficou de ontem. Se ontem ninguém contou o fecho, a app calcula
+    o que **devia ter ficado** (assados − vendas − perdas…) e avisa; podes corrigir e **registar as perdas de ontem**.
+  - **Dia**: as **vendas vêm sozinhas do Vendus** (sabor a sabor), **perdas e consumo próprio** (queimado, quebrado,
+    fora do prazo, **consumo próprio**, erro de produção…) com − / +, e **enviar/devolver** para outro local.
+  - **Fechar**: o número pequeno é o que devia haver; ajusta o que realmente sobrou ("faltam 2 / sobram 1"), ou
+    toca em **"Está tudo como devia haver"**. Se não fechares, no dia seguinte a abertura já vem com o que devia
+    ter ficado.
+  - **Duas opções de trabalho** (escolhe-se em cada aparelho): **1 · vendas** — contas só a abertura e o fecho e as
+    vendas vêm do Vendus; **2 · fornadas** — como a 1 e ainda registas cada fornada.
+- **Forno**: na opção 2, escolhes os sabores e as quantidades e carregas em **ASSAR**. Regista os assados, e
+  arranca um **cronómetro** com o **tempo de assadura da ficha técnica** (o maior, se houver vários sabores; se
+  nenhum tiver, pergunta os minutos). Quando acaba, o telemóvel vibra e toca, e o cartão fica a vermelho até
+  carregares em **"Tirei do forno"**. O cronómetro vê-se em qualquer telemóvel. **"Foi engano — cancelar"** apaga
+  os assados dessa fornada.
+- A abertura herdada passa a olhar os **últimos 14 dias** (antes só o último fecho contado).
+- Novas migrations: `1790920000_fornadas.js` (coleção `fornadas` e o motivo `consumo_proprio`).
+
 ## 1.53.0 — 2026-10-04 — Tempo de assadura na ficha técnica e na montagem
 
 - **Ficha técnica → "Tempo de assadura (minutos)"**: define-se uma vez na ficha e aparece em **Assar X min** no

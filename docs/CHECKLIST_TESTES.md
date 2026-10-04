@@ -1380,6 +1380,25 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Produzir / Mise en place com esse produto: cartão "Assar 12 min" por cima de "Produzir primeiro".
 - [ ] Agenda → uma produção com esse produto: a linha da receita no mise en place diz "assar 12 min".
 
+## 80. Contagem rápida e forno
+
+- [ ] Contagem diária abre no separador "Rápido": cada sabor tem − , número e + ; escrever o número também funciona;
+      vários toques seguidos somam todos.
+- [ ] Abrir: os sabores vêm com o que ficou de ontem. Sem fecho de ontem, aparece o aviso "Ontem não foi contado o
+      fecho" com os valores calculados; "Registar perdas de ontem" leva ao passo Dia de ontem.
+- [ ] "Guardar abertura" grava e passa ao passo Dia.
+- [ ] Dia: "Vendidos hoje (Vendus)" lista as vendas de hoje por sabor (após uma venda com o canal da Loja).
+- [ ] Perdas e consumo próprio: escolher o motivo (inclui "Consumo próprio"), pôr as quantidades e registar; aparece
+      em Detalhe → Registos do dia e no relatório de desperdício.
+- [ ] Opção 2: pôr sabores no forno e carregar em ASSAR → aparece o cartão "No forno · faltam mm:ss" com o tempo da
+      ficha (o maior dos sabores); os assados aparecem em Detalhe.
+- [ ] Acabado o tempo: o cartão fica vermelho "PRONTA!", o telemóvel vibra/toca; "Tirei do forno" fecha-o.
+- [ ] "Foi engano — cancelar" apaga a fornada e os assados.
+- [ ] Sabor sem tempo na ficha: ao assar pergunta os minutos.
+- [ ] Fechar: "devia haver" por sabor; ajustar mostra "faltam/sobram"; "Está tudo como devia haver" grava tudo.
+- [ ] No dia seguinte, sem ter fechado, a abertura vem com o que devia ter ficado.
+- [ ] A escolha Opção 1/2 e Rápido/Detalhe fica memorizada nesse telemóvel.
+
 ---
 
 ## Notas / ajustes pedidos
