@@ -22,12 +22,11 @@ import '../features/haccp/presentation/haccp_screen.dart';
 import '../features/inventory/presentation/inventario_screen.dart';
 import '../features/invoices/presentation/invoice_review_screen.dart';
 import '../features/invoices/presentation/invoices_screen.dart';
-import '../features/mise_en_place/presentation/mep_screen.dart';
 import '../features/navigation/presentation/navegacao_screen.dart';
 import '../features/orders/presentation/encomenda_detail_screen.dart';
 import '../features/orders/presentation/encomendas_screen.dart';
 import '../features/production/presentation/cart_review_screen.dart';
-import '../features/production/presentation/production_screen.dart';
+import '../features/production/presentation/producao_screen.dart';
 import '../features/products/presentation/produto_detail_screen.dart';
 import '../features/quiosque/presentation/colaboradores_screen.dart';
 import '../features/quiosque/presentation/quiosque_screen.dart';
@@ -38,7 +37,6 @@ import '../features/sales/presentation/produtos_nao_identificados_screen.dart';
 import '../features/sales/presentation/sales_screen.dart';
 import '../features/sales/presentation/venda_detail_screen.dart';
 import '../features/schedule/presentation/plan_detail_screen.dart';
-import '../features/schedule/presentation/schedule_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/settings/presentation/team_screen.dart';
 import '../features/shopping/presentation/compras_relatorio_screen.dart';
@@ -112,9 +110,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: Routes.home,
             builder: (_, __) => const HomeShell(),
           ),
+          // Produção: Produzir (+ mise en place) e Agenda numa só página
           GoRoute(
             path: Routes.production,
-            builder: (_, __) => const ProductionScreen(),
+            builder: (_, state) => ProducaoScreen(
+              secao: SecaoProducao.produzir,
+              receitaId: state.uri.queryParameters['receita'],
+              kgInicial: double.tryParse(state.uri.queryParameters['kg'] ?? ''),
+            ),
             routes: [
               GoRoute(
                 path: 'agendar',
@@ -122,15 +125,16 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
+          // a antiga página "Mise en place" é agora o Produzir
           GoRoute(
             path: Routes.miseEnPlace,
-            builder: (_, state) => MiseEnPlaceScreen(
-              receitaId: state.uri.queryParameters['receita'],
-            ),
+            redirect: (_, state) =>
+                '${Routes.production}${state.uri.hasQuery ? '?${state.uri.query}' : ''}',
           ),
           GoRoute(
             path: Routes.schedule,
-            builder: (_, __) => const ScheduleScreen(),
+            builder: (_, __) =>
+                const ProducaoScreen(secao: SecaoProducao.agenda),
             routes: [
               GoRoute(
                 path: ':id',

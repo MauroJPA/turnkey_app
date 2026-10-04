@@ -160,16 +160,16 @@ class HomeShell extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
         children: [
-          if (acessivel('mise'))
+          if (acessivel('producao'))
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: FilledButton.icon(
                 style: FilledButton.styleFrom(
                   minimumSize: const Size.fromHeight(56),
                 ),
-                onPressed: () => context.go(Routes.miseEnPlace),
+                onPressed: () => context.go(Routes.production),
                 icon: const Icon(Icons.checklist_rtl),
-                label: const Text('Mise en place — produzir agora'),
+                label: const Text('Produzir agora'),
               ),
             ),
           const SizedBox(height: 4),
@@ -186,7 +186,7 @@ class HomeShell extends ConsumerWidget {
               destaque: (stockBaixo ?? 0) > 0,
               onTap: () => context.go(Routes.inventory),
             ),
-          if (acessivel('agenda'))
+          if (acessivel('producao'))
             _StatCard(
               icon: Icons.event_note_outlined,
               titulo: 'Produções por fazer',

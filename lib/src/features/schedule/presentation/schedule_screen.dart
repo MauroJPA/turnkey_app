@@ -41,7 +41,10 @@ String _dataLabel(DateTime d) {
 }
 
 class ScheduleScreen extends ConsumerWidget {
-  const ScheduleScreen({super.key});
+  const ScheduleScreen({super.key, this.embedded = false});
+
+  /// Dentro da página Produção: sem barra própria (ela já tem título e ajuda).
+  final bool embedded;
 
   Future<void> _nova(BuildContext context, WidgetRef ref) async {
     final agora = DateTime.now();
@@ -71,14 +74,16 @@ class ScheduleScreen extends ConsumerWidget {
     final podeEditar = ref.watch(currentPapelProvider).canEditBusiness;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(Routes.home),
-        ),
-        title: const Text('Agenda de produção'),
-        actions: const [HelpActions(topic: HelpTopic.agenda)],
-      ),
+      appBar: embedded
+          ? null
+          : AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.go(Routes.home),
+              ),
+              title: const Text('Agenda de produção'),
+              actions: const [HelpActions(topic: HelpTopic.agenda)],
+            ),
       floatingActionButton: podeEditar
           ? FloatingActionButton.extended(
               onPressed: () => _nova(context, ref),
@@ -94,7 +99,7 @@ class ScheduleScreen extends ConsumerWidget {
             return const EmptyState(
               icon: Icons.event_note_outlined,
               titulo: 'Sem produções planeadas',
-              mensagem: 'Use "Nova produção" ou envie receitas da página Produzir.',
+              mensagem: 'Usa "Nova produção" ou agenda receitas a partir de "Produzir".',
             );
           }
           // agrupar por dia (a lista já vem ordenada por -data)

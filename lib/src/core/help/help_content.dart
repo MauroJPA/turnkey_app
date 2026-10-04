@@ -10,7 +10,6 @@ enum HelpTopic {
   fichas,
   fichaDetalhe,
   produzir,
-  miseEnPlace,
   agendar,
   agenda,
   planoDetalhe,
@@ -125,23 +124,13 @@ const Map<HelpTopic, HelpEntry> helpContent = {
   HelpTopic.produzir: (
     titulo: 'Produzir',
     paragrafos: [
-      'Escolha o que produzir: um PRODUTO FINAL das fichas técnicas (Boston, Provença…) ou uma receita (massa, recheio, base).',
-      'Produto final: indique as unidades. Aparece o mise en place — "Produzir primeiro" (a massa, os recheios e as coberturas, com as gramas de cada um) e os ingredientes a pesar. "Abrir" mostra a receita de cada intermédio.',
-      'Receita: indique os kg para ver quanto precisa de cada ingrediente. As quantidades são escaladas pela percentagem de cada ingrediente para dar exatamente os kg pedidos.',
-      'Botão "Adicionar à agenda": num produto final só escolhe a prioridade e a hora limite (as unidades e a massa já estão calculadas). Numa receita escolhe se é "Produto final" (com formato/ficha técnica → conta unidades) ou "Intermédio" (recheio, massa, base → entra em stock a granel em gramas).',
-      'Se já existir uma ficha técnica para essa massa, o recheio e as coberturas são preenchidos automaticamente.',
-      'Quando tiver as receitas todas no carrinho, toque na barra em baixo para "Rever e agendar".',
-    ],
-  ),
-  HelpTopic.miseEnPlace: (
-    titulo: 'Mise en place',
-    paragrafos: [
-      'Página para produzir agora, sem agendar antes.',
-      'Escolhe o produto: um produto final das fichas técnicas (indicas as unidades) ou uma receita (indicas os kg; se for produto final, escolhe o formato).',
-      'Aparece a lista em caixas: "Produzir primeiro" (recheios/bases — carrega em "Abrir" para ver a receita, procedimento e imagens de cada um) e "Ingredientes" (com o que tens em stock; a vermelho quando falta).',
-      'Botão "Procedimento e imagens" mostra o passo-a-passo da receita escolhida.',
-      'Vai marcando as caixas à medida que preparas.',
-      '"Produção feita" → pergunta se registas na Agenda (como concluída, dá baixa no stock) e se adicionas o que faltou à lista de compras.',
+      'A Produção junta duas secções: "Produzir" (fazer ou planear já) e "Agenda" (as produções planeadas, por dia).',
+      'Escolhe o que produzir: um PRODUTO FINAL das fichas técnicas (Boston, Provença…) ou uma receita (massa, recheio, base).',
+      'Produto final: indica as unidades. Aparece o mise en place — "Produzir primeiro" (a massa, os recheios e as coberturas, com as gramas de cada um; "Abrir" mostra a receita, o procedimento e as imagens) e os ingredientes a pesar, com o que tens em stock (a vermelho quando falta). O tempo de forno aparece em "Assar X min".',
+      'Receita: indica os kg (e, se for produto final, o formato) para ver quanto precisas de cada ingrediente. As quantidades são escaladas pela percentagem de cada ingrediente para dar exatamente os kg pedidos. "Custo por receita" mostra o custo de cada sub-receita. "Procedimento e imagens" mostra o passo-a-passo.',
+      'Vai marcando as caixas à medida que preparas. "Produção feita" regista a produção na Agenda como concluída, dá baixa no stock e pergunta se queres juntar à lista de compras o que faltou.',
+      'Botão "Agendar": para fazer noutro dia. Num produto final só escolhes a prioridade e a hora limite; numa receita escolhes se é "Produto final" (com formato/ficha técnica → conta unidades) ou "Intermédio" (recheio, massa, base → entra em stock a granel em gramas).',
+      'Quando tiveres as receitas todas no carrinho, toca na barra em baixo para "Rever e agendar".',
     ],
   ),
   HelpTopic.agendar: (

@@ -1505,6 +1505,22 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       tem conta.
 - [ ] Criar uma conta nova na Equipa faz aparecer a pessoa no quiosque sem mais passos.
 
+## 91. Produção numa só página
+
+- [ ] Todas as páginas e o rodapé já não têm "Mise en place" nem "Agenda"; têm "Produção". Rodapé novo por omissão
+      (Produção, Contagem diária, Compras, Inventário) numa empresa sem rodapé personalizado.
+- [ ] Início: "Produzir agora" abre Produção → Produzir; "Produções por fazer" abre Produção → Agenda.
+- [ ] Produzir com um produto final (ficha): unidades → mise en place com "Assar X min", caixas, stock; "Produção
+      feita" regista, dá baixa no stock e mostra o resumo ("Ver na agenda" abre a produção).
+- [ ] Produzir com uma receita: kg (+ formato) → mise en place; "Custo por receita" abre a árvore de custos;
+      "Procedimento e imagens" abre.
+- [ ] "Abrir" num intermédio abre o Produzir dessa receita (e voltar regressa).
+- [ ] "Agendar" num produto final e numa receita: abre as folhas (prioridade/hora), junta ao carrinho; a barra "n receitas
+      para agendar" → "Rever e agendar" cria a produção na Agenda.
+- [ ] Agenda: lista por dia; "Nova produção"; o botão do topo diz "Agenda · n por fazer"; abrir uma produção mostra o
+      detalhe (concluir, editar, lista de compras) como antes.
+- [ ] `/#/mise-en-place` e `/#/mise-en-place?receita=<id>` levam ao Produzir.
+
 ---
 
 ## Notas / ajustes pedidos

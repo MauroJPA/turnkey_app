@@ -2,6 +2,24 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.65.0 — 2026-10-04 — Produção numa só página: Produzir, Mise en place e Agenda
+
+Três páginas mostravam o mesmo plano de produção. Passam a **uma só, "Produção"**, com duas secções:
+
+- **Produzir** (antes "Produzir" + "Mise en place"): escolhes o produto e a quantidade e vês **tudo no mesmo
+  sítio** — o mise en place (o que produzir primeiro, os ingredientes a pesar com caixas para marcar, o stock
+  que há e o "Assar X min"), o **custo por receita** e o procedimento. Depois: **"Produção feita"** (regista agora,
+  dá baixa no stock e pode juntar o que faltou à lista de compras) ou **"Agendar"** (para outro dia).
+- **Agenda**: as produções planeadas por dia, com quantas estão **por fazer**. O detalhe de cada produção
+  continua igual.
+- *Todas as páginas* e o rodapé têm **uma só entrada, "Produção"** (saíram "Mise en place" e "Agenda"); o rodapé por
+  omissão passa a ser Produção · Contagem diária · Compras · Inventário. No Início: "Produzir agora" e "Produções
+  por fazer" levam à secção certa.
+- Os endereços antigos (`/mise-en-place`, incluindo `?receita=…`) levam ao Produzir.
+- Nada se perdeu: formato para receitas, procedimento e imagens, "Abrir" um intermédio, carrinho de agendar,
+  prioridade e hora limite, custo, tempo de assadura.
+- A ajuda do Mise en place passou para a do Produzir.
+
 ## 1.64.0 — 2026-10-04 — O quiosque mostra a Equipa
 
 - **O quiosque de tarefas lista logo as pessoas da Equipa** (as contas da empresa): não é preciso criar cada

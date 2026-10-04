@@ -31,6 +31,21 @@ void main() {
     });
   });
 
+  group('paginaDaRota', () {
+    test('a Agenda faz parte da Produção', () {
+      expect(paginaDaRota('/produzir')?.chave, 'producao');
+      expect(paginaDaRota('/produzir/agendar')?.chave, 'producao');
+      expect(paginaDaRota('/agenda')?.chave, 'producao');
+      expect(paginaDaRota('/agenda/abc')?.chave, 'producao');
+    });
+
+    test('as secções do Inventário e as fichas', () {
+      expect(paginaDaRota('/inventario/limpeza')?.chave, 'inventario');
+      expect(paginaDaRota('/fichas-tecnicas/x/informacao')?.chave, 'fichas');
+      expect(paginaDaRota('/ingredientes'), isNull); // só redireciona
+    });
+  });
+
   group('NavConfig', () {
     test('valores por omissão iguais ao comportamento anterior', () {
       const c = NavConfig();
@@ -65,28 +80,28 @@ void main() {
         NivelAcesso.oculto,
       );
       final viewer = c.rodapePara(Papel.viewer).map((p) => p.chave).toList();
-      expect(viewer, ['mise', 'producao', 'agenda', 'inventario']);
-      expect(c.rodapePara(Papel.admin).length, 5);
+      expect(viewer, ['producao', 'contagem', 'inventario']);
+      expect(c.rodapePara(Papel.admin).length, 4);
     });
 
     test('fromRecord ignora lixo e mantém o resto', () {
       final r = RecordModel.fromJson({
         'id': 'x1',
-        'rodape': ['vendas', 'nao-existe', 42, 'agenda'],
+        'rodape': ['vendas', 'nao-existe', 42, 'contagem'],
         'acesso': {
           'editor': {
             'vendas': 'oculto',
             'nao-existe': 'oculto',
-            'agenda': 'banana',
+            'contagem': 'banana',
           },
           'viewer': 'lixo',
         },
       });
       final c = NavConfig.fromRecord(r);
       expect(c.id, 'x1');
-      expect(c.rodape, ['vendas', 'agenda']);
+      expect(c.rodape, ['vendas', 'contagem']);
       expect(c.nivel(Papel.editor, 'vendas'), NivelAcesso.oculto);
-      expect(c.nivel(Papel.editor, 'agenda'), NivelAcesso.editar);
+      expect(c.nivel(Papel.editor, 'contagem'), NivelAcesso.editar);
     });
 
     test('rodapé vazio ou em falta volta ao original', () {

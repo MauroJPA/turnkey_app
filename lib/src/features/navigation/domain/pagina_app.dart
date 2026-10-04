@@ -5,7 +5,14 @@ import '../../../app/routes.dart';
 /// Uma página (ou grupo de páginas) da app que pode ir no rodapé, na grelha
 /// do Início e ter permissões próprias por papel.
 class PaginaApp {
-  const PaginaApp(this.chave, this.rota, this.label, this.icon, this.descricao);
+  const PaginaApp(
+    this.chave,
+    this.rota,
+    this.label,
+    this.icon,
+    this.descricao, {
+    this.rotasExtra = const [],
+  });
 
   /// Identificador estável, guardado na configuração (nunca muda).
   final String chave;
@@ -13,6 +20,10 @@ class PaginaApp {
   final String label;
   final IconData icon;
   final String descricao;
+
+  /// Outras rotas que também pertencem a esta página (ex.: a Agenda faz parte
+  /// da Produção).
+  final List<String> rotasExtra;
 }
 
 /// Chave do Início: está sempre disponível e sempre primeiro no rodapé.
@@ -20,25 +31,12 @@ const chaveInicio = 'inicio';
 
 const paginasApp = <PaginaApp>[
   PaginaApp(
-    'mise',
-    Routes.miseEnPlace,
-    'Mise en place',
-    Icons.checklist_rtl,
-    'Produzir agora, passo a passo',
-  ),
-  PaginaApp(
     'producao',
     Routes.production,
-    'Produzir',
+    'Produção',
     Icons.blender_outlined,
-    'Carrinho de produção',
-  ),
-  PaginaApp(
-    'agenda',
-    Routes.schedule,
-    'Agenda',
-    Icons.event_note_outlined,
-    'Plano de produções',
+    'Produzir agora (mise en place), agendar e ver a agenda',
+    rotasExtra: [Routes.schedule],
   ),
   PaginaApp(
     'compras',
@@ -170,9 +168,8 @@ const paginasApp = <PaginaApp>[
 
 /// Rodapé por omissão (o Início vem sempre à frente, não entra aqui).
 const rodapePorOmissao = <String>[
-  'mise',
   'producao',
-  'agenda',
+  'contagem',
   'compras',
   'inventario',
 ];
@@ -192,10 +189,14 @@ PaginaApp? paginaPorChave(String chave) {
 /// Início e rotas fora do catálogo.
 PaginaApp? paginaDaRota(String location) {
   PaginaApp? melhor;
+  var melhorRota = '';
   for (final p in paginasApp) {
-    final bate = location == p.rota || location.startsWith('${p.rota}/');
-    if (bate && (melhor == null || p.rota.length > melhor.rota.length)) {
-      melhor = p;
+    for (final rota in [p.rota, ...p.rotasExtra]) {
+      final bate = location == rota || location.startsWith('$rota/');
+      if (bate && (melhor == null || rota.length > melhorRota.length)) {
+        melhor = p;
+        melhorRota = rota;
+      }
     }
   }
   return melhor;
