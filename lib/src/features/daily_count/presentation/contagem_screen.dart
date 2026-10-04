@@ -14,17 +14,8 @@ import '../application/contagem_providers.dart';
 import '../domain/contagem_dia.dart';
 import '../domain/local.dart';
 import '../domain/movimento_produto.dart';
-import 'contagem_rapida_sheet.dart';
 import 'contagem_rapida_view.dart';
 import 'locais_sheet.dart';
-import 'movimento_sheet.dart';
-
-/// O tema da app põe os botões a toda a largura; num `Wrap` tem de ser
-/// compacto para ficarem lado a lado.
-final _estiloCompacto = FilledButton.styleFrom(minimumSize: const Size(0, 44));
-final _estiloCompactoContorno = OutlinedButton.styleFrom(
-  minimumSize: const Size(0, 44),
-);
 
 String _n(double v) => v == v.roundToDouble() ? '${v.toInt()}' : '$v';
 String _sinal(double v) => v > 0 ? '+${_n(v)}' : _n(v);
@@ -266,7 +257,10 @@ class _ContagemScreenState extends ConsumerState<ContagemScreen> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('${async.error}', textAlign: TextAlign.center),
+                                Text(
+                                  '${async.error}',
+                                  textAlign: TextAlign.center,
+                                ),
                                 const SizedBox(height: 12),
                                 OutlinedButton(
                                   onPressed: () =>
@@ -320,24 +314,6 @@ class _ContagemScreenState extends ConsumerState<ContagemScreen> {
     final contadas = c.linhas.where((l) => l.fecho != null).toList();
     final difTotal = contadas.fold<double>(0, (s, l) => s + (l.diferenca ?? 0));
 
-    void registar(TipoMovimento tipo, {String? fichaId}) => showMovimentoSheet(
-      context,
-      local: local,
-      locais: locais,
-      dia: _dia,
-      tipo: tipo,
-      fichaId: fichaId,
-    );
-
-    void contar(TipoMovimento tipo) => showContagemRapidaSheet(
-      context,
-      local: local,
-      dia: _dia,
-      tipo: tipo,
-      fichas: fichas,
-      linhas: c.linhas,
-    );
-
     return ListView(
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
       children: [
@@ -377,46 +353,6 @@ class _ContagemScreenState extends ConsumerState<ContagemScreen> {
             ),
           ),
         ),
-        if (_podeEditar) ...[
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              FilledButton.tonalIcon(
-                style: _estiloCompacto,
-                onPressed: () => registar(TipoMovimento.producao),
-                icon: const Icon(Icons.local_fire_department_outlined),
-                label: const Text('Assados'),
-              ),
-              if (locais.length > 1)
-                FilledButton.tonalIcon(
-                style: _estiloCompacto,
-                  onPressed: () => registar(TipoMovimento.transferencia),
-                  icon: const Icon(Icons.swap_horiz),
-                  label: const Text('Enviar / devolver'),
-                ),
-              FilledButton.tonalIcon(
-                style: _estiloCompacto,
-                onPressed: () => registar(TipoMovimento.desperdicio),
-                icon: const Icon(Icons.delete_outline),
-                label: const Text('Desperdício'),
-              ),
-              OutlinedButton.icon(
-                style: _estiloCompactoContorno,
-                onPressed: () => contar(TipoMovimento.contagemAbertura),
-                icon: const Icon(Icons.wb_sunny_outlined),
-                label: const Text('Contar abertura'),
-              ),
-              OutlinedButton.icon(
-                style: _estiloCompactoContorno,
-                onPressed: () => contar(TipoMovimento.contagemFecho),
-                icon: const Icon(Icons.nights_stay_outlined),
-                label: const Text('Contar fecho'),
-              ),
-            ],
-          ),
-        ],
         const SizedBox(height: 4),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
@@ -429,20 +365,13 @@ class _ContagemScreenState extends ConsumerState<ContagemScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: Text(
-              'Sem registos neste dia. Usa "Assados", "Desperdício" ou '
-              '"Contar" para começar.',
+              'Sem registos neste dia. Regista no separador "Rápido".',
               textAlign: TextAlign.center,
               style: tt.bodyMedium,
             ),
           ),
         for (final l in linhas)
-          _CartaoSabor(
-            nome: nomes[l.fichaId] ?? 'Produto',
-            linha: l,
-            onTap: _podeEditar
-                ? () => registar(TipoMovimento.producao, fichaId: l.fichaId)
-                : null,
-          ),
+          _CartaoSabor(nome: nomes[l.fichaId] ?? 'Produto', linha: l),
         if (c.registos.isNotEmpty) ...[
           const SizedBox(height: 12),
           Text('Registos do dia', style: tt.titleSmall),
@@ -518,11 +447,10 @@ class _ContagemScreenState extends ConsumerState<ContagemScreen> {
 
 /// A conta do dia de um sabor.
 class _CartaoSabor extends StatelessWidget {
-  const _CartaoSabor({required this.nome, required this.linha, this.onTap});
+  const _CartaoSabor({required this.nome, required this.linha});
 
   final String nome;
   final LinhaContagem linha;
-  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -551,62 +479,56 @@ class _CartaoSabor extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(child: Text(nome, style: tt.titleSmall)),
-                  if (dif != null)
-                    Icon(
-                      dif == 0
-                          ? Icons.check_circle_outline
-                          : Icons.error_outline,
-                      size: 18,
-                      color: dif == 0
-                          ? cs.primary
-                          : dif < 0
-                          ? cs.error
-                          : cs.tertiary,
-                    ),
-                ],
-              ),
-              Wrap(
-                children: [
-                  kv('Abertura', _n(l.abertura)),
-                  if (l.assados != 0) kv('Assados', _sinal(l.assados)),
-                  if (l.recebido != 0) kv('Recebidos', _sinal(l.recebido)),
-                  if (l.enviado != 0) kv('Enviados', _sinal(-l.enviado)),
-                  if (l.vendido != 0) kv('Vendidos', _sinal(-l.vendido)),
-                  if (l.desperdicio != 0)
-                    kv('Desperdício', _sinal(-l.desperdicio)),
-                ],
-              ),
-              Wrap(
-                children: [
-                  kv('Devia haver', _n(l.esperado)),
-                  if (l.fecho != null) kv('Contado', _n(l.fecho!)),
-                  if (dif != null && dif != 0)
-                    kv(
-                      dif < 0 ? 'Faltam' : 'Sobram',
-                      _n(dif.abs()),
-                      cor: dif < 0 ? cs.error : cs.tertiary,
-                    ),
-                  if (l.diferencaAbertura != null && l.diferencaAbertura != 0)
-                    kv(
-                      'De ontem para hoje',
-                      _sinal(l.diferencaAbertura!),
-                      cor: cs.error,
-                    ),
-                ],
-              ),
-            ],
-          ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(child: Text(nome, style: tt.titleSmall)),
+                if (dif != null)
+                  Icon(
+                    dif == 0 ? Icons.check_circle_outline : Icons.error_outline,
+                    size: 18,
+                    color: dif == 0
+                        ? cs.primary
+                        : dif < 0
+                        ? cs.error
+                        : cs.tertiary,
+                  ),
+              ],
+            ),
+            Wrap(
+              children: [
+                kv('Abertura', _n(l.abertura)),
+                if (l.assados != 0) kv('Assados', _sinal(l.assados)),
+                if (l.recebido != 0) kv('Recebidos', _sinal(l.recebido)),
+                if (l.enviado != 0) kv('Enviados', _sinal(-l.enviado)),
+                if (l.vendido != 0) kv('Vendidos', _sinal(-l.vendido)),
+                if (l.desperdicio != 0)
+                  kv('Desperdício', _sinal(-l.desperdicio)),
+              ],
+            ),
+            Wrap(
+              children: [
+                kv('Devia haver', _n(l.esperado)),
+                if (l.fecho != null) kv('Contado', _n(l.fecho!)),
+                if (dif != null && dif != 0)
+                  kv(
+                    dif < 0 ? 'Faltam' : 'Sobram',
+                    _n(dif.abs()),
+                    cor: dif < 0 ? cs.error : cs.tertiary,
+                  ),
+                if (l.diferencaAbertura != null && l.diferencaAbertura != 0)
+                  kv(
+                    'De ontem para hoje',
+                    _sinal(l.diferencaAbertura!),
+                    cor: cs.error,
+                  ),
+              ],
+            ),
+          ],
         ),
       ),
     );

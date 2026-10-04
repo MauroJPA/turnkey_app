@@ -12,8 +12,8 @@ import '../domain/contagem_dia.dart';
 import '../domain/fornada.dart';
 import '../domain/local.dart';
 import '../domain/movimento_produto.dart';
+import 'enviar_sheet.dart';
 import 'forno_widgets.dart';
-import 'movimento_sheet.dart';
 
 const _chaveModo = 'contagem_modo';
 
@@ -183,7 +183,9 @@ class _ContagemRapidaViewState extends ConsumerState<ContagemRapidaView> {
     for (final f in widget.fichas) {
       final l = _linhas[f.id];
       final esperado = (l?.esperado ?? 0) < 0 ? 0.0 : (l?.esperado ?? 0);
-      final v = comoEsperado ? esperado : (_fecho[f.id] ?? l?.fecho ?? esperado);
+      final v = comoEsperado
+          ? esperado
+          : (_fecho[f.id] ?? l?.fecho ?? esperado);
       if (v > 0 || _fecho.containsKey(f.id) || l?.fecho != null) {
         valores[f.id] = v;
       }
@@ -239,9 +241,7 @@ class _ContagemRapidaViewState extends ConsumerState<ContagemRapidaView> {
       _msg('Põe a quantidade dos sabores que vão ao forno.');
       return;
     }
-    final tempos = {
-      for (final f in widget.fichas) f.id: f.tempoAssaduraMin,
-    };
+    final tempos = {for (final f in widget.fichas) f.id: f.tempoAssaduraMin};
     final nomes = {for (final f in widget.fichas) f.id: f.nome};
     // sabores sem tempo na ficha: pergunta os minutos (uma vez para todos)
     final semTempo = [
@@ -432,7 +432,10 @@ class _ContagemRapidaViewState extends ConsumerState<ContagemRapidaView> {
     final tt = Theme.of(context).textTheme;
     final linhas = _linhas;
     final estimadas = widget.contagem.linhas.where(
-      (l) => !l.aberturaContada && l.fechoAnterior != null && l.fechoAnteriorEstimado,
+      (l) =>
+          !l.aberturaContada &&
+          l.fechoAnterior != null &&
+          l.fechoAnteriorEstimado,
     );
     final temFechoOntem = widget.contagem.linhas.any(
       (l) => l.fechoAnterior != null && !l.fechoAnteriorEstimado,
@@ -560,7 +563,8 @@ class _ContagemRapidaViewState extends ConsumerState<ContagemRapidaView> {
             ),
           ),
         ),
-        if (_modo == ModoContagem.fornadas) ..._forno_(context, fornadas, cs, tt),
+        if (_modo == ModoContagem.fornadas)
+          ..._forno_(context, fornadas, cs, tt),
         const SizedBox(height: 4),
         Card(
           child: ExpansionTile(
@@ -603,12 +607,11 @@ class _ContagemRapidaViewState extends ConsumerState<ContagemRapidaView> {
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: OutlinedButton.icon(
-              onPressed: () => showMovimentoSheet(
+              onPressed: () => showEnviarSheet(
                 context,
                 local: widget.local,
                 locais: widget.locais,
                 dia: widget.dia,
-                tipo: TipoMovimento.transferencia,
               ),
               icon: const Icon(Icons.swap_horiz),
               label: const Text('Enviar / devolver para outro local'),
@@ -708,7 +711,9 @@ class _ContagemRapidaViewState extends ConsumerState<ContagemRapidaView> {
           Builder(
             builder: (_) {
               final l = linhas[f.id];
-              final esperado = (l?.esperado ?? 0) < 0 ? 0.0 : (l?.esperado ?? 0);
+              final esperado = (l?.esperado ?? 0) < 0
+                  ? 0.0
+                  : (l?.esperado ?? 0);
               final valor = _fecho[f.id] ?? l?.fecho ?? esperado;
               final dif = valor - esperado;
               return _linha(

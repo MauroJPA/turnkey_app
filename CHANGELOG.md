@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.57.0 — 2026-10-04 — Contagem diária: um só sítio para registar
+
+Limpeza sem perder funções — antes havia **dois caminhos** para registar o mesmo na Contagem diária.
+
+- **"Rápido" passa a ser o único sítio onde se regista** (abertura, fornadas, perdas e consumo próprio, fecho).
+- **"Detalhe" passa a ser só consulta**: as contas de cada sabor, os registos do dia e o apagar de um registo
+  enganado. Saíram dali os botões "Assados", "Desperdício", "Contar abertura" e "Contar fecho" (faziam o mesmo que
+  o Rápido) e o toque no cartão do sabor.
+- "Enviar / devolver" fica no Rápido (passo "Dia"), numa folha mais simples (sabor, destino e quantidade com − / +).
+- Removido código duplicado: as folhas antigas de movimento e de contagem rápida.
+- Quem só pode ver (papel Leitura) continua a ver o Detalhe.
+
 ## 1.56.0 — 2026-10-04 — Quiosque de tarefas com cartão NFC e colaboradores
 
 - **Novo "Quiosque de tarefas"** (em *Todas as páginas*): um ecrã inteiro, sem rodapé, para o telemóvel que fica na

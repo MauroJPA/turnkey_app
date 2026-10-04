@@ -1429,6 +1429,15 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] O quiosque mostra o cartão "No forno" quando há algo no forno.
 - [ ] Um utilizador "viewer" não consegue registar tarefas (a base de dados recusa).
 
+## 83. Contagem diária: um só sítio para registar
+
+- [ ] Contagem diária → "Detalhe" já não tem botões de registar (Assados, Desperdício, Contar abertura/fecho) nem
+      abre nada ao tocar num sabor; continua a mostrar as contas, os "Registos do dia" e o botão de apagar.
+- [ ] "Rápido" → passo "Dia" → "Enviar / devolver para outro local": escolher destino, sabor e quantidade com − / +;
+      depois, no local de destino, aparece em "Recebidos".
+- [ ] Registar abertura, fornada, perdas e fecho no "Rápido" continua a funcionar como antes.
+- [ ] Um utilizador com papel Leitura abre a Contagem e vê o Detalhe (sem o separador Rápido).
+
 ---
 
 ## Notas / ajustes pedidos
