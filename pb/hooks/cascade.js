@@ -386,7 +386,10 @@ function runCascade(app, kind, rootId) {
         }
         const pecas = fnum(emb, 'unidades_compra') || 1;
         const rende = fnum(emb, 'rende_unidades') || 1;
-        custo += (fnum(emb, 'preco_compra') / pecas / rende) * qtd;
+        // a embalagem só para plataformas não entra no custo da loja
+        if (item.getString('slot') !== 'embalagem_plataforma') {
+          custo += (fnum(emb, 'preco_compra') / pecas / rende) * qtd;
+        }
       } else if (item.getString('kit')) {
         // kit de embalagens: qtd = nº de kits por unidade de produto; sem peso.
         let linhas;
@@ -414,7 +417,9 @@ function runCascade(app, kind, rootId) {
           const rd = fnum(emb, 'rende_unidades') || 1;
           cKit += (fnum(emb, 'preco_compra') / pc / rd) * fnum(kl, 'quantidade');
         }
-        custo += cKit * qtd;
+        if (item.getString('slot') !== 'embalagem_plataforma') {
+          custo += cKit * qtd;
+        }
       } else {
         peso += qtd;
       }

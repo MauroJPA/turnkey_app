@@ -65,6 +65,8 @@ class TechSheetRepository {
           'ficha': nova.id,
           'ingrediente': it.getStringValue('ingrediente'),
           'receita': it.getStringValue('receita'),
+          'embalagem': it.getStringValue('embalagem'),
+          'kit': it.getStringValue('kit'),
           'quantidade_g': it.getDoubleValue('quantidade_g'),
           'slot': it.getStringValue('slot'),
         },

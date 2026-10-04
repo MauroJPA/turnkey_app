@@ -17,8 +17,34 @@ class FichaDetail {
   final FichaTecnica ficha;
   final List<ItemFicha> itens;
 
-  double get pesoTotal => itens.fold(0, (s, i) => s + i.quantidadeG);
-  double get custoPreview => itens.fold(0, (s, i) => s + i.custoLinha);
+  /// Peso do produto: as embalagens (peças/kits) não pesam.
+  double get pesoTotal => itens
+      .where((i) => !i.isEmbalagem)
+      .fold(0, (s, i) => s + i.quantidadeG);
+
+  /// Custo do produto na loja: tudo menos a embalagem só para plataformas.
+  double get custoPreview => itens
+      .where((i) => i.slot != SlotFicha.embalagemPlataforma)
+      .fold(0, (s, i) => s + i.custoLinha);
+
+  /// Quanto desse custo é embalagem (o bloco "Embalagem").
+  double get custoEmbalagem => itens
+      .where((i) => i.slot == SlotFicha.embalagem)
+      .fold(0, (s, i) => s + i.custoLinha);
+
+  /// O que é matéria-prima (ingredientes, massas, recheios, coberturas…).
+  double get custoMateriaPrima => custoPreview - custoEmbalagem;
+
+  /// Embalagem extra só para as plataformas (sacos de entrega, selos…).
+  double get custoEmbalagemPlataforma => itens
+      .where((i) => i.slot == SlotFicha.embalagemPlataforma)
+      .fold(0, (s, i) => s + i.custoLinha);
+
+  bool get temEmbalagemPlataforma =>
+      itens.any((i) => i.slot == SlotFicha.embalagemPlataforma);
+
+  /// Custo do produto quando vai para uma plataforma.
+  double get custoPlataforma => custoPreview + custoEmbalagemPlataforma;
 
   Map<SlotFicha, List<ItemFicha>> get porSlot =>
       groupBy(itens, (ItemFicha i) => i.slot);

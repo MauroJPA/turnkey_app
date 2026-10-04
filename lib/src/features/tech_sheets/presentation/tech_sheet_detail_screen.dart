@@ -51,7 +51,7 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
   Future<void> _addTo(SlotFicha slot) async {
     final picked = await showItemPickerSheet(
       context,
-      apenasEmbalagem: slot == SlotFicha.embalagem,
+      apenasEmbalagem: slot.ehEmbalagem,
     );
     if (picked == null) return;
     await _run(
@@ -437,6 +437,22 @@ class _Header extends StatelessWidget {
                       ? 'defina o preço'
                       : '${cmvReal.toStringAsFixed(1)}%',
                   color: corReal,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              coluna(cell('Matéria-prima', fmt(detail.custoMateriaPrima))),
+              coluna(cell('Embalagem', fmt(detail.custoEmbalagem))),
+              coluna(
+                cell(
+                  'Nas plataformas',
+                  detail.temEmbalagemPlataforma
+                      ? fmt(detail.custoPlataforma)
+                      : '—',
                 ),
               ),
             ],

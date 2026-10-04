@@ -14,7 +14,8 @@ enum SlotFicha {
   coberturaBase,
   coberturaTop,
   extra,
-  embalagem;
+  embalagem,
+  embalagemPlataforma;
 
   static SlotFicha fromApi(String? v) => switch (v) {
     'massa' => SlotFicha.massa,
@@ -23,6 +24,7 @@ enum SlotFicha {
     'cobertura_base' => SlotFicha.coberturaBase,
     'cobertura_top' => SlotFicha.coberturaTop,
     'embalagem' => SlotFicha.embalagem,
+    'embalagem_plataforma' => SlotFicha.embalagemPlataforma,
     _ => SlotFicha.extra,
   };
 
@@ -34,6 +36,7 @@ enum SlotFicha {
     SlotFicha.coberturaTop => 'cobertura_top',
     SlotFicha.extra => 'extra',
     SlotFicha.embalagem => 'embalagem',
+    SlotFicha.embalagemPlataforma => 'embalagem_plataforma',
   };
 
   String get label => switch (this) {
@@ -44,7 +47,12 @@ enum SlotFicha {
     SlotFicha.coberturaTop => 'Cobertura (topo)',
     SlotFicha.extra => 'Extra',
     SlotFicha.embalagem => 'Embalagem',
+    SlotFicha.embalagemPlataforma => 'Embalagem para plataformas',
   };
+
+  /// Blocos de embalagem (peças ou kits, não gramas).
+  bool get ehEmbalagem =>
+      this == SlotFicha.embalagem || this == SlotFicha.embalagemPlataforma;
 }
 
 @freezed

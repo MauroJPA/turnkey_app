@@ -1363,6 +1363,16 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Custos fixos: novo custo com Categoria "Controlo operacional"; aparecem os chips de categoria com o
       subtotal e o filtro funciona.
 
+## 78. Ficha técnica: embalagem separada e embalagem para plataformas
+
+- [ ] Detalhe de uma ficha: aparecem "Matéria-prima", "Embalagem" e "Nas plataformas" por baixo do CMV.
+- [ ] Adicionar uma embalagem (ou kit) ao bloco "Embalagem para plataformas": o "Custo" da ficha e o preço
+      sugerido NÃO mudam; "Nas plataformas" sobe pelo custo dessa embalagem.
+- [ ] Remover essa embalagem: "Nas plataformas" volta a "—".
+- [ ] O "Peso" da ficha não inclui as peças das embalagens.
+- [ ] Duplicar uma ficha com embalagem/kit: a cópia traz as embalagens e os kits.
+- [ ] Inventário → Cozinha mostra o aviso da Contagem diária e abre-a.
+
 ---
 
 ## Notas / ajustes pedidos

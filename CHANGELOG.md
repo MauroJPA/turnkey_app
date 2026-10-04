@@ -2,6 +2,19 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.52.0 — 2026-10-04 — Ficha técnica: embalagem separada e embalagem para plataformas
+
+- **Ficha técnica → custo separado**: o detalhe mostra **Matéria-prima**, **Embalagem** e **Nas plataformas**
+  lado a lado. O custo do produto na loja (e o preço sugerido / CMV) continua a ser matéria-prima + embalagem.
+- **Novo bloco "Embalagem para plataformas"**: para o que só usas nas vendas por Uber Eats, Glovo, etc. (saco
+  de entrega, selo, caixa extra). **Não entra no custo da loja**; "Nas plataformas" = custo da loja + este
+  bloco. Aceita embalagens avulsas e kits, como o bloco Embalagem.
+- **Correção**: duplicar uma ficha agora copia também as embalagens e os kits (antes ficavam de fora).
+- **Correção**: o "Peso" da ficha deixou de somar as peças das embalagens.
+- **Inventário → Cozinha**: aviso a apontar para a **Contagem diária** (é lá que se contam os cookies prontos,
+  por local e por dia).
+- Nova migration `1790900000_slot_embalagem_plataforma.js`.
+
 ## 1.51.0 — 2026-10-04 — HACCP (registos, pragas, frigorífico, limpezas) e categorias nos custos fixos
 
 - **Nova página "HACCP"** (em *Todas as páginas*): três separadores.

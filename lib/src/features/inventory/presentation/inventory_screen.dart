@@ -175,6 +175,24 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
               ],
             ),
           ),
+          if (!naLoja)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+              child: Card(
+                margin: EdgeInsets.zero,
+                child: ListTile(
+                  dense: true,
+                  leading: const Icon(Icons.fact_check_outlined),
+                  title: const Text('Cookies prontos? Usa a Contagem diária'),
+                  subtitle: const Text(
+                    'Assados, enviados, vendidos, desperdício e sobras por '
+                    'local e por dia.',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.go(Routes.contagem),
+                ),
+              ),
+            ),
           Expanded(
             child: AsyncValueView<List<StockItem>>(
               value: async,

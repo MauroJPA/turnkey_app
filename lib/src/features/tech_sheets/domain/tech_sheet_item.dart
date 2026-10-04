@@ -27,7 +27,7 @@ class ItemFicha with _$ItemFicha {
 
   /// Linha de embalagem (peça avulsa ou kit): a quantidade é nº de peças/kits.
   bool get isEmbalagem =>
-      slot == SlotFicha.embalagem || embalagemId != null || kitId != null;
+      slot.ehEmbalagem || embalagemId != null || kitId != null;
 
   double get custoLinha => custoPorGramaResolvido * quantidadeG;
   String get nome => nomeResolvido.isEmpty ? 'Item' : nomeResolvido;
