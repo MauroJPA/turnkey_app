@@ -1438,6 +1438,15 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Registar abertura, fornada, perdas e fecho no "Rápido" continua a funcionar como antes.
 - [ ] Um utilizador com papel Leitura abre a Contagem e vê o Detalhe (sem o separador Rápido).
 
+## 84. Vendas do período mais rápidas
+
+- [ ] Contagem diária → Dia: "Vendidos hoje (Vendus)" mostra as quantidades certas (testar com mais de 40 vendas
+      no dia: soma igual à do ecrã de Vendas).
+- [ ] Painel financeiro, DRE, IVA e Números mágicos mostram os mesmos totais que antes para um mês fechado.
+- [ ] Relatório geral (Excel): a folha "1 Vendas" tem o mesmo número de linhas que antes.
+- [ ] Abrir a Contagem diária ou o Painel financeiro demora o mesmo em Setembro e em Dezembro (já não depende do
+      histórico).
+
 ---
 
 ## Notas / ajustes pedidos

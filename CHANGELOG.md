@@ -2,6 +2,13 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.58.0 — 2026-10-04 — Mais rápido: vendas do período sem trazer o histórico todo
+
+- **Contagem diária, Painel financeiro, DRE, IVA, Números mágicos e Relatório geral** carregavam as linhas de venda
+  de **todas** as vendas desde o início, mesmo para ver um só dia. Passam a pedir só as linhas das vendas do
+  período (em lotes, em paralelo). Os números são os mesmos; o tempo de carregamento deixa de crescer com os meses.
+- Sem alterações de dados nem de ecrãs.
+
 ## 1.57.0 — 2026-10-04 — Contagem diária: um só sítio para registar
 
 Limpeza sem perder funções — antes havia **dois caminhos** para registar o mesmo na Contagem diária.

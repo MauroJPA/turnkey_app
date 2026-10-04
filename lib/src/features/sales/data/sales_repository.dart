@@ -45,22 +45,34 @@ class SalesRepository {
   }
 
   /// Vendas e respetivas linhas entre [desde] e [ate] (inclusive) — para o
-  /// painel financeiro. Filtra as linhas do lado do cliente (por id da
-  /// venda) em vez de um filtro por relação (`venda.data`), que o PocketBase
-  /// não garante comparar semanticamente; para uma empresa deste porte o
-  /// volume de `vendas_itens` é pequeno, por isso é seguro trazer tudo.
+  /// painel financeiro e a contagem diária.
+  ///
+  /// As linhas são pedidas só das vendas do período, em lotes de ids (pedidos
+  /// em paralelo): antes vinham as linhas de TODAS as vendas desde sempre, o
+  /// que ia ficando mais lento a cada mês. Não se filtra por `venda.data`
+  /// porque o PocketBase não garante comparar datas por relação.
   Future<({List<Venda> vendas, List<VendaItem> itens})> periodo({
     required DateTime desde,
     required DateTime ate,
   }) async {
     final vendas = await list(desde: desde, ate: ate);
     if (vendas.isEmpty) return (vendas: vendas, itens: <VendaItem>[]);
-    final idsValidos = vendas.map((v) => v.id).toSet();
-    final todosItens = await _itens.getFullList(filter: 'empresa = "$_empresaId"');
-    final itens = todosItens
-        .map(VendaItem.fromRecord)
-        .where((it) => idsValidos.contains(it.vendaId))
-        .toList();
+    const tamanhoLote = 40;
+    final ids = [for (final v in vendas) v.id];
+    final pedidos = <Future<List<RecordModel>>>[
+      for (var i = 0; i < ids.length; i += tamanhoLote)
+        _itens.getFullList(
+          filter:
+              'empresa = "$_empresaId" && (${ids.sublist(i, i + tamanhoLote > ids.length ? ids.length : i + tamanhoLote).map((id) => 'venda = "$id"').join(' || ')})',
+        ),
+    ];
+    final idsValidos = ids.toSet();
+    final itens = [
+      for (final lote in await Future.wait(pedidos))
+        for (final r in lote)
+          if (idsValidos.contains(r.getStringValue('venda')))
+            VendaItem.fromRecord(r),
+    ];
     return (vendas: vendas, itens: itens);
   }
 
