@@ -9,6 +9,8 @@ import '../features/auth/presentation/onboarding_screen.dart';
 import '../features/auth/presentation/pending_approval_screen.dart';
 import '../features/consumables/presentation/consumiveis_screen.dart';
 import '../features/cookie_formats/presentation/cookie_formats_screen.dart';
+import '../features/daily_count/presentation/contagem_relatorios_screen.dart';
+import '../features/daily_count/presentation/contagem_screen.dart';
 import '../features/dashboard/presentation/home_shell.dart';
 import '../features/dashboard/presentation/main_shell.dart';
 import '../features/finance/presentation/analise_vendas_screen.dart';
@@ -180,6 +182,16 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, state) => EncomendaDetailScreen(
                   encomendaId: state.pathParameters['id']!,
                 ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: Routes.contagem,
+            builder: (_, __) => const ContagemScreen(),
+            routes: [
+              GoRoute(
+                path: 'relatorios',
+                builder: (_, __) => const ContagemRelatoriosScreen(),
               ),
             ],
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../daily_count/data/contagem_repository.dart';
 import '../../ingredients/data/ingredient_repository.dart';
 import '../../invoices/data/invoice_repository.dart';
 import '../../mise_en_place/data/mep_repository.dart';
@@ -96,6 +97,13 @@ class RelatorioGeralService {
       }
     }
 
+    final contagem = _ref.read(contagemRepositoryProvider);
+    final locais = await contagem.listLocais(incluirArquivados: true);
+    final movimentosProduto = await contagem.movimentos(
+      desde: desde.subtract(const Duration(days: 60)),
+      ate: ate,
+    );
+
     final schedule = _ref.read(scheduleRepositoryProvider);
     final planos = await schedule.listPlans();
     final itensProd = await schedule.listTodosItens();
@@ -115,6 +123,8 @@ class RelatorioGeralService {
       custosFixos: await _ref.read(custosFixosRepositoryProvider).list(),
       equipamentos: await _ref.read(equipamentosRepositoryProvider).list(),
       faturas: await _ref.read(invoiceRepositoryProvider).list(),
+      locais: locais,
+      movimentosProduto: movimentosProduto,
       producoes: planos,
       itensProducao: [
         for (final i in itensProd)

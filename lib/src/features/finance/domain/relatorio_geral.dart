@@ -1,3 +1,6 @@
+import '../../daily_count/domain/contagem_dia.dart';
+import '../../daily_count/domain/local.dart';
+import '../../daily_count/domain/movimento_produto.dart';
 import '../../ingredients/domain/ingredient.dart';
 import '../../invoices/domain/fatura.dart';
 import '../../sales/domain/venda.dart';
@@ -92,6 +95,8 @@ class EntradaRelatorio {
     this.faturas = const [],
     this.producoes = const [],
     this.itensProducao = const [],
+    this.locais = const [],
+    this.movimentosProduto = const [],
   });
 
   final String empresa;
@@ -116,6 +121,12 @@ class EntradaRelatorio {
 
   /// Linhas de produção, com [ItemProducaoRelatorio.producaoId] para ligar ao plano.
   final List<ItemProducaoRelatorio> itensProducao;
+
+  /// Locais (loja, Alvalade, plataformas) e o registo diário de cookies
+  /// (assados, envios, desperdício, contagens) — inclui alguns dias antes do
+  /// período para a abertura herdar o último fecho.
+  final List<Local> locais;
+  final List<MovimentoProduto> movimentosProduto;
 }
 
 /// Linha de produção + o plano a que pertence (o modelo da agenda não guarda
@@ -870,6 +881,91 @@ List<FolhaRelatorio> montarRelatorio(EntradaRelatorio e) {
     linhas: producao,
   );
 
+  // --- 2 Contagem diária (assados, sobras, desperdício por local) ----------------
+  final vendasLocal = vendasPorLocal(
+    vendas: e.vendas,
+    itens: e.itens,
+    locais: e.locais,
+  );
+  final nomeLocal = {for (final l in e.locais) l.id: l.nome};
+  final linhasContagem = <List<Object?>>[];
+  final diasComRegisto = <(DateTime, String)>{};
+  for (final m in e.movimentosProduto) {
+    if (!_noPeriodo(m.data, e.desde, e.ate)) continue;
+    diasComRegisto.add((_dia(m.data), m.localId));
+    if (m.destinoId.isNotEmpty) diasComRegisto.add((_dia(m.data), m.destinoId));
+  }
+  final diasOrdenados = diasComRegisto.toList()
+    ..sort((a, b) {
+      final c = a.$1.compareTo(b.$1);
+      return c != 0
+          ? c
+          : (nomeLocal[a.$2] ?? '').compareTo(nomeLocal[b.$2] ?? '');
+    });
+  for (final (dia, localId) in diasOrdenados) {
+    final linhas = calcularContagemDia(
+      localId: localId,
+      dia: dia,
+      fichaIds: [for (final f in fichasAtivas) f.id],
+      movimentos: e.movimentosProduto,
+      vendas: vendasLocal,
+    );
+    for (final l in linhas) {
+      if (!l.temMovimento) continue;
+      final motivos = <String, double>{};
+      for (final m in e.movimentosProduto) {
+        if (m.tipo == TipoMovimento.desperdicio &&
+            m.localId == localId &&
+            m.fichaId == l.fichaId &&
+            _dia(m.data) == dia) {
+          final k = m.motivo?.label ?? 'sem motivo';
+          motivos[k] = (motivos[k] ?? 0) + m.quantidade;
+        }
+      }
+      linhasContagem.add([
+        _ymd(dia),
+        nomeLocal[localId] ?? '',
+        fichaPorId[l.fichaId]?.nome ?? '',
+        l.abertura,
+        l.assados,
+        l.recebido,
+        l.enviado,
+        l.vendido,
+        l.desperdicio,
+        motivos.isEmpty
+            ? null
+            : motivos.entries
+                  .map(
+                    (x) =>
+                        '${x.key} ${x.value.toStringAsFixed(x.value == x.value.roundToDouble() ? 0 : 1)}',
+                  )
+                  .join('; '),
+        l.esperado,
+        l.fecho,
+        l.diferenca,
+      ]);
+    }
+  }
+  final folhaContagem = FolhaRelatorio(
+    nome: '2 Contagem diaria',
+    colunas: const [
+      'data',
+      'local',
+      'sabor',
+      'abertura',
+      'assados',
+      'recebidos',
+      'enviados',
+      'vendidos',
+      'desperdicio',
+      'desperdicio_motivo',
+      'devia_haver',
+      'sobras_contadas',
+      'diferenca_contado_menos_esperado',
+    ],
+    linhas: linhasContagem,
+  );
+
   // --- modelos por preencher ---------------------------------------------------
   const folhaPlataformas = FolhaRelatorio(
     nome: '5 Plataformas',
@@ -955,9 +1051,18 @@ List<FolhaRelatorio> montarRelatorio(EntradaRelatorio e) {
       ],
       [
         '2 Producao',
-        'Parcial: data, sabor e quantidade planeada (agenda de produção) e '
-            'unidades vendidas no dia. Sobras, desperdício (e motivo) e horas '
-            'de trabalho ainda não são registados.',
+        'Agenda de produção: data, sabor e quantidade planeada, e unidades '
+            'vendidas no dia. As horas de trabalho ainda não são registadas.',
+      ],
+      [
+        '2 Contagem diaria',
+        e.movimentosProduto.isEmpty
+            ? 'Sem registos: usa a página Contagem diária (assados, '
+                  'envios a Alvalade, desperdício, contagens de abertura e '
+                  'fecho) e esta folha enche-se sozinha.'
+            : 'Por dia, local e sabor: abertura, assados, recebidos, '
+                  'enviados, vendidos (das vendas, pelo canal), desperdício '
+                  '(com motivo), o que devia haver, a sobra contada e a diferença.',
       ],
       [
         '3 Custo por sabor',
@@ -1004,6 +1109,7 @@ List<FolhaRelatorio> montarRelatorio(EntradaRelatorio e) {
     folhaVendas,
     folhaEquivalencia,
     folhaProducao,
+    folhaContagem,
     folhaCustoSabor,
     folhaComponentes,
     folhaIngredientes,

@@ -1,0 +1,295 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:gc_turnkey/src/features/daily_count/domain/contagem_dia.dart';
+import 'package:gc_turnkey/src/features/daily_count/domain/local.dart';
+import 'package:gc_turnkey/src/features/daily_count/domain/movimento_produto.dart';
+import 'package:gc_turnkey/src/features/sales/domain/venda.dart';
+
+void main() {
+  const loja = Local(
+    id: 'loja',
+    nome: 'Loja',
+    canais: ['Loja física'],
+    ordem: 1,
+  );
+  const alv = Local(
+    id: 'alv',
+    nome: 'Alvalade',
+    tipo: TipoLocal.parceiro,
+    canais: ['Parceria Alvalade'],
+    ordem: 2,
+  );
+  const plat = Local(
+    id: 'plat',
+    nome: 'Plataformas',
+    tipo: TipoLocal.plataforma,
+    canais: ['Uber Eats', 'Glovo'],
+    ordem: 3,
+  );
+  const locais = [loja, alv, plat];
+
+  MovimentoProduto mov(
+    String tipo,
+    String local,
+    String ficha,
+    double q, {
+    DateTime? dia,
+    String destino = '',
+    MotivoDesperdicio? motivo,
+  }) => MovimentoProduto(
+    id: '${tipo}_${local}_${ficha}_$q',
+    data: dia ?? DateTime(2026, 10, 3),
+    localId: local,
+    fichaId: ficha,
+    tipo: TipoMovimento.values.firstWhere((t) => t.api == tipo),
+    quantidade: q,
+    destinoId: destino,
+    motivo: motivo,
+  );
+
+  group('localDoCanal', () {
+    test('canal conhecido → o seu local (sem distinguir maiúsculas)', () {
+      expect(localDoCanal('Parceria Alvalade', locais)?.id, 'alv');
+      expect(localDoCanal('  uber eats ', locais)?.id, 'plat');
+    });
+
+    test('canal vazio ou desconhecido → a loja', () {
+      expect(localDoCanal('', locais)?.id, 'loja');
+      expect(localDoCanal('Revenda', locais)?.id, 'loja');
+    });
+
+    test('locais arquivados são ignorados', () {
+      const arquivada = Local(
+        id: 'alv',
+        nome: 'Alvalade',
+        canais: ['Parceria Alvalade'],
+        arquivado: true,
+      );
+      expect(localDoCanal('Parceria Alvalade', [loja, arquivada])?.id, 'loja');
+      expect(localDoCanal('x', const <Local>[]), isNull);
+    });
+
+    test('sem loja, usa o primeiro local ativo', () {
+      expect(localDoCanal('x', [alv, plat])?.id, 'alv');
+    });
+  });
+
+  group('vendasPorLocal', () {
+    test('reparte as linhas pelo canal da venda', () {
+      final vendas = [
+        Venda(id: 'v1', data: DateTime(2026, 10, 3), canal: 'Loja física'),
+        Venda(id: 'v2', data: DateTime(2026, 10, 3), canal: 'Glovo'),
+        Venda(id: 'v3', data: DateTime(2026, 10, 3)), // sem canal
+      ];
+      final itens = [
+        const VendaItem(id: 'i1', vendaId: 'v1', fichaId: 'f1', quantidade: 3),
+        const VendaItem(id: 'i2', vendaId: 'v2', fichaId: 'f1', quantidade: 2),
+        const VendaItem(id: 'i3', vendaId: 'v3', fichaId: 'f2', quantidade: 1),
+        // sem produto identificado: não conta para nenhum sabor
+        const VendaItem(id: 'i4', vendaId: 'v1', quantidade: 5),
+      ];
+      final r = vendasPorLocal(vendas: vendas, itens: itens, locais: locais);
+      expect(r, hasLength(3));
+      expect(
+        r
+            .firstWhere((v) => v.fichaId == 'f1' && v.localId == 'loja')
+            .quantidade,
+        3,
+      );
+      expect(r.firstWhere((v) => v.localId == 'plat').quantidade, 2);
+      expect(r.firstWhere((v) => v.fichaId == 'f2').localId, 'loja');
+    });
+  });
+
+  group('calcularContagemDia', () {
+    final dia = DateTime(2026, 10, 3);
+
+    test('abertura = último fecho; esperado e diferença', () {
+      final movs = [
+        mov('contagem_fecho', 'loja', 'f1', 8, dia: DateTime(2026, 10, 2)),
+        mov('producao', 'loja', 'f1', 20),
+        mov('transferencia', 'alv', 'f1', 4, destino: 'loja'), // devolvido
+        mov('transferencia', 'loja', 'f1', 6, destino: 'alv'), // enviado
+        mov('desperdicio', 'loja', 'f1', 2, motivo: MotivoDesperdicio.queimado),
+        mov('contagem_fecho', 'loja', 'f1', 9),
+      ];
+      final vendas = [
+        VendaDoLocal(localId: 'loja', data: dia, fichaId: 'f1', quantidade: 12),
+      ];
+      final l = calcularContagemDia(
+        localId: 'loja',
+        dia: dia,
+        fichaIds: ['f1'],
+        movimentos: movs,
+        vendas: vendas,
+      ).single;
+      expect(l.abertura, 8);
+      expect(l.aberturaContada, isFalse);
+      expect(l.assados, 20);
+      expect(l.recebido, 4);
+      expect(l.enviado, 6);
+      expect(l.vendido, 12);
+      expect(l.desperdicio, 2);
+      // 8 + 20 + 4 - 6 - 12 - 2 = 12
+      expect(l.esperado, 12);
+      expect(l.fecho, 9);
+      expect(l.diferenca, -3); // faltam 3 sem explicação
+    });
+
+    test('contagem de abertura manda e mostra a diferença da noite', () {
+      final movs = [
+        mov('contagem_fecho', 'loja', 'f1', 8, dia: DateTime(2026, 10, 2)),
+        mov('contagem_abertura', 'loja', 'f1', 7),
+      ];
+      final l = calcularContagemDia(
+        localId: 'loja',
+        dia: dia,
+        fichaIds: ['f1'],
+        movimentos: movs,
+        vendas: const [],
+      ).single;
+      expect(l.abertura, 7);
+      expect(l.aberturaContada, isTrue);
+      expect(l.diferencaAbertura, -1);
+    });
+
+    test(
+      'sem contagens anteriores a abertura é 0 e sem fecho não há diferença',
+      () {
+        final l = calcularContagemDia(
+          localId: 'loja',
+          dia: dia,
+          fichaIds: ['f1'],
+          movimentos: [mov('producao', 'loja', 'f1', 10)],
+          vendas: const [],
+        ).single;
+        expect(l.abertura, 0);
+        expect(l.esperado, 10);
+        expect(l.fecho, isNull);
+        expect(l.diferenca, isNull);
+      },
+    );
+
+    test('Alvalade recebe o que a loja envia e conta o seu fecho', () {
+      final movs = [
+        mov('transferencia', 'loja', 'f1', 10, destino: 'alv'),
+        mov('contagem_fecho', 'alv', 'f1', 3),
+      ];
+      final vendas = [
+        VendaDoLocal(localId: 'alv', data: dia, fichaId: 'f1', quantidade: 6),
+      ];
+      final l = calcularContagemDia(
+        localId: 'alv',
+        dia: dia,
+        fichaIds: ['f1'],
+        movimentos: movs,
+        vendas: vendas,
+      ).single;
+      expect(l.recebido, 10);
+      expect(l.vendido, 6);
+      expect(l.esperado, 4);
+      expect(l.diferenca, -1);
+    });
+
+    test('só conta o dia pedido', () {
+      final movs = [
+        mov('producao', 'loja', 'f1', 5, dia: DateTime(2026, 10, 2)),
+        mov('producao', 'loja', 'f1', 7),
+      ];
+      final l = calcularContagemDia(
+        localId: 'loja',
+        dia: dia,
+        fichaIds: ['f1'],
+        movimentos: movs,
+        vendas: [
+          VendaDoLocal(
+            localId: 'loja',
+            data: DateTime(2026, 10, 2),
+            fichaId: 'f1',
+            quantidade: 3,
+          ),
+        ],
+      ).single;
+      expect(l.assados, 7);
+      expect(l.vendido, 0);
+    });
+  });
+
+  group('relatórios', () {
+    test('resumoDesperdicio: totais, motivos, custo e % dos assados', () {
+      final r = resumoDesperdicio(
+        movimentos: [
+          mov('producao', 'loja', 'f1', 100),
+          mov(
+            'desperdicio',
+            'loja',
+            'f1',
+            4,
+            motivo: MotivoDesperdicio.queimado,
+          ),
+          mov(
+            'desperdicio',
+            'alv',
+            'f2',
+            6,
+            motivo: MotivoDesperdicio.foraPrazo,
+          ),
+          mov('desperdicio', 'loja', 'f2', 1),
+        ],
+        custoPorFicha: {'f1': 1.0, 'f2': 2.0},
+      );
+      expect(r.unidades, 11);
+      expect(r.custo, 4 * 1.0 + 7 * 2.0);
+      expect(r.assados, 100);
+      expect(r.percentDosAssados, 11);
+      expect(r.porMotivo[MotivoDesperdicio.queimado], 4);
+      expect(r.porMotivo[MotivoDesperdicio.foraPrazo], 6);
+      expect(r.porMotivo[null], 1);
+      expect(r.porSabor['f2'], 7);
+      expect(r.porLocal['alv'], 6);
+    });
+
+    test('balancoDoLocal: quantos foram para Alvalade e quantos voltaram', () {
+      final b = balancoDoLocal(
+        localId: 'alv',
+        movimentos: [
+          mov('transferencia', 'loja', 'f1', 30, destino: 'alv'),
+          mov(
+            'transferencia',
+            'loja',
+            'f1',
+            10,
+            destino: 'alv',
+            dia: DateTime(2026, 10, 4),
+          ),
+          mov('transferencia', 'alv', 'f1', 5, destino: 'loja'),
+          mov(
+            'desperdicio',
+            'alv',
+            'f1',
+            2,
+            motivo: MotivoDesperdicio.foraPrazo,
+          ),
+          mov('transferencia', 'loja', 'f2', 8, destino: 'alv'),
+          // não é de Alvalade
+          mov('producao', 'loja', 'f3', 99),
+        ],
+        vendas: [
+          VendaDoLocal(
+            localId: 'alv',
+            data: DateTime(2026, 10, 3),
+            fichaId: 'f1',
+            quantidade: 20,
+          ),
+        ],
+      );
+      expect(b.map((x) => x.fichaId).toSet(), {'f1', 'f2'});
+      final f1 = b.firstWhere((x) => x.fichaId == 'f1');
+      expect(f1.recebido, 40);
+      expect(f1.enviado, 5); // voltaram
+      expect(f1.vendido, 20);
+      expect(f1.desperdicio, 2);
+      expect(f1.saldo, 40 - 5 - 20 - 2);
+      expect(b.first.fichaId, 'f1'); // ordenado por recebidos
+    });
+  });
+}

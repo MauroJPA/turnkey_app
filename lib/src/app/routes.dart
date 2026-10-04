@@ -17,6 +17,8 @@ abstract class Routes {
   static const invoices = '/faturas';
   static const sales = '/vendas';
   static const encomendas = '/encomendas';
+  static const contagem = '/contagem';
+  static const contagemRelatorios = '/contagem/relatorios';
   static const analiseVendas = '/vendas/analise';
   static const vendasNaoIdentificadas = '/vendas/nao-identificados';
   static const painelFinanceiro = '/financeiro';

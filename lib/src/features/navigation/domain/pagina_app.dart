@@ -97,6 +97,13 @@ const paginasApp = <PaginaApp>[
     'Registo de vendas e sabores mais vendidos',
   ),
   PaginaApp(
+    'contagem',
+    Routes.contagem,
+    'Contagem diária',
+    Icons.fact_check_outlined,
+    'Assados, sobras e desperdício por local',
+  ),
+  PaginaApp(
     'encomendas',
     Routes.encomendas,
     'Encomendas',

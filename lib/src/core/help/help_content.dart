@@ -21,6 +21,7 @@ enum HelpTopic {
   vendas,
   analiseVendas,
   encomendas,
+  contagem,
   custosFixos,
   equipamentos,
   numerosMagicos,
@@ -254,6 +255,18 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'O "Valor total" é sugerido automaticamente a partir do preço de venda das fichas técnicas escolhidas, mas pode ser editado ou deixado em branco. "Registar pagamento" guarda quanto já foi pago — a encomenda mostra Por pagar/Pago parcialmente/Pago, e isso também aparece no talão impresso (que acompanha a encomenda até ao cliente).',
       'Menu (⋮) no detalhe da encomenda: Editar (cliente, data/hora, produtos, valor), Registar pagamento, Cancelar ou Apagar.',
       'O botão de ordenar (seta) organiza por Data/hora ou Cliente; o chip "Urgentes" (quando há alguma) filtra só as que faltam menos horas do que o configurado.',
+    ],
+  ),
+  HelpTopic.contagem: (
+    titulo: 'Contagem diária',
+    paragrafos: [
+      'Para saberes, em cada local (a Loja, Alvalade, as Plataformas…), quantos cookies assaste, enviaste, venderam, foram para o lixo e quantos sobraram — por sabor e por dia.',
+      'Escolhe o local no topo e o dia nas setas. Cada sabor mostra a conta: Abertura + Assados + Recebidos − Enviados − Vendidos − Desperdício = "Devia haver". No fim do dia, "Contar fecho" regista o que realmente sobrou; a diferença para o "Devia haver" mostra o que faltou sem explicação.',
+      '"Assados": regista os cookies que saíram do forno. "Enviar / devolver": passa cookies de um local para outro (ex.: da Loja para Alvalade; e, no dia seguinte, o que volta de Alvalade para a Loja). O local de destino fica com os cookies recebidos.',
+      '"Desperdício": regista o que foi para o lixo e porquê (queimado, fora do prazo, quebrado, erro de produção, degustação ou outro).',
+      '"Contar abertura": conta o que há ao abrir. Se for diferente do fecho de ontem, aparece a diferença "de ontem para hoje".',
+      'Os "Vendidos" vêm sozinhos das Vendas, pelo canal de cada venda (ex.: "Parceria Alvalade" conta para Alvalade; "Uber Eats" para as Plataformas). Vendas sem canal ou com um canal que não está em nenhum local contam para a Loja. Os canais de cada local mudam-se no ícone dos locais.',
+      'Ícone do gráfico: o desperdício por motivo, sabor e local (com o custo e a percentagem dos assados) e o balanço de cada local — por exemplo, quantos cookies foram para Alvalade, quantos voltaram e quantos se venderam.',
     ],
   ),
   HelpTopic.custosFixos: (

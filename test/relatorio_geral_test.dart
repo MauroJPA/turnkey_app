@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gc_turnkey/src/features/daily_count/domain/local.dart';
+import 'package:gc_turnkey/src/features/daily_count/domain/movimento_produto.dart';
 import 'package:gc_turnkey/src/features/finance/domain/custo_fixo.dart';
 import 'package:gc_turnkey/src/features/finance/domain/equipamento.dart';
 import 'package:gc_turnkey/src/features/finance/domain/relatorio_exportar.dart';
@@ -170,6 +172,60 @@ void main() {
         total: 999,
       ),
     ],
+    locais: const [
+      Local(id: 'loja', nome: 'Loja', canais: ['Loja física'], ordem: 1),
+      Local(
+        id: 'alv',
+        nome: 'Alvalade',
+        tipo: TipoLocal.parceiro,
+        canais: ['Parceria Alvalade'],
+        ordem: 2,
+      ),
+    ],
+    movimentosProduto: [
+      MovimentoProduto(
+        id: 'm1',
+        data: DateTime(2026, 9, 9),
+        localId: 'loja',
+        fichaId: 'f1',
+        tipo: TipoMovimento.contagemFecho,
+        quantidade: 4,
+      ),
+      MovimentoProduto(
+        id: 'm2',
+        data: DateTime(2026, 9, 10),
+        localId: 'loja',
+        fichaId: 'f1',
+        tipo: TipoMovimento.producao,
+        quantidade: 20,
+      ),
+      MovimentoProduto(
+        id: 'm3',
+        data: DateTime(2026, 9, 10),
+        localId: 'loja',
+        fichaId: 'f1',
+        tipo: TipoMovimento.transferencia,
+        quantidade: 6,
+        destinoId: 'alv',
+      ),
+      MovimentoProduto(
+        id: 'm4',
+        data: DateTime(2026, 9, 10),
+        localId: 'loja',
+        fichaId: 'f1',
+        tipo: TipoMovimento.desperdicio,
+        quantidade: 2,
+        motivo: MotivoDesperdicio.queimado,
+      ),
+      MovimentoProduto(
+        id: 'm5',
+        data: DateTime(2026, 9, 10),
+        localId: 'loja',
+        fichaId: 'f1',
+        tipo: TipoMovimento.contagemFecho,
+        quantidade: 12,
+      ),
+    ],
     producoes: [
       ProducaoPlan(
         id: 'p1',
@@ -208,6 +264,7 @@ void main() {
           '1 Vendas',
           '1 Equivalencia nomes',
           '2 Producao',
+          '2 Contagem diaria',
           '3 Custo por sabor',
           '3 Componentes',
           '3 Ingredientes',
@@ -363,6 +420,36 @@ void main() {
         expect(kinder[3], 2);
         final estranha = e.linhas.firstWhere((l) => l[0] == 'Coisa estranha');
         expect(estranha[1], '(produto não identificado)');
+      },
+    );
+
+    test(
+      'contagem diária: assados, envios, desperdício e sobras por dia/local',
+      () {
+        final c = folha(montarRelatorio(entrada()), '2 Contagem diaria');
+        final cols = c.colunas;
+        Object? v(List<Object?> l, String col) => l[cols.indexOf(col)];
+        final loja = c.linhas.firstWhere(
+          (l) => v(l, 'local') == 'Loja' && v(l, 'data') == '2026-09-10',
+        );
+        expect(v(loja, 'sabor'), 'Boston');
+        expect(v(loja, 'abertura'), 4); // herdada do fecho de 09/09
+        expect(v(loja, 'assados'), 20);
+        expect(v(loja, 'enviados'), 6);
+        expect(v(loja, 'vendidos'), 2); // venda v1 (Loja física) nesse dia
+        expect(v(loja, 'desperdicio'), 2);
+        expect(v(loja, 'desperdicio_motivo'), 'Queimado 2');
+        expect(v(loja, 'devia_haver'), 4 + 20 - 6 - 2 - 2);
+        expect(v(loja, 'sobras_contadas'), 12);
+        expect(v(loja, 'diferenca_contado_menos_esperado'), 12 - 14);
+        // o mesmo envio aparece em Alvalade como recebido
+        final alv = c.linhas.firstWhere((l) => v(l, 'local') == 'Alvalade');
+        expect(v(alv, 'recebidos'), 6);
+        // dias sem registos não aparecem
+        expect(
+          c.linhas.map((l) => v(l, 'data')).toSet(),
+          {'2026-09-09', '2026-09-10'},
+        );
       },
     );
 

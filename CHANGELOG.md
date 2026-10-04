@@ -2,6 +2,29 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.49.0 — 2026-10-04 — Contagem diária por local (loja, Alvalade, plataformas) e desperdício
+
+- **Nova página "Contagem diária"** (em *Todas as páginas*; pode ir para o rodapé): para cada **local**
+  (Loja, Alvalade, Plataformas — e outros que criares), por dia e por sabor:
+  **Abertura + Assados + Recebidos − Enviados − Vendidos − Desperdício = "Devia haver"**, e a **contagem de
+  fecho** (o que sobrou de facto) com a diferença ("faltam 3").
+  - **Assados**: regista o que saiu do forno.
+  - **Enviar / devolver**: passa cookies de um local para outro (Loja → Alvalade; no dia seguinte, o que
+    volta de Alvalade → Loja). O destino fica com os recebidos; assim sabes quantos foram e quantos voltaram.
+  - **Desperdício** com motivo (queimado, fora do prazo, quebrado/caído, erro de produção, degustação,
+    outro) e notas.
+  - **Contar abertura / Contar fecho**: contagem rápida de todos os sabores de uma vez; a abertura mostra a
+    diferença "de ontem para hoje".
+  - Os **vendidos** vêm sozinhos das Vendas, pelo **canal** da venda (cada local tem os seus canais:
+    "Parceria Alvalade" → Alvalade; "Uber Eats", "Glovo", "Bolt Food" → Plataformas; o resto → Loja).
+- **Relatórios** (ícone do gráfico): **desperdício** por motivo, sabor e local, com o custo da
+  matéria-prima e a % dos assados; e **balanço por local** (ex.: Alvalade — recebidos, devolvidos, vendidos,
+  desperdício e saldo), por semana/mês/ano.
+- **Relatório geral** (Painel financeiro): nova folha **"2 Contagem diaria"** (assados, recebidos, enviados,
+  vendidos, desperdício e motivo, devia haver, sobra contada e diferença, por dia/local/sabor).
+- Gestão de **locais** (ícone do local): nome, tipo e canais de venda. Novas coleções `locais` e
+  `movimentos_produto` (migration `1790870000_contagem_locais.js`, que cria Loja / Alvalade / Plataformas).
+
 ## 1.48.3 — 2026-10-02 — Corrige "Failed to create record" ao criar embalagem sem formato
 
 - **Corrigido**: ao aplicar uma fatura com uma embalagem **nova** (ex.: "Caixa para bolo") sem escolher

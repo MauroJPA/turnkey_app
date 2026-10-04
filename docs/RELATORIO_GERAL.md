@@ -19,6 +19,7 @@ seguindo a especificação de relatórios da estratégia (`Gookie-Estrategia/fin
 | 1 Vendas | uma linha por produto vendido: data, hora, canal, sabor, quantidade, preço c/ IVA, desconto, valor sem IVA, comissão, pagamento, tipo de cliente | parcial (ver abaixo) |
 | 1 Equivalencia nomes | descrição na venda (nomes antigos, abreviaturas do POS) → sabor oficial | completo |
 | 2 Producao | linhas da agenda de produção + unidades vendidas no dia | parcial |
+| 2 Contagem diaria | por dia, local e sabor: abertura, assados, recebidos, enviados, vendidos, desperdício (com motivo), devia haver, sobra contada e diferença (da página Contagem diária) | completo se a contagem for usada |
 | 3 Custo por sabor | custo por unidade (ingredientes + embalagem), preço, margem; `3 Componentes`, `3 Ingredientes` (preço de compra e data), `3 Historico precos` (faturas) | completo |
 | 4 Despesas | faturas confirmadas por categoria + custos fixos/variáveis registados + depreciação | completo* |
 | 5 Plataformas, 6 Pessoal, 8 Eventos, 9 Origem clientes | modelos por preencher (só cabeçalhos) | por preencher |
@@ -32,7 +33,7 @@ categoria é deduzida do nome. O valor sem IVA só existe nas faturas.
 - Vendas: **comissão do canal**, **tipo de cliente**. O **canal** só existe nas vendas onde foi definido
   (vendas novas do Vendus ficam "Loja física"; "Reimportar histórico" completa as antigas). Hora, método de
   pagamento e valor sem IVA dependem do que o Vendus devolve.
-- Produção: **sobras, desperdício (e motivo), horas de trabalho**.
+- Produção: **horas de trabalho** (sobras e desperdício já vêm da Contagem diária).
 - **Extratos das plataformas de entrega**, **horas de pessoal**, **saldo bancário/dívidas**, **registo de
   eventos** e **origem dos clientes**.
 

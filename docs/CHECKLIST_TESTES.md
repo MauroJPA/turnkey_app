@@ -1310,6 +1310,25 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Embalagens → editar uma embalagem e desmarcar todos os formatos → guarda sem erro.
 - [ ] Escolher um formato de cookie continua a funcionar.
 
+## 75. Contagem diária por local
+
+- [ ] Todas as páginas → "Contagem diária" abre, com os locais Loja / Alvalade / Plataformas e o dia de hoje.
+- [ ] "Assados": escolhe um sabor, quantidade 24 → o cartão do sabor mostra Abertura 0, Assados +24, Devia
+      haver 24; aparece em "Registos do dia" (e apaga-se com o X).
+- [ ] "Enviar / devolver": Loja → Alvalade, 10 → Loja mostra Enviados −10; em Alvalade aparece Recebidos +10.
+      Em Alvalade, enviar 3 de volta para a Loja → Loja mostra Recebidos +3.
+- [ ] "Desperdício" com motivo → o sabor mostra Desperdício e o "Devia haver" desce.
+- [ ] "Contar fecho": preenche os sabores → "Contado" e "Faltam/Sobram" aparecem; contar de novo substitui.
+- [ ] No dia seguinte, a abertura herda a contagem de fecho de ontem; "Contar abertura" mostra a diferença
+      "de ontem para hoje" se for diferente.
+- [ ] "Vendidos" reflete as vendas desse dia pelo canal: uma venda com canal "Parceria Alvalade" aparece em
+      Alvalade; sem canal, na Loja.
+- [ ] Ícone do gráfico: Desperdício (por motivo/sabor/local, custo e % dos assados) e Balanço por local
+      (quantos foram para Alvalade, quantos voltaram) por semana/mês/ano.
+- [ ] Ícone dos locais: criar um local novo, mudar os canais, arquivar.
+- [ ] Relatório geral (Painel financeiro) inclui a folha "2 Contagem diaria".
+- [ ] Um utilizador "só ver" não vê os botões de registar.
+
 ---
 
 ## Notas / ajustes pedidos
