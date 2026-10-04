@@ -104,6 +104,13 @@ const paginasApp = <PaginaApp>[
     'Assados, sobras e desperdício por local',
   ),
   PaginaApp(
+    'haccp',
+    Routes.haccp,
+    'HACCP',
+    Icons.health_and_safety_outlined,
+    'Temperaturas, limpezas, pragas e extintor',
+  ),
+  PaginaApp(
     'encomendas',
     Routes.encomendas,
     'Encomendas',

@@ -10,6 +10,7 @@ import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../finance/application/custos_fixos_providers.dart';
+import '../../haccp/application/haccp_providers.dart';
 import '../../inventory/application/inventory_providers.dart';
 import '../../invoices/application/invoice_providers.dart';
 import '../../invoices/domain/fatura.dart';
@@ -91,6 +92,18 @@ class HomeShell extends ConsumerWidget {
             .where((p) => p.dias <= 7)
             .toList()
           ?..sort((a, b) => a.dias.compareTo(b.dias));
+
+    // só consulta o HACCP a quem tem a página
+    final haccpPorFazer = acessivel('haccp')
+        ? ref
+              .watch(haccpEstadoProvider)
+              .valueOrNull
+              ?.where((s) => s.precisaAcaoHoje)
+              .toList()
+        : null;
+    final haccpNc = acessivel('haccp')
+        ? ref.watch(haccpNaoConformidadesProvider).valueOrNull?.length
+        : null;
 
     final encomendas = ref.watch(encomendasListProvider(false)).valueOrNull;
     final lembreteHoras =
@@ -218,6 +231,23 @@ class HomeShell extends ConsumerWidget {
                   .join(', '),
               destaque: pagamentosProximos.any((p) => p.dias <= 2),
               onTap: () => context.go(Routes.custosFixos),
+            ),
+          if (acessivel('haccp') &&
+              ((haccpPorFazer?.length ?? 0) > 0 || (haccpNc ?? 0) > 0))
+            _StatCard(
+              icon: Icons.health_and_safety_outlined,
+              titulo: 'HACCP por fazer',
+              valor: '${haccpPorFazer?.length ?? 0}',
+              subtitulo: [
+                if (haccpPorFazer?.isNotEmpty ?? false)
+                  haccpPorFazer!.take(3).map((s) => s.controlo.nome).join(', '),
+                if ((haccpNc ?? 0) > 0)
+                  '$haccpNc não conformidade${haccpNc == 1 ? '' : 's'}',
+              ].join(' · '),
+              destaque:
+                  (haccpNc ?? 0) > 0 ||
+                  (haccpPorFazer?.any((s) => s.emAtraso) ?? false),
+              onTap: () => context.go(Routes.haccp),
             ),
           if (acessivel('encomendas') && (encomendasPorVir?.length ?? 0) > 0)
             _StatCard(

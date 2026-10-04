@@ -347,7 +347,10 @@ List<_LinhaDespesa> _despesas(EntradaRelatorio e) {
       out.add(
         _LinhaDespesa(
           data: DateTime(m.year, m.month, dia),
-          categoria: categoriaDeCusto(c.nome),
+          // pelo nome; se não disser nada, pela categoria escolhida
+          categoria: categoriaDeCusto(c.nome) != 'outras'
+              ? categoriaDeCusto(c.nome)
+              : categoriaDeCusto(c.categoria),
           fornecedor: '',
           descricao: c.nome,
           comIva: _r2(c.valorMensal),

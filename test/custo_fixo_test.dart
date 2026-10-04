@@ -38,7 +38,18 @@ void main() {
         'valor_mensal': 500,
         'notas': 'nota',
         'dia_pagamento': null,
+        'categoria': '',
       });
+    });
+
+    test('envia a categoria com a primeira letra maiúscula', () {
+      final input = CustoFixoInput(
+        nome: 'Extintores',
+        tipo: TipoCusto.fixo,
+        valorMensal: 5,
+        categoria: '  controlo operacional ',
+      );
+      expect(input.toBody()['categoria'], 'Controlo operacional');
     });
 
     test('inclui o dia de pagamento quando definido', () {

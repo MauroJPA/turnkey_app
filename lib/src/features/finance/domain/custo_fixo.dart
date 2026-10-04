@@ -19,6 +19,19 @@ enum TipoCusto {
   };
 }
 
+/// Categorias sugeridas para agrupar custos (texto livre: a pessoa pode
+/// escrever outra). "Controlo operacional" junta o que a operação exige —
+/// HACCP, controlo de pragas, extintores, análises.
+const categoriasCustoSugeridas = <String>[
+  'Instalações',
+  'Pessoal',
+  'Controlo operacional',
+  'Marketing',
+  'Software e subscrições',
+  'Impostos e taxas',
+  'Outros custos',
+];
+
 /// Um custo real e recorrente da empresa (aluguel, salários, seguros,
 /// subscrições…), em valor mensal — diferente dos percentuais de
 /// `CostConfig`, que só servem para sugerir o preço de venda.
@@ -31,6 +44,7 @@ class CustoFixo {
     this.arquivado = false,
     this.notas = '',
     this.diaPagamento,
+    this.categoria = '',
   });
 
   final String id;
@@ -44,6 +58,9 @@ class CustoFixo {
   /// pagamentos, não entra em nenhum cálculo.
   final int? diaPagamento;
 
+  /// Agrupamento livre ("Controlo operacional", "Pessoal"…); vazio = sem.
+  final String categoria;
+
   bool get ativo => !arquivado;
 
   factory CustoFixo.fromRecord(RecordModel r) => CustoFixo(
@@ -56,6 +73,7 @@ class CustoFixo {
     diaPagamento: r.getIntValue('dia_pagamento') > 0
         ? r.getIntValue('dia_pagamento')
         : null,
+    categoria: r.getStringValue('categoria'),
   );
 }
 
@@ -67,6 +85,7 @@ class CustoFixoInput {
     required this.valorMensal,
     this.notas = '',
     this.diaPagamento,
+    this.categoria = '',
   });
 
   final String nome;
@@ -74,6 +93,7 @@ class CustoFixoInput {
   final double valorMensal;
   final String notas;
   final int? diaPagamento;
+  final String categoria;
 
   Map<String, dynamic> toBody() => {
     'nome': capitalizarInicial(nome.trim()),
@@ -81,5 +101,6 @@ class CustoFixoInput {
     'valor_mensal': valorMensal,
     'notas': notas.trim(),
     'dia_pagamento': diaPagamento,
+    'categoria': capitalizarInicial(categoria.trim()),
   };
 }

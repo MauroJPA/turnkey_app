@@ -19,6 +19,7 @@ import '../features/finance/presentation/dre_screen.dart';
 import '../features/finance/presentation/equipamentos_screen.dart';
 import '../features/finance/presentation/numeros_magicos_screen.dart';
 import '../features/finance/presentation/painel_financeiro_screen.dart';
+import '../features/haccp/presentation/haccp_screen.dart';
 import '../features/ingredients/presentation/ingredients_screen.dart';
 import '../features/inventory/presentation/inventory_screen.dart';
 import '../features/invoices/presentation/invoice_review_screen.dart';
@@ -201,6 +202,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, __) => const ContagemRelatoriosScreen(),
               ),
             ],
+          ),
+          GoRoute(
+            path: Routes.haccp,
+            builder: (_, __) => const HaccpScreen(),
           ),
           GoRoute(
             path: Routes.painelFinanceiro,

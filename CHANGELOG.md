@@ -2,6 +2,24 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.51.0 — 2026-10-04 — HACCP (registos, pragas, frigorífico, limpezas) e categorias nos custos fixos
+
+- **Nova página "HACCP"** (em *Todas as páginas*): três separadores.
+  - **Hoje**: o que falta fazer — vermelho (atrasado/nunca registado), laranja (fazer hoje, "1 de 2"), verde
+    (em dia) — e as **não conformidades por resolver**. Também aparece um aviso **"HACCP por fazer"** no Início.
+  - **Registos**: histórico por período (7/30/90 dias ou 1 ano) e por controlo, com **imprimir / guardar em PDF**
+    para auditorias.
+  - **Controlos**: o que se controla — **temperatura** do frigorífico e da arca (com limites: fora deles fica
+    logo como não conformidade e pede a ação corretiva), **limpezas**, **controlo de pragas** (registo de
+    ocorrências), **manutenções/validades** (extintor, empresa de pragas, com a data da próxima revisão) e
+    outros. Cada um com a sua frequência (diária — até várias vezes por dia —, semanal, mensal, anual ou
+    ocasional). "Adicionar os controlos habituais" cria uma lista de partida.
+  - Os registos nunca se apagam (só proprietário/administrador, pela base de dados): ficam como prova.
+- **Custos fixos → "Categoria"** (texto livre com sugestões: Instalações, Pessoal, **Controlo operacional**,
+  Marketing, Software, Impostos, Outros custos): filtra por categoria com o subtotal de cada uma. No relatório
+  geral serve de pista quando o nome do custo não chega para o classificar.
+- Nova migration `1790890000_haccp.js` (coleções `haccp_controlos`, `haccp_registos` e `custos_fixos.categoria`).
+
 ## 1.50.0 — 2026-10-04 — IVA a separar, vista diária e relatório do que foi comprado
 
 - **Painel financeiro → "IVA a separar"**: o **IVA cobrado nas vendas** − o **IVA das faturas de compra

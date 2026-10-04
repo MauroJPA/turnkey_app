@@ -26,6 +26,9 @@ class CustosFixosScreen extends ConsumerStatefulWidget {
 class _CustosFixosScreenState extends ConsumerState<CustosFixosScreen> {
   bool _arquivados = false;
 
+  /// Filtro por categoria ('' = sem categoria; null = todas).
+  String? _categoria;
+
   bool get _podeEditar => ref.read(currentPapelProvider).canEditConfig;
 
   Future<void> _novo() async {
@@ -130,6 +133,27 @@ class _CustosFixosScreenState extends ConsumerState<CustosFixosScreen> {
                   : 'Pede a um administrador para registar os custos.',
             );
           }
+          // categorias em uso, com o subtotal mensal
+          final porCategoria = <String, double>{};
+          for (final c in custos) {
+            porCategoria.update(
+              c.categoria,
+              (v) => v + c.valorMensal,
+              ifAbsent: () => c.valorMensal,
+            );
+          }
+          final temCategorias = porCategoria.keys.any((k) => k.isNotEmpty);
+          // se a categoria filtrada já não existe, mostra tudo
+          final filtro = porCategoria.containsKey(_categoria) ? _categoria : null;
+          if (filtro == null && _categoria != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() => _categoria = null);
+            });
+          }
+          custos = [
+            for (final c in custos)
+              if (filtro == null || c.categoria == filtro) c,
+          ];
           final totalFixo = custos
               .where((c) => c.tipo == TipoCusto.fixo)
               .fold<double>(0, (s, c) => s + c.valorMensal);
@@ -159,6 +183,36 @@ class _CustosFixosScreenState extends ConsumerState<CustosFixosScreen> {
                     ],
                   ),
                 ),
+              if (temCategorias)
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: const Text('Todas'),
+                          selected: filtro == null,
+                          onSelected: (_) => setState(() => _categoria = null),
+                        ),
+                      ),
+                      for (final e in (porCategoria.entries.toList()
+                        ..sort((a, b) => a.key.compareTo(b.key))))
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(
+                              '${e.key.isEmpty ? 'Sem categoria' : e.key} · ${fmt(e.value)}',
+                            ),
+                            selected: filtro == e.key,
+                            onSelected: (_) =>
+                                setState(() => _categoria = e.key),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               for (final c in custos)
                 ListTile(
                   leading: CircleAvatar(
@@ -171,6 +225,7 @@ class _CustosFixosScreenState extends ConsumerState<CustosFixosScreen> {
                   title: Text(c.nome),
                   subtitle: Text(
                     '${c.tipo.label}'
+                    '${c.categoria.isNotEmpty ? ' · ${c.categoria}' : ''}'
                     '${c.diaPagamento != null ? ' · paga dia ${c.diaPagamento}' : ''}'
                     '${c.notas.isNotEmpty ? ' · ${c.notas}' : ''}',
                   ),

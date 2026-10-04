@@ -23,6 +23,7 @@ enum HelpTopic {
   analiseVendas,
   encomendas,
   contagem,
+  haccp,
   custosFixos,
   equipamentos,
   numerosMagicos,
@@ -276,6 +277,18 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       '"Contar abertura": conta o que há ao abrir. Se for diferente do fecho de ontem, aparece a diferença "de ontem para hoje".',
       'Os "Vendidos" vêm sozinhos das Vendas, pelo canal de cada venda (ex.: "Parceria Alvalade" conta para Alvalade; "Uber Eats" para as Plataformas). Vendas sem canal ou com um canal que não está em nenhum local contam para a Loja. Os canais de cada local mudam-se no ícone dos locais.',
       'Ícone do gráfico: o desperdício por motivo, sabor e local (com o custo e a percentagem dos assados) e o balanço de cada local — por exemplo, quantos cookies foram para Alvalade, quantos voltaram e quantos se venderam.',
+    ],
+  ),
+  HelpTopic.haccp: (
+    titulo: 'HACCP — segurança alimentar',
+    paragrafos: [
+      'Aqui registas o que a segurança alimentar pede: temperatura do frigorífico e da arca, limpezas, controlo de pragas (incluindo ocorrências) e validades como o extintor. Cada registo fica com data, hora e quem o fez — serve de prova numa fiscalização.',
+      'Separador "Hoje": o que falta fazer. Vermelho = atrasado ou nunca registado; laranja = fazer hoje; verde = em dia. Toca em "Registar" no controlo.',
+      'Temperaturas: escreve o valor medido. Se estiver fora dos limites do controlo (ex.: frigorífico 0 a 5 °C), fica logo como não conformidade e pede a ação corretiva. Nos outros controlos, desliga o interruptor se algo não estiver bem (ex.: viste sinais de pragas) e descreve o que fizeste.',
+      'As não conformidades ficam em "Hoje" até as marcares como resolvidas. Nada se apaga: o histórico fica sempre para auditoria.',
+      'Manutenções e validades (extintor, empresa de pragas): ao registar, indica a data da próxima revisão — o lembrete usa essa data.',
+      'Separador "Registos": escolhe o período e, se quiseres, um só controlo. A impressora abre o relatório pronto a imprimir ou a guardar em PDF.',
+      'Separador "Controlos": cria, edita ou arquiva controlos e define a frequência (diária, semanal, mensal, anual, ocasional) e os limites de temperatura. "Adicionar os controlos habituais" cria uma lista de partida.',
     ],
   ),
   HelpTopic.custosFixos: (

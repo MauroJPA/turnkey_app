@@ -35,6 +35,9 @@ class _CustoFixoFormSheetState extends State<_CustoFixoFormSheet> {
   late final _diaPagamento = TextEditingController(
     text: widget.existente?.diaPagamento?.toString() ?? '',
   );
+  late final _categoria = TextEditingController(
+    text: widget.existente?.categoria ?? '',
+  );
   late TipoCusto _tipo = widget.existente?.tipo ?? TipoCusto.fixo;
 
   @override
@@ -43,6 +46,7 @@ class _CustoFixoFormSheetState extends State<_CustoFixoFormSheet> {
     _valor.dispose();
     _notas.dispose();
     _diaPagamento.dispose();
+    _categoria.dispose();
     super.dispose();
   }
 
@@ -56,6 +60,7 @@ class _CustoFixoFormSheetState extends State<_CustoFixoFormSheet> {
         valorMensal: double.parse(_valor.text.replaceAll(',', '.')),
         notas: _notas.text,
         diaPagamento: int.tryParse(_diaPagamento.text.trim()),
+        categoria: _categoria.text,
       ),
     );
   }
@@ -125,6 +130,29 @@ class _CustoFixoFormSheetState extends State<_CustoFixoFormSheet> {
                 final n = double.tryParse((v ?? '').replaceAll(',', '.'));
                 return (n == null || n <= 0) ? 'Valor inválido' : null;
               },
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _categoria,
+              maxLength: 60,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Categoria (opcional)',
+                hintText: 'Ex.: Controlo operacional',
+                helperText:
+                    'Agrupa custos parecidos (HACCP, pragas, extintores…).',
+              ),
+            ),
+            Wrap(
+              spacing: 6,
+              runSpacing: 0,
+              children: [
+                for (final c in categoriasCustoSugeridas)
+                  ActionChip(
+                    label: Text(c),
+                    onPressed: () => setState(() => _categoria.text = c),
+                  ),
+              ],
             ),
             const SizedBox(height: 12),
             TextFormField(

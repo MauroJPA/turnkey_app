@@ -12,7 +12,11 @@ import 'html_escape.dart';
 ///
 /// O visual é propositadamente simples por agora; será substituído por um
 /// template a fornecer.
-void abrirImpressao(String tituloPagina, String corpoHtml) {
+void abrirImpressao(
+  String tituloPagina,
+  String corpoHtml, {
+  String estiloExtra = '',
+}) {
   final pagina = '''
 <!DOCTYPE html>
 <html>
@@ -31,6 +35,7 @@ void abrirImpressao(String tituloPagina, String corpoHtml) {
   p.alergenios { margin-top: 16px; font-size: 13px; }
   p.aviso { margin-top: 16px; font-size: 11px; color: #777; }
   @media print { body { padding: 0; } }
+  $estiloExtra
 </style>
 </head>
 <body onload="window.print()">

@@ -1345,6 +1345,24 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Dar o visto num item da lista de compras e "limpar comprados": a compra continua no relatório.
 - [ ] Relatório geral → "Resumo mensal" tem as colunas de IVA.
 
+## 77. HACCP e categorias nos custos fixos
+
+- [ ] Todas as páginas → HACCP existe e abre. Sem controlos, "Controlos" oferece "Adicionar os controlos
+      habituais" (frigorífico, arca, limpezas, pragas, empresa de pragas, extintor).
+- [ ] Hoje: controlos nunca registados aparecem a vermelho; "Registar" abre a folha certa para o tipo.
+- [ ] Frigorífico (0 a 5 °C): registar 3 → conforme; registar 8 → avisa "fora dos limites" e exige a ação
+      corretiva; fica em "Não conformidades por resolver".
+- [ ] Frigorífico com 2 registos por dia: depois do 1.º mostra "Hoje: 1 de 2"; depois do 2.º fica verde.
+- [ ] Arca congeladora (só máximo -18): -20 conforme, -10 não conforme.
+- [ ] Pragas: desligar "Sem sinais de pragas" exige descrever a ação; fica como não conformidade.
+- [ ] Extintor: ao registar, indicar a próxima revisão; o controlo fica verde até lá e vermelho depois.
+- [ ] "Resolver" numa não conformidade pede o que foi feito e tira-a da lista (o registo continua no histórico).
+- [ ] Registos: filtrar por período e por controlo; o ícone da impressora abre o relatório (guardar em PDF).
+- [ ] Arquivar um controlo tira-o de "Hoje"; os registos antigos continuam nos Registos.
+- [ ] Início: com controlos por fazer ou não conformidades aparece "HACCP por fazer".
+- [ ] Custos fixos: novo custo com Categoria "Controlo operacional"; aparecem os chips de categoria com o
+      subtotal e o filtro funciona.
+
 ---
 
 ## Notas / ajustes pedidos
