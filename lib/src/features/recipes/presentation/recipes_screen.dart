@@ -13,6 +13,8 @@ import '../../../core/widgets/help_actions.dart';
 import '../../../core/widgets/pendencia_aviso.dart';
 import '../../../core/widgets/sort_menu_button.dart';
 import '../../../core/widgets/swipe_to_delete.dart';
+import '../../recipe_categories/application/categoria_receita_providers.dart';
+import '../../recipe_categories/presentation/pedir_nome_categoria.dart';
 import '../application/recipes_providers.dart';
 import '../domain/recipe.dart';
 import 'auto_link_pendentes_sheet.dart';
@@ -81,6 +83,26 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
     });
   }
 
+  Future<void> _renomearCategoria(String atual) async {
+    final n = await pedirNomeCategoria(
+      context,
+      inicial: atual,
+      titulo: 'Mudar o nome da categoria',
+      dica: 'Muda em todas as receitas que usam "$atual".',
+    );
+    if (n == null || n == atual || !mounted) return;
+    try {
+      await renomearCategoriaReceita(ref, de: atual, para: n);
+      if (mounted && _categoria == atual) setState(() => _categoria = n);
+    } on Object catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final listAsync = ref.watch(recipesListProvider(_trash));
@@ -93,6 +115,11 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
             .toSet()
             .toList()
           ..sort();
+
+    final contagem = <String, int>{};
+    for (final r in listAsync.valueOrNull ?? const <Receita>[]) {
+      contagem[r.categoria] = (contagem[r.categoria] ?? 0) + 1;
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -167,10 +194,16 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
                 for (final c in categoriasEmUso)
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(c),
-                      selected: _categoria == c,
-                      onSelected: (_) => setState(() => _categoria = c),
+                    child: GestureDetector(
+                      // manter premido: mudar o nome da categoria
+                      onLongPress: _trash || !_podeEditar
+                          ? null
+                          : () => _renomearCategoria(c),
+                      child: ChoiceChip(
+                        label: Text('$c (${contagem[c] ?? 0})'),
+                        selected: _categoria == c,
+                        onSelected: (_) => setState(() => _categoria = c),
+                      ),
                     ),
                   ),
               ],

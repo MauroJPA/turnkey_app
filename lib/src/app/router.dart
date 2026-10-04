@@ -7,7 +7,6 @@ import '../core/auth/auth_state.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/onboarding_screen.dart';
 import '../features/auth/presentation/pending_approval_screen.dart';
-import '../features/cookie_formats/presentation/cookie_formats_screen.dart';
 import '../features/daily_count/presentation/contagem_relatorios_screen.dart';
 import '../features/daily_count/presentation/contagem_screen.dart';
 import '../features/dashboard/presentation/home_shell.dart';
@@ -30,7 +29,6 @@ import '../features/production/presentation/producao_screen.dart';
 import '../features/products/presentation/produto_detail_screen.dart';
 import '../features/quiosque/presentation/colaboradores_screen.dart';
 import '../features/quiosque/presentation/quiosque_screen.dart';
-import '../features/recipe_categories/presentation/recipe_categories_screen.dart';
 import '../features/recipes/presentation/recipe_detail_screen.dart';
 import '../features/recipes/presentation/recipes_screen.dart';
 import '../features/sales/presentation/produtos_nao_identificados_screen.dart';
@@ -324,13 +322,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'equipa',
                 builder: (_, __) => const TeamScreen(),
               ),
+              // formatos e categorias já não têm página: gerem-se na ficha/receita
               GoRoute(
                 path: 'formatos',
-                builder: (_, __) => const CookieFormatsScreen(),
+                redirect: (_, __) => Routes.techSheets,
               ),
               GoRoute(
                 path: 'categorias-receita',
-                builder: (_, __) => const RecipeCategoriesScreen(),
+                redirect: (_, __) => Routes.recipes,
               ),
               GoRoute(
                 path: 'navegacao',

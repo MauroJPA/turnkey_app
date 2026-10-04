@@ -1534,6 +1534,23 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Mudar um registo depois da emissão e voltar a gerar dá outro código de integridade.
 - [ ] Equipa e cartões: o botão diz "Adicionar pessoa" e a Equipa continua a aparecer sozinha.
 
+## 93. Formatos e categorias sem páginas
+
+- [ ] Configurações já não tem "Formatos de cookie" nem "Categorias de receitas"; Todas as páginas também não.
+- [ ] Ficha → Editar: o seletor "Formato do cookie" lista os formatos e termina com "＋ Novo formato…"; criar um novo
+      (ex.: "Gigante", 200 g) deixa-o escolhido; guardar a ficha grava-o.
+- [ ] O lápis ao lado do formato abre "Editar formato"; mudar a massa atualiza-o; "Apagar formato" recusa se alguma
+      ficha o usa e apaga se nenhuma o usa.
+- [ ] Ficha → Editar: as notas de ajuda dos campos não se sobrepõem à etiqueta do campo seguinte.
+- [ ] Receita nova: aparecem Massa, Recheio, Cobertura, Outra e "Nova categoria"; criar "Mousses" escolhe-a; guardar
+      a receita mantém-na.
+- [ ] Mantém premida uma categoria (na receita ou na lista de Receitas): "Mudar o nome" altera-a em todas as
+      receitas que a usam.
+- [ ] Apagar/mover para a lixeira a última receita de uma categoria própria faz a categoria desaparecer da lista de
+      escolha (as sugeridas ficam).
+- [ ] Lista de Receitas e de Fichas: botões de categoria com a contagem; ficha: tocar numa categoria já usada
+      preenche o campo.
+
 ---
 
 ## Notas / ajustes pedidos

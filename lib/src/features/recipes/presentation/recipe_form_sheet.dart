@@ -4,7 +4,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/errors/mensagem_amigavel.dart';
 import '../../recipe_categories/application/categoria_receita_providers.dart';
+import '../../recipe_categories/domain/categoria_receita.dart';
+import '../../recipe_categories/presentation/pedir_nome_categoria.dart';
 import '../domain/recipe.dart';
 
 /// Imagem escolhida no formulário (ainda não enviada).
@@ -107,6 +110,35 @@ class _RecipeFormSheetState extends ConsumerState<_RecipeFormSheet> {
     );
   }
 
+  Future<void> _nova() async {
+    final n = await pedirNomeCategoria(context);
+    if (n == null || !mounted) return;
+    setState(() {
+      _categoria = n;
+      _erroCategoria = null;
+    });
+  }
+
+  Future<void> _renomear(String atual) async {
+    final n = await pedirNomeCategoria(
+      context,
+      inicial: atual,
+      titulo: 'Mudar o nome da categoria',
+      dica: 'Muda em todas as receitas que usam "$atual".',
+    );
+    if (n == null || n == atual || !mounted) return;
+    try {
+      await renomearCategoriaReceita(ref, de: atual, para: n);
+      if (mounted && _categoria == atual) setState(() => _categoria = n);
+    } on Object catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final editar = widget.existente != null;
@@ -142,6 +174,11 @@ class _RecipeFormSheetState extends ConsumerState<_RecipeFormSheet> {
                 'Categoria *',
                 style: Theme.of(context).textTheme.labelLarge,
               ),
+              Text(
+                'Toca numa categoria para a escolher; mantém premido para '
+                'mudar o nome. Uma categoria sem receitas desaparece sozinha.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
               const SizedBox(height: 6),
               categoriasAsync.when(
                 loading: () => const Padding(
@@ -164,24 +201,34 @@ class _RecipeFormSheetState extends ConsumerState<_RecipeFormSheet> {
                       }
                     });
                   }
-                  if (categorias.isEmpty) {
-                    return const Text(
-                      'Sem categorias ativas. Cria uma em Configurações → '
-                      'Categorias de receitas.',
-                    );
-                  }
+                  // a categoria acabada de escrever ainda não está em nenhuma
+                  // receita: aparece na mesma
+                  final nomes = categoriasDisponiveis(
+                    categorias.map((c) => c.nome),
+                    extra: [if (_categoria != null) _categoria!],
+                  );
                   return Wrap(
                     spacing: 8,
+                    runSpacing: 4,
                     children: [
-                      for (final c in categorias)
-                        ChoiceChip(
-                          label: Text(c.nome),
-                          selected: _categoria == c.nome,
-                          onSelected: (_) => setState(() {
-                            _categoria = c.nome;
-                            _erroCategoria = null;
-                          }),
+                      for (final n in nomes)
+                        GestureDetector(
+                          // manter premido: mudar o nome (em todas as receitas)
+                          onLongPress: () => _renomear(n),
+                          child: ChoiceChip(
+                            label: Text(n),
+                            selected: _categoria == n,
+                            onSelected: (_) => setState(() {
+                              _categoria = n;
+                              _erroCategoria = null;
+                            }),
+                          ),
                         ),
+                      ActionChip(
+                        avatar: const Icon(Icons.add, size: 18),
+                        label: const Text('Nova categoria'),
+                        onPressed: _nova,
+                      ),
                     ],
                   );
                 },

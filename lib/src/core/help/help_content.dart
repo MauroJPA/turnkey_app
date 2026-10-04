@@ -32,8 +32,6 @@ enum HelpTopic {
   embalagens,
   consumiveis,
   produtos,
-  formatos,
-  categoriasReceita,
   configuracoes,
   navegacao,
   equipa,
@@ -389,30 +387,13 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Nas faturas, as linhas de limpeza/insumos/bebidas/revenda podem ser ligadas a estes produtos: o preço fica registado e, se já tiverem documentos, não é preciso pedi-los outra vez.',
     ],
   ),
-  HelpTopic.formatos: (
-    titulo: 'Formatos de cookie',
-    paragrafos: [
-      'Os tamanhos de cookie que faz — por exemplo Mini (20 g), Recheado (120 g de massa + 30 g de recheio) e Simples (150 g).',
-      'São usados para calcular quantas unidades saem de X kg de massa e quanto recheio é preciso.',
-      'Use "+" para criar. Toque para editar. O caixote do lixo remove (as produções antigas mantêm o valor guardado).',
-      'Onde se usam: em cada Ficha Técnica escolhe-se o formato do produto (Mini, Recheado…); em Produzir escolhe-se o formato para calcular quantas unidades saem e quanto recheio é preciso; os cookies prontos contam-se na Contagem diária.',
-    ],
-  ),
-  HelpTopic.categoriasReceita: (
-    titulo: 'Categorias de receitas',
-    paragrafos: [
-      'As categorias que agrupam as tuas receitas (ex.: Massa, Recheio, Cobertura) — servem para organizar e filtrar a lista de Receitas.',
-      'Use "+" para criar uma categoria nova, toque para renomear ou desativar, e o caixote do lixo remove (as receitas que já a usavam mantêm o nome guardado, só deixa de aparecer para escolher em receitas novas).',
-      'Uma categoria "Inativa" continua a aparecer nas receitas que já a têm, mas não entra na lista para escolher numa receita nova.',
-    ],
-  ),
   HelpTopic.configuracoes: (
     titulo: 'Configurações',
     paragrafos: [
       'Empresa: nome, moeda e regra de arredondamento.',
       'Aparência: modo claro/escuro, cor da app e logótipo. Aplica-se a toda a equipa.',
       'Percentuais de custo: salário, aluguer, impostos, etc. — usados para sugerir o preço de venda nas fichas técnicas. O campo "IVA das vendas" é à parte: serve só para estimar o IVA a entregar no Painel financeiro.',
-      'Formatos de cookie e Equipa têm páginas próprias, acessíveis aqui.',
+      'A Equipa tem página própria, acessível aqui. Os formatos de cookie criam-se na própria ficha técnica e as categorias na própria receita.',
     ],
   ),
   HelpTopic.navegacao: (

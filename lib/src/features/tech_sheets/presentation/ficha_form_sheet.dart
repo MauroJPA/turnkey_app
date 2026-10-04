@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../cookie_formats/application/cookie_format_providers.dart';
+import '../../cookie_formats/domain/cookie_format.dart';
+import '../../cookie_formats/presentation/formato_sheet.dart';
 import '../../products/domain/produto_rotulo.dart';
+import '../application/tech_sheets_providers.dart';
 import '../domain/tech_sheet.dart';
 
 Future<FichaInput?> showFichaFormSheet(
@@ -81,6 +84,22 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
     super.dispose();
   }
 
+  /// Valor do item "＋ Novo formato…" do seletor.
+  static const _novoFormato = '__novo_formato';
+
+  Future<void> _criarFormato() async {
+    final r = await showFormatoSheet(context);
+    if (r?.formato != null && mounted) {
+      setState(() => _formatoId = r!.formato!.id);
+    }
+  }
+
+  Future<void> _editarFormato(FormatoCookie f) async {
+    final r = await showFormatoSheet(context, existente: f);
+    if (r == null || !mounted) return;
+    if (r.apagado) setState(() => _formatoId = '');
+  }
+
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     Navigator.pop(
@@ -104,6 +123,12 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
   Widget build(BuildContext context) {
     final editar = widget.existente != null;
     final formatos = ref.watch(formatosProvider).valueOrNull ?? const [];
+    final categoriasUsadas = {
+      for (final f
+          in ref.watch(fichasListProvider(false)).valueOrNull ??
+              const <FichaTecnica>[])
+        if (f.categoria.trim().isNotEmpty) f.categoria.trim(),
+    }.toList()..sort();
     final visiveis = formatos
         .where((f) => f.ativo || f.id == _formatoId)
         .toList();
@@ -137,10 +162,33 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _categoria,
+              textCapitalization: TextCapitalization.sentences,
               decoration: const InputDecoration(
                 labelText: 'Categoria (opcional)',
+                helperText: 'Escreve uma nova ou toca numa já usada.',
               ),
+              onChanged: (_) => setState(() {}),
             ),
+            if (categoriasUsadas.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 0,
+                  children: [
+                    for (final c in categoriasUsadas)
+                      ChoiceChip(
+                        label: Text(c),
+                        selected: _categoria.text.trim() == c,
+                        onSelected: (_) => setState(
+                          () => _categoria.text = _categoria.text.trim() == c
+                              ? ''
+                              : c,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _subnome,
@@ -153,25 +201,60 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
                     'do nome.',
               ),
             ),
-            DropdownButtonFormField<String>(
-              initialValue: valor,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Formato do cookie (opcional)',
-                helperText:
-                    'Mini, Recheado, Simples… define o peso por '
-                    'unidade e liga este produto à produção.',
-                helperMaxLines: 2,
-              ),
-              items: [
-                const DropdownMenuItem(value: '', child: Text('Sem formato')),
-                for (final f in visiveis)
-                  DropdownMenuItem(
-                    value: f.id,
-                    child: Text(f.rotulo, overflow: TextOverflow.ellipsis),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    initialValue: valor,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Formato do cookie (opcional)',
+                      helperText:
+                          'Mini, Recheado, Simples… define o peso por '
+                          'unidade. Se não existe, cria-o aqui.',
+                      helperMaxLines: 2,
+                    ),
+                    items: [
+                      const DropdownMenuItem(
+                        value: '',
+                        child: Text('Sem formato'),
+                      ),
+                      for (final f in visiveis)
+                        DropdownMenuItem(
+                          value: f.id,
+                          child: Text(
+                            f.rotulo,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      const DropdownMenuItem(
+                        value: _novoFormato,
+                        child: Text('＋ Novo formato…'),
+                      ),
+                    ],
+                    onChanged: (v) {
+                      if (v == _novoFormato) {
+                        _criarFormato();
+                      } else {
+                        setState(() => _formatoId = v ?? '');
+                      }
+                    },
+                  ),
+                ),
+                if (valor.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: IconButton(
+                      tooltip: 'Editar ou apagar este formato',
+                      icon: const Icon(Icons.edit_outlined),
+                      onPressed: () => _editarFormato(
+                        visiveis.firstWhere((f) => f.id == valor),
+                      ),
+                    ),
                   ),
               ],
-              onChanged: (v) => setState(() => _formatoId = v ?? ''),
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -189,6 +272,7 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
                 helperMaxLines: 2,
               ),
             ),
+            const SizedBox(height: 12),
             TextFormField(
               controller: _validade,
               keyboardType: TextInputType.number,
@@ -197,6 +281,7 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
                 helperText: 'a contar da data de fabrico',
               ),
             ),
+            const SizedBox(height: 12),
             TextFormField(
               controller: _assadura,
               keyboardType: TextInputType.number,

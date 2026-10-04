@@ -11,7 +11,7 @@ void main() {
   group('paginaDaRota', () {
     test('a rota mais específica ganha', () {
       expect(paginaDaRota('/opcoes/equipa')?.chave, 'equipa');
-      expect(paginaDaRota('/opcoes/formatos')?.chave, 'formatos');
+      expect(paginaDaRota('/opcoes/formatos')?.chave, 'configuracoes');
       expect(paginaDaRota('/opcoes/navegacao')?.chave, 'configuracoes');
       expect(paginaDaRota('/opcoes')?.chave, 'configuracoes');
       expect(paginaDaRota('/financeiro/dre')?.chave, 'financeiro');

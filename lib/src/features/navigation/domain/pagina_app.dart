@@ -137,20 +137,6 @@ const paginasApp = <PaginaApp>[
     'Venda mínima para cobrir tudo',
   ),
   PaginaApp(
-    'formatos',
-    Routes.cookieFormats,
-    'Formatos de cookie',
-    Icons.cookie_outlined,
-    'Tamanhos e recheio por unidade',
-  ),
-  PaginaApp(
-    'categoriasReceita',
-    Routes.categoriasReceita,
-    'Categorias de receitas',
-    Icons.label_outline,
-    'Massa, recheio, cobertura — geríveis por ti',
-  ),
-  PaginaApp(
     'configuracoes',
     Routes.settings,
     'Configurações',

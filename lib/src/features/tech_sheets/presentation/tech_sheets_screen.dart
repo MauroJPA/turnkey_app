@@ -216,7 +216,9 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
-                        label: Text(c),
+                        label: Text(
+                          '$c (${(listAsync.valueOrNull ?? const <FichaTecnica>[]).where((f) => f.categoria == c).length})',
+                        ),
                         selected: _categoria == c,
                         onSelected: (_) => setState(() => _categoria = c),
                       ),

@@ -38,4 +38,12 @@ class CookieFormatRepository {
       FormatoCookie.fromRecord(await _c.update(id, body: input.toBody()));
 
   Future<void> delete(String id) => _c.delete(id);
+
+  /// Quantas fichas técnicas usam este formato.
+  Future<int> fichasQueUsam(String id) async {
+    final r = await _pb
+        .collection('fichas_tecnicas')
+        .getList(perPage: 1, filter: 'formato = "$id"');
+    return r.totalItems;
+  }
 }

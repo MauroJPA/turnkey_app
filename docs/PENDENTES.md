@@ -1,17 +1,11 @@
 # Pendentes (fila de trabalho)
 
-Última versão fechada: **1.66.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
+Última versão fechada: **1.67.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
 (editar → `bash scripts/verificar.sh` → pubspec + CHANGELOG + docs/CHECKLIST_TESTES.md → commit com caminhos
 explícitos → `git branch -f develop main` → `git tag vX.Y.Z`). No fim: `powershell -File scripts\empacotar-producao.ps1`
 e dar ao Mauro o SHA-256 + comando de publicação.
 
-1. **1.67.0 — Formatos de cookie e categorias de receita sem páginas próprias.**
-   - Formato: escolhido na ficha técnica (e nas receitas, onde se usa) num seletor que também **cria** o formato
-     (nome, massa g, recheio g) na hora; editar e remover (automático quando nenhuma ficha o usa).
-     Sai `Routes.cookieFormats` (`/opcoes/formatos`) do catálogo/rotas (redirect para as fichas).
-   - Categorias de receita: seletor ao criar/editar receita, com criar/editar/remover (remover sozinho quando
-     nenhuma receita a usa). Sai `Routes.categoriasReceita`.
-   - Filtros das listas (receitas, fichas, ingredientes…) mais ágeis (chips, um toque).
+1. ~~1.67.0 — Formatos de cookie e categorias de receita sem páginas próprias~~ (feito).
 2. **1.68.0 — Finanças simplificadas + página Contabilidade.** Nova página "Contabilidade" (faturação, IVA,
    números da empresa, relatório geral, compras do período, DRE) e simplificar Painel financeiro / Custos fixos /
    Equipamentos / Números mágicos / DRE / Análise de vendas (menos páginas soltas, tudo a poucos toques).

@@ -2,6 +2,26 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.67.0 — 2026-10-04 — Formatos de cookie e categorias de receita sem páginas próprias
+
+Duas páginas de configuração que não precisavam de existir, porque o que fazem se faz melhor onde se usa:
+
+- **Formato do cookie** (Mini, Recheado, Simples…) escolhe-se na **Ficha técnica → Editar**. Se o formato que
+  queres não existe, **"＋ Novo formato…"** cria-o ali mesmo (nome, massa e recheio em gramas) e fica já escolhido.
+  O lápis ao lado edita ou **apaga** o formato (recusa se alguma ficha o usa). A página "Formatos de cookie" saiu
+  das Configurações.
+- **Categoria da receita**: ao criar/editar uma receita, tocas numa categoria, ou **"Nova categoria"** para criar;
+  **mantém premido** uma categoria para lhe **mudar o nome** (muda em todas as receitas que a usam). Uma categoria
+  **desaparece sozinha quando nenhuma receita a usa**; Massa, Recheio, Cobertura e Outra ficam sempre como sugestão.
+  A página "Categorias de receitas" saiu das Configurações.
+- **Filtros mais ágeis**: na lista de Receitas e de Fichas, os botões de categoria mostram **quantas há** de cada
+  ("Massa (12)"); na lista de Receitas, mantém premido para renomear. Na Ficha, a categoria tem sugestões de
+  toque (as já usadas).
+- Ficha técnica → Editar: espaçamento corrigido (as notas de ajuda sobrepunham-se à etiqueta do campo seguinte).
+- Os endereços antigos (`/opcoes/formatos`, `/opcoes/categorias-receita`) redirecionam.
+- Nada foi apagado da base de dados: a coleção `categorias_receita` deixa de ser usada (a categoria é o nome na
+  própria receita, como já era).
+
 ## 1.66.0 — 2026-10-04 — Relatório HACCP formal, por período e por tipo
 
 - **HACCP → Registos → "Gerar relatório"**: cria o relatório formal de um período — **hoje, 7 dias, este mês, mês

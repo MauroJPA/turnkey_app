@@ -1,46 +1,46 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gc_turnkey/src/features/recipe_categories/domain/categoria_receita.dart';
-import 'package:pocketbase/pocketbase.dart';
 
 void main() {
-  group('CategoriaReceita.fromRecord', () {
-    test('lê nome, ordem e ativo', () {
-      final c = CategoriaReceita.fromRecord(
-        RecordModel.fromJson({
-          'id': 'c1',
-          'collectionName': 'categorias_receita',
-          'nome': 'Massa',
-          'ordem': 1,
-          'ativo': true,
-        }),
-      );
-      expect(c.nome, 'Massa');
-      expect(c.ordem, 1);
-      expect(c.ativo, isTrue);
+  group('categoriasDisponiveis', () {
+    test('empresa nova: só as sugeridas', () {
+      expect(categoriasDisponiveis(const []), categoriasReceitaPadrao);
     });
 
-    test('sem ativo definido cai em false (o que vier do registo)', () {
-      final c = CategoriaReceita.fromRecord(
-        RecordModel.fromJson({
-          'id': 'c2',
-          'collectionName': 'categorias_receita',
-          'nome': 'Outra',
-        }),
+    test('junta as que as receitas usam, sem repetir', () {
+      final r = categoriasDisponiveis([
+        'massa', // igual a "Massa" (ignora maiúsculas)
+        'Brigadeiros',
+        'Ganaches',
+        '  ',
+        'ganaches',
+      ]);
+      expect(r.take(4), categoriasReceitaPadrao);
+      expect(r.skip(4), ['Brigadeiros', 'Ganaches']);
+    });
+
+    test('uma categoria sem receitas desaparece (já não está em uso)', () {
+      final antes = categoriasDisponiveis(['Brigadeiros']);
+      expect(antes, contains('Brigadeiros'));
+      final depois = categoriasDisponiveis(const []);
+      expect(depois, isNot(contains('Brigadeiros')));
+    });
+
+    test('a categoria acabada de escrever entra mesmo sem receitas', () {
+      expect(
+        categoriasDisponiveis(const ['Massa'], extra: const ['Mousses']),
+        contains('Mousses'),
       );
-      expect(c.ativo, isFalse);
-      expect(c.ordem, 0);
+    });
+
+    test('as outras ficam por ordem alfabética', () {
+      final r = categoriasDisponiveis(['Zebra', 'ábaco', 'Mousses']);
+      expect(r.skip(4), ['ábaco', 'Mousses', 'Zebra']);
     });
   });
 
-  group('CategoriaReceitaInput.toBody', () {
-    test('capitaliza a primeira letra do nome', () {
-      final b = CategoriaReceitaInput(
-        nome: 'cobertura especial',
-        ordem: 3,
-      ).toBody();
-      expect(b['nome'], 'Cobertura especial');
-      expect(b['ordem'], 3);
-      expect(b['ativo'], isTrue);
-    });
+  test('CategoriaReceita usa o nome como id', () {
+    const c = CategoriaReceita(nome: 'Massa');
+    expect(c.id, 'Massa');
   });
 }

@@ -1,46 +1,45 @@
-import 'package:pocketbase/pocketbase.dart';
+import '../../../core/formatting/busca.dart';
 
-import '../../../core/formatting/capitalizar.dart';
-
-/// Uma categoria de receitas da empresa (ex.: Massa, Recheio, Cobertura) —
-/// gerível por empresa, ao contrário do que era antes (lista fixa no
-/// código). Guardada em `receitas.categoria` pelo NOME (texto livre), não
-/// por id — apagar/renomear uma categoria não quebra receitas antigas.
+/// Uma categoria de receitas (ex.: Massa, Recheio, Cobertura). Já não há uma
+/// página nem uma tabela para as gerir: a categoria é o NOME guardado em
+/// `receitas.categoria` — cria-se ao escolher/escrever uma na receita, muda-se
+/// o nome mantendo premido o botão da categoria, e **desaparece sozinha
+/// quando nenhuma receita a usa**.
 class CategoriaReceita {
-  const CategoriaReceita({
-    required this.id,
-    required this.nome,
-    this.ordem = 0,
-    this.ativo = true,
-  });
+  const CategoriaReceita({required this.nome});
 
-  final String id;
   final String nome;
-  final double ordem;
-  final bool ativo;
 
-  factory CategoriaReceita.fromRecord(RecordModel r) => CategoriaReceita(
-    id: r.id,
-    nome: r.getStringValue('nome'),
-    ordem: r.getDoubleValue('ordem'),
-    ativo: r.getBoolValue('ativo'),
-  );
+  /// Compatibilidade: o nome é a identificação.
+  String get id => nome;
 }
 
-class CategoriaReceitaInput {
-  CategoriaReceitaInput({
-    required this.nome,
-    this.ordem = 0,
-    this.ativo = true,
-  });
+/// As categorias sugeridas numa empresa nova (aparecem sempre para escolher).
+const categoriasReceitaPadrao = <String>[
+  'Massa',
+  'Recheio',
+  'Cobertura',
+  'Outra',
+];
 
-  final String nome;
-  final double ordem;
-  final bool ativo;
-
-  Map<String, dynamic> toBody() => {
-    'nome': capitalizarInicial(nome.trim()),
-    'ordem': ordem,
-    'ativo': ativo,
-  };
+/// As categorias para escolher: as sugeridas, mais as que as receitas usam,
+/// mais as [extra] (ex.: a que acabou de ser escrita e ainda não foi
+/// guardada). Sem repetidas (ignora maiúsculas); as sugeridas primeiro, as
+/// outras por ordem alfabética.
+List<String> categoriasDisponiveis(
+  Iterable<String> emUso, {
+  Iterable<String> extra = const [],
+}) {
+  final vistos = <String>{};
+  final out = <String>[];
+  for (final n in categoriasReceitaPadrao) {
+    if (vistos.add(normalizarBusca(n))) out.add(n);
+  }
+  final outras = <String>[];
+  for (final n in [...emUso, ...extra]) {
+    final t = n.trim();
+    if (t.isNotEmpty && vistos.add(normalizarBusca(t))) outras.add(t);
+  }
+  outras.sort((a, b) => normalizarBusca(a).compareTo(normalizarBusca(b)));
+  return [...out, ...outras];
 }

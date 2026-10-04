@@ -27,6 +27,20 @@ class RecipeRepository {
     return recs.map(Receita.fromRecord).toList();
   }
 
+  /// Muda o nome de uma categoria em todas as receitas que a usam (também as
+  /// que estão na lixeira).
+  Future<void> renomearCategoria(String de, String para) async {
+    final novo = para.trim();
+    if (novo.isEmpty || novo == de) return;
+    final recs = await _c.getFullList(
+      filter:
+          'empresa = "$_empresaId" && categoria = "${de.replaceAll('"', r'\"')}"',
+    );
+    for (final r in recs) {
+      await _c.update(r.id, body: {'categoria': novo});
+    }
+  }
+
   Future<Receita> getById(String id) async =>
       Receita.fromRecord(await _c.getOne(id));
 
