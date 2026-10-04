@@ -1454,6 +1454,13 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Início → "Stock baixo" conta só ingredientes e consumíveis abaixo do mínimo.
 - [ ] Dar entrada/saída de stock de um ingrediente continua a funcionar e o histórico (toque longo) também.
 
+## 86. Colaboradores dentro do HACCP
+
+- [ ] Todas as páginas já não lista "Colaboradores e cartões"; lista "Quiosque de tarefas".
+- [ ] HACCP → topo: ícone do quiosque (todos os que podem registar) e ícone do cartão (só proprietário/administrador).
+- [ ] O ícone do cartão abre "Colaboradores e cartões"; a seta de voltar vai ao Início.
+- [ ] Configurações → navegação (rodapé e páginas escondidas) abre sem erros depois da remoção.
+
 ---
 
 ## Notas / ajustes pedidos

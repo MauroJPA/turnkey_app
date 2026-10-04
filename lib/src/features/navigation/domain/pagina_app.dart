@@ -118,13 +118,6 @@ const paginasApp = <PaginaApp>[
     'Cartão NFC e um botão por tarefa diária',
   ),
   PaginaApp(
-    'colaboradores',
-    Routes.colaboradores,
-    'Colaboradores e cartões',
-    Icons.badge_outlined,
-    'Quem regista tarefas e o seu cartão NFC',
-  ),
-  PaginaApp(
     'encomendas',
     Routes.encomendas,
     'Encomendas',

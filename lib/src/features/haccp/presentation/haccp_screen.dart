@@ -51,7 +51,21 @@ class HaccpScreen extends ConsumerWidget {
             onPressed: () => context.go(Routes.home),
           ),
           title: const Text('HACCP'),
-          actions: const [HelpActions(topic: HelpTopic.haccp)],
+          actions: [
+            if (podeEditar)
+              IconButton(
+                tooltip: 'Quiosque de tarefas (cartão NFC)',
+                icon: const Icon(Icons.touch_app_outlined),
+                onPressed: () => context.go(Routes.quiosque),
+              ),
+            if (ref.watch(currentPapelProvider).canEditConfig)
+              IconButton(
+                tooltip: 'Colaboradores e cartões',
+                icon: const Icon(Icons.badge_outlined),
+                onPressed: () => context.go(Routes.colaboradores),
+              ),
+            const HelpActions(topic: HelpTopic.haccp),
+          ],
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Hoje'),

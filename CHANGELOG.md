@@ -2,6 +2,15 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.60.0 — 2026-10-04 — Menos páginas soltas: Colaboradores passa para dentro do HACCP
+
+- A página **"Colaboradores e cartões"** deixa de ocupar um lugar próprio em *Todas as páginas* (e no rodapé).
+  Abre-se pelo **HACCP** (ícones do quiosque e do cartão no topo) — é lá que as tarefas e as pessoas se juntam.
+- O **Quiosque de tarefas** mantém o seu lugar (é a página que fica aberta no telemóvel da loja/fábrica).
+- Nada muda no que a página faz nem nas permissões (só proprietário/administrador gere cartões).
+- Quem tinha "Colaboradores e cartões" no rodapé ou escondido: a escolha deixa de se aplicar (a página já não existe
+  no catálogo); basta abri-la pelo HACCP.
+
 ## 1.59.0 — 2026-10-04 — Inventário só com o que se compra (os cookies prontos ficam na Contagem)
 
 Limpeza de uma função duplicada: o stock de "Produto" (cookies prontos) existia no Inventário **e** na Contagem
