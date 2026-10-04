@@ -104,7 +104,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
     paragrafos: [
       'Uma ficha técnica é o produto final que vende — por exemplo "Cookie Boston".',
       'Junta uma massa, um recheio e/ou uma cobertura, e diz o peso de cada parte.',
-      'Serve para saber o custo e o preço de venda sugerido, e para o stock de produto acabado.',
+      'Serve para saber o custo e o preço de venda sugerido.',
       'Na lista, cada ficha mostra os dois preços: "sugerido" (calculado a partir do custo e dos Percentuais de custo) e "venda" (o preço real que praticas). Toca no preço de venda para o editar sem precisar de abrir a ficha.',
       'O botão de ordenar (seta) organiza por Nome, Custo ou Preço de venda; os chips de categoria (quando há mais do que uma) filtram a lista.',
     ],
@@ -114,7 +114,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
     paragrafos: [
       'Cada linha é uma parte do produto (massa, recheio, cobertura) com o peso.',
       'Em baixo vê o custo e o preço sugerido, calculado com os percentuais de Configurações.',
-      'Ligue a ficha a um "Formato de cookie" para o stock de produto acabado ser calculado ao concluir uma produção.',
+      'Ligue a ficha a um "Formato de cookie" para saber quantas unidades saem de cada produção.',
       'CMV esperado: a parte do preço que sobra para a matéria-prima, segundo os Percentuais de custo (ex. 25 %). CMV real: quanto o custo é do preço de venda que praticas (custo ÷ preço). Se o real for maior que o esperado, aparece a vermelho — o preço está baixo para o custo. Em "Quebra do preço" vê cada rubrica (matéria-prima, salário, aluguel, margem…) com valor e % no preço esperado e no real; no real a margem de lucro é o que sobra.',
       'Ícone do prato: a Declaração Nutricional calculada (por 100 g e por unidade) + alergénios. Botão "Copiar" para colar num rótulo.',
       '"Tempo de assadura" (em Editar ficha): os minutos de forno do produto. Aparece aqui como "Assar X min", na Mise en place / Produzir e na Agenda, e é o tempo do cronómetro do forno.',
@@ -194,8 +194,8 @@ const Map<HelpTopic, HelpEntry> helpContent = {
   HelpTopic.inventario: (
     titulo: 'Inventário',
     paragrafos: [
-      'O stock de tudo: ingredientes (gramas), produtos acabados (unidades) e material da loja (na unidade que escolher).',
-      'Dois separadores: "Cozinha" (ingredientes + produtos) e "Material da loja" — o inventário geral da loja: equipamentos, consumíveis, mobiliário, ferramentas… agrupado por categoria. O material que marca como comprado na lista de compras aparece aqui automaticamente.',
+      'O stock de tudo o que se compra: ingredientes (gramas) e material da loja (na unidade que escolher). Os cookies prontos contam-se na Contagem diária.',
+      'Dois separadores: "Cozinha" (ingredientes) e "Material da loja" — o inventário geral da loja: equipamentos, consumíveis, mobiliário, ferramentas… agrupado por categoria. O material que marca como comprado na lista de compras aparece aqui automaticamente.',
       'Botão "Material": adicionar qualquer coisa da empresa que não seja ingrediente nem produto — sabão, sacos de lixo, uma tesoura…',
       'Chips de vista: "Tudo", "Favoritos" (a estrela em cada linha fixa os itens que quer ver primeiro) e "Mais usados" (os que mais entram em produções ou na lista de compras).',
       'O triângulo de aviso aparece quando algo está abaixo do stock mínimo.',
@@ -406,7 +406,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Os tamanhos de cookie que faz — por exemplo Mini (20 g), Recheado (120 g de massa + 30 g de recheio) e Simples (150 g).',
       'São usados para calcular quantas unidades saem de X kg de massa e quanto recheio é preciso.',
       'Use "+" para criar. Toque para editar. O caixote do lixo remove (as produções antigas mantêm o valor guardado).',
-      'Onde se usam: em cada Ficha Técnica escolhe-se o formato do produto (Mini, Recheado…); em Produzir escolhe-se o formato para calcular quantas unidades saem e quanto recheio é preciso; ao concluir a produção o stock do produto sobe em unidades.',
+      'Onde se usam: em cada Ficha Técnica escolhe-se o formato do produto (Mini, Recheado…); em Produzir escolhe-se o formato para calcular quantas unidades saem e quanto recheio é preciso; os cookies prontos contam-se na Contagem diária.',
     ],
   ),
   HelpTopic.categoriasReceita: (

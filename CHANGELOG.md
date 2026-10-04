@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.59.0 — 2026-10-04 — Inventário só com o que se compra (os cookies prontos ficam na Contagem)
+
+Limpeza de uma função duplicada: o stock de "Produto" (cookies prontos) existia no Inventário **e** na Contagem
+diária, e o da Contagem é o que tem abertura, vendas do Vendus, perdas e fecho.
+
+- **Inventário → Cozinha** mostra só os **ingredientes**; deixaram de aparecer os "Produtos" (cookies prontos).
+  O aviso no topo leva à **Contagem diária**.
+- O "Stock baixo" do Início deixa de contar produtos prontos.
+- Textos de ajuda atualizados (ficha técnica, formatos de cookie, inventário).
+- **Nada foi apagado**: os registos antigos de stock de produto continuam na base de dados; para os voltar a ver
+  basta voltar à versão 1.58.0.
+
 ## 1.58.0 — 2026-10-04 — Mais rápido: vendas do período sem trazer o histórico todo
 
 - **Contagem diária, Painel financeiro, DRE, IVA, Números mágicos e Relatório geral** carregavam as linhas de venda

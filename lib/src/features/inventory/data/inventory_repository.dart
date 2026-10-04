@@ -17,14 +17,11 @@ class InventoryRepository {
   final PocketBase _pb;
   final String _empresaId;
 
-  /// Todos os ingredientes, fichas e consumíveis com stock (Bebida/Revenda/…)
-  /// com o stock atual (0 se não houver linha).
+  /// Todos os ingredientes e consumíveis com stock (Bebida/Revenda/…) com o
+  /// stock atual (0 se não houver linha). Os cookies prontos contam-se na
+  /// Contagem diária, não aqui.
   Future<List<StockItem>> list() async {
     final ings = await _pb.collection('ingredientes').getFullList(
-          filter: 'empresa = "$_empresaId" && deletado != true',
-          sort: 'nome',
-        );
-    final fichas = await _pb.collection('fichas_tecnicas').getFullList(
           filter: 'empresa = "$_empresaId" && deletado != true',
           sort: 'nome',
         );
@@ -37,14 +34,11 @@ class InventoryRepository {
         );
 
     final invByIng = <String, RecordModel>{};
-    final invByFicha = <String, RecordModel>{};
     final invByCons = <String, RecordModel>{};
     for (final r in inv) {
       final ing = r.getStringValue('ingrediente');
-      final fic = r.getStringValue('ficha');
       final co = r.getStringValue('consumivel');
       if (ing.isNotEmpty) invByIng[ing] = r;
-      if (fic.isNotEmpty) invByFicha[fic] = r;
       if (co.isNotEmpty) invByCons[co] = r;
     }
 
@@ -67,24 +61,6 @@ class InventoryRepository {
           usos: row?.getDoubleValue('usos') ?? 0,
           ultimoUso: row?.getStringValue('ultimo_uso') ?? '',
           unidadeIng: i.getStringValue('unidade'),
-        ),
-      );
-    }
-    for (final f in fichas) {
-      final row = invByFicha[f.id];
-      out.add(
-        StockItem(
-          tipo: StockTipo.ficha,
-          id: f.id,
-          nome: f.getStringValue('nome'),
-          quantidade: row?.getDoubleValue('quantidade') ?? 0,
-          custoUnitario: f.getDoubleValue('custo_produto'),
-          minimo: row?.getDoubleValue('minimo') ?? 0,
-          localizacao: row?.getStringValue('localizacao') ?? '',
-          inventarioId: row?.id,
-          favorito: row?.getBoolValue('favorito') ?? false,
-          usos: row?.getDoubleValue('usos') ?? 0,
-          ultimoUso: row?.getStringValue('ultimo_uso') ?? '',
         ),
       );
     }

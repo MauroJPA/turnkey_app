@@ -1447,6 +1447,13 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Abrir a Contagem diária ou o Painel financeiro demora o mesmo em Setembro e em Dezembro (já não depende do
       histórico).
 
+## 85. Inventário sem produtos prontos
+
+- [ ] Inventário → Cozinha lista só ingredientes (sem linhas "Produto"); "Material da loja" continua igual.
+- [ ] O aviso "Cookies prontos? Usa a Contagem diária" abre a Contagem.
+- [ ] Início → "Stock baixo" conta só ingredientes e consumíveis abaixo do mínimo.
+- [ ] Dar entrada/saída de stock de um ingrediente continua a funcionar e o histórico (toque longo) também.
+
 ---
 
 ## Notas / ajustes pedidos
