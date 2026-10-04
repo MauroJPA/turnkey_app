@@ -28,6 +28,10 @@ mixin _$FichaTecnica {
   String get descricao => throw _privateConstructorUsedError;
   String get subnome => throw _privateConstructorUsedError;
   int get validadeDias => throw _privateConstructorUsedError;
+
+  /// Minutos no forno (0 = não definido); aparece na montagem do produto
+  /// e dá o cronómetro da fornada na contagem diária.
+  int get tempoAssaduraMin => throw _privateConstructorUsedError;
   String get conservacao => throw _privateConstructorUsedError;
   Map<String, dynamic> get nutriRaw => throw _privateConstructorUsedError;
   List<String> get nomesVenda => throw _privateConstructorUsedError;
@@ -61,6 +65,7 @@ abstract class $FichaTecnicaCopyWith<$Res> {
     String descricao,
     String subnome,
     int validadeDias,
+    int tempoAssaduraMin,
     String conservacao,
     Map<String, dynamic> nutriRaw,
     List<String> nomesVenda,
@@ -95,6 +100,7 @@ class _$FichaTecnicaCopyWithImpl<$Res, $Val extends FichaTecnica>
     Object? descricao = null,
     Object? subnome = null,
     Object? validadeDias = null,
+    Object? tempoAssaduraMin = null,
     Object? conservacao = null,
     Object? nutriRaw = null,
     Object? nomesVenda = null,
@@ -147,6 +153,10 @@ class _$FichaTecnicaCopyWithImpl<$Res, $Val extends FichaTecnica>
                 ? _value.validadeDias
                 : validadeDias // ignore: cast_nullable_to_non_nullable
                       as int,
+            tempoAssaduraMin: null == tempoAssaduraMin
+                ? _value.tempoAssaduraMin
+                : tempoAssaduraMin // ignore: cast_nullable_to_non_nullable
+                      as int,
             conservacao: null == conservacao
                 ? _value.conservacao
                 : conservacao // ignore: cast_nullable_to_non_nullable
@@ -194,6 +204,7 @@ abstract class _$$FichaTecnicaImplCopyWith<$Res>
     String descricao,
     String subnome,
     int validadeDias,
+    int tempoAssaduraMin,
     String conservacao,
     Map<String, dynamic> nutriRaw,
     List<String> nomesVenda,
@@ -227,6 +238,7 @@ class __$$FichaTecnicaImplCopyWithImpl<$Res>
     Object? descricao = null,
     Object? subnome = null,
     Object? validadeDias = null,
+    Object? tempoAssaduraMin = null,
     Object? conservacao = null,
     Object? nutriRaw = null,
     Object? nomesVenda = null,
@@ -279,6 +291,10 @@ class __$$FichaTecnicaImplCopyWithImpl<$Res>
             ? _value.validadeDias
             : validadeDias // ignore: cast_nullable_to_non_nullable
                   as int,
+        tempoAssaduraMin: null == tempoAssaduraMin
+            ? _value.tempoAssaduraMin
+            : tempoAssaduraMin // ignore: cast_nullable_to_non_nullable
+                  as int,
         conservacao: null == conservacao
             ? _value.conservacao
             : conservacao // ignore: cast_nullable_to_non_nullable
@@ -319,6 +335,7 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
     this.descricao = '',
     this.subnome = '',
     this.validadeDias = 0,
+    this.tempoAssaduraMin = 0,
     this.conservacao = '',
     final Map<String, dynamic> nutriRaw = const <String, dynamic>{},
     final List<String> nomesVenda = const <String>[],
@@ -361,6 +378,12 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
   @override
   @JsonKey()
   final int validadeDias;
+
+  /// Minutos no forno (0 = não definido); aparece na montagem do produto
+  /// e dá o cronómetro da fornada na contagem diária.
+  @override
+  @JsonKey()
+  final int tempoAssaduraMin;
   @override
   @JsonKey()
   final String conservacao;
@@ -396,7 +419,7 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
 
   @override
   String toString() {
-    return 'FichaTecnica(id: $id, nome: $nome, categoria: $categoria, custoProduto: $custoProduto, pesoProduto: $pesoProduto, precoVenda: $precoVenda, deletado: $deletado, formatoId: $formatoId, descricao: $descricao, subnome: $subnome, validadeDias: $validadeDias, conservacao: $conservacao, nutriRaw: $nutriRaw, nomesVenda: $nomesVenda, custoCompleto: $custoCompleto, custoSemDados: $custoSemDados)';
+    return 'FichaTecnica(id: $id, nome: $nome, categoria: $categoria, custoProduto: $custoProduto, pesoProduto: $pesoProduto, precoVenda: $precoVenda, deletado: $deletado, formatoId: $formatoId, descricao: $descricao, subnome: $subnome, validadeDias: $validadeDias, tempoAssaduraMin: $tempoAssaduraMin, conservacao: $conservacao, nutriRaw: $nutriRaw, nomesVenda: $nomesVenda, custoCompleto: $custoCompleto, custoSemDados: $custoSemDados)';
   }
 
   @override
@@ -423,6 +446,8 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
             (identical(other.subnome, subnome) || other.subnome == subnome) &&
             (identical(other.validadeDias, validadeDias) ||
                 other.validadeDias == validadeDias) &&
+            (identical(other.tempoAssaduraMin, tempoAssaduraMin) ||
+                other.tempoAssaduraMin == tempoAssaduraMin) &&
             (identical(other.conservacao, conservacao) ||
                 other.conservacao == conservacao) &&
             const DeepCollectionEquality().equals(other._nutriRaw, _nutriRaw) &&
@@ -452,6 +477,7 @@ class _$FichaTecnicaImpl extends _FichaTecnica {
     descricao,
     subnome,
     validadeDias,
+    tempoAssaduraMin,
     conservacao,
     const DeepCollectionEquality().hash(_nutriRaw),
     const DeepCollectionEquality().hash(_nomesVenda),
@@ -481,6 +507,7 @@ abstract class _FichaTecnica extends FichaTecnica {
     final String descricao,
     final String subnome,
     final int validadeDias,
+    final int tempoAssaduraMin,
     final String conservacao,
     final Map<String, dynamic> nutriRaw,
     final List<String> nomesVenda,
@@ -511,6 +538,8 @@ abstract class _FichaTecnica extends FichaTecnica {
   String get subnome;
   @override
   int get validadeDias;
+  @override
+  int get tempoAssaduraMin;
   @override
   String get conservacao;
   @override

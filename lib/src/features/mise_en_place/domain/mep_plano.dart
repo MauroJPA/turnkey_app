@@ -74,6 +74,7 @@ class MepPlano {
     this.formatoId = '',
     this.recheio = '',
     this.fichaId = '',
+    this.tempoAssaduraMin = 0,
     this.comprar = const [],
     this.intermedios = const [],
   });
@@ -89,6 +90,9 @@ class MepPlano {
   /// Preenchido quando o plano é de um produto final (ficha técnica): então
   /// [receitaId] é a receita da massa e [nome] o nome do produto.
   final String fichaId;
+
+  /// Minutos de forno do produto final (0 = não definido na ficha).
+  final int tempoAssaduraMin;
   final List<MepIngrediente> comprar;
   final List<MepIntermedio> intermedios;
 
@@ -101,6 +105,7 @@ class MepPlano {
         formatoId: j['formatoId'] as String? ?? '',
         recheio: j['recheio'] as String? ?? '',
         fichaId: j['fichaId'] as String? ?? '',
+        tempoAssaduraMin: (j['tempoAssaduraMin'] as num?)?.toInt() ?? 0,
         comprar: ((j['comprar'] as List?) ?? const [])
             .map((e) =>
                 MepIngrediente.fromJson(Map<String, dynamic>.from(e as Map)))

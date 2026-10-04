@@ -52,6 +52,11 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
         ? '${widget.existente!.validadeDias}'
         : '',
   );
+  late final _assadura = TextEditingController(
+    text: (widget.existente?.tempoAssaduraMin ?? 0) > 0
+        ? '${widget.existente!.tempoAssaduraMin}'
+        : '',
+  );
   late final _conservacao = TextEditingController(
     text: widget.existente?.conservacao ?? '',
   );
@@ -71,6 +76,7 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
     _subnome.dispose();
     _descricao.dispose();
     _validade.dispose();
+    _assadura.dispose();
     _conservacao.dispose();
     super.dispose();
   }
@@ -86,6 +92,7 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
         subnome: _subnome.text,
         descricao: _descricao.text,
         validadeDias: int.tryParse(_validade.text.trim()) ?? 0,
+        tempoAssaduraMin: int.tryParse(_assadura.text.trim()) ?? 0,
         conservacao: _conservacaoSel == _outro
             ? _conservacao.text
             : _conservacaoSel,
@@ -189,6 +196,25 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
                 labelText: 'Validade (dias)',
                 helperText: 'a contar da data de fabrico',
               ),
+            ),
+            TextFormField(
+              controller: _assadura,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Tempo de assadura (minutos)',
+                helperText:
+                    'Aparece na montagem do produto e no cronómetro do '
+                    'forno.',
+                helperMaxLines: 2,
+              ),
+              validator: (v) {
+                final t = (v ?? '').trim();
+                if (t.isEmpty) return null;
+                final n = int.tryParse(t);
+                return (n == null || n < 1 || n > 600)
+                    ? 'Entre 1 e 600 minutos'
+                    : null;
+              },
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(

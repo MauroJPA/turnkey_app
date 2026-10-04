@@ -2,6 +2,14 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.53.0 — 2026-10-04 — Tempo de assadura na ficha técnica e na montagem
+
+- **Ficha técnica → "Tempo de assadura (minutos)"**: define-se uma vez na ficha e aparece em **Assar X min** no
+  detalhe da ficha, na **Mise en place / Produzir** (cartão em destaque junto ao plano do produto) e na
+  **Agenda** (mise en place por receita de uma produção). É também o tempo que o cronómetro do forno vai usar
+  na contagem diária (próxima versão).
+- Nova migration `1790910000_tempo_assadura.js` (`fichas_tecnicas.tempo_assadura_min`).
+
 ## 1.52.0 — 2026-10-04 — Ficha técnica: embalagem separada e embalagem para plataformas
 
 - **Ficha técnica → custo separado**: o detalhe mostra **Matéria-prima**, **Embalagem** e **Nas plataformas**

@@ -1373,6 +1373,13 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Duplicar uma ficha com embalagem/kit: a cópia traz as embalagens e os kits.
 - [ ] Inventário → Cozinha mostra o aviso da Contagem diária e abre-a.
 
+## 79. Tempo de assadura
+
+- [ ] Editar uma ficha: aparece "Tempo de assadura (minutos)"; guardar 12 mostra "Assar 12 min" no detalhe.
+- [ ] Valores fora de 1 a 600 são recusados; vazio = sem tempo.
+- [ ] Produzir / Mise en place com esse produto: cartão "Assar 12 min" por cima de "Produzir primeiro".
+- [ ] Agenda → uma produção com esse produto: a linha da receita no mise en place diz "assar 12 min".
+
 ---
 
 ## Notas / ajustes pedidos

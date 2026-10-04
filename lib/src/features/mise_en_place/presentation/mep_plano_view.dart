@@ -49,6 +49,20 @@ class MepPlanoView extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
         ),
+        if (plano.tempoAssaduraMin > 0)
+          Card(
+            margin: const EdgeInsets.only(bottom: 8),
+            color: cs.secondaryContainer,
+            child: ListTile(
+              dense: true,
+              leading: const Icon(Icons.timer_outlined),
+              title: Text(
+                'Assar ${plano.tempoAssaduraMin} min',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              subtitle: const Text('Tempo de assadura da ficha técnica'),
+            ),
+          ),
         if (plano.intermedios.isNotEmpty) ...[
           Text('Produzir primeiro',
               style: Theme.of(context).textTheme.titleSmall),

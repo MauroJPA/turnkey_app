@@ -254,6 +254,20 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
                     ],
                   ),
                 ),
+              if (d.ficha.tempoAssaduraMin > 0)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.timer_outlined, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Assar ${d.ficha.tempoAssaduraMin} min',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
               _Header(
                 detail: d,
                 config: config,

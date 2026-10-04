@@ -72,6 +72,10 @@ class FichaTecnica with _$FichaTecnica {
     /// ir na etiqueta, por baixo do nome.
     @Default('') String subnome,
     @Default(0) int validadeDias,
+
+    /// Minutos no forno (0 = não definido); aparece na montagem do produto
+    /// e dá o cronómetro da fornada na contagem diária.
+    @Default(0) int tempoAssaduraMin,
     @Default('') String conservacao,
     @Default(<String, dynamic>{}) Map<String, dynamic> nutriRaw,
 
@@ -124,6 +128,7 @@ class FichaTecnica with _$FichaTecnica {
       descricao: r.getStringValue('descricao'),
       subnome: r.getStringValue('subnome'),
       validadeDias: r.getIntValue('validade_dias'),
+      tempoAssaduraMin: r.getIntValue('tempo_assadura_min'),
       conservacao: r.getStringValue('conservacao'),
       nutriRaw: rawNutri is Map
           ? Map<String, dynamic>.from(rawNutri)
@@ -162,6 +167,7 @@ class FichaInput {
     this.descricao = '',
     this.subnome = '',
     this.validadeDias = 0,
+    this.tempoAssaduraMin = 0,
     this.conservacao = '',
   });
 
@@ -178,6 +184,9 @@ class FichaInput {
   /// Segundo nome (opcional) — ver [FichaTecnica.subnome].
   final String subnome;
   final int validadeDias;
+
+  /// Minutos de forno (0 = não definido).
+  final int tempoAssaduraMin;
   final String conservacao;
 
   Map<String, dynamic> toBody() => {
@@ -187,6 +196,7 @@ class FichaInput {
     'descricao': descricao.trim(),
     'subnome': subnome.trim(),
     'validade_dias': validadeDias,
+    'tempo_assadura_min': tempoAssaduraMin,
     'conservacao': conservacao.trim(),
   };
 }

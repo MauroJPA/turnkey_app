@@ -261,6 +261,7 @@ class PlanoPorReceita {
     this.unidades = 0,
     this.formato = '',
     this.recheio = '',
+    this.tempoAssaduraMin = 0,
     this.comprar = const [],
     this.intermedios = const [],
   });
@@ -271,6 +272,9 @@ class PlanoPorReceita {
   final int unidades;
   final String formato;
   final String recheio;
+
+  /// Minutos de forno do produto (da ficha técnica); 0 = não definido.
+  final int tempoAssaduraMin;
   final List<PlanoQtd> comprar;
   final List<PlanoQtd> intermedios;
 
@@ -281,6 +285,7 @@ class PlanoPorReceita {
         unidades: (j['unidades'] as num?)?.toInt() ?? 0,
         formato: j['formato'] as String? ?? '',
         recheio: j['recheio'] as String? ?? '',
+        tempoAssaduraMin: (j['tempoAssaduraMin'] as num?)?.toInt() ?? 0,
         comprar: ((j['comprar'] as List?) ?? const [])
             .map((e) => PlanoQtd.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList(),

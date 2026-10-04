@@ -116,6 +116,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Ligue a ficha a um "Formato de cookie" para o stock de produto acabado ser calculado ao concluir uma produção.',
       'CMV esperado: a parte do preço que sobra para a matéria-prima, segundo os Percentuais de custo (ex. 25 %). CMV real: quanto o custo é do preço de venda que praticas (custo ÷ preço). Se o real for maior que o esperado, aparece a vermelho — o preço está baixo para o custo. Em "Quebra do preço" vê cada rubrica (matéria-prima, salário, aluguel, margem…) com valor e % no preço esperado e no real; no real a margem de lucro é o que sobra.',
       'Ícone do prato: a Declaração Nutricional calculada (por 100 g e por unidade) + alergénios. Botão "Copiar" para colar num rótulo.',
+      '"Tempo de assadura" (em Editar ficha): os minutos de forno do produto. Aparece aqui como "Assar X min", na Mise en place / Produzir e na Agenda, e é o tempo do cronómetro do forno.',
       'O custo aparece separado: "Matéria-prima" (ingredientes, massa, recheios, coberturas) e "Embalagem" (o bloco Embalagem). O custo do produto na loja é a soma dos dois.',
       '"Embalagem para plataformas" é um bloco à parte para o que só usas nas vendas por Uber Eats, Glovo, etc. (saco de entrega, selo, caixa extra). Não entra no custo da loja nem no preço sugerido: aparece em "Nas plataformas" (custo da loja + esta embalagem), para saberes quanto o produto custa quando vai para uma plataforma.',
     ],

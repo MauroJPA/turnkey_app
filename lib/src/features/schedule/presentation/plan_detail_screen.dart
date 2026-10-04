@@ -331,6 +331,8 @@ class _Body extends ConsumerWidget {
                                 'recheio ${pr.recheio}',
                               '${pr.kg.toStringAsFixed(2)} kg',
                               if (pr.unidades > 0) '~${pr.unidades} un',
+                              if (pr.tempoAssaduraMin > 0)
+                                'assar ${pr.tempoAssaduraMin} min',
                             ].join(' · '),
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
