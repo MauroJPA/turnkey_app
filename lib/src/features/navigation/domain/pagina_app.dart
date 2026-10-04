@@ -52,14 +52,7 @@ const paginasApp = <PaginaApp>[
     Routes.inventory,
     'Inventário',
     Icons.warehouse_outlined,
-    'Stock e movimentos',
-  ),
-  PaginaApp(
-    'ingredientes',
-    Routes.ingredients,
-    'Ingredientes',
-    Icons.egg_alt_outlined,
-    'Preços e fornecedores',
+    'Ingredientes, limpeza, material e embalagens',
   ),
   PaginaApp(
     'receitas',
@@ -144,20 +137,6 @@ const paginasApp = <PaginaApp>[
     'Números mágicos',
     Icons.calculate_outlined,
     'Venda mínima para cobrir tudo',
-  ),
-  PaginaApp(
-    'embalagens',
-    Routes.embalagens,
-    'Embalagens',
-    Icons.inventory_2_outlined,
-    'Caixas, sacos, adesivos e o seu custo',
-  ),
-  PaginaApp(
-    'consumiveis',
-    Routes.consumiveis,
-    'Limpeza e insumos',
-    Icons.cleaning_services_outlined,
-    'Limpeza, insumos, bebidas e revenda',
   ),
   PaginaApp(
     'formatos',

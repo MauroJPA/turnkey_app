@@ -8,6 +8,13 @@ final stockListProvider =
   return ref.watch(inventoryRepositoryProvider).list();
 });
 
+/// O stock de cada item (chave `tipo:id`), para mostrar nas listas de
+/// ingredientes e de limpeza e insumos.
+final stockPorItemProvider = Provider.autoDispose<Map<String, StockItem>>((ref) {
+  final lista = ref.watch(stockListProvider).valueOrNull ?? const <StockItem>[];
+  return {for (final i in lista) '${i.tipo.name}:${i.id}': i};
+});
+
 typedef ItemRef = ({
   String? ingredienteId,
   String? fichaId,

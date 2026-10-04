@@ -22,7 +22,10 @@ import '../domain/embalagem_kit.dart';
 import 'kit_editor_sheet.dart';
 
 class EmbalagensScreen extends ConsumerStatefulWidget {
-  const EmbalagensScreen({super.key});
+  const EmbalagensScreen({super.key, this.embedded = false});
+
+  /// Dentro da página Inventário: sem seta de voltar, título nem ajuda.
+  final bool embedded;
 
   @override
   ConsumerState<EmbalagensScreen> createState() => _EmbalagensScreenState();
@@ -127,11 +130,15 @@ class _EmbalagensScreenState extends ConsumerState<EmbalagensScreen>
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(Routes.home),
-        ),
-        title: const Text('Embalagens'),
+        automaticallyImplyLeading: false,
+        toolbarHeight: widget.embedded ? 48 : null,
+        leading: widget.embedded
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.go(Routes.home),
+              ),
+        title: widget.embedded ? null : const Text('Embalagens'),
         actions: [
           if (_tab.index == 0)
             SortMenuButton<Embalagem>(
@@ -143,7 +150,8 @@ class _EmbalagensScreenState extends ConsumerState<EmbalagensScreen>
                 _sortAsc = asc;
               }),
             ),
-          const HelpActions(topic: HelpTopic.embalagens),
+          if (!widget.embedded)
+            const HelpActions(topic: HelpTopic.embalagens),
         ],
         bottom: TabBar(
           controller: _tab,

@@ -2,6 +2,23 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.63.0 — 2026-10-04 — Inventário numa só página: ingredientes, limpeza, material e embalagens
+
+Quatro sítios que geriam coisas parecidas passam a **uma só página, "Inventário"**, com secções:
+
+- **Ingredientes** (antes a página Ingredientes + o stock da "Cozinha"): cada linha mostra agora o **stock**
+  ("Stock 2,5 kg"; vermelho "mín. …" quando está abaixo do mínimo). Toca no stock para dar entrada ou saída;
+  toque longo para ver o histórico.
+- **Limpeza e insumos** (antes uma página à parte e metade do "Material da loja"): produtos, fichas de segurança
+  (FDS) e o stock em cada linha.
+- **Material da loja**: equipamentos, mobiliário, ferramentas… (já sem os consumíveis, que ficam em Limpeza e insumos).
+- **Embalagens**: peças e kits, como antes.
+- Os botões do topo trocam de secção e mostram **"a acabar"** quando há itens abaixo do mínimo nessa secção.
+- *Todas as páginas* e o rodapé têm **uma só entrada, "Inventário"** (saíram Ingredientes, Limpeza e insumos e
+  Embalagens). Os endereços antigos (`/ingredientes`, `/consumiveis`, `/embalagens`) levam à secção certa.
+- Cada secção mantém todas as suas funções (ordenar, juntar, INSA, importar, lixeira, kits, FDS…); só mudou o
+  sítio. A barra do topo de cada secção fica reduzida às ações.
+
 ## 1.62.0 — 2026-10-04 — Mensagens de erro claras em todos os ecrãs
 
 - Em **33 ecrãs** (receitas, vendas, compras, fichas, embalagens, formatos, agenda, definições…) um erro aparecia

@@ -192,15 +192,15 @@ const Map<HelpTopic, HelpEntry> helpContent = {
     ],
   ),
   HelpTopic.inventario: (
-    titulo: 'Inventário',
+    titulo: 'Inventário — material da loja',
     paragrafos: [
-      'O stock de tudo o que se compra: ingredientes (gramas) e material da loja (na unidade que escolher). Os cookies prontos contam-se na Contagem diária.',
-      'Dois separadores: "Cozinha" (ingredientes) e "Material da loja" — o inventário geral da loja: equipamentos, consumíveis, mobiliário, ferramentas… agrupado por categoria. O material que marca como comprado na lista de compras aparece aqui automaticamente.',
-      'Botão "Material": adicionar qualquer coisa da empresa que não seja ingrediente nem produto — sabão, sacos de lixo, uma tesoura…',
-      'Chips de vista: "Tudo", "Favoritos" (a estrela em cada linha fixa os itens que quer ver primeiro) e "Mais usados" (os que mais entram em produções ou na lista de compras).',
+      'O Inventário junta numa só página tudo o que a empresa compra e guarda, em quatro secções: Ingredientes, Limpeza e insumos, Material da loja e Embalagens. Troca de secção nos botões do topo; uma secção com itens abaixo do mínimo mostra "a acabar".',
+      'Material da loja: o inventário geral — equipamentos, mobiliário, ferramentas… agrupado por categoria. O material que marcas como comprado na lista de compras aparece aqui automaticamente.',
+      'Botão "Material": adicionar qualquer coisa da empresa que não seja ingrediente nem produto — uma tesoura, uma mesa…',
+      'Chips de vista: "Tudo", "Favoritos" (a estrela em cada linha fixa os itens que queres ver primeiro) e "Mais usados".',
       'O triângulo de aviso aparece quando algo está abaixo do stock mínimo.',
-      'Toque num item para dar entrada ou saída de stock e definir o mínimo.',
-      'Toque e segure (ou toque, se não puder editar) para ver o histórico de movimentos.',
+      'Toca num item para dar entrada ou saída de stock e definir o mínimo. Toque longo: histórico de movimentos.',
+      'Nos Ingredientes e na Limpeza e insumos o stock aparece em cada linha ("Stock 2,5 kg"): toca nele para dar entrada ou saída. Os cookies prontos contam-se na Contagem diária.',
     ],
   ),
   HelpTopic.faturas: (

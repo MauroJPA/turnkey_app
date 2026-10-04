@@ -1480,6 +1480,21 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       sem `ClientException`.
 - [ ] Uma lista que não carrega mostra a frase e o botão "Tentar de novo".
 
+## 89. Inventário numa só página
+
+- [ ] Todas as páginas e o rodapé já não têm Ingredientes, Limpeza e insumos nem Embalagens; têm "Inventário".
+- [ ] Inventário abre em Ingredientes; os 4 botões do topo (Ingredientes, Limpeza e insumos, Material da loja,
+      Embalagens) trocam de secção e o endereço muda (`/inventario`, `/inventario/limpeza`, …).
+- [ ] Ingredientes: pesquisar, ordenar, filtros de fornecedor, INSA, importar CSV, juntar, lixeira, criar e editar
+      funcionam como antes.
+- [ ] Ingredientes: cada linha mostra o stock; tocar nele abre "Entrada/Saída" e o valor atualiza; abaixo do mínimo
+      fica vermelho e o botão do topo diz "· n a acabar".
+- [ ] Limpeza e insumos: produtos, estado da FDS, filtros e o botão "Produto" funcionam; o stock aparece em cada linha.
+- [ ] Material da loja: só itens livres (sem consumíveis), por categoria; "Material" cria; favoritos e mais usados.
+- [ ] Embalagens: separadores Peças e Kits, ordenar e criar funcionam.
+- [ ] Abrir `/#/ingredientes`, `/#/consumiveis` e `/#/embalagens` leva à secção certa.
+- [ ] Início → "Stock baixo" abre o Inventário.
+
 ---
 
 ## Notas / ajustes pedidos

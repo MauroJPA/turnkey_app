@@ -7,7 +7,6 @@ import '../core/auth/auth_state.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/onboarding_screen.dart';
 import '../features/auth/presentation/pending_approval_screen.dart';
-import '../features/consumables/presentation/consumiveis_screen.dart';
 import '../features/cookie_formats/presentation/cookie_formats_screen.dart';
 import '../features/daily_count/presentation/contagem_relatorios_screen.dart';
 import '../features/daily_count/presentation/contagem_screen.dart';
@@ -20,15 +19,13 @@ import '../features/finance/presentation/equipamentos_screen.dart';
 import '../features/finance/presentation/numeros_magicos_screen.dart';
 import '../features/finance/presentation/painel_financeiro_screen.dart';
 import '../features/haccp/presentation/haccp_screen.dart';
-import '../features/ingredients/presentation/ingredients_screen.dart';
-import '../features/inventory/presentation/inventory_screen.dart';
+import '../features/inventory/presentation/inventario_screen.dart';
 import '../features/invoices/presentation/invoice_review_screen.dart';
 import '../features/invoices/presentation/invoices_screen.dart';
 import '../features/mise_en_place/presentation/mep_screen.dart';
 import '../features/navigation/presentation/navegacao_screen.dart';
 import '../features/orders/presentation/encomenda_detail_screen.dart';
 import '../features/orders/presentation/encomendas_screen.dart';
-import '../features/packaging/presentation/embalagens_screen.dart';
 import '../features/production/presentation/cart_review_screen.dart';
 import '../features/production/presentation/production_screen.dart';
 import '../features/products/presentation/produto_detail_screen.dart';
@@ -152,9 +149,29 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
+          // Inventário: uma página com secções (ingredientes, limpeza e
+          // insumos, material da loja, embalagens)
           GoRoute(
             path: Routes.inventory,
-            builder: (_, __) => const InventoryScreen(),
+            builder: (_, __) =>
+                const InventarioScreen(secao: SecaoInventario.ingredientes),
+            routes: [
+              GoRoute(
+                path: 'limpeza',
+                builder: (_, __) =>
+                    const InventarioScreen(secao: SecaoInventario.limpeza),
+              ),
+              GoRoute(
+                path: 'material',
+                builder: (_, __) =>
+                    const InventarioScreen(secao: SecaoInventario.material),
+              ),
+              GoRoute(
+                path: 'embalagens',
+                builder: (_, __) =>
+                    const InventarioScreen(secao: SecaoInventario.embalagens),
+              ),
+            ],
           ),
           GoRoute(
             path: Routes.invoices,
@@ -238,17 +255,18 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: Routes.numerosMagicos,
             builder: (_, __) => const NumerosMagicosScreen(),
           ),
+          // endereços antigos (favoritos, links): vão para a secção certa
           GoRoute(
             path: Routes.embalagens,
-            builder: (_, __) => const EmbalagensScreen(),
+            redirect: (_, __) => Routes.inventoryEmbalagens,
           ),
           GoRoute(
             path: Routes.consumiveis,
-            builder: (_, __) => const ConsumiveisScreen(),
+            redirect: (_, __) => Routes.inventoryLimpeza,
           ),
           GoRoute(
             path: Routes.ingredients,
-            builder: (_, __) => const IngredientsScreen(),
+            redirect: (_, __) => Routes.inventory,
           ),
           GoRoute(
             path: Routes.recipes,

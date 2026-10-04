@@ -18,6 +18,8 @@ import '../../../core/widgets/sort_menu_button.dart';
 import '../../../core/widgets/swipe_to_delete.dart';
 import '../../import_csv/application/ingredient_import_service.dart';
 import '../../import_csv/domain/import_result.dart';
+import '../../inventory/domain/stock_item.dart';
+import '../../inventory/presentation/stock_badge.dart';
 import '../../recipes/application/recipes_providers.dart';
 import '../../recipes/presentation/nutricao_receita_sheet.dart';
 import '../application/ingredients_providers.dart';
@@ -29,7 +31,11 @@ import 'juntar_marcas_fornecedores_sheet.dart';
 import 'nutricao_sheet.dart';
 
 class IngredientsScreen extends ConsumerStatefulWidget {
-  const IngredientsScreen({super.key});
+  const IngredientsScreen({super.key, this.embedded = false});
+
+  /// Dentro da página Inventário: sem seta de voltar, título nem ajuda
+  /// (a página já os tem); ficam só as ações.
+  final bool embedded;
 
   @override
   ConsumerState<IngredientsScreen> createState() => _IngredientsScreenState();
@@ -457,11 +463,17 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
               ],
             )
           : AppBar(
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => context.go(Routes.home),
-              ),
-              title: Text(_trash ? 'Ingredientes · Lixeira' : 'Ingredientes'),
+              automaticallyImplyLeading: false,
+              toolbarHeight: widget.embedded ? 48 : null,
+              leading: widget.embedded
+                  ? null
+                  : IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () => context.go(Routes.home),
+                    ),
+              title: widget.embedded
+                  ? (_trash ? const Text('Lixeira') : null)
+                  : Text(_trash ? 'Ingredientes · Lixeira' : 'Ingredientes'),
               actions: [
                 if (!_trash)
                   SortMenuButton<Ingrediente>(
@@ -534,7 +546,8 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                     icon: const Icon(Icons.add),
                     onPressed: _busy ? null : _add,
                   ),
-                const HelpActions(topic: HelpTopic.ingredientes),
+                if (!widget.embedded)
+                  const HelpActions(topic: HelpTopic.ingredientes),
               ],
             ),
       body: Column(
@@ -747,7 +760,13 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
 
     final tile = ListTile(
       title: Text(i.nomeComCaracteristica),
-      subtitle: subtitle.isEmpty ? null : Text(subtitle),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (subtitle.isNotEmpty) Text(subtitle),
+          StockBadge(tipo: StockTipo.ingrediente, id: i.id),
+        ],
+      ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -12,6 +12,8 @@ import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../../core/widgets/sort_menu_button.dart';
+import '../../inventory/domain/stock_item.dart';
+import '../../inventory/presentation/stock_badge.dart';
 import '../application/consumivel_providers.dart';
 import '../domain/consumivel.dart';
 import 'consumivel_sheet.dart';
@@ -44,7 +46,10 @@ import 'consumivel_sheet.dart';
 };
 
 class ConsumiveisScreen extends ConsumerStatefulWidget {
-  const ConsumiveisScreen({super.key});
+  const ConsumiveisScreen({super.key, this.embedded = false});
+
+  /// Dentro da página Inventário: sem seta de voltar, título nem ajuda.
+  final bool embedded;
 
   @override
   ConsumerState<ConsumiveisScreen> createState() => _ConsumiveisScreenState();
@@ -140,11 +145,15 @@ class _ConsumiveisScreenState extends ConsumerState<ConsumiveisScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(Routes.home),
-        ),
-        title: const Text('Limpeza e insumos'),
+        automaticallyImplyLeading: false,
+        toolbarHeight: widget.embedded ? 48 : null,
+        leading: widget.embedded
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.go(Routes.home),
+              ),
+        title: widget.embedded ? null : const Text('Limpeza e insumos'),
         actions: [
           SortMenuButton<(Consumivel, EstadoFds)>(
             options: _sortOptions,
@@ -166,7 +175,8 @@ class _ConsumiveisScreenState extends ConsumerState<ConsumiveisScreen> {
               ).showSnackBar(const SnackBar(content: Text('Registo copiado.')));
             },
           ),
-          const HelpActions(topic: HelpTopic.consumiveis),
+          if (!widget.embedded)
+            const HelpActions(topic: HelpTopic.consumiveis),
         ],
       ),
       floatingActionButton: _podeEditar
@@ -268,15 +278,24 @@ class _ConsumiveisScreenState extends ConsumerState<ConsumiveisScreen> {
                               .length;
                           return ListTile(
                             title: Text(x.nomeComCaracteristica),
-                            subtitle: Text(
-                              [
-                                x.categoria,
-                                if (x.marca.isNotEmpty) x.marca,
-                                if (x.fornecedor.isNotEmpty) x.fornecedor,
-                                if (x.temPrecoVenda)
-                                  'venda € ${x.precoVenda.toStringAsFixed(2)}',
-                                '$nDocs doc.',
-                              ].join(' · '),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  [
+                                    x.categoria,
+                                    if (x.marca.isNotEmpty) x.marca,
+                                    if (x.fornecedor.isNotEmpty) x.fornecedor,
+                                    if (x.temPrecoVenda)
+                                      'venda € ${x.precoVenda.toStringAsFixed(2)}',
+                                    '$nDocs doc.',
+                                  ].join(' · '),
+                                ),
+                                StockBadge(
+                                  tipo: StockTipo.consumivel,
+                                  id: x.id,
+                                ),
+                              ],
                             ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,

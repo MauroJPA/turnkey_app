@@ -14,7 +14,11 @@ abstract class Routes {
   static const schedule = '/agenda';
   static const shopping = '/compras';
   static const comprasRelatorio = '/compras/relatorio';
+  /// Inventário (secção Ingredientes) e as outras secções.
   static const inventory = '/inventario';
+  static const inventoryLimpeza = '/inventario/limpeza';
+  static const inventoryMaterial = '/inventario/material';
+  static const inventoryEmbalagens = '/inventario/embalagens';
   static const invoices = '/faturas';
   static const sales = '/vendas';
   static const encomendas = '/encomendas';

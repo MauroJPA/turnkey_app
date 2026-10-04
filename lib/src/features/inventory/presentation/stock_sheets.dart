@@ -1,337 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../app/router.dart';
-import '../../../core/auth/current_user.dart';
 import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/formatting/dates.dart';
-import '../../../core/formatting/money_provider.dart';
-import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
-import '../../../core/widgets/empty_state.dart';
-import '../../../core/widgets/help_actions.dart';
 import '../application/inventory_providers.dart';
 import '../domain/stock_item.dart';
 
-class InventoryScreen extends ConsumerStatefulWidget {
-  const InventoryScreen({super.key});
-
-  @override
-  ConsumerState<InventoryScreen> createState() => _InventoryScreenState();
+/// Dá entrada/saída de stock de um item e define o mínimo (aviso).
+Future<void> showAjusteStockSheet(BuildContext context, StockItem item) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => _AjusteSheet(item: item),
+  );
 }
 
-enum _Vista { tudo, favoritos, maisUsados }
+/// Histórico de movimentos de stock de um item.
+Future<void> showHistoricoStockSheet(BuildContext context, StockItem item) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => _HistoricoSheet(item: item),
+  );
+}
 
-class _InventoryScreenState extends ConsumerState<InventoryScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tab = TabController(length: 2, vsync: this)
-    ..addListener(() => setState(() {}));
-  String _q = '';
-  _Vista _vista = _Vista.tudo;
-
-  bool get _podeEditar => ref.read(currentPapelProvider).canEditBusiness;
-
-  @override
-  void dispose() {
-    _tab.dispose();
-    super.dispose();
-  }
-
-  List<StockItem> _aplicarVista(List<StockItem> xs) {
-    final q = _q.toLowerCase();
-    final out = xs.where((i) {
-      final mq = q.isEmpty ||
-          i.nome.toLowerCase().contains(q) ||
-          i.categoria.toLowerCase().contains(q);
-      final mv = switch (_vista) {
-        _Vista.tudo => true,
-        _Vista.favoritos => i.favorito,
-        _Vista.maisUsados => i.usos > 0,
-      };
-      return mq && mv;
-    }).toList();
-    if (_vista == _Vista.maisUsados) {
-      out.sort((a, b) {
-        final c = b.usos.compareTo(a.usos);
-        return c != 0 ? c : b.ultimoUso.compareTo(a.ultimoUso);
-      });
-    }
-    return out;
-  }
-
-  Future<void> _toggleFav(StockItem i) =>
-      ref.read(inventoryActionsProvider).alternarFavorito(i);
-
-  Future<void> _abrirAjuste(StockItem item) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => _AjusteSheet(item: item),
-    );
-  }
-
-  void _historico(StockItem item) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => _HistoricoSheet(item: item),
-    );
-  }
-
-  Future<void> _novoItemLivre() async {
-    final r = await showModalBottomSheet<_ItemLivre>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => const _ItemLivreSheet(),
-    );
-    if (r == null || r.descricao.isEmpty) return;
-    try {
-      await ref.read(inventoryActionsProvider).criarItemLivre(
-            descricao: r.descricao,
-            unidade: r.unidade,
-            categoria: r.categoria,
-            quantidadeInicial: r.quantidade,
-            minimo: r.minimo,
-            localizacao: r.localizacao,
-          );
-    } on Object catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final async = ref.watch(stockListProvider);
-    final fmt = ref.watch(moneyFormatProvider);
-    final naLoja = _tab.index == 1;
-
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(Routes.home),
-        ),
-        title: const Text('Inventário'),
-        actions: const [HelpActions(topic: HelpTopic.inventario)],
-        bottom: TabBar(
-          controller: _tab,
-          tabs: const [
-            Tab(text: 'Cozinha'),
-            Tab(text: 'Material da loja'),
-          ],
-        ),
-      ),
-      floatingActionButton: _podeEditar && naLoja
-          ? FloatingActionButton.extended(
-              onPressed: _novoItemLivre,
-              icon: const Icon(Icons.add),
-              label: const Text('Material'),
-            )
-          : null,
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-            child: TextField(
-              onChanged: (v) => setState(() => _q = v),
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Procurar',
-                isDense: true,
-              ),
-            ),
-          ),
-          SizedBox(
-            height: 44,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              children: [
-                for (final v in _Vista.values)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      avatar: switch (v) {
-                        _Vista.favoritos => const Icon(Icons.star, size: 18),
-                        _Vista.maisUsados =>
-                          const Icon(Icons.trending_up, size: 18),
-                        _ => null,
-                      },
-                      label: Text(switch (v) {
-                        _Vista.tudo => 'Tudo',
-                        _Vista.favoritos => 'Favoritos',
-                        _Vista.maisUsados => 'Mais usados',
-                      }),
-                      selected: _vista == v,
-                      onSelected: (_) => setState(() => _vista = v),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          if (!naLoja)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
-              child: Card(
-                margin: EdgeInsets.zero,
-                child: ListTile(
-                  dense: true,
-                  leading: const Icon(Icons.fact_check_outlined),
-                  title: const Text('Cookies prontos? Usa a Contagem diária'),
-                  subtitle: const Text(
-                    'Assados, enviados, vendidos, desperdício e sobras por '
-                    'local e por dia.',
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.go(Routes.contagem),
-                ),
-              ),
-            ),
-          Expanded(
-            child: AsyncValueView<List<StockItem>>(
-              value: async,
-              onRetry: () => ref.invalidate(stockListProvider),
-              data: (all) => TabBarView(
-                controller: _tab,
-                children: [
-                  _lista(
-                    _aplicarVista(
-                      all
-                          .where(
-                            (i) =>
-                                i.tipo == StockTipo.ingrediente ||
-                                i.tipo == StockTipo.ficha,
-                          )
-                          .toList(),
-                    ),
-                    fmt,
-                  ),
-                  _listaLoja(
-                    _aplicarVista(
-                      all
-                          .where(
-                            (i) =>
-                                i.tipo == StockTipo.livre ||
-                                i.tipo == StockTipo.consumivel,
-                          )
-                          .toList(),
-                    ),
-                    fmt,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _vazio() => EmptyState(
-        icon: Icons.warehouse_outlined,
-        titulo: 'Nada a mostrar',
-        mensagem: switch (_vista) {
-          _Vista.favoritos =>
-            'Ainda não marcaste favoritos (toca na estrela de um item).',
-          _Vista.maisUsados =>
-            'Ainda não há utilizações registadas. Aparecem quando produzes '
-                'ou quando um item vai para a lista de compras.',
-          _Vista.tudo => 'Sem itens para esta pesquisa.',
-        },
-      );
-
-  Widget _lista(List<StockItem> items, MoneyFmt fmt) {
-    if (items.isEmpty) return _vazio();
-    return ListView.separated(
-      itemCount: items.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
-      itemBuilder: (_, idx) => _row(items[idx], fmt),
-    );
-  }
-
-  Widget _listaLoja(List<StockItem> items, MoneyFmt fmt) {
-    if (items.isEmpty) return _vazio();
-    // agrupar por categoria
-    final grupos = <String, List<StockItem>>{};
-    for (final i in items) {
-      grupos.putIfAbsent(i.categoria.isEmpty ? 'Outro' : i.categoria, () => [])
-          .add(i);
-    }
-    final chaves = grupos.keys.toList()..sort();
-    return ListView(
-      children: [
-        for (final k in chaves) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
-            child: Text(
-              k,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-            ),
-          ),
-          for (final i in grupos[k]!) _row(i, fmt),
-          const Divider(height: 1),
-        ],
-      ],
-    );
-  }
-
-  Widget _row(StockItem i, MoneyFmt fmt) {
-    return ListTile(
-      leading: IconButton(
-        tooltip: i.favorito ? 'Tirar dos favoritos' : 'Marcar favorito',
-        icon: Icon(
-          i.favorito ? Icons.star : Icons.star_border,
-          color: i.favorito ? Theme.of(context).colorScheme.tertiary : null,
-        ),
-        onPressed: () => _toggleFav(i),
-      ),
-      title: Text(i.nome),
-      subtitle: Text(
-        [
-          switch (i.tipo) {
-            StockTipo.ficha => 'Produto',
-            StockTipo.ingrediente => 'Ingrediente',
-            StockTipo.consumivel =>
-              i.categoria.isEmpty ? 'Consumível' : i.categoria,
-            StockTipo.livre => i.categoria.isEmpty ? 'Outro' : i.categoria,
-          },
-          if (i.valor > 0) 'valor ${fmt(i.valor)}',
-          if (i.usos > 0) 'usado ${i.usos.toStringAsFixed(0)}×',
-          if (i.localizacao.isNotEmpty) i.localizacao,
-        ].join(' · '),
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (i.stockBaixo)
-            Tooltip(
-              message: 'Abaixo do mínimo',
-              child: Icon(
-                Icons.warning_amber_rounded,
-                color: Theme.of(context).colorScheme.error,
-                size: 20,
-              ),
-            ),
-          const SizedBox(width: 6),
-          Text(
-            i.quantidadeLabel(),
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-      onTap: () => _podeEditar ? _abrirAjuste(i) : _historico(i),
-      onLongPress: () => _historico(i),
-    );
-  }
+/// Folha para criar um item livre no inventário (sabão, sacos de lixo…).
+Future<ItemLivre?> showItemLivreSheet(BuildContext context) {
+  return showModalBottomSheet<ItemLivre>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => const ItemLivreSheet(),
+  );
 }
 
 class _AjusteSheet extends ConsumerStatefulWidget {
@@ -552,7 +255,7 @@ class _HistoricoSheet extends ConsumerWidget {
   }
 }
 
-typedef _ItemLivre = ({
+typedef ItemLivre = ({
   String descricao,
   String unidade,
   String categoria,
@@ -562,14 +265,14 @@ typedef _ItemLivre = ({
 });
 
 /// Folha para criar um item livre no inventário (sabão, sacos de lixo…).
-class _ItemLivreSheet extends StatefulWidget {
-  const _ItemLivreSheet();
+class ItemLivreSheet extends StatefulWidget {
+  const ItemLivreSheet({super.key});
 
   @override
-  State<_ItemLivreSheet> createState() => _ItemLivreSheetState();
+  State<ItemLivreSheet> createState() => ItemLivreSheetState();
 }
 
-class _ItemLivreSheetState extends State<_ItemLivreSheet> {
+class ItemLivreSheetState extends State<ItemLivreSheet> {
   final _desc = TextEditingController();
   final _qtd = TextEditingController(text: '0');
   final _min = TextEditingController();
