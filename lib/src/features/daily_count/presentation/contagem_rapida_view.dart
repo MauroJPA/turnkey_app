@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/alerts/alerta_forno.dart';
 import '../../../core/storage/prefs_locais.dart';
 import '../../../core/widgets/quantidade_stepper.dart';
 import '../../invoices/domain/invoice_erros.dart';
@@ -13,6 +12,7 @@ import '../domain/contagem_dia.dart';
 import '../domain/fornada.dart';
 import '../domain/local.dart';
 import '../domain/movimento_produto.dart';
+import 'forno_widgets.dart';
 import 'movimento_sheet.dart';
 
 const _chaveModo = 'contagem_modo';
@@ -71,8 +71,7 @@ class _ContagemRapidaViewState extends ConsumerState<ContagemRapidaView> {
   bool _aGuardar = false;
   Timer? _tick;
   int _segundos = 0;
-  final _emContagem = <String>{};
-  final _avisadas = <String>{};
+  final _avisos = AvisosForno();
 
   _Passo _passoInicial() {
     final linhas = widget.contagem.linhas;
@@ -126,14 +125,7 @@ class _ContagemRapidaViewState extends ConsumerState<ContagemRapidaView> {
     final fornadas =
         ref.read(fornadasNoFornoProvider(widget.local.id)).valueOrNull ??
         const <Fornada>[];
-    final agora = DateTime.now();
-    for (final f in fornadas) {
-      if (!f.pronta(agora)) {
-        _emContagem.add(f.id);
-      } else if (_emContagem.contains(f.id) && _avisadas.add(f.id)) {
-        avisarForno();
-      }
-    }
+    _avisos.verificar(fornadas, DateTime.now());
   }
 
   void _msg(String t) {
@@ -250,28 +242,45 @@ class _ContagemRapidaViewState extends ConsumerState<ContagemRapidaView> {
     final tempos = {
       for (final f in widget.fichas) f.id: f.tempoAssaduraMin,
     };
-    var minutos = duracaoDaFornada(lista.keys, tempos);
-    if (minutos == null) {
-      // nenhum sabor tem o tempo na ficha: pergunta (e sugere definir na ficha)
-      minutos = await showDialog<int>(
+    final nomes = {for (final f in widget.fichas) f.id: f.nome};
+    // sabores sem tempo na ficha: pergunta os minutos (uma vez para todos)
+    final semTempo = [
+      for (final k in lista.keys)
+        if ((tempos[k] ?? 0) <= 0) nomes[k] ?? 'Produto',
+    ];
+    var padrao = 0;
+    if (semTempo.isNotEmpty) {
+      final m = await showDialog<int>(
         context: context,
-        builder: (_) => const _MinutosDialog(),
+        builder: (_) => _MinutosDialog(sabores: semTempo),
       );
-      if (minutos == null) return;
+      if (m == null) return;
+      padrao = m;
     }
-    final min = minutos;
+    final itens = [
+      for (final e in lista.entries)
+        ItemFornada(
+          fichaId: e.key,
+          quantidade: e.value,
+          duracaoMin: (tempos[e.key] ?? 0) > 0 ? tempos[e.key]! : padrao,
+        ),
+    ];
+    final minutos = (itens.map((i) => i.duracaoMin).toSet().toList()..sort());
+    final resumo = minutos.length == 1
+        ? 'Cronómetro de ${minutos.first} min a andar.'
+        : 'Cronómetros de ${minutos.join(', ')} min a andar.';
     await _correr(() async {
       await ref
           .read(contagemActionsProvider)
-          .assar(
-            data: widget.dia,
-            localId: widget.local.id,
-            porFicha: lista,
-            duracaoMin: min,
-          );
+          .assar(data: widget.dia, localId: widget.local.id, itens: itens);
       if (mounted) setState(_forno.clear);
-    }, 'No forno! Cronómetro de $min min a andar.');
+    }, 'No forno! $resumo');
   }
+
+  Future<void> _tirarItem(Fornada f, ItemFornada i) => _correr(
+    () => ref.read(contagemActionsProvider).tirarItem(f, i.fichaId),
+    'Tirado do forno.',
+  );
 
   Future<void> _tirar(Fornada f) => _correr(
     () => ref.read(contagemActionsProvider).tirarDoForno(f.id),
@@ -620,12 +629,13 @@ class _ContagemRapidaViewState extends ConsumerState<ContagemRapidaView> {
     final agora = DateTime.now();
     return [
       for (final f in fornadas)
-        _CartaoFornada(
+        CartaoFornada(
           fornada: f,
           nomes: nomes,
           agora: agora,
           ocupado: _aGuardar,
-          onTirar: () => _tirar(f),
+          onTirarItem: (i) => _tirarItem(f, i),
+          onTirarTudo: () => _tirar(f),
           onCancelar: () => _cancelar(f),
         ),
       Card(
@@ -735,78 +745,11 @@ class _ContagemRapidaViewState extends ConsumerState<ContagemRapidaView> {
   }
 }
 
-/// Cartão de uma fornada no forno, com cronómetro.
-class _CartaoFornada extends StatelessWidget {
-  const _CartaoFornada({
-    required this.fornada,
-    required this.nomes,
-    required this.agora,
-    required this.ocupado,
-    required this.onTirar,
-    required this.onCancelar,
-  });
-
-  final Fornada fornada;
-  final Map<String, String> nomes;
-  final DateTime agora;
-  final bool ocupado;
-  final VoidCallback onTirar;
-  final VoidCallback onCancelar;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final pronta = fornada.pronta(agora);
-    final restante = fornada.restante(agora);
-    final fundo = pronta ? cs.errorContainer : cs.secondaryContainer;
-    return Card(
-      color: fundo,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(pronta ? Icons.notifications_active : Icons.timer_outlined),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    pronta
-                        ? 'PRONTA! (há ${cronometro(restante)})'
-                        : 'No forno · faltam ${cronometro(restante)}',
-                    style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              [
-                for (final i in fornada.itens)
-                  '${nomes[i.fichaId] ?? 'Produto'} ${_n(i.quantidade)}',
-              ].join(' · '),
-            ),
-            const SizedBox(height: 8),
-            FilledButton.icon(
-              onPressed: ocupado ? null : onTirar,
-              icon: const Icon(Icons.check),
-              label: const Text('Tirei do forno'),
-            ),
-            TextButton(
-              onPressed: ocupado ? null : onCancelar,
-              child: const Text('Foi engano — cancelar'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _MinutosDialog extends StatefulWidget {
-  const _MinutosDialog();
+  const _MinutosDialog({required this.sabores});
+
+  /// Os sabores que não têm o tempo de assadura na ficha.
+  final List<String> sabores;
 
   @override
   State<_MinutosDialog> createState() => _MinutosDialogState();
@@ -837,8 +780,8 @@ class _MinutosDialogState extends State<_MinutosDialog> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Dica: define o "Tempo de assadura" na ficha técnica e a app usa-o '
-            'sozinha.',
+            'Sem tempo na ficha: ${widget.sabores.join(', ')}. Dica: define o '
+            '"Tempo de assadura" na ficha técnica e a app usa-o sozinha.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],

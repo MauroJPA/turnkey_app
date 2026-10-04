@@ -108,6 +108,11 @@ final fornadasNoFornoProvider = FutureProvider.autoDispose
           ref.watch(contagemRepositoryProvider).fornadasNoForno(localId),
     );
 
+/// Tudo o que está no forno, em todos os locais (para o Início e o quiosque).
+final fornadasNoFornoTodasProvider = FutureProvider.autoDispose<List<Fornada>>(
+  (ref) => ref.watch(contagemRepositoryProvider).fornadasNoFornoTodas(),
+);
+
 final contagemActionsProvider = Provider<ContagemActions>(ContagemActions.new);
 
 class ContagemActions {
@@ -179,27 +184,31 @@ class ContagemActions {
   Future<void> assar({
     required DateTime data,
     required String localId,
-    required Map<String, double> porFicha,
-    required int duracaoMin,
+    required List<ItemFornada> itens,
   }) async {
-    await _repo.assar(
-      data: data,
-      localId: localId,
-      porFicha: porFicha,
-      duracaoMin: duracaoMin,
-    );
-    _ref.invalidate(fornadasNoFornoProvider);
+    await _repo.assar(data: data, localId: localId, itens: itens);
+    _refreshForno();
     _refresh();
+  }
+
+  void _refreshForno() {
+    _ref.invalidate(fornadasNoFornoProvider);
+    _ref.invalidate(fornadasNoFornoTodasProvider);
   }
 
   Future<void> tirarDoForno(String fornadaId) async {
     await _repo.tirarDoForno(fornadaId);
-    _ref.invalidate(fornadasNoFornoProvider);
+    _refreshForno();
+  }
+
+  Future<void> tirarItem(Fornada f, String fichaId) async {
+    await _repo.tirarItem(f, fichaId);
+    _refreshForno();
   }
 
   Future<void> cancelarFornada(Fornada f) async {
     await _repo.cancelarFornada(f);
-    _ref.invalidate(fornadasNoFornoProvider);
+    _refreshForno();
     _refresh();
   }
 

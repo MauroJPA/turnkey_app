@@ -9,6 +9,7 @@ import '../../../core/env/app_version.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../daily_count/presentation/forno_widgets.dart';
 import '../../finance/application/custos_fixos_providers.dart';
 import '../../haccp/application/haccp_providers.dart';
 import '../../inventory/application/inventory_providers.dart';
@@ -232,6 +233,8 @@ class HomeShell extends ConsumerWidget {
               destaque: pagamentosProximos.any((p) => p.dias <= 2),
               onTap: () => context.go(Routes.custosFixos),
             ),
+          // o que está no forno (some sozinho quando está vazio)
+          if (acessivel('contagem')) const ResumoFornoCard(),
           if (acessivel('haccp') &&
               ((haccpPorFazer?.length ?? 0) > 0 || (haccpNc ?? 0) > 0))
             _StatCard(

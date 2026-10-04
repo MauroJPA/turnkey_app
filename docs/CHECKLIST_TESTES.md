@@ -1399,6 +1399,18 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] No dia seguinte, sem ter fechado, a abertura vem com o que devia ter ficado.
 - [ ] A escolha Opção 1/2 e Rápido/Detalhe fica memorizada nesse telemóvel.
 
+## 81. Forno com um cronómetro por sabor
+
+- [ ] Assar dois sabores com tempos diferentes (ex.: 12 e 14 min): o cartão mostra uma linha por sabor com
+      "faltam mm:ss", "passaram mm:ss" e a barra de progresso; o de 12 min está à frente.
+- [ ] Aos 12 min só o primeiro avisa (vibra/toca), fica vermelho "PRONTO! passou há…" com "Tirei"; o segundo continua.
+- [ ] "Tirei" tira só esse sabor ("✓ … já saiu"); quando saem todos a fornada desaparece.
+- [ ] "Tirei tudo" tira os que faltam. "Foi engano — cancelar" apaga a fornada e os assados.
+- [ ] Sabores sem tempo na ficha: pergunta os minutos e diz quais são.
+- [ ] Início: cartão "No forno" com uma linha por sabor e o tempo que falta; vermelho "Tirar do forno!" quando
+      algum está pronto; toca e abre a Contagem; some quando o forno está vazio.
+- [ ] Abrir a app noutro telemóvel: os cronómetros aparecem iguais (até 30 s de atraso).
+
 ---
 
 ## Notas / ajustes pedidos

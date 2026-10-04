@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.55.0 — 2026-10-04 — Forno com um cronómetro por sabor (e no Início)
+
+- **Sabores com tempos diferentes**: cada sabor da fornada tem o **seu cronómetro**, com o tempo de assadura da
+  ficha técnica: **"faltam 05:12"**, **"passaram 06:48"** e uma barra de progresso. O que sai primeiro aparece
+  primeiro.
+- Quando um sabor chega ao fim do tempo, **só esse** avisa (vibra e toca) e fica a vermelho com o botão **"Tirei"**;
+  os outros continuam a contar. "Tirei tudo" tira os que faltam; quando saem todos, a fornada fecha.
+- Se vários sabores não têm tempo na ficha, pergunta os minutos uma vez (e diz quais são).
+- **No Início** aparece o cartão **"No forno"** com uma linha por sabor e o tempo que falta (vermelho "Tirar do
+  forno!" quando algum está pronto); toca para abrir a contagem. Só aparece quando há algo no forno.
+- Fornadas feitas na 1.54.0 continuam a funcionar (usam o tempo da fornada para todos os sabores).
+
 ## 1.54.0 — 2026-10-04 — Contagem rápida com botões − / + e forno com cronómetro
 
 - **Contagem diária → separador "Rápido"** (é o que abre por omissão; "Detalhe" tem todas as contas): cada sabor

@@ -162,39 +162,50 @@ class ContagemRepository {
     return recs.map(Fornada.fromRecord).toList();
   }
 
+  /// As fornadas ainda no forno, de todos os locais (para o Início).
+  Future<List<Fornada>> fornadasNoFornoTodas() async {
+    final recs = await _fornadas.getFullList(
+      filter: 'empresa = "$_empresaId" && estado = "no_forno"',
+      sort: 'inicio',
+    );
+    return recs.map(Fornada.fromRecord).toList();
+  }
+
   /// Põe cookies no forno: regista os assados de cada sabor (do dia [data]) e
-  /// a fornada com o seu cronómetro.
+  /// a fornada, com o tempo de forno de cada sabor.
   Future<void> assar({
     required DateTime data,
     required String localId,
-    required Map<String, double> porFicha,
-    required int duracaoMin,
+    required List<ItemFornada> itens,
   }) async {
+    final validos = [
+      for (final i in itens)
+        if (i.quantidade > 0 && i.duracaoMin > 0) i,
+    ];
     final ids = <String>[];
-    for (final e in porFicha.entries) {
-      if (e.value <= 0) continue;
+    for (final i in validos) {
       ids.add(
         await adicionar(
           data: data,
           localId: localId,
-          fichaId: e.key,
+          fichaId: i.fichaId,
           tipo: TipoMovimento.producao,
-          quantidade: e.value,
+          quantidade: i.quantidade,
           notas: 'Fornada',
         ),
       );
     }
+    final maior = validos.fold<int>(
+      0,
+      (m, i) => i.duracaoMin > m ? i.duracaoMin : m,
+    );
     await _fornadas.create(
       body: {
         'empresa': _empresaId,
         'local': localId,
         'inicio': pbDataHora(DateTime.now()),
-        'duracao_min': duracaoMin,
-        'itens': [
-          for (final e in porFicha.entries)
-            if (e.value > 0)
-              ItemFornada(fichaId: e.key, quantidade: e.value).toJson(),
-        ],
+        'duracao_min': maior,
+        'itens': [for (final i in validos) i.toJson()],
         'movimentos': ids,
         'estado': EstadoFornada.noForno.api,
         if (_pb.authStore.record != null) 'autor': _pb.authStore.record!.id,
@@ -204,6 +215,18 @@ class ContagemRepository {
 
   Future<void> tirarDoForno(String fornadaId) =>
       _fornadas.update(fornadaId, body: {'estado': EstadoFornada.tirada.api});
+
+  /// Um sabor saiu do forno; quando saem todos, a fornada fica concluída.
+  Future<void> tirarItem(Fornada f, String fichaId) async {
+    final nova = f.comItemTirado(fichaId);
+    await _fornadas.update(
+      f.id,
+      body: {
+        'itens': [for (final i in nova.itens) i.toJson()],
+        if (nova.todosTirados) 'estado': EstadoFornada.tirada.api,
+      },
+    );
+  }
 
   /// Cancela a fornada e desfaz os assados que ela registou.
   Future<void> cancelarFornada(Fornada f) async {
