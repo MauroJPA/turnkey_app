@@ -310,8 +310,8 @@ class _QuiosqueScreenState extends ConsumerState<QuiosqueScreen> {
         const SizedBox(height: 24),
         if (colaboradores.isEmpty)
           Text(
-            'Ainda não há colaboradores. Quem gere a app cria-os em '
-            '"Colaboradores e cartões".',
+            'Ainda não há ninguém na Equipa. Quem gere a app cria as '
+            'contas em Definições → Equipa.',
             textAlign: TextAlign.center,
             style: tt.bodyMedium,
           )

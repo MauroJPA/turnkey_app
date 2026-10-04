@@ -1,20 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../settings/application/settings_providers.dart';
 import '../data/colaboradores_repository.dart';
 import '../domain/colaborador.dart';
 
-/// Os colaboradores ativos (o quiosque escolhe daqui).
-final colaboradoresProvider = FutureProvider.autoDispose<List<Colaborador>>(
-  (ref) => ref.watch(colaboradoresRepositoryProvider).list(),
-);
-
-/// Todos, também os arquivados (para a gestão).
+/// Todas as pessoas do quiosque: a **Equipa** (as contas da empresa) mais
+/// quem não tem conta, com os cartões — também as escondidas (para a gestão).
 final todosColaboradoresProvider =
-    FutureProvider.autoDispose<List<Colaborador>>(
-      (ref) => ref
-          .watch(colaboradoresRepositoryProvider)
-          .list(incluirArquivados: true),
-    );
+    FutureProvider.autoDispose<List<Colaborador>>((ref) async {
+      final linhas = await ref.watch(colaboradoresRepositoryProvider).linhas();
+      final equipa = await ref.watch(teamMembersProvider.future);
+      return juntarEquipa(
+        linhas: linhas,
+        equipa: [for (final m in equipa) (id: m.id, nome: m.nome)],
+      );
+    });
+
+/// As pessoas que aparecem no quiosque (as não escondidas).
+final colaboradoresProvider = FutureProvider.autoDispose<List<Colaborador>>(
+  (ref) async => [
+    for (final c in await ref.watch(todosColaboradoresProvider.future))
+      if (c.ativo) c,
+  ],
+);
 
 final colaboradoresActionsProvider = Provider<ColaboradoresActions>(
   ColaboradoresActions.new,
@@ -37,18 +45,18 @@ class ColaboradoresActions {
     _refresh();
   }
 
-  Future<void> renomear(String id, String nome) async {
-    await _repo.renomear(id, nome);
+  Future<void> renomear(Colaborador c, String nome) async {
+    await _repo.renomear(c.id, nome);
     _refresh();
   }
 
-  Future<void> definirCartao(String id, String uid) async {
-    await _repo.definirCartao(id, uid);
+  Future<void> definirCartao(Colaborador c, String uid) async {
+    await _repo.definirCartao(c, uid);
     _refresh();
   }
 
-  Future<void> arquivar(String id, {required bool arquivado}) async {
-    await _repo.arquivar(id, arquivado: arquivado);
+  Future<void> arquivar(Colaborador c, {required bool arquivado}) async {
+    await _repo.arquivar(c, arquivado: arquivado);
     _refresh();
   }
 }

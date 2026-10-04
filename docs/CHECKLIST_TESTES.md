@@ -1495,6 +1495,16 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Abrir `/#/ingredientes`, `/#/consumiveis` e `/#/embalagens` leva à secção certa.
 - [ ] Início → "Stock baixo" abre o Inventário.
 
+## 90. O quiosque mostra a Equipa
+
+- [ ] Quiosque: aparecem os nomes de todos os utilizadores da Equipa (Equipa → Utilizadores), sem criar nada.
+- [ ] Equipa e cartões (HACCP → ícone do cartão): lista a Equipa com "Equipa · sem cartão" e as pessoas sem conta.
+- [ ] Associar um cartão a alguém da Equipa guarda-o; passar esse cartão no quiosque entra como essa pessoa.
+- [ ] "Esconder do quiosque" tira a pessoa da lista do quiosque; "Mostrar no quiosque" volta a pô-la.
+- [ ] Mudar o nome de uma conta da Equipa reflete-se no quiosque; a opção "Mudar o nome" só existe para quem não
+      tem conta.
+- [ ] Criar uma conta nova na Equipa faz aparecer a pessoa no quiosque sem mais passos.
+
 ---
 
 ## Notas / ajustes pedidos

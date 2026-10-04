@@ -60,7 +60,7 @@ class HaccpScreen extends ConsumerWidget {
               ),
             if (ref.watch(currentPapelProvider).canEditConfig)
               IconButton(
-                tooltip: 'Colaboradores e cartões',
+                tooltip: 'Equipa e cartões do quiosque',
                 icon: const Icon(Icons.badge_outlined),
                 onPressed: () => context.go(Routes.colaboradores),
               ),

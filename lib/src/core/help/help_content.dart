@@ -298,10 +298,10 @@ const Map<HelpTopic, HelpEntry> helpContent = {
     ],
   ),
   HelpTopic.colaboradores: (
-    titulo: 'Colaboradores e quiosque de tarefas',
+    titulo: 'Equipa, cartões e quiosque de tarefas',
     paragrafos: [
       'O quiosque é um ecrã para o telemóvel que fica na loja ou na fábrica com a app sempre aberta. Mostra só os botões das tarefas diárias (limpezas, temperaturas, pragas, lote…): cada pessoa encosta o seu cartão NFC, toca num botão e fica feito — o registo guarda o nome e a hora.',
-      'Chegas aqui pelo HACCP (ícone do cartão) ou pelo quiosque. Aqui crias um colaborador por pessoa (não precisa de conta na app) e associas-lhe o cartão: menu (⋮) → "Associar cartão" e encosta o cartão à parte de trás do telemóvel. Se não houver leitor NFC, escreve o número de série. Cada cartão só pode ser de uma pessoa.',
+      'Chegas aqui pelo HACCP (ícone do cartão) ou pelo quiosque. Estão aqui todas as pessoas da Equipa (as contas da empresa — não é preciso criar nada) e, se quiseres, pessoas sem conta ("Pessoa sem conta"). Associa o cartão de cada uma: menu (⋮) → "Associar cartão" e encosta o cartão à parte de trás do telemóvel. Se não houver leitor NFC, escreve o número de série. Cada cartão só pode ser de uma pessoa. "Esconder do quiosque" tira alguém da lista sem apagar nada. O nome de quem é da Equipa muda-se na conta.',
       'Sem cartão (esqueceu-se dele): no quiosque toca no teu nome na lista.',
       'As tarefas vêm do HACCP → Controlos. Limpeza e manutenção: um toque. Temperatura: teclado grande (fora dos limites pergunta o que foi feito). Pragas: "Tudo bem" ou "Vi sinais". Outros (ex.: registo de lote): escreve o texto.',
       'O quiosque volta sozinho ao ecrã do cartão 45 segundos depois do último toque. Para sair dele, mantém premido o cadeado (canto superior direito).',

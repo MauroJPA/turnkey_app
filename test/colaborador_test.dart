@@ -28,6 +28,41 @@ void main() {
     expect(colaboradorDoCartao('', todos), isNull); // vazio não casa com "sem cartão"
   });
 
+  test('a Equipa aparece toda, com o cartão de quem já tem linha', () {
+    const linhas = [
+      Colaborador(id: 'L1', nome: 'Ana (antigo)', nfcUid: '04A1', userId: 'u1'),
+      Colaborador(id: 'L2', nome: 'Visitante', nfcUid: '0511'),
+      Colaborador(id: 'L3', nome: 'Rui', userId: 'u2', arquivado: true),
+    ];
+    final r = juntarEquipa(
+      linhas: linhas,
+      equipa: [
+        (id: 'u1', nome: 'Ana Silva'),
+        (id: 'u2', nome: 'Rui'),
+        (id: 'u3', nome: 'Carla'),
+      ],
+    );
+    expect(r.map((c) => c.nome), ['Ana Silva', 'Carla', 'Rui', 'Visitante']);
+    final ana = r.firstWhere((c) => c.userId == 'u1');
+    expect(ana.id, 'L1'); // linha existente
+    expect(ana.nfcUid, '04A1');
+    expect(ana.nome, 'Ana Silva'); // o nome vem da conta
+    final carla = r.firstWhere((c) => c.userId == 'u3');
+    expect(carla.virtual, isTrue); // ainda sem linha
+    expect(carla.id, '${prefixoEquipa}u3');
+    expect(carla.temCartao, isFalse);
+    expect(r.firstWhere((c) => c.userId == 'u2').arquivado, isTrue);
+    expect(r.firstWhere((c) => c.nome == 'Visitante').daEquipa, isFalse);
+  });
+
+  test('uma conta que saiu da Equipa deixa de aparecer', () {
+    final r = juntarEquipa(
+      linhas: const [Colaborador(id: 'L1', nome: 'Velho', userId: 'uX')],
+      equipa: [(id: 'u1', nome: 'Ana')],
+    );
+    expect(r.map((c) => c.nome), ['Ana']);
+  });
+
   test('lê o colaborador do registo', () {
     final c = Colaborador.fromRecord(
       RecordModel({

@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.64.0 — 2026-10-04 — O quiosque mostra a Equipa
+
+- **O quiosque de tarefas lista logo as pessoas da Equipa** (as contas da empresa): não é preciso criar cada
+  uma outra vez. O nome vem da conta.
+- A página passa a chamar-se **"Equipa e cartões"**: aí associas o cartão NFC de cada pessoa (menu ⋮ → "Associar
+  cartão"). O cartão fica guardado na pessoa; quem ainda não tem cartão continua a escolher o nome no quiosque.
+- **"Esconder do quiosque"** tira alguém da lista sem apagar nada (e "Mostrar no quiosque" volta a pô-la).
+- **"Pessoa sem conta"** mantém-se para quem trabalha mas não tem conta na app.
+- Migration `1790940000_colaboradores_equipa.js` (campo `user` em `colaboradores`, uma linha por conta).
+- Os colaboradores já criados na 1.56.0–1.63.0 (sem conta) continuam a aparecer como "Sem conta".
+
 ## 1.63.0 — 2026-10-04 — Inventário numa só página: ingredientes, limpeza, material e embalagens
 
 Quatro sítios que geriam coisas parecidas passam a **uma só página, "Inventário"**, com secções:

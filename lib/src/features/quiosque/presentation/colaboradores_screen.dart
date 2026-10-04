@@ -26,7 +26,7 @@ class ColaboradoresScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go(Routes.home),
         ),
-        title: const Text('Colaboradores e cartões'),
+        title: const Text('Equipa e cartões'),
         actions: [
           IconButton(
             tooltip: 'Abrir o quiosque de tarefas',
@@ -40,7 +40,7 @@ class ColaboradoresScreen extends ConsumerWidget {
           ? FloatingActionButton.extended(
               onPressed: () => _novo(context, ref),
               icon: const Icon(Icons.person_add_alt),
-              label: const Text('Colaborador'),
+              label: const Text('Pessoa sem conta'),
             )
           : null,
       body: AsyncValueView<List<Colaborador>>(
@@ -52,8 +52,8 @@ class ColaboradoresScreen extends ConsumerWidget {
               child: Padding(
                 padding: EdgeInsets.all(24),
                 child: Text(
-                  'Ainda não há colaboradores. Cria um por pessoa e associa-lhe '
-                  'o cartão NFC.',
+                  'Ainda não há ninguém. A Equipa aparece aqui sozinha; para '
+                  'quem não tem conta, usa "Pessoa sem conta".',
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -85,11 +85,15 @@ class ColaboradoresScreen extends ConsumerWidget {
                         : null,
                   ),
                   subtitle: Text(
-                    c.arquivado
-                        ? 'arquivado'
-                        : c.temCartao
-                        ? 'Cartão associado'
-                        : 'Sem cartão',
+                    [
+                      c.daEquipa ? 'Equipa' : 'Sem conta',
+                      if (c.arquivado)
+                        'escondido do quiosque'
+                      else if (c.temCartao)
+                        'cartão associado'
+                      else
+                        'sem cartão',
+                    ].join(' · '),
                   ),
                   trailing: podeGerir
                       ? PopupMenuButton<String>(
@@ -106,13 +110,19 @@ class ColaboradoresScreen extends ConsumerWidget {
                                 value: 'tirar',
                                 child: Text('Tirar o cartão'),
                               ),
-                            const PopupMenuItem(
-                              value: 'nome',
-                              child: Text('Mudar o nome'),
-                            ),
+                            // o nome da Equipa vem da conta (Equipa → Utilizadores)
+                            if (!c.daEquipa)
+                              const PopupMenuItem(
+                                value: 'nome',
+                                child: Text('Mudar o nome'),
+                              ),
                             PopupMenuItem(
                               value: 'arquivar',
-                              child: Text(c.arquivado ? 'Reativar' : 'Arquivar'),
+                              child: Text(
+                                c.arquivado
+                                    ? 'Mostrar no quiosque'
+                                    : 'Esconder do quiosque',
+                              ),
                             ),
                           ],
                         )
@@ -150,14 +160,14 @@ class ColaboradoresScreen extends ConsumerWidget {
               _NomeDialog(titulo: 'Mudar o nome', inicial: c.nome),
         );
         if (n == null || !context.mounted) return;
-        await _tentar(context, () => acoes.renomear(c.id, n));
+        await _tentar(context, () => acoes.renomear(c, n));
       case 'cartao':
         final uid = await showDialog<String>(
           context: context,
           builder: (_) => _CartaoDialog(nome: c.nome),
         );
         if (uid == null || !context.mounted) return;
-        await _tentar(context, () => acoes.definirCartao(c.id, uid));
+        await _tentar(context, () => acoes.definirCartao(c, uid));
       case 'tirar':
         final ok = await confirmDialog(
           context,
@@ -166,11 +176,11 @@ class ColaboradoresScreen extends ConsumerWidget {
           confirmar: 'Tirar',
         );
         if (!ok || !context.mounted) return;
-        await _tentar(context, () => acoes.definirCartao(c.id, ''));
+        await _tentar(context, () => acoes.definirCartao(c, ''));
       case 'arquivar':
         await _tentar(
           context,
-          () => acoes.arquivar(c.id, arquivado: !c.arquivado),
+          () => acoes.arquivar(c, arquivado: !c.arquivado),
         );
     }
   }

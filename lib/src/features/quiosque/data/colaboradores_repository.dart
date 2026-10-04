@@ -20,16 +20,16 @@ class ColaboradoresRepository {
 
   RecordService get _c => _pb.collection('colaboradores');
 
-  Future<List<Colaborador>> list({bool incluirArquivados = false}) async {
-    final filtros = ['empresa = "$_empresaId"'];
-    if (!incluirArquivados) filtros.add('arquivado != true');
+  /// As linhas guardadas (pessoas sem conta e os cartões/estado da Equipa).
+  Future<List<Colaborador>> linhas() async {
     final recs = await _c.getFullList(
-      filter: filtros.join(' && '),
+      filter: 'empresa = "$_empresaId"',
       sort: 'ordem,nome',
     );
     return recs.map(Colaborador.fromRecord).toList();
   }
 
+  /// Uma pessoa sem conta na app.
   Future<void> criar(String nome) => _c.create(
     body: {
       'empresa': _empresaId,
@@ -42,10 +42,31 @@ class ColaboradoresRepository {
   Future<void> renomear(String id, String nome) =>
       _c.update(id, body: {'nome': nome.trim()});
 
-  /// Associa (ou, com vazio, tira) o cartão.
-  Future<void> definirCartao(String id, String uid) =>
-      _c.update(id, body: {'nfc_uid': normalizarUid(uid)});
+  /// Associa (ou, com vazio, tira) o cartão. Se a pessoa é da Equipa e ainda
+  /// não tem linha, cria-a.
+  Future<void> definirCartao(Colaborador c, String uid) {
+    final u = normalizarUid(uid);
+    if (c.virtual) return _criarLinhaDaConta(c, nfcUid: u);
+    return _c.update(c.id, body: {'nfc_uid': u});
+  }
 
-  Future<void> arquivar(String id, {required bool arquivado}) =>
-      _c.update(id, body: {'arquivado': arquivado});
+  /// Esconde (ou volta a mostrar) a pessoa no quiosque.
+  Future<void> arquivar(Colaborador c, {required bool arquivado}) {
+    if (c.virtual) return _criarLinhaDaConta(c, arquivado: arquivado);
+    return _c.update(c.id, body: {'arquivado': arquivado});
+  }
+
+  Future<void> _criarLinhaDaConta(
+    Colaborador c, {
+    String nfcUid = '',
+    bool arquivado = false,
+  }) => _c.create(
+    body: {
+      'empresa': _empresaId,
+      'user': c.userId,
+      'nome': c.nome,
+      'nfc_uid': nfcUid,
+      'arquivado': arquivado,
+    },
+  );
 }
