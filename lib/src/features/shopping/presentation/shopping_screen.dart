@@ -163,6 +163,11 @@ class ShoppingScreen extends ConsumerWidget {
         ),
         title: const Text('Lista de compras'),
         actions: [
+          IconButton(
+            tooltip: 'O que comprei (relatório)',
+            icon: const Icon(Icons.receipt_long_outlined),
+            onPressed: () => context.push(Routes.comprasRelatorio),
+          ),
           if (podeEditar)
             PopupMenuButton<String>(
               onSelected: (v) {

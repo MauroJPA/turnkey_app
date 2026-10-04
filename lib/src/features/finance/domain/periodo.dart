@@ -1,7 +1,7 @@
-/// Tipo de período "de calendário": a semana (domingo a sábado, ignora o mês),
-/// o mês civil (dia 1 ao último dia) ou o ano civil (1 de janeiro a 31 de
-/// dezembro).
-enum TipoPeriodo { semana, mes, ano }
+/// Tipo de período "de calendário": um dia, a semana (domingo a sábado,
+/// ignora o mês), o mês civil (dia 1 ao último dia) ou o ano civil (1 de
+/// janeiro a 31 de dezembro).
+enum TipoPeriodo { dia, semana, mes, ano }
 
 /// Um intervalo de datas (inclusive nas duas pontas) para o painel
 /// financeiro, com o período anterior para comparação.
@@ -54,6 +54,8 @@ class Periodo {
   /// semana anterior; um intervalo livre, com outro da mesma duração.
   Periodo get anterior {
     switch (tipo) {
+      case TipoPeriodo.dia:
+        return diaDe(DateTime(desde.year, desde.month, desde.day - 1));
       case TipoPeriodo.mes:
         return mesDe(DateTime(desde.year, desde.month - 1, 1));
       case TipoPeriodo.semana:
@@ -72,6 +74,8 @@ class Periodo {
   /// O período de calendário a seguir (só faz sentido para semana/mês).
   Periodo get seguinte {
     switch (tipo) {
+      case TipoPeriodo.dia:
+        return diaDe(DateTime(ate.year, ate.month, ate.day + 1));
       case TipoPeriodo.mes:
         return mesDe(DateTime(ate.year, ate.month + 1, 1));
       case TipoPeriodo.semana:
@@ -89,11 +93,13 @@ class Periodo {
 
   /// Fração de um mês "médio" que este período representa — para prorratear
   /// custos fixos (que são sempre um valor *mensal*). Um mês completo dá 1.0;
-  /// uma semana dá sempre 7/30,44, esteja onde estiver no calendário; um ano
-  /// completo dá 12.
+  /// uma semana dá sempre 7/30,44 e um dia 1/30,44, esteja onde estiver no
+  /// calendário; um ano completo dá 12.
   double get fatorProrateioMensal {
     if (tipo == TipoPeriodo.ano) return 12;
-    if (tipo == TipoPeriodo.semana) return dias / 30.44;
+    if (tipo == TipoPeriodo.semana || tipo == TipoPeriodo.dia) {
+      return dias / 30.44;
+    }
     final diasMes = desde.month == ate.month
         ? DateTime(desde.year, desde.month + 1, 0).day
         : 30.44;
@@ -126,6 +132,31 @@ class Periodo {
     'novembro',
     'dezembro',
   ];
+
+  static const _diasSemana = [
+    'Segunda-feira',
+    'Terça-feira',
+    'Quarta-feira',
+    'Quinta-feira',
+    'Sexta-feira',
+    'Sábado',
+    'Domingo',
+  ];
+
+  /// Um único dia (para ver o vendido e a venda mínima desse dia).
+  static Periodo diaDe(DateTime d, {DateTime? hoje}) {
+    final dia = _diaZero(d);
+    final h = _diaZero(hoje ?? DateTime.now());
+    final String label;
+    if (dia == h) {
+      label = 'Hoje';
+    } else if (dia == DateTime(h.year, h.month, h.day - 1)) {
+      label = 'Ontem';
+    } else {
+      label = _diasSemana[dia.weekday - 1];
+    }
+    return Periodo(desde: dia, ate: dia, label: label, tipo: TipoPeriodo.dia);
+  }
 
   /// A semana (domingo a sábado) que contém [d] — ignora o mês.
   static Periodo semanaDe(DateTime d, {DateTime? hoje}) {
@@ -188,6 +219,8 @@ class Periodo {
       tipo: TipoPeriodo.ano,
     );
   }
+
+  static Periodo diaAtual() => diaDe(DateTime.now());
 
   static Periodo semanaAtual() => semanaDe(DateTime.now());
 

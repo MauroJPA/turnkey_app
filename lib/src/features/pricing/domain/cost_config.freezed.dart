@@ -25,6 +25,7 @@ mixin _$CostConfig {
   double get despesasFixas => throw _privateConstructorUsedError;
   double get taxasFinanceiras => throw _privateConstructorUsedError;
   double get margemLucro => throw _privateConstructorUsedError;
+  double get ivaVendas => throw _privateConstructorUsedError;
 
   /// Create a copy of CostConfig
   /// with the given fields replaced by the non-null parameter values.
@@ -49,6 +50,7 @@ abstract class $CostConfigCopyWith<$Res> {
     double despesasFixas,
     double taxasFinanceiras,
     double margemLucro,
+    double ivaVendas,
   });
 }
 
@@ -75,6 +77,7 @@ class _$CostConfigCopyWithImpl<$Res, $Val extends CostConfig>
     Object? despesasFixas = null,
     Object? taxasFinanceiras = null,
     Object? margemLucro = null,
+    Object? ivaVendas = null,
   }) {
     return _then(
       _value.copyWith(
@@ -110,6 +113,10 @@ class _$CostConfigCopyWithImpl<$Res, $Val extends CostConfig>
                 ? _value.margemLucro
                 : margemLucro // ignore: cast_nullable_to_non_nullable
                       as double,
+            ivaVendas: null == ivaVendas
+                ? _value.ivaVendas
+                : ivaVendas // ignore: cast_nullable_to_non_nullable
+                      as double,
           )
           as $Val,
     );
@@ -134,6 +141,7 @@ abstract class _$$CostConfigImplCopyWith<$Res>
     double despesasFixas,
     double taxasFinanceiras,
     double margemLucro,
+    double ivaVendas,
   });
 }
 
@@ -159,6 +167,7 @@ class __$$CostConfigImplCopyWithImpl<$Res>
     Object? despesasFixas = null,
     Object? taxasFinanceiras = null,
     Object? margemLucro = null,
+    Object? ivaVendas = null,
   }) {
     return _then(
       _$CostConfigImpl(
@@ -194,6 +203,10 @@ class __$$CostConfigImplCopyWithImpl<$Res>
             ? _value.margemLucro
             : margemLucro // ignore: cast_nullable_to_non_nullable
                   as double,
+        ivaVendas: null == ivaVendas
+            ? _value.ivaVendas
+            : ivaVendas // ignore: cast_nullable_to_non_nullable
+                  as double,
       ),
     );
   }
@@ -211,6 +224,7 @@ class _$CostConfigImpl extends _CostConfig {
     this.despesasFixas = 0,
     this.taxasFinanceiras = 0,
     this.margemLucro = 0,
+    this.ivaVendas = 0,
   }) : super._();
 
   @override
@@ -236,10 +250,13 @@ class _$CostConfigImpl extends _CostConfig {
   @override
   @JsonKey()
   final double margemLucro;
+  @override
+  @JsonKey()
+  final double ivaVendas;
 
   @override
   String toString() {
-    return 'CostConfig(id: $id, salario: $salario, aluguel: $aluguel, impostos: $impostos, servicos: $servicos, despesasFixas: $despesasFixas, taxasFinanceiras: $taxasFinanceiras, margemLucro: $margemLucro)';
+    return 'CostConfig(id: $id, salario: $salario, aluguel: $aluguel, impostos: $impostos, servicos: $servicos, despesasFixas: $despesasFixas, taxasFinanceiras: $taxasFinanceiras, margemLucro: $margemLucro, ivaVendas: $ivaVendas)';
   }
 
   @override
@@ -259,7 +276,9 @@ class _$CostConfigImpl extends _CostConfig {
             (identical(other.taxasFinanceiras, taxasFinanceiras) ||
                 other.taxasFinanceiras == taxasFinanceiras) &&
             (identical(other.margemLucro, margemLucro) ||
-                other.margemLucro == margemLucro));
+                other.margemLucro == margemLucro) &&
+            (identical(other.ivaVendas, ivaVendas) ||
+                other.ivaVendas == ivaVendas));
   }
 
   @override
@@ -273,6 +292,7 @@ class _$CostConfigImpl extends _CostConfig {
     despesasFixas,
     taxasFinanceiras,
     margemLucro,
+    ivaVendas,
   );
 
   /// Create a copy of CostConfig
@@ -294,6 +314,7 @@ abstract class _CostConfig extends CostConfig {
     final double despesasFixas,
     final double taxasFinanceiras,
     final double margemLucro,
+    final double ivaVendas,
   }) = _$CostConfigImpl;
   const _CostConfig._() : super._();
 
@@ -313,6 +334,8 @@ abstract class _CostConfig extends CostConfig {
   double get taxasFinanceiras;
   @override
   double get margemLucro;
+  @override
+  double get ivaVendas;
 
   /// Create a copy of CostConfig
   /// with the given fields replaced by the non-null parameter values.

@@ -194,7 +194,9 @@ class _NumerosMagicosScreenState extends ConsumerState<NumerosMagicosScreen> {
                   ),
                   _linha(
                     context,
-                    'Mínimo para o período inteiro',
+                    n.periodo.tipo == TipoPeriodo.dia
+                        ? 'Mínimo para este dia'
+                        : 'Mínimo para o período inteiro',
                     fmt(n.vendaMinimaDoPeriodo!),
                   ),
                   if (n.periodoComparado != null) ...[
@@ -273,8 +275,100 @@ class _NumerosMagicosScreenState extends ConsumerState<NumerosMagicosScreen> {
               ),
             ),
           ),
+          if (n.periodo.dias > 1 &&
+              n.periodo.dias <= 31 &&
+              n.vendaMinimaDiaria != null) ...[
+            const SizedBox(height: 12),
+            _diaADia(context, n, fmt),
+          ],
         ],
       ],
+    );
+  }
+
+  /// Dia a dia: o vendido de cada dia contra a venda mínima diária.
+  Widget _diaADia(BuildContext context, NumerosMagicos n, MoneyFmt fmt) {
+    final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final minimo = n.vendaMinimaDiaria!;
+    final hoje = DateTime.now();
+    final hojeZero = DateTime(hoje.year, hoje.month, hoje.day);
+    const sem = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
+    final dias = [
+      for (var i = 0; i < n.periodo.dias; i++)
+        DateTime(
+          n.periodo.desde.year,
+          n.periodo.desde.month,
+          n.periodo.desde.day + i,
+        ),
+    ].where((d) => !d.isAfter(hojeZero)).toList();
+    var bateu = 0;
+    for (final d in dias) {
+      if ((n.vendasPorDia[d] ?? 0) >= minimo) bateu++;
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Dia a dia', style: tt.titleMedium),
+            const SizedBox(height: 2),
+            Text(
+              'Venda mínima por dia: ${fmt(minimo)} · bateste o mínimo em '
+              '$bateu de ${dias.length} dia(s).',
+              style: tt.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            for (final d in dias.reversed)
+              Builder(
+                builder: (_) {
+                  final v = n.vendasPorDia[d] ?? 0;
+                  final ok = v >= minimo;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Row(
+                      children: [
+                        Icon(
+                          ok
+                              ? Icons.check_circle_outline
+                              : Icons.radio_button_unchecked,
+                          size: 18,
+                          color: ok ? cs.primary : cs.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '${sem[d.weekday - 1]} '
+                            '${d.day.toString().padLeft(2, '0')}/'
+                            '${d.month.toString().padLeft(2, '0')}',
+                          ),
+                        ),
+                        Text(
+                          fmt(v),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(
+                          width: 88,
+                          child: Text(
+                            ok
+                                ? '+${fmt(v - minimo)}'
+                                : '−${fmt(minimo - v)}',
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              color: ok ? cs.primary : cs.error,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
     );
   }
 

@@ -73,5 +73,6 @@ final numerosMagicosProvider = FutureProvider.autoDispose
         impostoPercent: costConfig.impostos,
         cmvPercent: costConfig.cmvPercent,
         receitaPeriodo: receitaPeriodo,
+        vendasPorDia: vendidoPorDia(resultado.vendas),
       );
     });

@@ -583,6 +583,20 @@ List<FolhaRelatorio> montarRelatorio(EntradaRelatorio e) {
     final resultado = margemBruta == null
         ? null
         : margemBruta - fixas - variaveis - deprec;
+    // IVA: cobrado nas vendas (registado ou estimado) e pago nas compras
+    var ivaLiq = 0.0;
+    var ivaDesconhecido = false;
+    for (final (_, it) in doMes) {
+      final s = _semIva(it, e.ivaAssumidoPercent);
+      if (s.valor == null) {
+        ivaDesconhecido = true;
+      } else {
+        ivaLiq += it.totalLinha - s.valor!;
+      }
+    }
+    final ivaCompras = desp
+        .where((d) => d.fonte == 'fatura' && d.semIva != null)
+        .fold<double>(0, (s, d) => s + d.comIva - d.semIva!);
     resumo.add([
       chave,
       docs,
@@ -596,6 +610,9 @@ List<FolhaRelatorio> montarRelatorio(EntradaRelatorio e) {
       _r2(deprec),
       _r2(compras),
       resultado == null ? null : _r2(resultado),
+      ivaDesconhecido ? null : _r2(ivaLiq),
+      _r2(ivaCompras),
+      ivaDesconhecido ? null : _r2(ivaLiq - ivaCompras),
     ]);
 
     final saidasFaturas = desp
@@ -630,6 +647,9 @@ List<FolhaRelatorio> montarRelatorio(EntradaRelatorio e) {
       'depreciacao_equipamentos',
       'compras_ingredientes_e_embalagem',
       'resultado_estimado',
+      'iva_cobrado_nas_vendas',
+      'iva_das_compras',
+      'iva_a_entregar',
     ],
     linhas: resumo,
   );

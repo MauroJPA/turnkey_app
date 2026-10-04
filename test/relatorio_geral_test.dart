@@ -356,6 +356,10 @@ void main() {
       expect(c('compras_ingredientes_e_embalagem'), 100);
       // 7.6 - 600 - 80 - 10
       expect(c('resultado_estimado'), -682.4);
+      // IVA: 10,60 - 10 = 0,60 cobrado; a fatura de 123 tem 23 de IVA
+      expect(c('iva_cobrado_nas_vendas'), 0.6);
+      expect(c('iva_das_compras'), 23);
+      expect(c('iva_a_entregar'), -22.4);
     });
 
     test('resumo mensal sem IVA completo deixa o resultado em branco', () {

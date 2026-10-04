@@ -51,6 +51,11 @@ class CostConfig with _$CostConfig {
     @Default(0) double despesasFixas,
     @Default(0) double taxasFinanceiras,
     @Default(0) double margemLucro,
+
+    /// Taxa de IVA das vendas (%), para estimar o IVA quando a venda não
+    /// traz o valor sem IVA. 0 = não definida. Não faz parte da quebra do
+    /// preço (não entra em [somaOutros]).
+    @Default(0) double ivaVendas,
   }) = _CostConfig;
 
   const CostConfig._();
@@ -64,6 +69,7 @@ class CostConfig with _$CostConfig {
         despesasFixas: r.getDoubleValue('despesas_fixas'),
         taxasFinanceiras: r.getDoubleValue('taxas_financeiras'),
         margemLucro: r.getDoubleValue('margem_de_lucro'),
+        ivaVendas: r.getDoubleValue('iva_vendas'),
       );
 
   Map<String, dynamic> toBody() => {
@@ -74,6 +80,7 @@ class CostConfig with _$CostConfig {
         'despesas_fixas': despesasFixas,
         'taxas_financeiras': taxasFinanceiras,
         'margem_de_lucro': margemLucro,
+        'iva_vendas': ivaVendas,
       };
 
   /// Rubricas nomeadas (para a quebra do preço).

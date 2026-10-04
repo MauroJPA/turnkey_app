@@ -3,6 +3,8 @@ import 'package:pocketbase/pocketbase.dart';
 
 import '../../../core/auth/current_user.dart';
 import '../../../core/pocketbase/pb_client.dart';
+import '../../sales/domain/venda.dart' show ymd;
+import '../domain/compra_registada.dart';
 import '../domain/stock_item.dart';
 
 final inventoryRepositoryProvider = Provider<InventoryRepository>((ref) {
@@ -167,6 +169,31 @@ class InventoryRepository {
     );
     return ((res as Map<String, dynamic>)['quantidade'] as num?)?.toDouble() ??
         0;
+  }
+
+  /// As compras que deram entrada no stock entre [desde] e [ate] (inclusive,
+  /// em dias locais): dar o visto na lista de compras ou aplicar uma fatura.
+  Future<List<CompraRegistada>> compras({
+    required DateTime desde,
+    required DateTime ate,
+  }) async {
+    String utc(DateTime local) {
+      final u = local.toUtc();
+      return '${ymd(u)} '
+          '${u.hour.toString().padLeft(2, '0')}:'
+          '${u.minute.toString().padLeft(2, '0')}:00.000Z';
+    }
+
+    final inicio = DateTime(desde.year, desde.month, desde.day);
+    final fim = DateTime(ate.year, ate.month, ate.day + 1);
+    final recs = await _pb.collection('movimentos_inventario').getFullList(
+          filter:
+              'empresa = "$_empresaId" && motivo = "compra" && delta > 0 && '
+              'created >= "${utc(inicio)}" && created < "${utc(fim)}"',
+          sort: 'created',
+          expand: 'ingrediente,consumivel',
+        );
+    return recs.map(CompraRegistada.fromRecord).toList();
   }
 
   Future<List<MovimentoStock>> movimentos({

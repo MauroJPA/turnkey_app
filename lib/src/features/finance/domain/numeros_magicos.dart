@@ -1,4 +1,15 @@
+import '../../sales/domain/venda.dart';
 import 'periodo.dart';
+
+/// Soma o total das vendas de cada dia.
+Map<DateTime, double> vendidoPorDia(Iterable<Venda> vendas) {
+  final out = <DateTime, double>{};
+  for (final v in vendas) {
+    final d = DateTime(v.data.year, v.data.month, v.data.day);
+    out[d] = (out[d] ?? 0) + v.total;
+  }
+  return out;
+}
 
 /// "Números mágicos": o ponto a partir do qual tudo o que se vender é
 /// lucro, porque os custos reais + imposto + CMV já estão cobertos.
@@ -13,6 +24,7 @@ class NumerosMagicos {
     required this.receitaPeriodo,
     this.periodoComparado,
     this.receitaComparada = 0,
+    this.vendasPorDia = const {},
     this.diasUteisMes = 26,
   });
 
@@ -41,6 +53,9 @@ class NumerosMagicos {
 
   final int diasUteisMes;
 
+  /// Vendido em cada dia do [periodo] (só os dias com vendas).
+  final Map<DateTime, double> vendasPorDia;
+
   /// Variação do vendido face ao [periodoComparado], em % (`null` se não há
   /// nada vendido nesse período para comparar).
   double? get variacaoVendidoPercent =>
@@ -66,9 +81,12 @@ class NumerosMagicos {
 
   /// A venda mínima mensal, na proporção da duração do [periodo] escolhido
   /// — para comparar com [receitaPeriodo].
-  double? get vendaMinimaDoPeriodo => vendaMinimaMensal == null
-      ? null
-      : vendaMinimaMensal! * periodo.fatorProrateioMensal;
+  double? get vendaMinimaDoPeriodo {
+    if (vendaMinimaMensal == null) return null;
+    // um único dia: a venda mínima diária (mensal ÷ dias de trabalho)
+    if (periodo.tipo == TipoPeriodo.dia) return vendaMinimaDiaria;
+    return vendaMinimaMensal! * periodo.fatorProrateioMensal;
+  }
 
   /// Positivo = falta vender para bater o mínimo do período; negativo = já
   /// passou o mínimo (o excedente é lucro puro).

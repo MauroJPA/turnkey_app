@@ -15,6 +15,7 @@ enum HelpTopic {
   agenda,
   planoDetalhe,
   compras,
+  comprasRelatorio,
   inventario,
   faturas,
   faturaRevisao,
@@ -177,6 +178,14 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Menu (⋮): "Reorganizar lista" apaga os comprados e recalcula; "Limpar lista" apaga tudo. Ambos pedem confirmação.',
     ],
   ),
+  HelpTopic.comprasRelatorio: (
+    titulo: 'O que comprei',
+    paragrafos: [
+      'Mostra tudo o que deu entrada no stock por compra num período: quando dás o visto na lista de compras ou quando aplicas uma fatura com a ação de stock.',
+      'Escolhe o dia, a semana, o mês ou o ano e agrupa por dia, por fornecedor ou por produto. O custo é estimado (quantidade × preço atual do produto); para o valor exato de cada compra, vê as Faturas.',
+      'O ícone de descarregar guarda a lista num ficheiro CSV (abre no Excel). Este histórico não se apaga quando limpas a lista de compras.',
+    ],
+  ),
   HelpTopic.inventario: (
     titulo: 'Inventário',
     paragrafos: [
@@ -299,7 +308,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Mostra a partir de quanto vendido, por mês (e por dia), tudo já está pago — custos fixos, variáveis, depreciação dos equipamentos, imposto e o custo da matéria-prima (CMV). A partir daí, cada euro vendido a mais continua a levar imposto e CMV; só o que sobra depois disso é lucro líquido.',
       'Os percentuais de Imposto e CMV vêm de Configurações → Percentuais de custo — muda-os lá se precisares.',
       'A "venda mínima" é sempre um valor mensal cheio; o cartão de baixo compara com o que já vendeste no período escolhido, para veres se estás perto ou longe do objetivo.',
-      'Períodos: a Semana vai de domingo a sábado (ignora o mês), o Mês vai do dia 1 ao último dia e o Ano de 1 de janeiro a 31 de dezembro. São sempre contados inteiros — por isso o mínimo do período não muda de um dia para o outro; só o "vendido" vai subindo. As datas exatas aparecem por baixo do nome do período; usa as setas para ver semanas/meses anteriores (toca nas datas para saltar para um dia).',
+      'Períodos: o Dia é um único dia (a venda mínima desse dia contra o que vendeste nesse dia), a Semana vai de domingo a sábado (ignora o mês), o Mês vai do dia 1 ao último dia e o Ano de 1 de janeiro a 31 de dezembro. Na semana e no mês há uma lista "Dia a dia" com o vendido de cada dia contra a venda mínima diária. São sempre contados inteiros — por isso o mínimo do período não muda de um dia para o outro; só o "vendido" vai subindo. As datas exatas aparecem por baixo do nome do período; usa as setas para ver semanas/meses anteriores (toca nas datas para saltar para um dia).',
       'Se o aviso de percentuais aparecer, é porque Imposto + CMV somam 100% ou mais — nesse caso não há venda que cubra os custos só com esses dois; revê os valores em Configurações.',
     ],
   ),
@@ -309,9 +318,10 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Junta as Vendas e os Custos fixos num só sítio: quanto entrou, quanto saiu e o lucro, por semana ou mês.',
       '"Custo dos produtos vendidos" é o custo real da matéria-prima do que foi vendido (guardado em cada venda no momento em que foi registada).',
       '"Distribuição teórica" mostra, com as percentagens atuais de Configurações → Percentuais de custo, para onde o valor vendido deveria ir (matéria-prima, salário, aluguel...). É um modelo, não o dinheiro que saiu de verdade — isso são os Custos fixos, mostrados por cima.',
-      'A seta ao lado de cada número compara com o período anterior (a semana anterior, ou o mês civil anterior). A Semana vai de domingo a sábado, o Mês do dia 1 ao último dia e o Ano de 1 de janeiro a 31 de dezembro; as datas exatas aparecem por cima e as setas levam-te a períodos passados.',
+      'A seta ao lado de cada número compara com o período anterior (a semana anterior, ou o mês civil anterior). O Dia é um único dia, a Semana vai de domingo a sábado, o Mês do dia 1 ao último dia e o Ano de 1 de janeiro a 31 de dezembro; as datas exatas aparecem por cima e as setas levam-te a períodos passados.',
       'Se houver vendas sem produto identificado (ex.: de uma importação de CSV), o custo delas não é conhecido — aparece um aviso e o lucro fica sobrestimado nessa medida.',
       'Ícone do relatório (canto superior, só administradores): gera o Relatório geral num ficheiro Excel (.xlsx, uma folha por relatório) ou em CSV (.zip), para os últimos 12 meses (ou 6, ou este ano, ou o período do painel). Inclui resumo mensal, vendas por canal e sabor, produção, custo por sabor (com histórico de preços de compra), despesas por categoria e tesouraria. As folhas que a app ainda não regista (plataformas de entrega, pessoal, eventos, origem dos clientes) vão como modelos por preencher; a folha "Leia-me" diz o que está completo. Margens são sem IVA: o valor sem IVA vem do Vendus quando existe, ou estima-se com a taxa que escolheres.',
+      '"IVA a separar": o IVA cobrado nas vendas menos o IVA das faturas de compra confirmadas = o que há a entregar ao Estado (ou crédito de IVA, se as compras tiveram mais). Vê-se por dia, semana, mês ou ano, e há uma lista "Dia a dia". O IVA das vendas vem do Vendus quando existe; senão estima-se com a taxa "IVA das vendas" que defines em Configurações → Percentuais de custo. Reserva este valor: não é lucro teu.',
       '"Dicas para melhorar" (só administradores): toca em "Gerar dicas com IA" e a IA lê os números do período mostrado e do anterior (receita, lucro, custos fixos e variáveis, CMV, imposto) e sugere o que atacar. Faz isto no fim de cada semana ou mês para ir melhorando. São sugestões geradas por IA — avalia antes de agir. Os fixos não se eliminam; os variáveis podem reduzir-se ou cortar-se.',
     ],
   ),
@@ -382,7 +392,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
     paragrafos: [
       'Empresa: nome, moeda e regra de arredondamento.',
       'Aparência: modo claro/escuro, cor da app e logótipo. Aplica-se a toda a equipa.',
-      'Percentuais de custo: salário, aluguer, impostos, etc. — usados para sugerir o preço de venda nas fichas técnicas.',
+      'Percentuais de custo: salário, aluguer, impostos, etc. — usados para sugerir o preço de venda nas fichas técnicas. O campo "IVA das vendas" é à parte: serve só para estimar o IVA a entregar no Painel financeiro.',
       'Formatos de cookie e Equipa têm páginas próprias, acessíveis aqui.',
     ],
   ),

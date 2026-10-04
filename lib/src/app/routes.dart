@@ -13,6 +13,7 @@ abstract class Routes {
   static const miseEnPlace = '/mise-en-place';
   static const schedule = '/agenda';
   static const shopping = '/compras';
+  static const comprasRelatorio = '/compras/relatorio';
   static const inventory = '/inventario';
   static const invoices = '/faturas';
   static const sales = '/vendas';

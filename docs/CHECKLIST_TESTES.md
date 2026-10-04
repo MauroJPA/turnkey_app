@@ -1329,6 +1329,22 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Relatório geral (Painel financeiro) inclui a folha "2 Contagem diaria".
 - [ ] Um utilizador "só ver" não vê os botões de registar.
 
+## 76. IVA a separar, dia e relatório de compras
+
+- [ ] Configurações → Percentuais de custo → "IVA das vendas" (ex.: 13): guarda sem afetar o "Sobra X % para a
+      matéria-prima".
+- [ ] Painel financeiro → cartão "IVA a separar" mostra IVA cobrado, IVA das compras e "A entregar ao Estado";
+      muda ao mudar a semana/mês/ano; a lista "Dia a dia" abre e mostra cada dia.
+- [ ] Sem a taxa definida e sem valor sem IVA do Vendus, avisa que há linhas sem IVA contado.
+- [ ] O seletor de período tem Dia · Semana · Mês · Ano em todos os ecrãs financeiros; "Dia" mostra Hoje /
+      Ontem / dia da semana e navega dia a dia.
+- [ ] Números mágicos → Dia: "Mínimo para este dia" = venda mínima mensal ÷ 26 e o vendido desse dia.
+- [ ] Números mágicos → Semana/Mês: lista "Dia a dia" com ✓ nos dias em que se bateu o mínimo.
+- [ ] Compras → ícone "O que comprei": lista as compras do período por dia / fornecedor / produto, com
+      total estimado; "Descarregar CSV" abre no Excel.
+- [ ] Dar o visto num item da lista de compras e "limpar comprados": a compra continua no relatório.
+- [ ] Relatório geral → "Resumo mensal" tem as colunas de IVA.
+
 ---
 
 ## Notas / ajustes pedidos

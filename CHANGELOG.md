@@ -2,6 +2,24 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.50.0 — 2026-10-04 — IVA a separar, vista diária e relatório do que foi comprado
+
+- **Painel financeiro → "IVA a separar"**: o **IVA cobrado nas vendas** − o **IVA das faturas de compra
+  confirmadas** = o que há a **entregar ao Estado** (ou crédito de IVA). Por dia, semana, mês ou ano, com a
+  lista **"Dia a dia"** (vendido com IVA e IVA de cada dia). O IVA das vendas vem do Vendus quando existe;
+  senão estima-se com a nova taxa **"IVA das vendas"** (Configurações → Percentuais de custo; não entra nos
+  percentuais do preço). O cartão avisa quantas linhas foram estimadas ou ficaram sem IVA.
+- **Novo período "Dia"** em todos os ecrãs financeiros (Painel, DRE, Análise de vendas, Números mágicos,
+  Desperdício…): um único dia. Nos **Números mágicos**, a venda mínima do dia (mínimo mensal ÷ 26 dias) contra
+  o que vendeste nesse dia; e, na semana e no mês, uma lista **"Dia a dia"** com o vendido de cada dia contra o
+  mínimo diário (✓ quando o bateste).
+- **Compras → ícone "O que comprei"**: relatório do que deu entrada no stock por compra (dar o visto na lista
+  de compras ou aplicar faturas) por dia, semana, mês ou ano, agrupado por **dia / fornecedor / produto**,
+  com custo estimado e **descarregar CSV**. O histórico não se perde ao limpar a lista de compras.
+- **Relatório geral** (Excel/CSV): o "Resumo mensal" ganha `iva_cobrado_nas_vendas`, `iva_das_compras` e
+  `iva_a_entregar`.
+- Nova migration `1790880000_iva_vendas.js` (campo `iva_vendas` em `configuracoes_custo`).
+
 ## 1.49.0 — 2026-10-04 — Contagem diária por local (loja, Alvalade, plataformas) e desperdício
 
 - **Nova página "Contagem diária"** (em *Todas as páginas*; pode ir para o rodapé): para cada **local**

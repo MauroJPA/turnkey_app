@@ -23,12 +23,14 @@ class SeletorPeriodo extends StatelessWidget {
   TipoPeriodo get _tipo => periodo.tipo ?? TipoPeriodo.semana;
 
   Periodo _de(TipoPeriodo t, DateTime ref) => switch (t) {
+    TipoPeriodo.dia => Periodo.diaDe(ref),
     TipoPeriodo.mes => Periodo.mesDe(ref),
     TipoPeriodo.ano => Periodo.anoDe(ref),
     TipoPeriodo.semana => Periodo.semanaDe(ref),
   };
 
   String get _nomeTipo => switch (_tipo) {
+    TipoPeriodo.dia => 'dia',
     TipoPeriodo.mes => 'mês',
     TipoPeriodo.ano => 'ano',
     TipoPeriodo.semana => 'semana',
@@ -53,7 +55,8 @@ class SeletorPeriodo extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     final hoje = _hoje;
     final atual = periodo.contem(hoje);
-    final aDecorrer = atual && periodo.ate.isAfter(hoje);
+    final aDecorrer =
+        atual && periodo.ate.isAfter(hoje) && _tipo != TipoPeriodo.dia;
     final podeAvancar = !periodo.seguinte.desde.isAfter(hoje);
 
     return Padding(
@@ -64,21 +67,10 @@ class SeletorPeriodo extends StatelessWidget {
           SegmentedButton<TipoPeriodo>(
             showSelectedIcon: false,
             segments: const [
-              ButtonSegment(
-                value: TipoPeriodo.semana,
-                label: Text('Semana'),
-                icon: Icon(Icons.view_week_outlined),
-              ),
-              ButtonSegment(
-                value: TipoPeriodo.mes,
-                label: Text('Mês'),
-                icon: Icon(Icons.calendar_month_outlined),
-              ),
-              ButtonSegment(
-                value: TipoPeriodo.ano,
-                label: Text('Ano'),
-                icon: Icon(Icons.event_note_outlined),
-              ),
+              ButtonSegment(value: TipoPeriodo.dia, label: Text('Dia')),
+              ButtonSegment(value: TipoPeriodo.semana, label: Text('Semana')),
+              ButtonSegment(value: TipoPeriodo.mes, label: Text('Mês')),
+              ButtonSegment(value: TipoPeriodo.ano, label: Text('Ano')),
             ],
             selected: {_tipo},
             onSelectionChanged: (s) =>

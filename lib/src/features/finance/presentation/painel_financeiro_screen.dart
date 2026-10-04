@@ -12,6 +12,7 @@ import '../application/resumo_financeiro_providers.dart';
 import '../domain/periodo.dart';
 import '../domain/resumo_financeiro.dart';
 import 'dicas_ia_card.dart';
+import 'iva_card.dart';
 import 'relatorio_geral_sheet.dart';
 import 'seletor_periodo.dart';
 
@@ -141,6 +142,8 @@ class _PainelFinanceiroScreenState
             ),
           ),
         ),
+        const SizedBox(height: 12),
+        IvaCard(periodo: r.periodo),
         if (r.numLinhasSemFicha > 0) ...[
           const SizedBox(height: 12),
           Text(

@@ -42,6 +42,7 @@ import '../features/schedule/presentation/plan_detail_screen.dart';
 import '../features/schedule/presentation/schedule_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/settings/presentation/team_screen.dart';
+import '../features/shopping/presentation/compras_relatorio_screen.dart';
 import '../features/shopping/presentation/shopping_screen.dart';
 import '../features/tech_sheets/presentation/tech_sheet_detail_screen.dart';
 import '../features/tech_sheets/presentation/tech_sheets_screen.dart';
@@ -136,6 +137,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: Routes.shopping,
             builder: (_, __) => const ShoppingScreen(),
+            routes: [
+              GoRoute(
+                path: 'relatorio',
+                builder: (_, __) => const ComprasRelatorioScreen(),
+              ),
+            ],
           ),
           GoRoute(
             path: Routes.inventory,

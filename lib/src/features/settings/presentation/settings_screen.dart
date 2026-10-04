@@ -33,6 +33,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _custos = <String, TextEditingController>{
     for (final k in _rubricas.keys) k: TextEditingController(),
   };
+  final _ivaVendas = TextEditingController();
   Moeda _moeda = Moeda.eur;
   RegraArredondamento _regra = RegraArredondamento.cima;
   TemaApp _tema = TemaApp.sistema;
@@ -68,6 +69,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     for (final c in _custos.values) {
       c.dispose();
     }
+    _ivaVendas.dispose();
     super.dispose();
   }
 
@@ -96,6 +98,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _custos['despesasFixas']!.text = _n(c.despesasFixas);
     _custos['taxasFinanceiras']!.text = _n(c.taxasFinanceiras);
     _custos['margemLucro']!.text = _n(c.margemLucro);
+    _ivaVendas.text = c.ivaVendas > 0 ? _n(c.ivaVendas) : '';
   }
 
   static String _n(double v) =>
@@ -119,6 +122,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     despesasFixas: _v('despesasFixas'),
     taxasFinanceiras: _v('taxasFinanceiras'),
     margemLucro: _v('margemLucro'),
+    ivaVendas:
+        double.tryParse(_ivaVendas.text.replaceAll(',', '.').trim()) ?? 0,
   );
 
   Future<void> _run(String ok, Future<void> Function() action) async {
@@ -386,6 +391,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   onChanged: (_) => setState(() {}),
                 ),
               ),
+            const Divider(height: 28),
+            TextField(
+              controller: _ivaVendas,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'IVA das vendas',
+                suffixText: '%',
+                helperText:
+                    'Não entra nos percentuais acima. Serve para estimar o IVA '
+                    'a entregar quando uma venda não traz o valor sem IVA '
+                    '(Painel financeiro → IVA a separar).',
+                helperMaxLines: 3,
+              ),
+            ),
             const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerLeft,
