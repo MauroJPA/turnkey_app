@@ -111,6 +111,20 @@ const paginasApp = <PaginaApp>[
     'Temperaturas, limpezas, pragas e extintor',
   ),
   PaginaApp(
+    'quiosque',
+    Routes.quiosque,
+    'Quiosque de tarefas',
+    Icons.touch_app_outlined,
+    'Cartão NFC e um botão por tarefa diária',
+  ),
+  PaginaApp(
+    'colaboradores',
+    Routes.colaboradores,
+    'Colaboradores e cartões',
+    Icons.badge_outlined,
+    'Quem regista tarefas e o seu cartão NFC',
+  ),
+  PaginaApp(
     'encomendas',
     Routes.encomendas,
     'Encomendas',

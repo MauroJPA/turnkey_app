@@ -1411,6 +1411,24 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       algum está pronto; toca e abre a Contagem; some quando o forno está vazio.
 - [ ] Abrir a app noutro telemóvel: os cronómetros aparecem iguais (até 30 s de atraso).
 
+## 82. Quiosque de tarefas e colaboradores
+
+- [ ] Todas as páginas → "Colaboradores e cartões": criar dois colaboradores; só proprietário/administrador vê os botões
+      de criar/editar.
+- [ ] "Associar cartão" (Chrome no Android, HTTPS): encostar o cartão guarda-o ("Cartão associado"); o mesmo cartão a
+      outra pessoa é recusado ("já está associado"). Sem NFC: escrever o número de série funciona.
+- [ ] Quiosque: sem cartão mostra "Quem és tu?" com os nomes; com o cartão encostado entra direto ("Olá, Ana").
+- [ ] Cartão desconhecido: aparece "Cartão não reconhecido." durante uns segundos.
+- [ ] Um toque numa limpeza regista (faixa "✓ … registado, Ana"); em HACCP → Registos aparece com o nome da Ana.
+- [ ] Temperatura: o teclado grande regista; fora dos limites (ex.: 8 °C no frigorífico) pede o que foi feito e fica
+      como não conformidade.
+- [ ] Pragas: "Tudo bem" regista conforme; "Vi sinais" pede a nota e fica como problema.
+- [ ] Registo de lote: pede o texto e regista-o nas notas.
+- [ ] 45 s sem tocar → volta ao ecrã do cartão. "Terminar" volta de imediato.
+- [ ] Sair do quiosque: manter premido o cadeado leva ao Início (um toque simples não sai).
+- [ ] O quiosque mostra o cartão "No forno" quando há algo no forno.
+- [ ] Um utilizador "viewer" não consegue registar tarefas (a base de dados recusa).
+
 ---
 
 ## Notas / ajustes pedidos

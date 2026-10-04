@@ -428,6 +428,13 @@ def teste_papeis():
         if rid:
             s, _, _ = call('PATCH', f'/api/collections/{col}/records/{rid[0]}', {'salario': 1}, tok['editorA'])
             check(s != 200, f'{col}: editor não altera configuração de custos', f'status {s}')
+    # cartões NFC identificam quem fez os registos: só owner/admin os gere
+    colab = dados.get(('colaboradores', 'A'))
+    if colab:
+        s, _, _ = call('PATCH', f'/api/collections/colaboradores/records/{colab[0]}', {'nome': 'X'}, tok['editorA'])
+        check(s != 200, 'colaboradores: editor não altera colaboradores nem cartões', f'status {s}')
+        s, _, _ = call('PATCH', f'/api/collections/colaboradores/records/{colab[0]}', {'nome': 'Colaborador A'}, tok['adminA'])
+        check(s == 200, 'colaboradores: admin gere colaboradores e cartões', f'status {s}')
     s, _, _ = call('PATCH', f'/api/collections/empresas/records/{empresas["A"]}', {'nome': 'X'}, tok['editorA'])
     check(s != 200, 'empresas: editor não altera a empresa')
     s, _, _ = call('PATCH', f'/api/collections/empresas/records/{empresas["A"]}', {'nome': 'Empresa A'}, tok['adminA'])

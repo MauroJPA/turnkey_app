@@ -2,6 +2,26 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.56.0 — 2026-10-04 — Quiosque de tarefas com cartão NFC e colaboradores
+
+- **Novo "Quiosque de tarefas"** (em *Todas as páginas*): um ecrã inteiro, sem rodapé, para o telemóvel que fica na
+  loja/fábrica com a app sempre aberta. Mostra só **um botão grande por tarefa** (as do HACCP: limpezas,
+  temperaturas, pragas, extintor, lote…), a vermelho/laranja/verde conforme estejam em atraso, por fazer ou feitas.
+  - **Cartão NFC**: cada pessoa encosta o seu cartão e a app sabe quem é ("Olá, Ana"). Sem cartão (ou sem NFC no
+    aparelho) toca-se no próprio nome na lista.
+  - **Um toque regista**: limpeza e manutenção ficam logo registadas com o nome e a hora. **Temperatura**: teclado
+    numérico grande (fora dos limites pergunta o que foi feito, com opções rápidas). **Pragas**: "Tudo bem" ou "Vi
+    sinais". **Lote/outros**: escreve-se o texto.
+  - Volta sozinho ao ecrã do cartão **45 s** depois do último toque. Para sair do quiosque: mantém premido o cadeado.
+  - Mostra também o que **está no forno**, com o tempo de cada sabor.
+- **Nova página "Colaboradores e cartões"** (só proprietário/administrador): cria cada colaborador (não precisa de
+  conta na app) e associa-lhe o cartão encostando-o ao telemóvel (ou escrevendo o número de série). Um cartão só
+  pode ser de uma pessoa.
+- HACCP: novo controlo habitual **"Registo de lote"** (escreve-se o lote no quiosque).
+- **Requisito do NFC**: o leitor só funciona no **Chrome do Android** e com a app aberta por **HTTPS**; o
+  navegador pede permissão na primeira vez. Sem isso o quiosque funciona na mesma, escolhendo o nome.
+- Nova migration `1790930000_colaboradores.js` (coleção `colaboradores`).
+
 ## 1.55.0 — 2026-10-04 — Forno com um cronómetro por sabor (e no Início)
 
 - **Sabores com tempos diferentes**: cada sabor da fornada tem o **seu cronómetro**, com o tempo de assadura da

@@ -460,6 +460,14 @@ List<ControloInput> controlosHabituais() => [
     ordem: 8,
     instrucoes: 'Indicar a data da próxima revisão.',
   ),
+  ControloInput(
+    nome: 'Registo de lote',
+    tipo: TipoControlo.outro,
+    periodicidadeDias: 0,
+    ordem: 9,
+    instrucoes:
+        'Escrever o número do lote (receção de matérias-primas ou produção).',
+  ),
 ];
 
 // ---------------------------------------------------------------------------

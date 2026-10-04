@@ -33,6 +33,8 @@ import '../features/production/presentation/cart_review_screen.dart';
 import '../features/production/presentation/production_screen.dart';
 import '../features/products/presentation/produto_detail_screen.dart';
 import '../features/products/presentation/produtos_screen.dart';
+import '../features/quiosque/presentation/colaboradores_screen.dart';
+import '../features/quiosque/presentation/quiosque_screen.dart';
 import '../features/recipe_categories/presentation/recipe_categories_screen.dart';
 import '../features/recipes/presentation/recipe_detail_screen.dart';
 import '../features/recipes/presentation/recipes_screen.dart';
@@ -98,6 +100,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.pendente,
         builder: (_, __) => const PendingApprovalScreen(),
+      ),
+      // Quiosque de tarefas: ecrã inteiro, sem rodapé, para o telemóvel que
+      // fica na loja/fábrica com os cartões NFC dos colaboradores.
+      GoRoute(
+        path: Routes.quiosque,
+        builder: (_, __) => const QuiosqueScreen(),
       ),
       // Todas as secções autenticadas — sempre com a barra de navegação
       // inferior (rodapé) para acesso rápido a qualquer página.
@@ -206,6 +214,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: Routes.haccp,
             builder: (_, __) => const HaccpScreen(),
+          ),
+          GoRoute(
+            path: Routes.colaboradores,
+            builder: (_, __) => const ColaboradoresScreen(),
           ),
           GoRoute(
             path: Routes.painelFinanceiro,

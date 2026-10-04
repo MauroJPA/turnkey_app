@@ -205,7 +205,7 @@ void main() {
   });
 
   test(
-    'controlos habituais cobrem temperatura, limpeza, pragas e extintor',
+    'controlos habituais cobrem temperatura, limpeza, pragas, extintor e lote',
     () {
       final h = controlosHabituais();
       expect(h.map((c) => c.tipo).toSet(), {
@@ -213,6 +213,7 @@ void main() {
         TipoControlo.limpeza,
         TipoControlo.praga,
         TipoControlo.manutencao,
+        TipoControlo.outro, // registo de lote
       });
       final arca = h.firstWhere((c) => c.nome.contains('congeladora'));
       expect(arca.limiteMax, -18);

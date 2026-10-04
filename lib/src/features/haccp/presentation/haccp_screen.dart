@@ -13,6 +13,7 @@ import '../../settings/application/empresa_providers.dart';
 import '../application/haccp_providers.dart';
 import '../domain/haccp.dart';
 import 'haccp_controlo_dialog.dart';
+import 'haccp_icones.dart';
 import 'haccp_registo_sheet.dart';
 
 String _dmy(DateTime d) =>
@@ -24,14 +25,6 @@ String _n(double v) =>
       '.',
       ',',
     );
-
-IconData _icone(TipoControlo t) => switch (t) {
-  TipoControlo.temperatura => Icons.thermostat_outlined,
-  TipoControlo.limpeza => Icons.cleaning_services_outlined,
-  TipoControlo.praga => Icons.pest_control_outlined,
-  TipoControlo.manutencao => Icons.fire_extinguisher_outlined,
-  TipoControlo.outro => Icons.fact_check_outlined,
-};
 
 const _estiloEstadoImpressao = '''
   h2 { font-size: 15px; margin: 18px 0 2px; }
@@ -212,7 +205,7 @@ class _CartaoControlo extends StatelessWidget {
 
     return Card(
       child: ListTile(
-        leading: Icon(_icone(c.tipo), color: cor),
+        leading: Icon(iconeDoControlo(c.tipo), color: cor),
         title: Text(c.nome),
         subtitle: Text(
           '$detalhes\n'
@@ -486,7 +479,7 @@ class _ControlosTab extends ConsumerWidget {
               Card(
                 child: ListTile(
                   leading: Icon(
-                    _icone(c.tipo),
+                    iconeDoControlo(c.tipo),
                     color: c.arquivado ? Theme.of(context).disabledColor : null,
                   ),
                   title: Text(

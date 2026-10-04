@@ -24,6 +24,7 @@ enum HelpTopic {
   encomendas,
   contagem,
   haccp,
+  colaboradores,
   custosFixos,
   equipamentos,
   numerosMagicos,
@@ -294,6 +295,17 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Manutenções e validades (extintor, empresa de pragas): ao registar, indica a data da próxima revisão — o lembrete usa essa data.',
       'Separador "Registos": escolhe o período e, se quiseres, um só controlo. A impressora abre o relatório pronto a imprimir ou a guardar em PDF.',
       'Separador "Controlos": cria, edita ou arquiva controlos e define a frequência (diária, semanal, mensal, anual, ocasional) e os limites de temperatura. "Adicionar os controlos habituais" cria uma lista de partida.',
+    ],
+  ),
+  HelpTopic.colaboradores: (
+    titulo: 'Colaboradores e quiosque de tarefas',
+    paragrafos: [
+      'O quiosque é um ecrã para o telemóvel que fica na loja ou na fábrica com a app sempre aberta. Mostra só os botões das tarefas diárias (limpezas, temperaturas, pragas, lote…): cada pessoa encosta o seu cartão NFC, toca num botão e fica feito — o registo guarda o nome e a hora.',
+      'Aqui crias um colaborador por pessoa (não precisa de conta na app) e associas-lhe o cartão: menu (⋮) → "Associar cartão" e encosta o cartão à parte de trás do telemóvel. Se não houver leitor NFC, escreve o número de série. Cada cartão só pode ser de uma pessoa.',
+      'Sem cartão (esqueceu-se dele): no quiosque toca no teu nome na lista.',
+      'As tarefas vêm do HACCP → Controlos. Limpeza e manutenção: um toque. Temperatura: teclado grande (fora dos limites pergunta o que foi feito). Pragas: "Tudo bem" ou "Vi sinais". Outros (ex.: registo de lote): escreve o texto.',
+      'O quiosque volta sozinho ao ecrã do cartão 45 segundos depois do último toque. Para sair dele, mantém premido o cadeado (canto superior direito).',
+      'Leitura de cartões: só funciona no Chrome do Android e com a app aberta por HTTPS. Na primeira vez o navegador pede permissão para o NFC.',
     ],
   ),
   HelpTopic.custosFixos: (

@@ -21,6 +21,8 @@ abstract class Routes {
   static const contagem = '/contagem';
   static const contagemRelatorios = '/contagem/relatorios';
   static const haccp = '/haccp';
+  static const quiosque = '/quiosque';
+  static const colaboradores = '/colaboradores';
   static const analiseVendas = '/vendas/analise';
   static const vendasNaoIdentificadas = '/vendas/nao-identificados';
   static const painelFinanceiro = '/financeiro';
