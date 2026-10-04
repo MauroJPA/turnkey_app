@@ -4,6 +4,7 @@ import 'package:pocketbase/pocketbase.dart';
 
 import '../../../core/auth/auth_controller.dart';
 import '../../../core/auth/auth_repository.dart';
+import '../../../core/errors/mensagem_amigavel.dart';
 
 /// Provedores OAuth2 ativos no servidor (ex.: `['google']`).
 final _oauthProvidersProvider = FutureProvider.autoDispose<List<String>>(
@@ -201,7 +202,7 @@ class _SocialButtonsState extends ConsumerState<_SocialButtons> {
     } on Object catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+            .showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
       }
     } finally {
       if (mounted) setState(() => _busy = null);

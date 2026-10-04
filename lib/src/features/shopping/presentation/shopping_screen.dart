@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
@@ -50,7 +51,7 @@ class ShoppingScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('$e')));
+        ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
       }
     }
   }
@@ -77,7 +78,7 @@ class ShoppingScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('$e')));
+        ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
       }
     }
   }
@@ -727,7 +728,7 @@ class _NovoItemSheetState extends ConsumerState<_NovoItemSheet> {
         Expanded(
           child: async.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('$e')),
+            error: (e, _) => Center(child: Text(mensagemAmigavel(e))),
             data: (todos) {
               final itens = todos
                   .where((i) => i.correspondeABusca(_busca.text))

@@ -2,6 +2,16 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.62.0 — 2026-10-04 — Mensagens de erro claras em todos os ecrãs
+
+- Em **33 ecrãs** (receitas, vendas, compras, fichas, embalagens, formatos, agenda, definições…) um erro aparecia
+  em bruto, por exemplo `ClientException: {url: http://…, statusCode: 400 …}`, com o endereço do servidor à vista.
+  Passa tudo a **uma frase em português**: "Sem ligação ao servidor…", a mensagem do servidor quando é nossa
+  (ex.: "Esta ficha não tem massa…") ou "Não foi possível concluir. Tenta de novo.".
+- As listas que falham a carregar ("Tentar de novo") usam a mesma frase.
+- Erros técnicos (com endereços, `Null`, `type '…'`) nunca se mostram.
+- A função passou para `core/errors/mensagem_amigavel.dart`; o ficheiro antigo continua a apontar para ela.
+
 ## 1.61.0 — 2026-10-04 — "Produtos" passa para dentro da ficha técnica (uma só informação nutricional)
 
 A página **Produtos** e a **declaração nutricional** da ficha técnica faziam o mesmo, e só a impressão feita nos

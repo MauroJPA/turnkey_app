@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/printing/print_html.dart';
 import '../../settings/application/empresa_providers.dart';
@@ -269,7 +270,7 @@ class _EncomendaFormSheetState extends ConsumerState<_EncomendaFormSheet> {
     } on Object catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+            .showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);

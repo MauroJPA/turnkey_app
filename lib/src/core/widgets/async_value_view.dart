@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../errors/mensagem_amigavel.dart';
+
 /// Renderização padrão de um [AsyncValue]: dados, carregamento e erro
 /// (com botão de repetir).
 class AsyncValueView<T> extends StatelessWidget {
@@ -29,7 +31,7 @@ class AsyncValueView<T> extends StatelessWidget {
             children: [
               const Icon(Icons.error_outline, size: 40),
               const SizedBox(height: 8),
-              Text('$err', textAlign: TextAlign.center),
+              Text(mensagemAmigavel(err), textAlign: TextAlign.center),
               if (onRetry != null) ...[
                 const SizedBox(height: 12),
                 OutlinedButton(

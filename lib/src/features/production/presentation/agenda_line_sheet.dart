@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
+import '../../../core/errors/mensagem_amigavel.dart';
 import '../../cookie_formats/application/cookie_format_providers.dart';
 import '../../cookie_formats/domain/cookie_format.dart';
 import '../../recipes/domain/recipe.dart';
@@ -192,7 +193,7 @@ class _AgendaLinhaSheetState extends ConsumerState<_AgendaLinhaSheet> {
           if (_produtoFinal)
             formatosAsync.when(
             loading: () => const LinearProgressIndicator(),
-            error: (e, _) => Text('$e'),
+            error: (e, _) => Text(mensagemAmigavel(e)),
             data: (formatos) {
               if (!_formatoEscolhido && formatos.isNotEmpty) {
                 _formato = formatos.firstWhere(

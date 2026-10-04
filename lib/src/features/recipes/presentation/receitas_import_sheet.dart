@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 
+import '../../../core/errors/mensagem_amigavel.dart';
 import '../../import_csv/domain/import_result.dart';
 import '../../invoices/domain/invoice_erros.dart';
 import '../../recipe_categories/application/categoria_receita_providers.dart';
@@ -217,7 +218,7 @@ class _ImportarReceitasSheetState
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('$e')));
+        ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
       }
     }
   }
@@ -233,7 +234,7 @@ class _ImportarReceitasSheetState
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('$e')));
+        ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);

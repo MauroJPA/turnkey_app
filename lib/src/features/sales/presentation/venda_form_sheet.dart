@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../pricing/data/cost_config_repository.dart';
 import '../../tech_sheets/domain/tech_sheet.dart';
@@ -137,7 +138,7 @@ class _VendaFormSheetState extends ConsumerState<_VendaFormSheet> {
     } on Object catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+            .showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);

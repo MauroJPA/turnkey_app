@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/current_user.dart';
+import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../application/nota_pagina_providers.dart';
@@ -57,7 +58,7 @@ class _NotasPaginaSheetState extends ConsumerState<_NotasPaginaSheet> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('$e')));
+        ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
       }
     } finally {
       if (mounted) setState(() => _enviando = false);
@@ -79,7 +80,7 @@ class _NotasPaginaSheetState extends ConsumerState<_NotasPaginaSheet> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('$e')));
+        ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
       }
     }
   }

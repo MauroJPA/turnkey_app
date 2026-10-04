@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/feedback/application/nota_pagina_providers.dart';
 import '../../features/feedback/data/suggestion_repository.dart';
 import '../../features/feedback/presentation/notas_pagina_sheet.dart';
+import '../errors/mensagem_amigavel.dart';
 import '../help/help_content.dart';
 
 /// Botão único do `AppBar` de qualquer página: ajuda, notas da equipa e
@@ -178,7 +179,7 @@ Future<void> _abrirSugestao(
                         setState(() => enviando = false);
                         ScaffoldMessenger.of(
                           ctx,
-                        ).showSnackBar(SnackBar(content: Text('$e')));
+                        ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
                       }
                     }
                   },

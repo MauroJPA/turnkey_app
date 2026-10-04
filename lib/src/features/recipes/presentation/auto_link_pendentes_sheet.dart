@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/errors/mensagem_amigavel.dart';
 import '../../ingredients/application/ingredients_providers.dart';
 import '../../ingredients/domain/ingredient.dart';
 import '../application/recipes_providers.dart';
@@ -25,7 +26,7 @@ Future<void> ligarPendentesAutomaticamente(
     if (context.mounted) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('$e')));
+      ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
     }
     return;
   }

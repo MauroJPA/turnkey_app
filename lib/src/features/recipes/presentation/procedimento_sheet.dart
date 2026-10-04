@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/current_user.dart';
+import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../application/recipes_providers.dart';
 import '../data/recipe_repository.dart';
@@ -36,7 +37,7 @@ class _ProcedimentoSheetState extends ConsumerState<_ProcedimentoSheet> {
     } on Object catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+            .showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -191,7 +192,7 @@ class _ProcedimentoSheetState extends ConsumerState<_ProcedimentoSheet> {
       height: MediaQuery.of(context).size.height * 0.85,
       child: detailAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, _) => Center(child: Text(mensagemAmigavel(e))),
         data: (d) {
           final receita = d.receita;
           final passos = receita.passos;

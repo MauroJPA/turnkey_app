@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/formatting/dates.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
@@ -100,7 +101,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
     } on Object catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+            .showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
       }
     }
   }
@@ -394,7 +395,7 @@ class _AjusteSheetState extends ConsumerState<_AjusteSheet> {
     } on Object catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+            .showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../dashboard/presentation/home_shell.dart' show marcaAppBar;
@@ -137,7 +138,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('$e')));
+        ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);

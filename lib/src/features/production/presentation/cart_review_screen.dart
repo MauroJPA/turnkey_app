@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
+import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../schedule/application/schedule_providers.dart';
@@ -61,7 +62,7 @@ class _CartReviewScreenState extends ConsumerState<CartReviewScreen> {
     } on Object catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+            .showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/formatting/quantities.dart';
 import '../../../core/nutrition/nutri_widgets.dart';
 import '../../ingredients/application/ingredients_providers.dart';
@@ -78,7 +79,7 @@ class _SheetState extends ConsumerState<_Sheet> {
     } on Object catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+            .showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);

@@ -1472,6 +1472,14 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Ficha com "Nutrição em falta" (faixa amarela): tocar abre "Completar a nutrição" e leva ao ingrediente.
 - [ ] Abrir `/#/produtos` ou `/#/produtos/<id>` redireciona (lista de fichas / informação da ficha).
 
+## 88. Mensagens de erro claras
+
+- [ ] Desligar o servidor/internet e tentar guardar algo (ex.: uma receita): aparece "Sem ligação ao servidor…" e
+      nenhum endereço (`http://…`).
+- [ ] Abrir a Informação do produto de uma ficha sem massa: o aviso dos ingredientes é uma frase em português,
+      sem `ClientException`.
+- [ ] Uma lista que não carrega mostra a frase e o botão "Tentar de novo".
+
 ---
 
 ## Notas / ajustes pedidos

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/errors/mensagem_amigavel.dart';
 import '../application/configuracoes_encomendas_providers.dart';
 import '../data/configuracoes_encomendas_repository.dart';
 import '../domain/configuracao_encomendas.dart';
@@ -70,7 +71,7 @@ class _EncomendasConfigSheetState
     } on Object catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$e')));
+            .showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
