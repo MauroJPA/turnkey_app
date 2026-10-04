@@ -73,14 +73,7 @@ const paginasApp = <PaginaApp>[
     Routes.techSheets,
     'Fichas Técnicas',
     Icons.receipt_long_outlined,
-    'Produtos e preço de venda',
-  ),
-  PaginaApp(
-    'produtos',
-    Routes.produtos,
-    'Produtos',
-    Icons.bakery_dining_outlined,
-    'Declaração nutricional e ingredientes',
+    'Custo, preço de venda e informação do produto',
   ),
   PaginaApp(
     'faturas',

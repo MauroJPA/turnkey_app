@@ -1461,6 +1461,17 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] O ícone do cartão abre "Colaboradores e cartões"; a seta de voltar vai ao Início.
 - [ ] Configurações → navegação (rodapé e páginas escondidas) abre sem erros depois da remoção.
 
+## 87. Informação do produto dentro da ficha
+
+- [ ] Todas as páginas já não tem "Produtos"; "Fichas Técnicas" diz "Custo, preço de venda e informação do produto".
+- [ ] Abrir uma ficha → ícone do prato: abre a "Informação do produto" (nutrição, ingredientes, alergénios,
+      conservação); voltar regressa à ficha.
+- [ ] Nessa página: copiar, imprimir a etiqueta (completa e resumida) e editar funcionam como antes em Produtos.
+- [ ] Lista de fichas: ficha com informação por completar mostra o prato vermelho (passar o rato/segurar mostra o
+      que falta); o filtro "Informação por completar" mostra só essas.
+- [ ] Ficha com "Nutrição em falta" (faixa amarela): tocar abre "Completar a nutrição" e leva ao ingrediente.
+- [ ] Abrir `/#/produtos` ou `/#/produtos/<id>` redireciona (lista de fichas / informação da ficha).
+
 ---
 
 ## Notas / ajustes pedidos

@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/nutrition/nutri_widgets.dart';
-import '../../../core/printing/print_html.dart';
 import '../../ingredients/application/ingredients_providers.dart';
 import '../../ingredients/presentation/nutricao_sheet.dart';
 import '../../recipes/application/recipes_providers.dart';
@@ -12,6 +9,10 @@ import '../../recipes/presentation/nutricao_receita_sheet.dart';
 import '../application/tech_sheets_providers.dart';
 import '../domain/tech_sheet.dart';
 
+/// Ajuda a completar a nutrição de uma ficha: lista os ingredientes (ou
+/// massas) sem dados e leva, em cascata, ao sítio onde se preenchem. A
+/// informação já pronta (tabela, ingredientes, alergénios, etiqueta) está na
+/// "Informação do produto" da ficha.
 Future<void> showDeclaracaoNutricionalSheet(
   BuildContext context, {
   required FichaTecnica ficha,
@@ -64,20 +65,10 @@ class _SheetState extends ConsumerState<_Sheet> {
     ref.watch(recipesListProvider(false));
     final ficha =
         ref.watch(fichaDetailProvider(widget.ficha.id)).valueOrNull?.ficha ??
-            widget.ficha;
+        widget.ficha;
     final n = ficha.nutri;
-    final porUnidade = n.porUnidade;
-    final resumo = alergeniosResumo(n.alergenios, n.alergeniosTracos);
-
-    final texto = declaracaoTexto(
-      titulo: ficha.nome,
-      por100g: n.por100g,
-      porUnidade: porUnidade,
-      pesoUnidadeG: n.pesoUnidadeG,
-      alergenios: n.alergenios,
-      alergeniosTracos: n.alergeniosTracos,
-      completo: n.completo,
-    );
+    final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -91,45 +82,15 @@ class _SheetState extends ConsumerState<_Sheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text('Declaração nutricional',
-                      style: Theme.of(context).textTheme.titleLarge),
-                ),
-                if (!n.vazio) ...[
-                  IconButton(
-                    tooltip: 'Imprimir',
-                    icon: const Icon(Icons.print_outlined, size: 20),
-                    onPressed: () => abrirImpressao(
-                      'Declaração nutricional — ${ficha.nome}',
-                      declaracaoHtml(
-                        titulo: ficha.nome,
-                        por100g: n.por100g,
-                        porUnidade: porUnidade,
-                        pesoUnidadeG: n.pesoUnidadeG,
-                        alergenios: n.alergenios,
-                        alergeniosTracos: n.alergeniosTracos,
-                        completo: n.completo,
-                      ),
-                    ),
-                  ),
-                  TextButton.icon(
-                    icon: const Icon(Icons.copy, size: 18),
-                    label: const Text('Copiar'),
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: texto));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Declaração copiada.')),
-                      );
-                    },
-                  ),
-                ],
-              ],
-            ),
-            Text(ficha.nome, style: Theme.of(context).textTheme.bodySmall),
+            Text('Completar a nutrição', style: tt.titleLarge),
+            Text(ficha.nome, style: tt.bodySmall),
             const SizedBox(height: 12),
-            if (n.vazio && n.semDados.isEmpty)
+            if (!n.vazio && n.completo)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Text('A nutrição desta ficha está completa.'),
+              )
+            else if (n.semDados.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 16),
                 child: Text(
@@ -138,59 +99,29 @@ class _SheetState extends ConsumerState<_Sheet> {
                 ),
               )
             else ...[
-              if (!n.vazio)
-                NutriTabela(
-                  col1Titulo: 'por 100 g',
-                  col1: n.por100g,
-                  col2Titulo: porUnidade != null
-                      ? (n.pesoUnidadeG > 0
-                          ? 'unidade (${n.pesoUnidadeG.toStringAsFixed(0)} g)'
-                          : 'unidade')
-                      : null,
-                  col2: porUnidade,
-                ),
-              if (!n.completo) ...[
-                const SizedBox(height: 8),
-                Text(
-                  n.vazio
-                      ? 'Sem valores porque estes ingredientes ainda não têm '
+              Text(
+                n.vazio
+                    ? 'Sem valores porque estes ingredientes ainda não têm '
                           'nutrição. Toca para preencher (vai em cascata pelas '
                           'massas e ingredientes):'
-                      : 'Valores incompletos — toca para preencher a nutrição de:',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                    fontSize: 12,
-                  ),
-                ),
-                for (final sd in n.semDados)
-                  InkWell(
-                    onTap: () => _corrigir(sd),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.error_outline, size: 18),
-                          const SizedBox(width: 12),
-                          Expanded(child: Text(sd.nome)),
-                          const Icon(Icons.chevron_right),
-                        ],
-                      ),
+                    : 'Valores incompletos — toca para preencher a nutrição de:',
+                style: TextStyle(color: cs.error),
+              ),
+              for (final sd in n.semDados)
+                InkWell(
+                  onTap: () => _corrigir(sd),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline, size: 18),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text(sd.nome)),
+                        const Icon(Icons.chevron_right),
+                      ],
                     ),
                   ),
-              ],
-              if (resumo.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Text('Alergénios',
-                    style: Theme.of(context).textTheme.labelLarge),
-                const SizedBox(height: 4),
-                Text(resumo),
-              ],
-              const SizedBox(height: 8),
-              Text(
-                'Cálculo a partir dos valores dos ingredientes '
-                '(Reg. (UE) 1169/2011). Confirma com os rótulos.',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+                ),
             ],
           ],
         ),

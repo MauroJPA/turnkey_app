@@ -111,9 +111,9 @@ class ProdutoDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(Routes.produtos),
+          onPressed: () => context.go('${Routes.techSheets}/$fichaId'),
         ),
-        title: Text(ficha?.nome ?? 'Produto'),
+        title: Text(ficha?.nome ?? 'Informação do produto'),
         actions: [
           if (ficha != null)
             IconButton(
@@ -136,13 +136,13 @@ class ProdutoDetailScreen extends ConsumerWidget {
             ),
           if (ficha != null)
             IconButton(
-              tooltip: 'Imprimir etiqueta',
+              tooltip: 'Imprimir etiqueta e informação nutricional',
               icon: const Icon(Icons.print_outlined),
               onPressed: () => showEtiquetaSheet(context, ficha: ficha),
             ),
           if (ficha != null && podeEditar)
             IconButton(
-              tooltip: 'Editar dados do produto',
+              tooltip: 'Editar a ficha (descrição, validade, conservação)',
               icon: const Icon(Icons.edit_outlined),
               onPressed: () => _editar(context, ref, ficha),
             ),

@@ -32,7 +32,6 @@ import '../features/packaging/presentation/embalagens_screen.dart';
 import '../features/production/presentation/cart_review_screen.dart';
 import '../features/production/presentation/production_screen.dart';
 import '../features/products/presentation/produto_detail_screen.dart';
-import '../features/products/presentation/produtos_screen.dart';
 import '../features/quiosque/presentation/colaboradores_screen.dart';
 import '../features/quiosque/presentation/quiosque_screen.dart';
 import '../features/recipe_categories/presentation/recipe_categories_screen.dart';
@@ -263,15 +262,15 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
+          // a antiga página "Produtos" passou para dentro da ficha técnica
           GoRoute(
             path: Routes.produtos,
-            builder: (_, __) => const ProdutosScreen(),
+            redirect: (_, __) => Routes.techSheets,
             routes: [
               GoRoute(
                 path: ':id',
-                builder: (_, state) => ProdutoDetailScreen(
-                  fichaId: state.pathParameters['id']!,
-                ),
+                redirect: (_, state) =>
+                    Routes.fichaInformacao(state.pathParameters['id']!),
               ),
             ],
           ),
@@ -284,6 +283,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, state) => TechSheetDetailScreen(
                   fichaId: state.pathParameters['id']!,
                 ),
+                routes: [
+                  GoRoute(
+                    path: 'informacao',
+                    builder: (_, state) => ProdutoDetailScreen(
+                      fichaId: state.pathParameters['id']!,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

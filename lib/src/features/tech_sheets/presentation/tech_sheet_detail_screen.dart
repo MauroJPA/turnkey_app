@@ -178,10 +178,10 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
         actions: [
           detailAsync.maybeWhen(
             data: (d) => IconButton(
-              tooltip: 'Declaração nutricional',
+              tooltip: 'Informação do produto: nutrição, ingredientes, etiqueta',
               icon: const Icon(Icons.local_dining_outlined),
               onPressed: () =>
-                  showDeclaracaoNutricionalSheet(context, ficha: d.ficha),
+                  context.push(Routes.fichaInformacao(widget.fichaId)),
             ),
             orElse: () => const SizedBox.shrink(),
           ),

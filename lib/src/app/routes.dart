@@ -37,5 +37,7 @@ abstract class Routes {
   static const cookieFormats = '/opcoes/formatos';
   static const categoriasReceita = '/opcoes/categorias-receita';
   static const navegacao = '/opcoes/navegacao';
+  /// Antiga página "Produtos" (hoje: a informação do produto dentro da ficha).
   static const produtos = '/produtos';
+  static String fichaInformacao(String id) => '/fichas-tecnicas/$id/informacao';
 }

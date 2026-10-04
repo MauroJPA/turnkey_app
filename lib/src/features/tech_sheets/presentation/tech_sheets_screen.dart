@@ -15,6 +15,7 @@ import '../../../core/widgets/swipe_to_delete.dart';
 import '../../cookie_formats/application/cookie_format_providers.dart';
 import '../../pricing/data/cost_config_repository.dart';
 import '../../pricing/domain/cost_config.dart';
+import '../../products/domain/produto_rotulo.dart';
 import '../application/tech_sheets_providers.dart';
 import '../domain/tech_sheet.dart';
 import 'ficha_form_sheet.dart';
@@ -29,6 +30,7 @@ class TechSheetsScreen extends ConsumerStatefulWidget {
 class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
   String _q = '';
   String? _categoria;
+  bool _soPorCompletar = false;
   bool _trash = false;
   bool _busy = false;
 
@@ -125,6 +127,9 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
   Widget build(BuildContext context) {
     final listAsync = ref.watch(fichasListProvider(_trash));
     final configAsync = ref.watch(costConfigProvider);
+    final porCompletar = (listAsync.valueOrNull ?? const <FichaTecnica>[])
+        .where((f) => pendenciasProduto(f).isNotEmpty)
+        .length;
     final categoriasEmUso =
         (listAsync.valueOrNull ?? const <FichaTecnica>[])
             .map((f) => f.categoria)
@@ -181,13 +186,23 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
               ),
             ),
           ),
-          if (!_trash && categoriasEmUso.length > 1)
+          if (!_trash && (categoriasEmUso.length > 1 || porCompletar > 0))
             SizedBox(
               height: 44,
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 children: [
+                  if (porCompletar > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        avatar: const Icon(Icons.local_dining_outlined, size: 16),
+                        label: Text('Informação por completar ($porCompletar)'),
+                        selected: _soPorCompletar,
+                        onSelected: (v) => setState(() => _soPorCompletar = v),
+                      ),
+                    ),
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: ChoiceChip(
@@ -222,7 +237,9 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
                                 f.nome.toLowerCase().contains(
                                   _q.toLowerCase(),
                                 )) &&
-                            (_categoria == null || f.categoria == _categoria),
+                            (_categoria == null || f.categoria == _categoria) &&
+                            (!_soPorCompletar ||
+                                pendenciasProduto(f).isNotEmpty),
                       )
                       .toList(),
                   _sortOptions[_sortIndex],
@@ -373,9 +390,27 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final semPreco = f.custoSemDados.isNotEmpty;
+    final faltaInfo = pendenciasProduto(f);
 
     final tile = ListTile(
-      title: Text(f.nome),
+      title: Row(
+        children: [
+          Flexible(child: Text(f.nome)),
+          if (faltaInfo.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(left: 6),
+              child: Tooltip(
+                message: 'Informação do produto por completar: '
+                    '${faltaInfo.join(' · ')}',
+                child: Icon(
+                  Icons.local_dining_outlined,
+                  size: 16,
+                  color: cs.error,
+                ),
+              ),
+            ),
+        ],
+      ),
       subtitle: Wrap(
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [

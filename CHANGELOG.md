@@ -2,6 +2,22 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.61.0 — 2026-10-04 — "Produtos" passa para dentro da ficha técnica (uma só informação nutricional)
+
+A página **Produtos** e a **declaração nutricional** da ficha técnica faziam o mesmo, e só a impressão feita nos
+Produtos saía correta. Ficou **uma só** coisa:
+
+- **Ficha técnica → ícone do prato = "Informação do produto"**: declaração nutricional, ingredientes (completa ou
+  resumida), alergénios, peso, validade e conservação, com **copiar** e **imprimir a etiqueta** (a impressão
+  correta, a mesma de antes). A seta de voltar regressa à ficha.
+- **Lista de fichas**: um prato vermelho ao lado do nome quando a informação está por completar (diz o que
+  falta) e o filtro **"Informação por completar (n)"** — é a antiga lista de Produtos.
+- A página **Produtos saiu** de *Todas as páginas*; os links e favoritos antigos (`/produtos`, `/produtos/…`)
+  redirecionam para a ficha.
+- A folha antiga "Declaração nutricional" (com imprimir/copiar duplicados) passou a **"Completar a nutrição"**:
+  só lista os ingredientes sem dados e leva a preenchê-los.
+- Textos de ajuda atualizados.
+
 ## 1.60.0 — 2026-10-04 — Menos páginas soltas: Colaboradores passa para dentro do HACCP
 
 - A página **"Colaboradores e cartões"** deixa de ocupar um lugar próprio em *Todas as páginas* (e no rodapé).
