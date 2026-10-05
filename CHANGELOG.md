@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.70.0 — 2026-10-05 — Revisão de interface (2): barras de topo
+
+Continuação da revisão em largura de telemóvel — as barras de topo com ícones a mais escondiam ou cortavam o título:
+
+- **Vendas** (sem título, com 6 ícones): fica só a ordenação; **Análise de vendas, Produtos não identificados,
+  Sincronizar com o Vendus, Reimportar histórico e Importar CSV** passam para um menu **⋮**. O botão flutuante
+  "Registar venda" já não tapa a última linha da lista.
+- **Receitas** (título cortado "Receit…"): ficam Ordenar e **+**; **Importar** e **Lixeira** passam para o menu **⋮**.
+- **Fichas Técnicas** (título cortado): o título da barra passa a "Fichas" (a página continua a chamar-se Fichas Técnicas).
+- Vistos sem problemas: Compras, Encomendas, Faturas, Produção/Agenda, Quiosque, detalhe da Ficha.
+- Sem alterações à base de dados.
+
 ## 1.69.0 — 2026-10-05 — Revisão final de interface (telemóvel)
 
 Revisão de alinhamentos e textos nos ecrãs, em largura de telemóvel:

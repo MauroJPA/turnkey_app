@@ -145,7 +145,7 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go(Routes.home),
         ),
-        title: Text(_trash ? 'Fichas · Lixeira' : 'Fichas Técnicas'),
+        title: Text(_trash ? 'Fichas · Lixeira' : 'Fichas'),
         actions: [
           if (!_trash)
             SortMenuButton<FichaTecnica>(
@@ -198,7 +198,10 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: FilterChip(
-                        avatar: const Icon(Icons.local_dining_outlined, size: 16),
+                        avatar: const Icon(
+                          Icons.local_dining_outlined,
+                          size: 16,
+                        ),
                         label: Text('Informação por completar ($porCompletar)'),
                         selected: _soPorCompletar,
                         onSelected: (v) => setState(() => _soPorCompletar = v),
@@ -403,7 +406,8 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
             Padding(
               padding: const EdgeInsets.only(left: 6),
               child: Tooltip(
-                message: 'Informação do produto por completar: '
+                message:
+                    'Informação do produto por completar: '
                     '${faltaInfo.join(' · ')}',
                 child: Icon(
                   Icons.local_dining_outlined,

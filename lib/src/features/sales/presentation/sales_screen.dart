@@ -172,16 +172,6 @@ class _SalesScreenState extends ConsumerState<SalesScreen> {
         ),
         title: const Text('Vendas'),
         actions: [
-          IconButton(
-            tooltip: 'Análise de vendas',
-            icon: const Icon(Icons.bar_chart_outlined),
-            onPressed: () => context.push(Routes.analiseVendas),
-          ),
-          IconButton(
-            tooltip: 'Produtos não identificados',
-            icon: const Icon(Icons.link_off),
-            onPressed: () => context.push(Routes.vendasNaoIdentificadas),
-          ),
           SortMenuButton<Venda>(
             options: _sortOptions,
             selectedIndex: _sortIndex,
@@ -191,27 +181,49 @@ class _SalesScreenState extends ConsumerState<SalesScreen> {
               _sortAsc = asc;
             }),
           ),
-          if (podeEditar) ...[
-            PopupMenuButton<void>(
-              tooltip: 'Sincronizar com o Vendus',
-              icon: const Icon(Icons.cloud_sync_outlined),
-              itemBuilder: (ctx) => [
+          PopupMenuButton<void>(
+            tooltip: 'Mais',
+            itemBuilder: (ctx) => [
+              PopupMenuItem(
+                onTap: () => context.push(Routes.analiseVendas),
+                child: const _ItemMenu(
+                  Icons.bar_chart_outlined,
+                  'Análise de vendas',
+                ),
+              ),
+              PopupMenuItem(
+                onTap: () => context.push(Routes.vendasNaoIdentificadas),
+                child: const _ItemMenu(
+                  Icons.link_off,
+                  'Produtos não identificados',
+                ),
+              ),
+              if (podeEditar) ...[
+                const PopupMenuDivider(),
                 PopupMenuItem(
                   onTap: () => _sincronizarVendus(context, ref),
-                  child: const Text('Sincronizar (desde a última vez)'),
+                  child: const _ItemMenu(
+                    Icons.cloud_sync_outlined,
+                    'Sincronizar com o Vendus',
+                  ),
                 ),
                 PopupMenuItem(
                   onTap: () => _reimportarHistorico(context, ref),
-                  child: const Text('Reimportar histórico (escolher data)'),
+                  child: const _ItemMenu(
+                    Icons.history,
+                    'Reimportar histórico (escolher data)',
+                  ),
+                ),
+                PopupMenuItem(
+                  onTap: () => _importarCsv(context, ref),
+                  child: const _ItemMenu(
+                    Icons.upload_file_outlined,
+                    'Importar CSV',
+                  ),
                 ),
               ],
-            ),
-            IconButton(
-              tooltip: 'Importar CSV',
-              icon: const Icon(Icons.upload_file_outlined),
-              onPressed: () => _importarCsv(context, ref),
-            ),
-          ],
+            ],
+          ),
           const HelpActions(topic: HelpTopic.vendas),
         ],
       ),
@@ -246,7 +258,7 @@ class _SalesScreenState extends ConsumerState<SalesScreen> {
             _sortAsc,
           );
           return ListView(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.fromLTRB(0, 8, 0, 88),
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(
@@ -322,4 +334,22 @@ class _SalesScreenState extends ConsumerState<SalesScreen> {
   String _diaLabel(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}/'
       '${d.month.toString().padLeft(2, '0')}/${d.year}';
+}
+
+/// Linha de um menu "⋮": ícone e texto alinhados.
+class _ItemMenu extends StatelessWidget {
+  const _ItemMenu(this.icon, this.texto);
+  final IconData icon;
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 20),
+        const SizedBox(width: 12),
+        Expanded(child: Text(texto)),
+      ],
+    );
+  }
 }

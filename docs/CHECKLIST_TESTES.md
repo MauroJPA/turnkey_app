@@ -1572,6 +1572,13 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Início: o cartão "HACCP por fazer" não cresce com a lista de controlos (2 linhas)
 - [ ] Os botões de escolha de período (Dia / Semana / Mês / Ano) e os de tipo (Fixo / Variável) continuam legíveis
 
+## 96. Barras de topo (revisão 2)
+
+- [ ] Vendas: aparece o título "Vendas"; o menu ⋮ tem Análise, Não identificados, Sincronizar, Reimportar e Importar CSV
+      (os três últimos só para quem pode editar); a última venda da lista não fica tapada pelo botão flutuante
+- [ ] Receitas: ícones Ordenar, + e ⋮ (Importar, Lixeira); "Lixeira" alterna para "Ver ativas"
+- [ ] Fichas: o título "Fichas" cabe inteiro com Ordenar, Lixeira, + e ajuda
+
 ---
 
 ## Notas / ajustes pedidos

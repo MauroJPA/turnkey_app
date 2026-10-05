@@ -139,27 +139,38 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
                 _sortAsc = asc;
               }),
             ),
-          IconButton(
-            tooltip: _trash ? 'Ver ativas' : 'Lixeira',
-            icon: Icon(
-              _trash ? Icons.menu_book_outlined : Icons.delete_outline,
-            ),
-            onPressed: () => setState(() => _trash = !_trash),
-          ),
-          if (_podeEditar && !_trash)
-            IconButton(
-              tooltip: 'Importar receitas (CSV / colar)',
-              icon: const Icon(Icons.upload_file_outlined),
-              onPressed: _busy
-                  ? null
-                  : () => showImportarReceitasSheet(context),
-            ),
           if (_podeEditar && !_trash)
             IconButton(
               tooltip: 'Nova receita',
               icon: const Icon(Icons.add),
               onPressed: _busy ? null : _add,
             ),
+          PopupMenuButton<void>(
+            tooltip: 'Mais',
+            itemBuilder: (_) => [
+              if (_podeEditar && !_trash)
+                PopupMenuItem(
+                  onTap: _busy
+                      ? null
+                      : () => showImportarReceitasSheet(context),
+                  child: const ListTile(
+                    leading: Icon(Icons.upload_file_outlined),
+                    title: Text('Importar receitas (CSV / colar)'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              PopupMenuItem(
+                onTap: () => setState(() => _trash = !_trash),
+                child: ListTile(
+                  leading: Icon(
+                    _trash ? Icons.menu_book_outlined : Icons.delete_outline,
+                  ),
+                  title: Text(_trash ? 'Ver ativas' : 'Lixeira'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
+          ),
           const HelpActions(topic: HelpTopic.receitas),
         ],
       ),
