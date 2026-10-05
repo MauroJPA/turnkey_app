@@ -36,6 +36,30 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
   final Set<String> _selecionadas = {};
   FaturaEstado? _estado;
 
+  static const _meses = [
+    'janeiro',
+    'fevereiro',
+    'março',
+    'abril',
+    'maio',
+    'junho',
+    'julho',
+    'agosto',
+    'setembro',
+    'outubro',
+    'novembro',
+    'dezembro',
+  ];
+
+  /// "2026-09" → "Setembro de 2026".
+  static String _nomeMes(String ym) {
+    final p = ym.split('-');
+    final m = p.length == 2 ? int.tryParse(p[1]) : null;
+    if (m == null || m < 1 || m > 12) return ym;
+    final nome = _meses[m - 1];
+    return '${nome[0].toUpperCase()}${nome.substring(1)} de ${p[0]}';
+  }
+
   static final List<SortOption<Fatura>> _sortOptions = [
     SortOption<Fatura>(
       'Data',
@@ -400,6 +424,12 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
               _sortAsc,
             );
           }
+          // os meses por ordem (mais recente primeiro; ao contrário se se
+          // ordena por data crescente) — antes vinham pela ordem de criação
+          final meses = grupos.keys.toList()..sort((a, b) => b.compareTo(a));
+          final mesesOrdenados = _sortIndex == 0 && _sortAsc
+              ? meses.reversed.toList()
+              : meses;
           final trabalhos = ref.watch(analiseFaturasProvider);
           return ListView(
             padding: const EdgeInsets.only(bottom: 88),
@@ -437,11 +467,13 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
                   padding: EdgeInsets.all(24),
                   child: Center(child: Text('Nada corresponde ao filtro.')),
                 ),
-              for (final entry in grupos.entries) ...[
+              for (final entry in [
+                for (final m in mesesOrdenados) MapEntry(m, grupos[m]!),
+              ]) ...[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
                   child: Text(
-                    entry.key,
+                    _nomeMes(entry.key),
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       color: Theme.of(context).colorScheme.primary,
                     ),

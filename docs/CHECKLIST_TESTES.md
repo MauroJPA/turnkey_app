@@ -1620,6 +1620,11 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Rubricas a 0 % não aparecem; "Matéria-prima" e "Margem de lucro" aparecem sempre
 - [ ] Configurações → Percentuais de custo: a nota do "IVA das vendas" avisa para pôr "Impostos" a 0 se for o IVA
 
+## 102. Faturas: meses por ordem
+
+- [ ] Faturas: os grupos aparecem do mês mais recente para o mais antigo, com o nome por extenso ("Outubro de 2026")
+- [ ] Ordenar por Data ascendente: os meses invertem (mais antigo primeiro); ordenar por Fornecedor/Valor mantém o mais recente primeiro
+
 ---
 
 ## Notas / ajustes pedidos

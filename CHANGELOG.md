@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.76.0 — 2026-10-06 — Faturas: meses por ordem e com nome
+
+Revisão no servidor (Chrome, dados reais):
+
+- **Faturas**: os grupos de meses vinham pela ordem de criação (setembro, outubro, junho…). Passam a vir por ordem —
+  **mais recente primeiro** (ao contrário se ordenas por data crescente) — e com o nome por extenso ("Setembro de 2026" em
+  vez de "2026-09").
+- Vistos sem problemas, com dados reais: HACCP, Equipa e cartões, Contagem, Vendas, Produção, Contabilidade (custos fixos,
+  DRE, relatórios e IVA), Inventário (ingredientes e embalagens), Navegação e a ficha técnica.
+- Sem alterações à base de dados.
+
 ## 1.75.0 — 2026-10-06 — Quebra do preço: embalagem à parte e IVA só no fim
 
 - **Matéria-prima e Embalagem em linhas separadas**: na Quebra do preço, a *Embalagem* passa a ter a sua linha, logo
