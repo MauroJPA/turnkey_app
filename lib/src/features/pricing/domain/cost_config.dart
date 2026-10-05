@@ -1,7 +1,4 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pocketbase/pocketbase.dart';
-
-part 'cost_config.freezed.dart';
 
 /// Uma linha da quebra do preço: o que cabe a cada rubrica no preço
 /// **esperado** (sugerido pelos percentuais) e no preço **real** (o de venda
@@ -50,68 +47,123 @@ class QuebraComparada {
 
 /// Percentuais de custo da empresa (tabela `configuracoes_custo`).
 ///
-/// A ideia (portada do `meu_app_ia`): tudo o que não é matéria-prima soma uma
-/// percentagem do preço de venda; o que sobra é o CMV (custo da matéria-prima
-/// como % do preço). Logo `preço de venda = custo / (CMV% / 100)`.
-@freezed
-class CostConfig with _$CostConfig {
-  const factory CostConfig({
-    String? id,
-    @Default(0) double salario,
-    @Default(0) double aluguel,
-    @Default(0) double impostos,
-    @Default(0) double servicos,
-    @Default(0) double despesasFixas,
-    @Default(0) double taxasFinanceiras,
-    @Default(0) double margemLucro,
+/// O **CMV** (custo da matéria-prima como % do preço sem IVA) é o que tu
+/// defines; as outras rubricas (salário, aluguel…) são % do preço; **o que
+/// sobra é a margem de lucro** — flexível: sobe se reduzires custos, desce se
+/// os aumentares. Logo `preço de venda = custo / (CMV% / 100)`. O IVA não
+/// entra aqui: soma-se no fim, sobre o preço sem IVA.
+class CostConfig {
+  const CostConfig({
+    this.id,
+    this.salario = 0,
+    this.aluguel = 0,
+    this.servicos = 0,
+    this.despesasFixas = 0,
+    this.taxasFinanceiras = 0,
+    this.cmv = 100,
+    this.ivaVendas = 0,
+  });
 
-    /// Taxa de IVA das vendas (%). 0 = não definida. Não faz parte da quebra
-    /// do preço (não entra em [somaOutros]): o IVA soma-se no fim, sobre o
-    /// preço sem IVA. Também estima o IVA quando a venda não traz o valor
-    /// sem IVA.
-    @Default(0) double ivaVendas,
-  }) = _CostConfig;
+  final String? id;
+  final double salario;
+  final double aluguel;
+  final double servicos;
+  final double despesasFixas;
+  final double taxasFinanceiras;
 
-  const CostConfig._();
+  /// CMV (matéria-prima) como % do preço sem IVA — definido por ti.
+  final double cmv;
 
-  factory CostConfig.fromRecord(RecordModel r) => CostConfig(
-    id: r.id,
-    salario: r.getDoubleValue('salario'),
-    aluguel: r.getDoubleValue('aluguel'),
-    impostos: r.getDoubleValue('impostos'),
-    servicos: r.getDoubleValue('servicos_e_gastos_intangiveis'),
-    despesasFixas: r.getDoubleValue('despesas_fixas'),
-    taxasFinanceiras: r.getDoubleValue('taxas_financeiras'),
-    margemLucro: r.getDoubleValue('margem_de_lucro'),
-    ivaVendas: r.getDoubleValue('iva_vendas'),
+  /// Taxa de IVA das vendas (%). 0 = não definida. O IVA soma-se no fim,
+  /// sobre o preço sem IVA. Também estima o IVA quando a venda não traz o
+  /// valor sem IVA.
+  final double ivaVendas;
+
+  CostConfig copyWith({
+    double? salario,
+    double? aluguel,
+    double? servicos,
+    double? despesasFixas,
+    double? taxasFinanceiras,
+    double? cmv,
+    double? ivaVendas,
+  }) => CostConfig(
+    id: id,
+    salario: salario ?? this.salario,
+    aluguel: aluguel ?? this.aluguel,
+    servicos: servicos ?? this.servicos,
+    despesasFixas: despesasFixas ?? this.despesasFixas,
+    taxasFinanceiras: taxasFinanceiras ?? this.taxasFinanceiras,
+    cmv: cmv ?? this.cmv,
+    ivaVendas: ivaVendas ?? this.ivaVendas,
   );
+
+  factory CostConfig.fromRecord(RecordModel r) {
+    final salario = r.getDoubleValue('salario');
+    final aluguel = r.getDoubleValue('aluguel');
+    final servicos = r.getDoubleValue('servicos_e_gastos_intangiveis');
+    final despesas = r.getDoubleValue('despesas_fixas');
+    final taxas = r.getDoubleValue('taxas_financeiras');
+    var cmv = r.getDoubleValue('cmv');
+    if (cmv <= 0) {
+      // registo antigo (antes do CMV ser definido): o que sobrava de 100
+      // depois das rubricas de então (impostos e margem incluídos)
+      cmv =
+          100 -
+          (salario +
+              aluguel +
+              r.getDoubleValue('impostos') +
+              servicos +
+              despesas +
+              taxas +
+              r.getDoubleValue('margem_de_lucro'));
+      if (cmv <= 0) cmv = 100;
+    }
+    return CostConfig(
+      id: r.id,
+      salario: salario,
+      aluguel: aluguel,
+      servicos: servicos,
+      despesasFixas: despesas,
+      taxasFinanceiras: taxas,
+      cmv: cmv,
+      ivaVendas: r.getDoubleValue('iva_vendas'),
+    );
+  }
 
   Map<String, dynamic> toBody() => {
     'salario': salario,
     'aluguel': aluguel,
-    'impostos': impostos,
     'servicos_e_gastos_intangiveis': servicos,
     'despesas_fixas': despesasFixas,
     'taxas_financeiras': taxasFinanceiras,
-    'margem_de_lucro': margemLucro,
+    'cmv': cmv,
     'iva_vendas': ivaVendas,
   };
 
-  /// Rubricas nomeadas (para a quebra do preço).
+  /// Soma das rubricas de custo (sem matéria-prima nem margem).
+  double get somaCustos =>
+      salario + aluguel + servicos + despesasFixas + taxasFinanceiras;
+
+  /// Margem de lucro (% do preço sem IVA): **o que sobra** depois do CMV e
+  /// das rubricas de custo. Pode ser negativa se os custos não cabem.
+  double get margemLucro => 100 - cmv - somaCustos;
+
+  /// Rubricas nomeadas (para a quebra do preço); a margem é a que sobra.
   Map<String, double> get rubricas => {
     'Salário': salario,
     'Aluguel': aluguel,
-    'Impostos': impostos,
     'Serviços e gastos intangíveis': servicos,
     'Despesas fixas': despesasFixas,
     'Taxas financeiras': taxasFinanceiras,
     'Margem de lucro': margemLucro,
   };
 
-  double get somaOutros => rubricas.values.fold(0, (s, v) => s + v);
+  /// Tudo o que não é matéria-prima (rubricas + margem) = 100 − CMV.
+  double get somaOutros => 100 - cmv;
 
   /// CMV (matéria-prima) como % do preço de venda.
-  double get cmvPercent => 100 - somaOutros;
+  double get cmvPercent => cmv;
 
   double get _fatorIva => 1 + (ivaVendas < 0 ? 0 : ivaVendas) / 100;
 
@@ -129,13 +181,13 @@ class CostConfig with _$CostConfig {
   /// Preço mínimo **sem IVA** em que a margem de lucro é zero: abaixo disto
   /// há prejuízo. As outras rubricas mantêm o seu percentual do preço.
   double precoEquilibrio(double custoMateriaPrima) {
-    final fator = 1 - (somaOutros - margemLucro) / 100;
+    final fator = 1 - somaCustos / 100;
     return fator <= 0 ? 0 : custoMateriaPrima / fator;
   }
 
   /// Lucro por unidade (€) a um dado preço **sem IVA**.
   double lucroSemIva(double custoMateriaPrima, double precoSemIva) =>
-      precoSemIva * (1 - (somaOutros - margemLucro) / 100) - custoMateriaPrima;
+      precoSemIva * (1 - somaCustos / 100) - custoMateriaPrima;
 
   /// Preço de venda sugerido (**sem IVA**) para um dado custo de
   /// matéria-prima.

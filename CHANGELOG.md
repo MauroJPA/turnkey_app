@@ -2,6 +2,20 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.79.0 — 2026-10-06 — Sem "Impostos" nos percentuais; o CMV é teu e a margem é o que sobra
+
+- **"Impostos" saiu** dos Percentuais de custo e da Quebra do preço: o IVA só aparece no fim (preço sem IVA → IVA → preço
+  final). O aviso/botão "O IVA está a contar duas vezes" deixou de ser necessário e saiu.
+- **O CMV passa a ser um campo teu** (Configurações → Percentuais de custo → "CMV — custo da matéria-prima"). O **preço
+  sugerido = custo ÷ CMV**. Os custos (salário, aluguel, serviços, despesas fixas, taxas financeiras) são % do preço sem IVA e
+  a **margem de lucro é o que sobra** (100 − CMV − custos), mostrada num cartão ao lado, a verde, ou a vermelho se os custos
+  não couberem. Se reduzires custos a margem sobe; se os aumentares desce — o CMV mantém-se.
+- **Empresas existentes**: o CMV fica igual ao que já era (a migration `1790970000_cmv_config` calcula-o), por isso os preços
+  sugeridos não mudam; o antigo "Impostos" deixa de contar e a margem passa a ser o que sobra. Ajusta o CMV ao que quiseres.
+- **Números mágicos** e as **dicas de IA** usavam o "Impostos" como imposto das vendas: passam a usar o **IVA das vendas** (a
+  parte de IVA que vem nos totais de venda), e o CMV sobre o total com IVA.
+- `CostConfig` deixa de ser gerado (freezed): classe simples com `copyWith`. Testes novos.
+
 ## 1.78.0 — 2026-10-06 — O botão "Atualizar" passa a atualizar mesmo
 
 - **Problema**: depois de publicar uma versão nova, o aviso "Há uma versão nova da app" aparecia, mas **"Atualizar" não

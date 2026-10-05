@@ -70,9 +70,18 @@ final numerosMagicosProvider = FutureProvider.autoDispose
         custosFixosMensal: custosFixosMensal,
         custosVariaveisMensal: custosVariaveisMensal,
         depreciacaoMensal: depreciacaoMensal,
-        impostoPercent: costConfig.impostos,
-        cmvPercent: costConfig.cmvPercent,
+        // as vendas trazem IVA, que não é nosso: a parte do IVA no total e o
+        // CMV (que é % do preço sem IVA) sobre o total com IVA
+        impostoPercent: _ivaNoTotal(costConfig.ivaVendas),
+        cmvPercent:
+            costConfig.cmvPercent *
+            (100 - _ivaNoTotal(costConfig.ivaVendas)) /
+            100,
         receitaPeriodo: receitaPeriodo,
         vendasPorDia: vendidoPorDia(resultado.vendas),
       );
     });
+
+/// Que % de um total **com IVA** é IVA (ex.: 23% → 18,7%).
+double _ivaNoTotal(double ivaPct) =>
+    ivaPct <= 0 ? 0 : ivaPct / (100 + ivaPct) * 100;

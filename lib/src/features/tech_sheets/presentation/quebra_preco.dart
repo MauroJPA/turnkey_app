@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/auth/current_user.dart';
-import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/formatting/money_provider.dart';
-import '../../../core/widgets/confirm_dialog.dart';
-import '../../pricing/data/cost_config_repository.dart';
 import '../../pricing/domain/cost_config.dart';
 
 /// Quebra do preço da ficha técnica, **sempre sobre o preço sem IVA**: o IVA
 /// é cobrado em cima do preço limpo e por isso entra por último. Mostra o
 /// esperado (pelos percentuais) lado a lado com o real (o preço de venda
 /// praticado) e, por baixo, o simulador de desconto para revendedores.
-class QuebraPrecoTile extends ConsumerWidget {
+class QuebraPrecoTile extends StatelessWidget {
   const QuebraPrecoTile({
     super.key,
     required this.custo,
@@ -98,41 +93,8 @@ class QuebraPrecoTile extends ConsumerWidget {
     );
   }
 
-  /// O "Impostos" dos percentuais igual ao IVA: é o IVA a contar duas vezes
-  /// (dentro da quebra e outra vez no fim).
-  bool get _impostoEIva =>
-      config.ivaVendas > 0 &&
-      config.impostos > 0 &&
-      (config.impostos - config.ivaVendas).abs() < 0.01;
-
-  Future<void> _tirarImposto(BuildContext context, WidgetRef ref) async {
-    final ok = await confirmDialog(
-      context,
-      titulo: 'Tirar o imposto da quebra?',
-      mensagem:
-          'Põe "Impostos" a 0% nos Percentuais de custo. O IVA continua a '
-          'somar-se no fim. A quebra e os preços sugeridos de todas as '
-          'fichas passam a ser calculados sem esse '
-          '${config.impostos.toStringAsFixed(0)}%.',
-      confirmar: 'Tirar',
-    );
-    if (!ok || config.id == null) return;
-    try {
-      await ref
-          .read(costConfigRepositoryProvider)
-          .update(config.id!, config.copyWith(impostos: 0));
-      ref.invalidate(costConfigProvider);
-    } on Object catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
-      }
-    }
-  }
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final q = config.quebraComparada(
@@ -157,41 +119,6 @@ class QuebraPrecoTile extends ConsumerWidget {
       expandedAlignment: Alignment.centerLeft,
       expandedCrossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_impostoEIva)
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: cs.errorContainer,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'O IVA está a contar duas vezes',
-                  style: tt.titleSmall?.copyWith(color: cs.onErrorContainer),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Os "Impostos" dos percentuais '
-                  '(${config.impostos.toStringAsFixed(0)}%) são iguais ao IVA '
-                  'das vendas: aparecem aqui dentro e outra vez no fim. O IVA '
-                  'só deve aparecer no fim.',
-                  style: tt.bodySmall?.copyWith(color: cs.onErrorContainer),
-                ),
-                if (ref.watch(currentPapelProvider).canEditConfig)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: () => _tirarImposto(context, ref),
-                      child: const Text('Tirar o imposto da quebra'),
-                    ),
-                  ),
-              ],
-            ),
-          ),
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
@@ -224,8 +151,8 @@ class QuebraPrecoTile extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    // rubricas a 0% (ex.: Impostos, depois de passar o IVA para o
-                    // fim) não aparecem: menos linhas, mais fácil de ler
+                    // rubricas a 0% (ex.: Despesas fixas vazias) não aparecem:
+                    // menos linhas, mais fácil de ler
                     for (final l in q.linhas.where(
                       (l) =>
                           l.nome == 'Matéria-prima' ||

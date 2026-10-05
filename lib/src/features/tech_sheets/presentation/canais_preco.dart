@@ -163,7 +163,7 @@ class _CartaoCanal extends StatelessWidget {
     final custoCanal = canal.embalagemPlataforma && custoPlataforma != null
         ? custoPlataforma!
         : custo;
-    final fator = 1 - (config.somaOutros - config.margemLucro) / 100;
+    final fator = 1 - config.somaCustos / 100;
     // receita que mantém o lucro da loja, mesmo com a embalagem extra
     final receitaAlvo = fator > 0 ? base + (custoCanal - custo) / fator : base;
     final recomendado = canal.paraReceber(receitaAlvo);
@@ -218,7 +218,7 @@ class _CartaoCanal extends StatelessWidget {
       final ivaVal = config.comIva(r.precoCliente) - r.precoCliente;
       final lucro = config.lucroSemIva(custoCanal, r.receita);
       final estrutura =
-          r.receita * (config.somaOutros - config.margemLucro) / 100;
+          r.receita * config.somaCustos / 100;
       final temIva = config.ivaVendas > 0;
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,

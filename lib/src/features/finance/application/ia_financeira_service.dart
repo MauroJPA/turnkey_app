@@ -68,10 +68,7 @@ class IaFinanceiraService {
                   'valorMensal': c.valorMensal,
                 },
             ],
-            'percentuais': {
-              'imposto': config.impostos,
-              'cmv': config.cmvPercent,
-            },
+            'percentuais': {'iva': config.ivaVendas, 'cmv': config.cmvPercent},
           },
         );
     return DicasFinanceiras.fromJson(res);

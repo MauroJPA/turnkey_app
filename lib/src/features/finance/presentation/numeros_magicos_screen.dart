@@ -115,7 +115,7 @@ class _NumerosMagicosScreenState extends ConsumerState<NumerosMagicosScreen> {
                 const SizedBox(height: 8),
                 _linha(
                   context,
-                  'Imposto',
+                  'IVA incluído nas vendas',
                   '${n.impostoPercent.toStringAsFixed(1)}%',
                 ),
                 _linha(
@@ -134,7 +134,7 @@ class _NumerosMagicosScreenState extends ConsumerState<NumerosMagicosScreen> {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Imposto + CMV somam ${(n.impostoPercent + n.cmvPercent).toStringAsFixed(1)}% '
+                'IVA + CMV somam ${(n.impostoPercent + n.cmvPercent).toStringAsFixed(1)}% '
                 '— não há margem livre para cobrir os custos com estes '
                 'percentuais. Revê os Percentuais de custo em Configurações.',
                 style: TextStyle(color: cs.onErrorContainer),
@@ -357,13 +357,9 @@ class _NumerosMagicosScreenState extends ConsumerState<NumerosMagicosScreen> {
                         SizedBox(
                           width: 88,
                           child: Text(
-                            ok
-                                ? '+${fmt(v - minimo)}'
-                                : '−${fmt(minimo - v)}',
+                            ok ? '+${fmt(v - minimo)}' : '−${fmt(minimo - v)}',
                             textAlign: TextAlign.right,
-                            style: TextStyle(
-                              color: ok ? cs.primary : cs.error,
-                            ),
+                            style: TextStyle(color: ok ? cs.primary : cs.error),
                           ),
                         ),
                       ],

@@ -76,6 +76,8 @@ routerAdd(
       ]) {
         cfg.set(campo, 0);
       }
+      // CMV: 100% até a empresa definir os seus percentuais (preço = custo)
+      cfg.set('cmv', 100);
       tx.save(cfg);
 
       // Formatos de cookie por omissão (ver 1705104000_formatos_cookie.js).

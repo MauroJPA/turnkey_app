@@ -33,6 +33,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _corTexto = TextEditingController();
   final _custos = <String, TextEditingController>{
     for (final k in _rubricas.keys) k: TextEditingController(),
+    'cmv': TextEditingController(),
   };
   final _ivaVendas = TextEditingController();
   Moeda _moeda = Moeda.eur;
@@ -48,14 +49,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _prefilled = false;
   bool _busy = false;
 
+  // custos em % do preço sem IVA; o CMV é à parte e a margem é o que sobra
   static const _rubricas = {
     'salario': 'Salário',
     'aluguel': 'Aluguel',
-    'impostos': 'Impostos',
     'servicos': 'Serviços e gastos intangíveis',
     'despesasFixas': 'Despesas fixas',
     'taxasFinanceiras': 'Taxas financeiras',
-    'margemLucro': 'Margem de lucro',
   };
 
   bool get _podeEditar => ref.read(currentPapelProvider).canEditConfig;
@@ -94,11 +94,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _fonteFamilia = e.fonteFamilia;
     _custos['salario']!.text = _n(c.salario);
     _custos['aluguel']!.text = _n(c.aluguel);
-    _custos['impostos']!.text = _n(c.impostos);
     _custos['servicos']!.text = _n(c.servicos);
     _custos['despesasFixas']!.text = _n(c.despesasFixas);
     _custos['taxasFinanceiras']!.text = _n(c.taxasFinanceiras);
-    _custos['margemLucro']!.text = _n(c.margemLucro);
+    _custos['cmv']!.text = _n(c.cmv);
     _ivaVendas.text = c.ivaVendas > 0 ? _n(c.ivaVendas) : '';
   }
 
@@ -118,11 +117,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   CostConfig get _configFromForm => CostConfig(
     salario: _v('salario'),
     aluguel: _v('aluguel'),
-    impostos: _v('impostos'),
     servicos: _v('servicos'),
     despesasFixas: _v('despesasFixas'),
     taxasFinanceiras: _v('taxasFinanceiras'),
-    margemLucro: _v('margemLucro'),
+    cmv: _v('cmv'),
     ivaVendas:
         double.tryParse(_ivaVendas.text.replaceAll(',', '.').trim()) ?? 0,
   );
@@ -169,7 +167,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Widget _form(Empresa empresa, CostConfig config) {
     _prefill(empresa, config);
-    final cmv = _configFromForm.cmvPercent;
+    final cfgForm = _configFromForm;
+    final margem = cfgForm.margemLucro;
 
     return AbsorbPointer(
       absorbing: !_podeEditar,
@@ -367,16 +366,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             Text(
-              cmv <= 0
-                  ? 'Somam ≥ 100% — o preço sugerido fica a 0.'
-                  : 'Sobra ${cmv.toStringAsFixed(1)}% para a matéria-prima (CMV).',
+              'Tudo sobre o preço sem IVA. Defines o CMV e os custos; a margem '
+              'de lucro é o que sobra.',
               style: TextStyle(
-                color: cmv <= 0
-                    ? Theme.of(context).colorScheme.error
-                    : Theme.of(context).colorScheme.onSurfaceVariant,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: TextField(
+                controller: _custos['cmv'],
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'CMV — custo da matéria-prima',
+                  suffixText: '%',
+                  helperText:
+                      'Quanto do preço (sem IVA) pode ir para a matéria-prima '
+                      'e embalagem. Define o preço sugerido: custo ÷ CMV.',
+                  helperMaxLines: 3,
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+            ),
             for (final e in _rubricas.entries)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
@@ -392,6 +406,47 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   onChanged: (_) => setState(() {}),
                 ),
               ),
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Margem de lucro (o que sobra)',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        Text(
+                          margem < 0
+                              ? 'Os custos e o CMV passam de 100%: não sobra '
+                                    'nada. Baixa o CMV ou os custos.'
+                              : 'Sobe se reduzires custos; desce se os '
+                                    'aumentares. O CMV não muda.',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '${margem.toStringAsFixed(1)}%',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: margem < 0
+                          ? Theme.of(context).colorScheme.error
+                          : Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const Divider(height: 28),
             TextField(
               controller: _ivaVendas,
@@ -404,8 +459,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 helperText:
                     'Não entra nos percentuais acima: o IVA soma-se no fim, em '
                     'cima do preço sem IVA (Fichas técnicas → Quebra do preço). '
-                    'Se "Impostos" acima for o IVA, põe-no a 0 (senão conta '
-                    'duas vezes). '
                     'Também estima o IVA a entregar quando uma venda não traz o '
                     'valor sem IVA (Contabilidade → IVA a separar).',
                 helperMaxLines: 6,

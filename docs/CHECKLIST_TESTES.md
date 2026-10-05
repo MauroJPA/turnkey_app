@@ -1636,6 +1636,16 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       aviso; tocar em "Atualizar" carrega logo a versão nova (sem Ctrl+Shift+R) e o aviso desaparece
 - [ ] Vale no telemóvel (Chrome) e no computador
 
+## 105. CMV teu, margem a que sobra, sem Impostos
+
+- [ ] Configurações → Percentuais de custo: aparece "CMV — custo da matéria-prima" (preenchido com o valor de antes), os custos
+      e o cartão "Margem de lucro (o que sobra)"; não há campo "Impostos" nem "Margem de lucro" para escrever
+- [ ] Mudar o Salário: a margem mexe e o CMV fica; mudar o CMV: a margem mexe e o preço sugerido das fichas muda (custo ÷ CMV)
+- [ ] Custos + CMV acima de 100 %: a margem aparece a vermelho com o aviso
+- [ ] Ficha → Quebra do preço: não há linha "Impostos"; sem aviso de "IVA a contar duas vezes"; o IVA só no fim
+- [ ] Contabilidade → Números mágicos: a linha "IVA incluído nas vendas" e o aviso "IVA + CMV…" se somarem 100 %
+- [ ] Empresa nova (onboarding): CMV 100 % (preço sugerido = custo) até definires os percentuais
+
 ---
 
 ## Notas / ajustes pedidos

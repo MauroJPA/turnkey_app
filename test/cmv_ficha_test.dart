@@ -6,7 +6,7 @@ void main() {
   ivaPorUltimo();
   embalagemSeparada();
   // 30+15+30 = 75% em outras rubricas → CMV esperado 25%.
-  const config = CostConfig(salario: 30, aluguel: 15, margemLucro: 30);
+  const config = CostConfig(salario: 30, aluguel: 15, cmv: 25);
 
   test(
     'CMV esperado vem da configuração; real do preço de venda praticado',
@@ -75,7 +75,7 @@ void ivaPorUltimo() {
     const config = CostConfig(
       salario: 30,
       aluguel: 15,
-      margemLucro: 30,
+      cmv: 25,
       ivaVendas: 20,
     );
 
@@ -108,7 +108,7 @@ void ivaPorUltimo() {
     });
 
     test('sem IVA definido nada muda', () {
-      const sem = CostConfig(salario: 30, aluguel: 15, margemLucro: 30);
+      const sem = CostConfig(salario: 30, aluguel: 15, cmv: 25);
       expect(sem.semIva(5), 5);
       final q = sem.quebraComparada(1.5, 5);
       expect(q.precoReal, 5);
@@ -133,7 +133,7 @@ void ivaPorUltimo() {
 
 void embalagemSeparada() {
   group('Embalagem na quebra', () {
-    const config = CostConfig(salario: 30, aluguel: 15, margemLucro: 30);
+    const config = CostConfig(salario: 30, aluguel: 15, cmv: 25);
 
     test(
       'matéria-prima e embalagem em linhas separadas, abaixo/acima certos',
