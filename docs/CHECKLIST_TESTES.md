@@ -1710,6 +1710,16 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] "Un. por fornada": escrever um valor muda o €/h; apagar volta à média das fornadas
 - [ ] Produtos sem tempo de assadura mostram "— /h"; produtos sem preço de venda ficam de fora (aviso em baixo)
 
+## 114. Tabela de preços para revendedores
+
+- [ ] Contabilidade → Revendedores: a tabela mostra cada produto com preço s/IVA, c/IVA e os preços de 24+ e 48+
+- [ ] Mudar o desconto (%) muda os preços; escolher um canal usa as taxas do canal
+- [ ] "+ Degrau": juntar "12 unidades, 3 %" cria um novo degrau; o × de um degrau tira-o
+- [ ] "Copiar": cola o texto da tabela (nome da empresa, data, preços, descontos por quantidade)
+- [ ] "WhatsApp": abre o WhatsApp com a tabela (o texto também fica copiado)
+- [ ] "PDF": abre a tabela para imprimir/guardar em PDF; os produtos desmarcados não aparecem
+- [ ] Depois de recarregar a página, o desconto, os degraus e os produtos desmarcados mantêm-se
+
 ---
 
 ## Notas / ajustes pedidos

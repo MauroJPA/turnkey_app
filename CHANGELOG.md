@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.88.0 — 2026-10-06 — Tabela de preços para revendedores
+
+Tabela de preços para revendedores, em PDF ou WhatsApp.
+
+- **Contabilidade → Revendedores** (nova secção): a tabela com todos os produtos que têm preço de venda, por categoria — preço por unidade **sem IVA** e **com IVA** (o IVA das vendas das Configurações) e uma coluna por cada degrau de **desconto por quantidade**.
+- Como se chega ao preço do revendedor: **desconto %** sobre o preço ao público (sem IVA), ou um **canal** (revendedor/plataforma da ficha técnica): o revendedor paga o que te chega com as taxas do canal tiradas — a mesma conta da Rentabilidade. Tudo arredondado a cêntimos.
+- **Desconto por quantidade**: junta degraus ("a partir de 24 un −5 %"); aplicam-se por produto. Já vêm 24+ (−5 %) e 48+ (−10 %) para começar.
+- **Copiar** (texto simples), **WhatsApp** (abre a conversa com a tabela; o texto fica também copiado) e **PDF** (impressão do navegador → "Guardar como PDF", com o nome da empresa e a data). Desmarca os produtos que não queres mostrar.
+- O desconto, o canal, os degraus e os produtos escolhidos ficam guardados neste aparelho. Sem alterações no servidor.
+- Testes do cálculo (desconto, IVA no fim, degraus, canal, ordem, texto, escape de HTML, sem IVA definido).
+
 ## 1.87.0 — 2026-10-06 — Rentabilidade por sabor e canal
 
 Rentabilidade por sabor e canal: que produtos deixam mais lucro.

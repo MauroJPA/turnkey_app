@@ -17,6 +17,7 @@ import 'painel_financeiro_screen.dart';
 import 'relatorio_geral_sheet.dart';
 import 'rentabilidade_view.dart';
 import 'seletor_periodo.dart';
+import 'tabela_revendedor_view.dart';
 
 /// As secções da Contabilidade.
 enum SecaoContabilidade {
@@ -29,6 +30,11 @@ enum SecaoContabilidade {
     'Rentabilidade',
     Icons.leaderboard_outlined,
     Routes.rentabilidade,
+  ),
+  revendedores(
+    'Revendedores',
+    Icons.price_change_outlined,
+    Routes.tabelaRevendedores,
   ),
   relatorios('Relatórios e IVA', Icons.summarize_outlined, Routes.relatorios);
 
@@ -44,6 +50,7 @@ enum SecaoContabilidade {
     SecaoContabilidade.equipamentos => HelpTopic.equipamentos,
     SecaoContabilidade.numeros => HelpTopic.numerosMagicos,
     SecaoContabilidade.rentabilidade => HelpTopic.rentabilidade,
+    SecaoContabilidade.revendedores => HelpTopic.tabelaRevendedores,
     SecaoContabilidade.relatorios => HelpTopic.contabilidade,
   };
 }
@@ -115,6 +122,9 @@ class ContabilidadeScreen extends ConsumerWidget {
               ),
               SecaoContabilidade.rentabilidade => const RentabilidadeView(
                 key: ValueKey('cont-rentabilidade'),
+              ),
+              SecaoContabilidade.revendedores => const TabelaRevendedorView(
+                key: ValueKey('cont-revendedores'),
               ),
               SecaoContabilidade.relatorios => const _Relatorios(
                 key: ValueKey('cont-relatorios'),

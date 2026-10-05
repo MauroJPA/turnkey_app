@@ -36,6 +36,7 @@ enum HelpTopic {
   avisos,
   lotes,
   rentabilidade,
+  tabelaRevendedores,
   consumiveis,
   produtos,
   configuracoes,
@@ -375,6 +376,16 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'A lista de ingredientes segue as regras da UE: por ordem decrescente de peso e com os alergénios a negrito. É calculada sozinha a partir da ficha técnica, das receitas e dos ingredientes. "Completa" usa o nome de cada ingrediente; "Resumida" usa nomes curtos, para etiquetas pequenas.',
       '"Falta completar" mostra o que ainda não está preenchido: nutrição de algum ingrediente, prazo de validade e modo de conservação. "Corrigir a nutrição" leva-te ao ingrediente em falta; "Preencher os dados" abre a ficha.',
       'Ícone da impressora: imprime a etiqueta (completa ou resumida) com a informação nutricional. Ícone de copiar: junta tudo num texto.',
+    ],
+  ),
+  HelpTopic.tabelaRevendedores: (
+    titulo: 'Tabela de preços para revendedores',
+    paragrafos: [
+      'Faz a tabela de preços que mandas a quem revende os teus produtos. Cada produto com preço de venda entra com o preço por unidade sem IVA e com IVA (o IVA das vendas está em Configurações).',
+      'Como se chega ao preço: "Desconto sobre o preço ao público" tira uma percentagem ao preço de venda sem IVA; ou escolhe um canal (o revendedor ou plataforma que criaste na ficha técnica) e o revendedor paga o que te chega com as taxas desse canal tiradas — a mesma conta da Rentabilidade.',
+      'Desconto por quantidade: junta degraus ("a partir de 24 unidades, −5 %"). O desconto aplica-se por produto e cada degrau aparece como uma coluna na tabela. Toca no × de um degrau para o tirar.',
+      'Copiar e WhatsApp dão a tabela em texto (o WhatsApp abre a conversa e deixa o texto copiado, caso a mensagem venha cortada); PDF abre a impressão do navegador, onde escolhes "Guardar como PDF".',
+      'Desmarca os produtos que não queres mostrar ao revendedor. O desconto, o canal, os degraus e os produtos escolhidos ficam guardados neste aparelho.',
     ],
   ),
   HelpTopic.rentabilidade: (
