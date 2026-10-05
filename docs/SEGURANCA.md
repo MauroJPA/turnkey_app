@@ -128,6 +128,15 @@ empresa. O WhatsApp está no código mas **desligado** por omissão (precisa de 
 6. Sessão dura 7 dias; palavras-passe: mínimo 8 (o PocketBase não bloqueia palavras-passe fracas
    comuns).
 
+## Quiosque sem ligação (1.90.0)
+
+- Os registos tocados sem ligação ficam no `localStorage` do aparelho (`quiosque_fila`) até chegarem ao servidor; o mesmo aparelho
+  guarda também a última lista de tarefas e de pessoas (nomes e números de série dos cartões) para o ecrã de espera.
+  Convém que o telemóvel do quiosque tenha bloqueio de ecrã e seja só da empresa.
+- Cada registo leva um id próprio (15 caracteres): reenviar não duplica (o servidor recusa o id repetido e a app dá-o por enviado)
+  e uma empresa não consegue ver nem alterar o registo de outra por reutilizar o id (testado em `teste_quiosque_offline`).
+- Sem endpoints novos nem alterações de regras no servidor.
+
 ## Riscos aceites / notas
 
 - O administrador pode editar o perfil da empresa (desenho) e, tecnicamente, o campo `plano`

@@ -7,12 +7,12 @@ import 'package:go_router/go_router.dart';
 import '../../../app/routes.dart';
 import '../../../core/device/nfc_leitor.dart';
 import '../../daily_count/presentation/forno_widgets.dart';
-import '../../haccp/application/haccp_providers.dart';
 import '../../haccp/domain/haccp.dart';
 import '../../haccp/presentation/haccp_icones.dart';
 import '../../invoices/domain/invoice_erros.dart';
-import '../application/colaboradores_providers.dart';
+import '../application/fila_offline_service.dart';
 import '../domain/colaborador.dart';
+import '../domain/fila_offline.dart';
 
 /// Segundos sem tocar em nada até o quiosque voltar a pedir o cartão.
 const segundosDeInatividade = 45;
@@ -30,6 +30,7 @@ class QuiosqueScreen extends ConsumerStatefulWidget {
 class _QuiosqueScreenState extends ConsumerState<QuiosqueScreen> {
   Colaborador? _quem;
   Timer? _inatividade;
+  Timer? _reenvio;
   bool _nfcLigado = false;
   String? _avisoNfc;
   String? _avisoCartao;
@@ -39,11 +40,16 @@ class _QuiosqueScreenState extends ConsumerState<QuiosqueScreen> {
   void initState() {
     super.initState();
     if (NfcLeitor.suporta) _ligarNfc();
+    _reenvio = Timer.periodic(
+      const Duration(seconds: segundosEntreReenvios),
+      (_) => _reenviar(),
+    );
   }
 
   @override
   void dispose() {
     _inatividade?.cancel();
+    _reenvio?.cancel();
     NfcLeitor.parar();
     super.dispose();
   }
@@ -69,7 +75,7 @@ class _QuiosqueScreenState extends ConsumerState<QuiosqueScreen> {
 
   void _aoLerCartao(String serie) {
     if (!mounted) return;
-    final todos = ref.read(colaboradoresProvider).valueOrNull ?? const [];
+    final todos = ref.read(pessoasQuiosqueProvider).valueOrNull ?? const [];
     final c = colaboradorDoCartao(serie, todos);
     if (c == null) {
       setState(() => _avisoCartao = 'Cartão não reconhecido.');
@@ -125,8 +131,8 @@ class _QuiosqueScreenState extends ConsumerState<QuiosqueScreen> {
     if (quem == null || _ocupado) return;
     setState(() => _ocupado = true);
     try {
-      await ref
-          .read(haccpActionsProvider)
+      final enviado = await ref
+          .read(filaOfflineProvider.notifier)
           .registar(
             controloId: c.id,
             dataHora: DateTime.now(),
@@ -136,17 +142,52 @@ class _QuiosqueScreenState extends ConsumerState<QuiosqueScreen> {
             notas: notas,
             acaoCorretiva: acao,
           );
-      _msg(
-        conforme
-            ? '✓ ${c.nome} — registado, ${quem.nome}'
-            : '⚠ ${c.nome} — registado como problema',
-        erro: !conforme,
-      );
+      if (enviado) {
+        _msg(
+          conforme
+              ? '✓ ${c.nome} — registado, ${quem.nome}'
+              : '⚠ ${c.nome} — registado como problema',
+          erro: !conforme,
+        );
+      } else {
+        _msg(
+          '✓ ${c.nome} — guardado neste aparelho (sem ligação). '
+          'Segue quando a ligação voltar.',
+        );
+      }
     } on Object catch (e) {
       _msg(mensagemAmigavel(e), erro: true);
     } finally {
       if (mounted) setState(() => _ocupado = false);
       _reiniciarInatividade();
+    }
+  }
+
+  /// De tempos a tempos: envia o que ficou guardado e, se a lista de tarefas
+  /// veio da memória, tenta buscar a verdadeira.
+  Future<void> _reenviar({bool aPedido = false}) async {
+    if (!mounted) return;
+    final fila = ref.read(filaOfflineProvider);
+    if (fila.pendentes.isNotEmpty) {
+      final n = await ref.read(filaOfflineProvider.notifier).sincronizar();
+      if (!mounted) return;
+      if (n > 0) {
+        _msg('✓ $n registo(s) enviado(s).');
+      } else if (aPedido) {
+        _msg('Ainda sem ligação ao servidor.', erro: true);
+      }
+      final rej = ref.read(filaOfflineProvider).rejeitados;
+      if (rej > fila.rejeitados) {
+        _msg(
+          '$rej registo(s) não foram aceites pelo servidor. Avisa quem gere a app.',
+          erro: true,
+        );
+      }
+    }
+    final doServidor = ref.read(estadosQuiosqueProvider).valueOrNull;
+    if (doServidor == null || doServidor.daCache) {
+      ref.invalidate(estadosQuiosqueProvider);
+      ref.invalidate(pessoasQuiosqueProvider);
     }
   }
 
@@ -213,7 +254,10 @@ class _QuiosqueScreenState extends ConsumerState<QuiosqueScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 8, 4, 0),
                 child: Row(
                   children: [
-                    Expanded(child: Text('Tarefas do dia', style: tt.titleLarge)),
+                    Expanded(
+                      child: Text('Tarefas do dia', style: tt.titleLarge),
+                    ),
+                    _ChipPorEnviar(onTap: () => _reenviar(aPedido: true)),
                     if (NfcLeitor.suporta)
                       Padding(
                         padding: const EdgeInsets.only(right: 4),
@@ -224,7 +268,9 @@ class _QuiosqueScreenState extends ConsumerState<QuiosqueScreen> {
                             size: 16,
                             color: _nfcLigado ? cs.primary : cs.outline,
                           ),
-                          label: Text(_nfcLigado ? 'NFC ligado' : 'NFC desligado'),
+                          label: Text(
+                            _nfcLigado ? 'NFC ligado' : 'NFC desligado',
+                          ),
                         ),
                       ),
                     // sair do quiosque: toque longo (para ninguém sair sem querer)
@@ -257,7 +303,7 @@ class _QuiosqueScreenState extends ConsumerState<QuiosqueScreen> {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final colaboradores =
-        ref.watch(colaboradoresProvider).valueOrNull ?? const <Colaborador>[];
+        ref.watch(pessoasQuiosqueProvider).valueOrNull ?? const <Colaborador>[];
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
       children: [
@@ -348,10 +394,30 @@ class _QuiosqueScreenState extends ConsumerState<QuiosqueScreen> {
   Widget _tarefas(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final estados = ref.watch(haccpEstadoProvider);
-    final lista = estados.valueOrNull;
+    final estados = ref.watch(estadosQuiosqueProvider);
+    final pendentes = ref.watch(filaOfflineProvider).pendentes;
+    final base = estados.valueOrNull;
+    final lista = base == null
+        ? null
+        : comPendentes(base.lista, pendentes, DateTime.now());
     return Column(
       children: [
+        if (base != null && base.daCache)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: cs.tertiaryContainer,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              'Sem ligação ao servidor — a mostrar a última lista. O que '
+              'registares fica guardado neste aparelho e segue quando a '
+              'ligação voltar.',
+              style: tt.bodyMedium,
+            ),
+          ),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 12),
           child: ResumoFornoCard(),
@@ -378,7 +444,29 @@ class _QuiosqueScreenState extends ConsumerState<QuiosqueScreen> {
         ),
         Expanded(
           child: lista == null
-              ? const Center(child: CircularProgressIndicator())
+              ? (estados.hasError
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text(
+                                'Sem ligação ao servidor e ainda não há uma '
+                                'lista guardada neste aparelho.',
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 12),
+                              OutlinedButton(
+                                onPressed: () =>
+                                    ref.invalidate(estadosQuiosqueProvider),
+                                child: const Text('Tentar de novo'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : const Center(child: CircularProgressIndicator()))
               : lista.isEmpty
               ? const Center(
                   child: Padding(
@@ -412,6 +500,40 @@ class _QuiosqueScreenState extends ConsumerState<QuiosqueScreen> {
   }
 }
 
+/// Quantos segundos entre tentativas de enviar o que ficou guardado.
+const segundosEntreReenvios = 20;
+
+/// "N por enviar" / "Sem ligação": aparece quando há registos à espera de
+/// ligação (ou a última tentativa falhou); tocar tenta enviar já.
+class _ChipPorEnviar extends ConsumerWidget {
+  const _ChipPorEnviar({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final fila = ref.watch(filaOfflineProvider);
+    if (fila.pendentes.isEmpty && !fila.semLigacao) {
+      return const SizedBox.shrink();
+    }
+    final cs = Theme.of(context).colorScheme;
+    final n = fila.pendentes.length;
+    return Padding(
+      padding: const EdgeInsets.only(right: 4),
+      child: ActionChip(
+        visualDensity: VisualDensity.compact,
+        backgroundColor: n > 0 ? cs.tertiaryContainer : cs.errorContainer,
+        avatar: Icon(
+          fila.aEnviar ? Icons.sync : Icons.cloud_off_outlined,
+          size: 16,
+        ),
+        label: Text(n > 0 ? '$n por enviar' : 'Sem ligação'),
+        onPressed: fila.aEnviar ? null : onTap,
+      ),
+    );
+  }
+}
+
 /// Um botão grande de uma tarefa.
 class _Tarefa extends StatelessWidget {
   const _Tarefa({
@@ -430,10 +552,8 @@ class _Tarefa extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = status.controlo;
     final (fundo, texto) = switch (status.estado) {
-      EstadoControlo.atrasado || EstadoControlo.semRegisto => (
-        cs.errorContainer,
-        'Em atraso',
-      ),
+      EstadoControlo.atrasado ||
+      EstadoControlo.semRegisto => (cs.errorContainer, 'Em atraso'),
       EstadoControlo.pendenteHoje => (
         cs.tertiaryContainer,
         c.esperadosPorDia > 1
@@ -441,7 +561,10 @@ class _Tarefa extends StatelessWidget {
             : 'Fazer hoje',
       ),
       EstadoControlo.emDia => (cs.primaryContainer, 'Feito ✓'),
-      EstadoControlo.ocasional => (cs.surfaceContainerHighest, 'Quando for preciso'),
+      EstadoControlo.ocasional => (
+        cs.surfaceContainerHighest,
+        'Quando for preciso',
+      ),
     };
     return Material(
       color: fundo,
@@ -461,7 +584,10 @@ class _Tarefa extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 4),
               Text(texto, style: Theme.of(context).textTheme.bodySmall),
@@ -530,10 +656,7 @@ class _TecladoTemperaturaState extends State<_TecladoTemperatura> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            _txt.isEmpty ? '— °C' : '$_txt °C',
-            style: tt.displaySmall,
-          ),
+          Text(_txt.isEmpty ? '— °C' : '$_txt °C', style: tt.displaySmall),
           if (c.limitesTexto.isNotEmpty)
             Text('Limites: ${c.limitesTexto}', style: tt.bodySmall),
           const SizedBox(height: 12),
@@ -542,7 +665,20 @@ class _TecladoTemperaturaState extends State<_TecladoTemperatura> {
             runSpacing: 8,
             alignment: WrapAlignment.center,
             children: [
-              for (final t in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '−', '0', ','])
+              for (final t in [
+                '1',
+                '2',
+                '3',
+                '4',
+                '5',
+                '6',
+                '7',
+                '8',
+                '9',
+                '−',
+                '0',
+                ',',
+              ])
                 tecla(t),
               tecla('⌫'),
             ],
@@ -556,7 +692,9 @@ class _TecladoTemperaturaState extends State<_TecladoTemperatura> {
         ),
         FilledButton(
           style: FilledButton.styleFrom(minimumSize: const Size(140, 52)),
-          onPressed: _valor == null ? null : () => Navigator.pop(context, _valor),
+          onPressed: _valor == null
+              ? null
+              : () => Navigator.pop(context, _valor),
           child: const Text('Registar'),
         ),
       ],
@@ -679,9 +817,13 @@ class _PerguntaPragaState extends State<_PerguntaPraga> {
         children: [
           if (!_problema) ...[
             FilledButton.icon(
-              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(64)),
-              onPressed: () =>
-                  Navigator.pop(context, const _RespostaPraga(semProblema: true)),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(64),
+              ),
+              onPressed: () => Navigator.pop(
+                context,
+                const _RespostaPraga(semProblema: true),
+              ),
               icon: const Icon(Icons.check_circle_outline),
               label: const Text('Tudo bem', style: TextStyle(fontSize: 20)),
             ),
@@ -693,7 +835,10 @@ class _PerguntaPragaState extends State<_PerguntaPraga> {
               ),
               onPressed: () => setState(() => _problema = true),
               icon: const Icon(Icons.pest_control),
-              label: const Text('Vi sinais de pragas', style: TextStyle(fontSize: 20)),
+              label: const Text(
+                'Vi sinais de pragas',
+                style: TextStyle(fontSize: 20),
+              ),
             ),
           ] else ...[
             TextField(
@@ -706,7 +851,9 @@ class _PerguntaPragaState extends State<_PerguntaPraga> {
             ),
             const SizedBox(height: 12),
             FilledButton(
-              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(56),
+              ),
               onPressed: () => Navigator.pop(
                 context,
                 _RespostaPraga(semProblema: false, nota: _nota.text.trim()),

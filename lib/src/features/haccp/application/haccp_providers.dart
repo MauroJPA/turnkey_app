@@ -65,6 +65,8 @@ class HaccpActions {
 
   HaccpRepository get _repo => _ref.read(haccpRepositoryProvider);
 
+  void refrescar() => _refresh();
+
   void _refresh() {
     _ref.invalidate(haccpEstadoProvider);
     _ref.invalidate(haccpRegistosProvider);
@@ -86,8 +88,10 @@ class HaccpActions {
     String notas = '',
     String acaoCorretiva = '',
     DateTime? proximoVencimento,
+    String? id,
   }) async {
     await _repo.registar(
+      id: id,
       controloId: controloId,
       dataHora: dataHora,
       valor: valor,

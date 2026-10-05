@@ -1730,6 +1730,15 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Copiar: cola a lista "Assar amanhã" com os sabores e o total
 - [ ] Numa loja nova (poucas vendas) aparece "pouco histórico" e o ponto vermelho
 
+## 116. Quiosque offline
+
+- [ ] Quiosque ligado: tocar numa tarefa regista normalmente ("✓ … registado")
+- [ ] Desligar o Wi-Fi do telemóvel com o quiosque aberto: aparece "Sem ligação ao servidor — a mostrar a última lista"; o cartão/nomes continuam a funcionar
+- [ ] Sem Wi-Fi, tocar numa tarefa: fica "Feito ✓", mensagem "guardado neste aparelho" e o aviso "1 por enviar" no topo
+- [ ] Ligar o Wi-Fi: em cerca de 20 s o aviso desaparece e o registo aparece em HACCP → Registos com a hora a que foi tocado
+- [ ] Tocar no aviso "N por enviar" com ligação: envia já
+- [ ] Sem Wi-Fi, registar uma temperatura: o teclado e o aviso de fora dos limites funcionam e o registo fica guardado
+
 ---
 
 ## Notas / ajustes pedidos

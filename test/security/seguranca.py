@@ -938,6 +938,30 @@ def teste_lotes():
     check(s in (200, 204), 'administrador apaga o lote de produção', f'status {s}')
 
 
+def teste_quiosque_offline():
+    sec('7a6. Quiosque sem ligação (registos com id próprio)')
+    ctlA = semear('haccp_controlos', 'A')
+    if not ctlA:
+        aviso('quiosque offline: não foi possível semear um controlo — não testado')
+        return
+    reg = {'id': 'offlinetest0001', 'empresa': empresas['A'], 'controlo': ctlA[0], 'data_hora': '2026-10-07 09:00:00.000Z',
+           'conforme': True, 'responsavel': 'Ana', 'notas': '', 'acao_corretiva': '', 'resolvido': False}
+    s, _, _ = call('POST', '/api/collections/haccp_registos/records', reg, tok['viewerA'])
+    check(s in (400, 403), 'leitura não regista tarefas', f'status {s}')
+    s, r, _ = call('POST', '/api/collections/haccp_registos/records', reg, tok['editorA'])
+    check(s == 200 and r.get('id') == 'offlinetest0001', 'o quiosque regista com um id escolhido por ele', f'status {s} {str(r)[:100]}')
+    s, r, _ = call('POST', '/api/collections/haccp_registos/records', reg, tok['editorA'])
+    check(s == 400 and 'id' in (r.get('data') or {}), 'reenviar o mesmo registo é recusado sem duplicar (a app dá-o por enviado)', f'status {s} {str(r)[:120]}')
+    s, _, _ = call('POST', '/api/collections/haccp_registos/records', {**reg, 'empresa': empresas['B']}, tok['editorB'])
+    check(s in (400, 403), 'empresa B não reutiliza o id nem regista num controlo da A', f'status {s}')
+    s, _, _ = call('GET', '/api/collections/haccp_registos/records/offlinetest0001', tok=tok['editorB'])
+    check(s == 404, 'empresa B não vê o registo da A', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/haccp_registos/records', {**reg, 'id': 'curto'}, tok['editorA'])
+    check(s == 400, 'um id fora do formato é recusado', f'status {s}')
+    s, r, _ = call('GET', '/api/collections/haccp_registos/records?perPage=200', tok=tok['editorA'])
+    check(s == 200 and sum(1 for i in r.get('items', []) if i.get('id') == 'offlinetest0001') == 1, 'há um só registo depois do reenvio')
+
+
 def teste_estado_backups():
     sec('7a3. Estado dos backups (só administradores)')
     s, _, _ = call('GET', '/api/gc_turnkey/backups/estado')
@@ -2336,6 +2360,7 @@ def main():
         teste_estado_backups()
         teste_avisos()
         teste_lotes()
+        teste_quiosque_offline()
         teste_segredos()
         teste_sem_chave()
         teste_faturas_ia()

@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.90.0 — 2026-10-06 — Quiosque offline
+
+Quiosque offline: se o Wi-Fi cair, as tarefas continuam a poder ser registadas.
+
+- **Registos guardados no aparelho**: sem ligação ao servidor, cada toque no quiosque fica guardado neste aparelho (com a hora real em que foi feito) e a tarefa passa a "Feito ✓". No topo aparece **"N por enviar"**.
+- **Envio automático**: de 20 em 20 segundos a app tenta enviar o que ficou à espera (ou toca no aviso para tentar já). Cada registo leva um id próprio, por isso, se um envio chegou mas a resposta se perdeu, **nada se duplica**. Mantém a hora original.
+- **Lista de tarefas e de pessoas em memória**: a última lista vista (tarefas, estados e pessoas com o número do cartão) é guardada, por isso o ecrã do cartão e o das tarefas abrem mesmo sem ligação, com um aviso "Sem ligação ao servidor — a mostrar a última lista". O cartão NFC continua a identificar a pessoa.
+- Registos que o servidor recusa (ex.: a tarefa foi apagada) são postos de lado depois de 5 tentativas e a app avisa; ficam guardados no aparelho.
+- Limite: a página tem de estar aberta quando o Wi-Fi cai (recarregá-la sem ligação não funciona).
+- Sem alterações no servidor. Testes: fila, deteção de "sem ligação" (o PocketBase marca falhas de rede como "abort"), cache, estados com pendentes; teste de segurança do reenvio com id próprio. Verificado a sério no browser: servidor desligado → toque guardado → servidor ligado → enviado.
+
 ## 1.89.0 — 2026-10-06 — Quantos assar amanhã
 
 "Quantos assar amanhã": a previsão, sabor a sabor, do que convém ter pronto.

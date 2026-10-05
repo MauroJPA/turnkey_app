@@ -85,8 +85,13 @@ class HaccpRepository {
     String notas = '',
     String acaoCorretiva = '',
     DateTime? proximoVencimento,
+
+    /// Id escolhido por quem chama (15 letras/números): permite reenviar um
+    /// registo sem o duplicar (usado pelo quiosque sem ligação).
+    String? id,
   }) => _registos.create(
     body: {
+      if (id != null) 'id': id,
       'empresa': _empresaId,
       'controlo': controloId,
       'data_hora': pbDataHora(dataHora),
@@ -138,8 +143,7 @@ class HaccpRepository {
             'registos': registos,
             'nao_conformidades': naoConformidades,
             'integridade': integridade,
-            if (_pb.authStore.record != null)
-              'autor': _pb.authStore.record!.id,
+            if (_pb.authStore.record != null) 'autor': _pb.authStore.record!.id,
           },
         );
         return codigo;

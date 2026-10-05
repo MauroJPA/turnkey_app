@@ -1,6 +1,6 @@
 # Pendentes (fila de trabalho)
 
-Última versão fechada: **1.89.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
+Última versão fechada: **1.90.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
 (editar → `bash scripts/verificar.sh` → pubspec + CHANGELOG + docs/CHECKLIST_TESTES.md → commit com caminhos
 explícitos → `git branch -f develop main` → `git tag vX.Y.Z`). No fim: `powershell -File scripts\empacotar-producao.ps1`
 e dar ao Mauro o SHA-256 + comando de publicação.
@@ -18,7 +18,7 @@ Fila atual (pedido do Mauro em 06/10/2026, **cada item = uma versão**, por esta
 - ~~**1.87.0**~~ (feito) Rentabilidade por sabor e canal (ranking de lucro por unidade e por hora de forno, com os canais e as taxas).
 - ~~**1.88.0**~~ (feito) Tabela de preços para revendedores (PDF e texto para WhatsApp, preço + IVA, desconto por volume) a partir dos canais.
 - ~~**1.89.0**~~ (feito) "Quantos assar amanhã": sugestão por dia da semana e desperdício + predição estatística/IA que melhora com o histórico.
-- **1.90.0** Quiosque offline: guarda os registos no aparelho se o Wi-Fi cair e envia depois.
+- ~~**1.90.0**~~ (feito) Quiosque offline: guarda os registos no aparelho se o Wi-Fi cair e envia depois.
 - No fim: empacotar, dar SHA-256 + comando; atualizar docs/SEGURANCA.md se houver novos endpoints.
 
 ## Notas para quem retomar
