@@ -34,6 +34,7 @@ enum HelpTopic {
   variacoesPreco,
   aprovacoes,
   avisos,
+  lotes,
   consumiveis,
   produtos,
   configuracoes,
@@ -373,6 +374,16 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'A lista de ingredientes segue as regras da UE: por ordem decrescente de peso e com os alergénios a negrito. É calculada sozinha a partir da ficha técnica, das receitas e dos ingredientes. "Completa" usa o nome de cada ingrediente; "Resumida" usa nomes curtos, para etiquetas pequenas.',
       '"Falta completar" mostra o que ainda não está preenchido: nutrição de algum ingrediente, prazo de validade e modo de conservação. "Corrigir a nutrição" leva-te ao ingrediente em falta; "Preencher os dados" abre a ficha.',
       'Ícone da impressora: imprime a etiqueta (completa ou resumida) com a informação nutricional. Ícone de copiar: junta tudo num texto.',
+    ],
+  ),
+  HelpTopic.lotes: (
+    titulo: 'Lotes e rastreabilidade',
+    paragrafos: [
+      'A lei (Reg. (CE) n.º 178/2002, art. 18.º) pede que saibas de onde vêm os ingredientes de cada coisa que vendes: se um fornecedor avisar que um lote tem um problema, tens de saber que produtos o levaram. Aqui registas isso em poucos toques.',
+      '"Novo lote": escolhe o produto, a data, as unidades e (se a ficha tem prazo) a validade é calculada. Para cada ingrediente da ficha escolhes o lote que usaste (o que vence primeiro vem à frente) ou "＋ Novo lote…" e escreves o código que vem na embalagem do fornecedor e a validade. Se não souberes, "Sem lote" — o lote fica marcado com um aviso.',
+      'O lote recebe um código (ex.: 261006-ALB-1: data, produto e nº do dia). Na página do lote: "Etiqueta com QR" imprime a etiqueta com o lote e um QR que abre esta página no telemóvel (precisa de entrar na app); "Ficha" imprime/guarda em PDF a folha de rastreabilidade com os ingredientes, lotes e fornecedores.',
+      'A lupa ao lado de cada ingrediente mostra todos os lotes de produção em que esse lote do fornecedor entrou — é a lista do que retirar em caso de alerta.',
+      'Só o proprietário/administrador apaga lotes (rastreabilidade). Os lotes ficam registados mesmo que mudes os ingredientes da ficha depois.',
     ],
   ),
   HelpTopic.avisos: (

@@ -11,9 +11,13 @@ abstract class Routes {
   static const techSheets = '/fichas-tecnicas';
   static const production = '/produzir';
   static const miseEnPlace = '/mise-en-place';
+  static const productionLotes = '/produzir/lotes';
+  static const loteBase = '/lote';
+  static String lote(String codigo) => '/lote/${Uri.encodeComponent(codigo)}';
   static const schedule = '/agenda';
   static const shopping = '/compras';
   static const comprasRelatorio = '/compras/relatorio';
+
   /// Inventário (secção Ingredientes) e as outras secções.
   static const inventory = '/inventario';
   static const inventoryLimpeza = '/inventario/limpeza';
@@ -43,6 +47,7 @@ abstract class Routes {
   static const aprovacoes = '/opcoes/aprovacoes';
   static const avisos = '/opcoes/avisos';
   static const navegacao = '/opcoes/navegacao';
+
   /// Antiga página "Produtos" (hoje: a informação do produto dentro da ficha).
   static const produtos = '/produtos';
   static String fichaInformacao(String id) => '/fichas-tecnicas/$id/informacao';

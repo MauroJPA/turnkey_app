@@ -1692,6 +1692,16 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Email: com o email do servidor configurado chega; sem ele a app diz como resolver
 - [ ] Token inválido/chat errado: a app mostra um motivo claro (sem mostrar o token)
 
+## 112. Rastreabilidade por lote com QR
+
+- [ ] Produção → Lotes → "Novo lote": escolher um produto; aparecem os ingredientes da ficha (incluindo os das receitas) com lotes à escolha
+- [ ] "＋ Novo lote…" num ingrediente: guarda o lote (código, validade, fornecedor) e fica escolhido; da próxima vez aparece na lista
+- [ ] Criar o lote: abre a página do lote com os ingredientes e lotes; "Sem lote" mostra o aviso a vermelho
+- [ ] "Etiqueta com QR": a etiqueta traz o lote e um QR; ler o QR com o telemóvel abre a página do lote (depois de entrar)
+- [ ] "Ficha": abre a folha de rastreabilidade para imprimir/PDF com ingredientes, lotes e fornecedores
+- [ ] A lupa de um ingrediente lista os lotes de produção que usaram o mesmo lote do fornecedor
+- [ ] Leitura não vê "Novo lote"; só proprietário/administrador vê "Apagar lote"
+
 ---
 
 ## Notas / ajustes pedidos

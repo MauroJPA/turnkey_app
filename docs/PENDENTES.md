@@ -1,6 +1,6 @@
 # Pendentes (fila de trabalho)
 
-Última versão fechada: **1.85.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
+Última versão fechada: **1.86.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
 (editar → `bash scripts/verificar.sh` → pubspec + CHANGELOG + docs/CHECKLIST_TESTES.md → commit com caminhos
 explícitos → `git branch -f develop main` → `git tag vX.Y.Z`). No fim: `powershell -File scripts\empacotar-producao.ps1`
 e dar ao Mauro o SHA-256 + comando de publicação.
@@ -14,7 +14,7 @@ Fila atual (pedido do Mauro em 06/10/2026, **cada item = uma versão**, por esta
 - ~~**1.84.0**~~ (feito) Cartão "Estado dos backups" para administradores (script de backup escreve um ficheiro de estado; aviso se falhar/atrasar).
 - ~~**1.85.0**~~ (feito) Avisos e resumo diário (HACCP por fazer, stock baixo, pagamentos) por **email** e **Telegram** (WhatsApp só no código,
   desligado: a API é paga).
-- **1.86.0** Rastreabilidade por lote com QR na etiqueta (lote do ingrediente → lote do produto; Reg. 178/2002).
+- ~~**1.86.0**~~ (feito) Rastreabilidade por lote com QR na etiqueta (lote do ingrediente → lote do produto; Reg. 178/2002).
 - **1.87.0** Rentabilidade por sabor e canal (ranking de lucro por unidade e por hora de forno, com os canais e as taxas).
 - **1.88.0** Tabela de preços para revendedores (PDF e texto para WhatsApp, preço + IVA, desconto por volume) a partir dos canais.
 - **1.89.0** "Quantos assar amanhã": sugestão por dia da semana e desperdício + predição estatística/IA que melhora com o histórico.

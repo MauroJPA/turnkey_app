@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/current_user.dart';
 import '../../../core/printing/print_etiquetas.dart';
+import '../../../core/printing/qr_svg.dart';
 import '../../tech_sheets/domain/tech_sheet.dart';
 import '../application/etiqueta_prefs_providers.dart';
 import '../application/produtor_providers.dart';
@@ -14,19 +15,38 @@ import '../domain/etiqueta.dart';
 Future<void> showEtiquetaSheet(
   BuildContext context, {
   required FichaTecnica ficha,
+
+  /// Etiqueta de um lote de produção: o código (e o QR para a sua página),
+  /// a data de fabrico do lote.
+  String? loteCodigo,
+  String? loteUrl,
+  DateTime? loteFabrico,
 }) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
     constraints: const BoxConstraints(maxWidth: 640),
-    builder: (_) => _Sheet(ficha: ficha),
+    builder: (_) => _Sheet(
+      ficha: ficha,
+      loteCodigo: loteCodigo,
+      loteUrl: loteUrl,
+      loteFabrico: loteFabrico,
+    ),
   );
 }
 
 class _Sheet extends ConsumerStatefulWidget {
-  const _Sheet({required this.ficha});
+  const _Sheet({
+    required this.ficha,
+    this.loteCodigo,
+    this.loteUrl,
+    this.loteFabrico,
+  });
   final FichaTecnica ficha;
+  final String? loteCodigo;
+  final String? loteUrl;
+  final DateTime? loteFabrico;
 
   @override
   ConsumerState<_Sheet> createState() => _SheetState();
@@ -58,6 +78,11 @@ class _SheetState extends ConsumerState<_Sheet> {
   @override
   void initState() {
     super.initState();
+    if (widget.loteCodigo != null) _lote.text = widget.loteCodigo!;
+    if (widget.loteFabrico != null) {
+      final d = widget.loteFabrico!;
+      _fabrico = DateTime(d.year, d.month, d.day);
+    }
   }
 
   @override
@@ -128,6 +153,9 @@ class _SheetState extends ConsumerState<_Sheet> {
       validadeDias: f.validadeDias,
       tipoData: _tipoData,
       lote: _lote.text,
+      qrSvg: widget.loteUrl != null && _lote.text.trim() == widget.loteCodigo
+          ? qrSvg(widget.loteUrl!)
+          : '',
       produtor: _produtor.text,
       copias: (int.tryParse(_copias.text.trim()) ?? 1).clamp(1, 500),
       larguraMm: _tamanho.larguraMm,

@@ -39,6 +39,7 @@ import '../features/shopping/presentation/compras_relatorio_screen.dart';
 import '../features/shopping/presentation/shopping_screen.dart';
 import '../features/tech_sheets/presentation/tech_sheet_detail_screen.dart';
 import '../features/tech_sheets/presentation/tech_sheets_screen.dart';
+import '../features/traceability/presentation/lote_detail_screen.dart';
 import 'routes.dart';
 
 export 'routes.dart';
@@ -110,7 +111,18 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'agendar',
                 builder: (_, __) => const CartReviewScreen(),
               ),
+              GoRoute(
+                path: 'lotes',
+                builder: (_, __) =>
+                    const ProducaoScreen(secao: SecaoProducao.lotes),
+              ),
             ],
+          ),
+          // a página de um lote (é o que o QR da etiqueta abre)
+          GoRoute(
+            path: '${Routes.loteBase}/:codigo',
+            builder: (_, state) =>
+                LoteDetailScreen(codigo: state.pathParameters['codigo']!),
           ),
           // a antiga página "Mise en place" é agora o Produzir
           GoRoute(
@@ -299,10 +311,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'aprovacoes',
                 builder: (_, __) => const AprovacoesScreen(),
               ),
-              GoRoute(
-                path: 'avisos',
-                builder: (_, __) => const AvisosScreen(),
-              ),
+              GoRoute(path: 'avisos', builder: (_, __) => const AvisosScreen()),
               // formatos e categorias já não têm página: gerem-se na ficha/receita
               GoRoute(path: 'formatos', redirect: (_, __) => Routes.techSheets),
               GoRoute(

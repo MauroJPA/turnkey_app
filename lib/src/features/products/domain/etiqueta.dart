@@ -179,6 +179,7 @@ class EtiquetaDados {
     this.validadeDias = 0,
     this.tipoData = EtiquetaData.preferencia,
     this.lote = '',
+    this.qrSvg = '',
     this.produtor = '',
     this.copias = 1,
     this.imprimirDatas = true,
@@ -213,6 +214,9 @@ class EtiquetaDados {
   final int validadeDias;
   final EtiquetaData tipoData;
   final String lote;
+
+  /// QR code (SVG) da página do lote na app; vazio = sem QR.
+  final String qrSvg;
   final String produtor;
   final int copias;
 
@@ -343,7 +347,9 @@ String _etiquetaHtml(EtiquetaDados d, {required bool repetida}) {
     }
   }
   if (d.lote.trim().isNotEmpty) {
-    corpo.writeln('<p><b>Lote:</b> ${_esc(d.lote.trim())}</p>');
+    // o QR vem do nosso gerador (SVG sem texto do utilizador)
+    final qr = d.qrSvg.isEmpty ? '' : '<span class="qr">${d.qrSvg}</span>';
+    corpo.writeln('<p class="lote">$qr<b>Lote:</b> ${_esc(d.lote.trim())}</p>');
   }
   if (d.produtor.trim().isNotEmpty) {
     corpo.writeln(
@@ -396,6 +402,8 @@ String etiquetaPagina(EtiquetaDados d, {String tokenMedicao = ''}) {
   table.nutri td.v { text-align: right; white-space: nowrap; }
   table.nutri tr.sub td:first-child { padding-left: 3mm; font-style: italic; }
   .prod { margin-top: 0.6mm; }
+  .lote .qr { float: right; width: 11mm; height: 11mm; margin: 0 0 0 1mm; }
+  .lote .qr svg { width: 11mm; height: 11mm; display: block; }
   .cx { display: inline-block; width: 18mm; border-bottom: 0.25mm solid #000; height: 2.6mm; vertical-align: bottom; }
   .barra { display: none; }
   @media screen {

@@ -2,6 +2,25 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.86.0 — 2026-10-06 — Rastreabilidade por lote com QR
+
+Rastreabilidade por lote (Reg. (CE) 178/2002, art. 18.º): sabes de que lotes de ingredientes veio cada lote que produziste.
+
+- **Produção → Lotes** (nova secção): lista dos lotes de produção e **"Novo lote"**: escolhes o produto, a data, as unidades (a validade vem
+  do prazo da ficha) e, para **cada ingrediente da ficha**, o lote que usaste — os que vencem primeiro vêm à frente — ou **"＋ Novo
+  lote…"** (código da embalagem do fornecedor, validade, fornecedor) ou "Sem lote". O lote ganha um código (`261006-ALB-1`: data,
+  produto e nº do dia).
+- **Página do lote** (`/lote/…`): produto, datas, quantidade, responsável e a lista de ingredientes com lote, fornecedor e validade;
+  aviso nos ingredientes sem lote. A **lupa** de cada ingrediente mostra **todos os lotes de produção em que esse lote do fornecedor
+  entrou** — a lista do que retirar se houver um alerta.
+- **Etiqueta com QR**: o botão abre a etiqueta já com o lote, a data de fabrico do lote e um **QR** que abre a página do lote no
+  telemóvel (precisa de sessão). **Ficha** imprime/guarda em PDF a folha de rastreabilidade.
+- Servidor: coleções `lotes_ingrediente` e `lotes_producao` (migration `1791010000_lotes`; cópia dos ingredientes usados dentro do lote,
+  só owner/admin apagam lotes de produção) e `GET /api/gc_turnkey/lotes/ingredientes?ficha=` (ingredientes da ficha, incluindo os das
+  sub-receitas, com os lotes conhecidos). Nova dependência `qr` (gerador de QR).
+- 16 testes de segurança novos (papéis, outra empresa, códigos únicos, sem sessão) e testes do código do lote, do QR, da etiqueta e do
+  escape de texto (XSS) na ficha impressa.
+
 ## 1.85.0 — 2026-10-05 — Avisos e resumo diário por Telegram e email
 
 Recebes todos os dias um resumo do que pede atenção, por **Telegram** e/ou **email**.

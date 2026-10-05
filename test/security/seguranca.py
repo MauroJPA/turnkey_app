@@ -882,6 +882,62 @@ def teste_avisos():
         srv.shutdown()
 
 
+def teste_lotes():
+    sec('7a5. Rastreabilidade por lote')
+    ingA = semear('ingredientes', 'A')
+    ingB = semear('ingredientes', 'B')
+    fichaA = semear('fichas_tecnicas', 'A')
+    if not (ingA and ingB and fichaA):
+        aviso('lotes: não foi possível semear ingrediente/ficha — não testado')
+        return
+    ingA, ingB, fichaA = ingA[0], ingB[0], fichaA[0]
+    lote = {'empresa': empresas['A'], 'ingrediente': ingA, 'lote': 'L-2026-001', 'validade': '2027-01-31 00:00:00.000Z', 'fornecedor': 'Makro'}
+    s, _, _ = call('POST', '/api/collections/lotes_ingrediente/records', lote, tok['viewerA'])
+    check(s in (400, 403), 'leitura não regista lotes', f'status {s}')
+    s, r, _ = call('POST', '/api/collections/lotes_ingrediente/records', lote, tok['editorA'])
+    check(s == 200, 'editor regista o lote de um ingrediente', f'status {s} {str(r)[:100]}')
+    li = r.get('id')
+    s, _, _ = call('POST', '/api/collections/lotes_ingrediente/records', lote, tok['editorA'])
+    check(s == 400, 'o mesmo lote do mesmo ingrediente não se repete', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/lotes_ingrediente/records',
+                   {**lote, 'empresa': empresas['B'], 'ingrediente': ingA, 'lote': 'X'}, tok['editorB'])
+    check(s in (400, 403), 'empresa B não regista lotes de ingredientes da A', f'status {s}')
+    s, r, _ = call('GET', '/api/collections/lotes_ingrediente/records', tok=tok['editorB'])
+    check(s == 200 and all(i.get('empresa') == empresas['B'] for i in r.get('items', [])), 'empresa B só vê os seus lotes (nenhum da A)')
+    # lote de produção
+    lp = {'empresa': empresas['A'], 'codigo': '261006-TST-1', 'ficha': fichaA, 'ficha_nome': 'Teste', 'data_producao': '2026-10-06 00:00:00.000Z',
+          'quantidade': 24, 'validade': '2026-10-11 00:00:00.000Z',
+          'ingredientes': [{'ingrediente': ingA, 'nome': 'Farinha', 'lote': 'L-2026-001'}]}
+    s, _, _ = call('POST', '/api/collections/lotes_producao/records', lp, tok['viewerA'])
+    check(s in (400, 403), 'leitura não cria lotes de produção', f'status {s}')
+    s, r, _ = call('POST', '/api/collections/lotes_producao/records', lp, tok['editorA'])
+    check(s == 200, 'editor cria um lote de produção', f'status {s} {str(r)[:100]}')
+    lpid = r.get('id')
+    s, _, _ = call('POST', '/api/collections/lotes_producao/records', lp, tok['editorA'])
+    check(s == 400, 'o código do lote é único', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/lotes_producao/records', {**lp, 'empresa': empresas['B'], 'codigo': 'B-1'}, tok['editorB'])
+    check(s in (400, 403), 'empresa B não cria lote ligado a ficha da A', f'status {s}')
+    s, r, _ = call('GET', f'/api/collections/lotes_producao/records/{lpid}', tok=tok['viewerA'])
+    check(s == 200 and r.get('codigo') == '261006-TST-1', 'leitura consulta o lote')
+    s, _, _ = call('GET', f'/api/collections/lotes_producao/records/{lpid}', tok=tok['editorB'])
+    check(s == 404, 'empresa B não consulta lotes da A', f'status {s}')
+    s, _, _ = call('DELETE', f'/api/collections/lotes_producao/records/{lpid}', tok=tok['editorA'])
+    check(s in (403, 404), 'editor não apaga lotes de produção (rastreabilidade)', f'status {s}')
+    # sugestão de ingredientes
+    call('POST', '/api/collections/itens_ficha/records',
+         {'empresa': empresas['A'], 'ficha': fichaA, 'ingrediente': ingA, 'quantidade_g': 100, 'slot': 'massa'}, su)
+    s, r, _ = call('GET', f'/api/gc_turnkey/lotes/ingredientes?ficha={fichaA}', tok=tok['viewerA'])
+    ings = r.get('ingredientes', []) if s == 200 else []
+    check(any(i['id'] == ingA and any(l['lote'] == 'L-2026-001' for l in i['lotes']) for i in ings),
+          'a sugestão traz os ingredientes da ficha e os seus lotes', f'status {s} {str(r)[:140]}')
+    s, _, _ = call('GET', f'/api/gc_turnkey/lotes/ingredientes?ficha={fichaA}', tok=tok['editorB'])
+    check(s == 404, 'empresa B não pede ingredientes de uma ficha da A', f'status {s}')
+    s, _, _ = call('GET', f'/api/gc_turnkey/lotes/ingredientes?ficha={fichaA}')
+    check(s in (401, 403), 'sem sessão não há sugestão', f'status {s}')
+    s, _, _ = call('DELETE', f'/api/collections/lotes_producao/records/{lpid}', tok=tok['adminA'])
+    check(s in (200, 204), 'administrador apaga o lote de produção', f'status {s}')
+
+
 def teste_estado_backups():
     sec('7a3. Estado dos backups (só administradores)')
     s, _, _ = call('GET', '/api/gc_turnkey/backups/estado')
@@ -2279,6 +2335,7 @@ def main():
         teste_aprovacoes_na_app()
         teste_estado_backups()
         teste_avisos()
+        teste_lotes()
         teste_segredos()
         teste_sem_chave()
         teste_faturas_ia()

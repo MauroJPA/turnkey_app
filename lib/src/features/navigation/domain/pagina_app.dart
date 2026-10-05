@@ -42,7 +42,7 @@ const paginasApp = <PaginaApp>[
     'Produção',
     Icons.blender_outlined,
     'Produzir agora (mise en place), agendar e ver a agenda',
-    rotasExtra: [Routes.schedule],
+    rotasExtra: [Routes.schedule, Routes.loteBase],
   ),
   PaginaApp(
     'compras',
