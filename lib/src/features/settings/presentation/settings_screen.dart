@@ -513,6 +513,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onTap: () => context.go(Routes.navegacao),
               ),
 
+            // ---- Avisos e resumo diário ----
+            if (ref.read(currentPapelProvider).canEditConfig)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.notifications_active_outlined),
+                title: const Text('Avisos e resumo diário'),
+                subtitle: const Text('Email ou Telegram, à hora que escolheres'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.go(Routes.avisos),
+              ),
+
             // ---- Integrações ----
             if (ref.read(currentPapelProvider).canEditConfig)
               ListTile(

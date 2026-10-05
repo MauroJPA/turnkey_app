@@ -33,6 +33,7 @@ enum HelpTopic {
   embalagens,
   variacoesPreco,
   aprovacoes,
+  avisos,
   consumiveis,
   produtos,
   configuracoes,
@@ -372,6 +373,16 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'A lista de ingredientes segue as regras da UE: por ordem decrescente de peso e com os alergénios a negrito. É calculada sozinha a partir da ficha técnica, das receitas e dos ingredientes. "Completa" usa o nome de cada ingrediente; "Resumida" usa nomes curtos, para etiquetas pequenas.',
       '"Falta completar" mostra o que ainda não está preenchido: nutrição de algum ingrediente, prazo de validade e modo de conservação. "Corrigir a nutrição" leva-te ao ingrediente em falta; "Preencher os dados" abre a ficha.',
       'Ícone da impressora: imprime a etiqueta (completa ou resumida) com a informação nutricional. Ícone de copiar: junta tudo num texto.',
+    ],
+  ),
+  HelpTopic.avisos: (
+    titulo: 'Avisos e resumo diário',
+    paragrafos: [
+      'Recebe todos os dias, à hora que escolheres (hora de Lisboa), um resumo do que pede atenção: HACCP por fazer, stock baixo, pagamentos próximos (7 dias), faturas por rever e preços que subiram nas últimas 24 h. Escolhe o que incluir. Se estiver tudo em dia, recebes "Tudo em dia".',
+      'Por Telegram (grátis, instantâneo): fala com @BotFather no Telegram → /newbot e copia o token; cola-o aqui e guarda (fica cifrado no servidor e nunca volta a aparecer); abre o teu bot e envia /start; toca em "Detetar o meu chat" e escolhe o teu. Podes pôr o chat de um grupo (adiciona o bot ao grupo).',
+      'Por email: precisa de o servidor ter o email configurado (PocketBase → Definições → Mail). Podes pôr vários endereços separados por vírgula.',
+      '"Enviar um teste" manda já o resumo para os canais ligados e mostra o resultado de cada um; sem canais ligados mostra só a pré-visualização.',
+      'WhatsApp: o código existe mas está desligado (a API do WhatsApp Business é paga); só se ativa no servidor com GC_TURNKEY_WHATSAPP_TOKEN e GC_TURNKEY_WHATSAPP_PHONE_ID.',
     ],
   ),
   HelpTopic.aprovacoes: (

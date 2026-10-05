@@ -1683,6 +1683,15 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] No servidor, depois de correr `bash backup/copia-externa.sh`, o estado da cópia externa passa de "sem informação" a "ok · há N min"
 - [ ] Forçar uma falha da cópia externa (ex.: renomear o remoto): aparece "FALHOU" com a mensagem
 
+## 111. Avisos e resumo diário por Telegram e email
+
+- [ ] Configurações → Avisos e resumo diário: aparece só a administradores
+- [ ] Telegram: criar o bot (@BotFather), guardar o token, enviar /start ao bot, "Detetar o meu chat" mostra o teu nome → escolher
+- [ ] "Enviar um teste": chega a mensagem ao Telegram com as secções ligadas; "Tudo em dia" se não houver nada
+- [ ] Ligar o envio diário numa hora 2–3 minutos à frente: a mensagem chega à hora; "Último envio" mostra a data e o resultado
+- [ ] Email: com o email do servidor configurado chega; sem ele a app diz como resolver
+- [ ] Token inválido/chat errado: a app mostra um motivo claro (sem mostrar o token)
+
 ---
 
 ## Notas / ajustes pedidos

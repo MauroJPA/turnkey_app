@@ -2,6 +2,23 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.85.0 — 2026-10-05 — Avisos e resumo diário por Telegram e email
+
+Recebes todos os dias um resumo do que pede atenção, por **Telegram** e/ou **email**.
+
+- **Configurações → Avisos e resumo diário** (administradores): ligar o envio diário, escolher a **hora** (Lisboa), o **que incluir**
+  (HACCP por fazer, stock baixo, pagamentos nos próximos 7 dias, faturas por rever, preços que subiram nas últimas 24 h) e os canais.
+- **Telegram** (grátis): crias um bot com o @BotFather, colas o token (guardado **cifrado**, nunca volta a aparecer), envias /start ao bot
+  e tocas em **"Detetar o meu chat"** — escolhes o teu (ou o de um grupo). **Email**: vários endereços; precisa do email do servidor
+  configurado no PocketBase (Definições → Mail) — se não estiver, a app explica.
+- **"Enviar um teste"** manda já o resumo e mostra o resultado de cada canal (e o texto). Sem canais mostra só a pré-visualização.
+- **WhatsApp**: o código está pronto mas **desligado** (a API da Meta é paga) — só se ativa no servidor com
+  `GC_TURNKEY_WHATSAPP_TOKEN` e `GC_TURNKEY_WHATSAPP_PHONE_ID`; não há nada na app a ativá-lo.
+- Servidor: tarefa que corre a cada minuto e envia à hora marcada (recupera até 3 h se o servidor esteve parado; 1 envio por dia),
+  `POST /api/gc_turnkey/avisos/testar` e `…/telegram/detetar` (só owner/admin). Nova coleção `avisos_config` (migration
+  `1791000000_avisos`); serviço `telegram` nas integrações. Os erros nunca revelam o token.
+- 18 testes de segurança novos (com um Telegram falso) e testes da configuração.
+
 ## 1.84.0 — 2026-10-05 — Estado dos backups
 
 Vês se os backups estão a correr, sem abrir o servidor.

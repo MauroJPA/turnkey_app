@@ -782,6 +782,106 @@ def teste_aprovacoes_na_app():
     check(s == 404, 'conta inexistente => 404', f'status {s}')
 
 
+class _TelegramFalso(BaseHTTPRequestHandler):
+    def log_message(self, *a):
+        pass
+
+    def _resp(self, codigo, corpo):
+        b = json.dumps(corpo).encode()
+        self.send_response(codigo)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Length', str(len(b)))
+        self.end_headers()
+        self.wfile.write(b)
+
+    def do_POST(self):
+        n = int(self.headers.get('Content-Length', 0))
+        corpo = json.loads(self.rfile.read(n) or b'{}')
+        if tg_estado['modo'] == '401':
+            return self._resp(401, {'ok': False})
+        tg_estado['enviadas'].append({'path': self.path, 'corpo': corpo})
+        self._resp(200, {'ok': True, 'result': {}})
+
+    def do_GET(self):
+        if tg_estado['modo'] == '401':
+            return self._resp(401, {'ok': False})
+        self._resp(200, {'ok': True, 'result': [
+            {'update_id': 1, 'message': {'chat': {'id': 987654, 'first_name': 'Mauro', 'last_name': 'P'}}},
+            {'update_id': 2, 'message': {'chat': {'id': -100123, 'title': 'Equipa Gookie'}}},
+        ]})
+
+
+TOKEN_TG = '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11'
+
+
+def teste_avisos():
+    """Avisos e resumo diário (email / Telegram falso)."""
+    if 'PB_URL' in os.environ:
+        return
+    sec('7a4. Avisos e resumo diário (Telegram falso)')
+    srv = HTTPServer(('127.0.0.1', PORTA_TG), _TelegramFalso)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        tg_estado.update(modo='ok', enviadas=[])
+        s, _, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': False})
+        check(s in (401, 403), 'sem sessão não testa os avisos', f'status {s}')
+        for quem in ('editorA', 'viewerA'):
+            s, _, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': True}, tok[quem])
+            check(s == 403, f'{quem}: não envia avisos', f'status {s}')
+            s, _, _ = call('POST', '/api/gc_turnkey/avisos/telegram/detetar', {}, tok[quem])
+            check(s == 403, f'{quem}: não deteta chats do Telegram', f'status {s}')
+        # configuração: só owner/admin gravam
+        cfg = {'empresa': empresas['A'], 'ativo': False, 'hora': '00:00', 'telegram_ativo': True, 'telegram_chat': '987654',
+               'email_ativo': False, 'inc_haccp': True, 'inc_stock': True, 'inc_pagamentos': True, 'inc_faturas': True, 'inc_precos': True}
+        # (o teste de isolamento já semeou uma configuração: parte-se de zero)
+        s, r, _ = call('GET', '/api/collections/avisos_config/records?perPage=50', tok=su)
+        for it in r.get('items', []):
+            call('DELETE', f'/api/collections/avisos_config/records/{it["id"]}', tok=su)
+        s, _, _ = call('POST', '/api/collections/avisos_config/records', cfg, tok['editorA'])
+        check(s in (400, 403), 'editor não grava a configuração dos avisos', f'status {s}')
+        s, r, _ = call('POST', '/api/collections/avisos_config/records', cfg, tok['adminA'])
+        check(s == 200, 'admin grava a configuração dos avisos', f'status {s} {str(r)[:100]}')
+        cfg_id = r.get('id')
+        s, _, _ = call('POST', '/api/collections/avisos_config/records', {**cfg, 'empresa': empresas['B']}, tok['adminA'])
+        check(s in (400, 403), 'admin não grava avisos de outra empresa', f'status {s}')
+        # token do bot (cifrado) e testes
+        s, r, _ = call('PUT', '/api/gc_turnkey/integracoes/telegram', {'valor': TOKEN_TG}, tok['adminA'])
+        check(s == 200 and r.get('configurada') is True and TOKEN_TG not in json.dumps(r), 'token do Telegram guardado e nunca devolvido', f'status {s}')
+        s, r, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': False}, tok['adminA'])
+        check(s == 200 and 'Resumo de' in r.get('texto', '') and not tg_estado['enviadas'],
+              'pré-visualização do resumo sem enviar nada', f'status {s} {str(r)[:100]}')
+        s, r, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': True}, tok['adminA'])
+        check(s == 200 and r.get('resultados', {}).get('telegram') == '' and len(tg_estado['enviadas']) == 1,
+              'envio de teste chega ao Telegram', f'status {s} {str(r)[:120]}')
+        env = tg_estado['enviadas'][0] if tg_estado['enviadas'] else {}
+        check(env.get('corpo', {}).get('chat_id') == '987654' and 'Resumo de' in env.get('corpo', {}).get('text', ''),
+              'a mensagem vai para o chat configurado')
+        check(TOKEN_TG not in json.dumps(r), 'a resposta nunca contém o token')
+        # sem SMTP: mensagem clara
+        call('PATCH', f'/api/collections/avisos_config/records/{cfg_id}', {'email_ativo': True, 'email_para': 'x@exemplo.pt', 'telegram_ativo': False}, tok['adminA'])
+        s, r, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': True}, tok['adminA'])
+        check('SMTP' in (r.get('resultados', {}).get('email') or ''), 'email sem SMTP configurado explica o que fazer', str(r)[:140])
+        # token inválido
+        call('PATCH', f'/api/collections/avisos_config/records/{cfg_id}', {'email_ativo': False, 'telegram_ativo': True}, tok['adminA'])
+        tg_estado['modo'] = '401'
+        s, r, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': True}, tok['adminA'])
+        check('token' in (r.get('resultados', {}).get('telegram') or '').lower() and TOKEN_TG not in json.dumps(r),
+              'token inválido: mensagem útil sem revelar o token', str(r)[:140])
+        s, _, _ = call('POST', '/api/gc_turnkey/avisos/telegram/detetar', {}, tok['adminA'])
+        check(s == 400, 'detetar com token inválido => erro claro', f'status {s}')
+        tg_estado['modo'] = 'ok'
+        s, r, _ = call('POST', '/api/gc_turnkey/avisos/telegram/detetar', {}, tok['adminA'])
+        ids = [c.get('id') for c in r.get('chats', [])] if s == 200 else []
+        check('987654' in ids and '-100123' in ids, 'detetar mostra os chats que falaram com o bot', f'status {s} {str(r)[:120]}')
+        # outra empresa nunca vê/usa o token da A
+        s, r, _ = call('POST', '/api/gc_turnkey/avisos/telegram/detetar', {}, tok['ownerB'])
+        check(s == 400, 'a empresa B não usa o token da A', f'status {s}')
+        # limpeza: o teste seguinte (segredos) espera só o token do Vendus
+        call('DELETE', '/api/gc_turnkey/integracoes/telegram', tok=tok['adminA'])
+    finally:
+        srv.shutdown()
+
+
 def teste_estado_backups():
     sec('7a3. Estado dos backups (só administradores)')
     s, _, _ = call('GET', '/api/gc_turnkey/backups/estado')
@@ -920,6 +1020,8 @@ def teste_sem_chave():
 # IA falsa (Gemini) e qpdf falso, para testar faturas com vários documentos
 # ---------------------------------------------------------------------------
 PORTA_IA = 8188
+PORTA_TG = 8189
+tg_estado = {'modo': 'ok', 'enviadas': []}
 ia_modo = {'modo': 'tres', 'chamadas': {}}
 
 
@@ -1009,6 +1111,7 @@ def ambiente_ia_falsa():
         'GC_TURNKEY_GEMINI_URL': f'http://127.0.0.1:{PORTA_IA}/v1beta/models/',
         'GC_TURNKEY_AI_MODEL': 'modelo-a', 'GC_TURNKEY_AI_MODEL_FALLBACK': 'modelo-b,modelo-c',
         'GC_TURNKEY_AI_ESPERAS': '0,0', 'GC_TURNKEY_JANELA_PAGINAS': '4',
+        'GC_TURNKEY_TELEGRAM_URL': f'http://127.0.0.1:{PORTA_TG}',
         'PATH': pasta + os.pathsep + os.environ.get('PATH', ''),
     }
 
@@ -2175,6 +2278,7 @@ def main():
         teste_aprovacao()
         teste_aprovacoes_na_app()
         teste_estado_backups()
+        teste_avisos()
         teste_segredos()
         teste_sem_chave()
         teste_faturas_ia()

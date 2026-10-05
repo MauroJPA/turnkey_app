@@ -97,6 +97,13 @@ no navegador) e o contentor tinha capacidades a mais (`cap_drop: ALL`, `no-new-p
 6. Manter o PocketBase e o Debian atualizados; `flutter pub outdated` antes de cada ciclo.
 7. Dados pessoais (nomes e cartões da equipa): são dados pessoais (RGPD) — só o necessário, apagar quando a pessoa sai.
 
+## Avisos por Telegram/email (1.85.0)
+
+O token do bot do Telegram guarda-se **cifrado** como o do Vendus (`segredos_empresa`, serviço `telegram`) e nunca sai do servidor;
+as mensagens de erro não o incluem. Os endpoints de teste e de deteção do chat são só para owner/admin e só usam o token da própria
+empresa. O WhatsApp está no código mas **desligado** por omissão (precisa de variáveis de ambiente). Os avisos só enviam resumos
+(nomes de controlos, ingredientes, custos a pagar) — nenhum dado de clientes.
+
 ## O que **fica por fazer** (depende de ti / do servidor)
 
 1. **Reiniciar o PocketBase** depois de gerar a chave de cifra (ver acima) — as migrations novas

@@ -6,7 +6,7 @@
 //   PUT    /api/gc_turnkey/integracoes/{servico}   { valor }   (owner/admin)
 //   DELETE /api/gc_turnkey/integracoes/{servico}               (owner/admin)
 //
-// O valor guardado nunca volta a sair do servidor. Serviços aceites: vendus.
+// O valor guardado nunca volta a sair do servidor. Serviços aceites: vendus, telegram (token do bot dos avisos).
 //
 // NOTA: cada handler é autocontido (os handlers correm isolados).
 
@@ -20,7 +20,7 @@ routerAdd(
     }
     if (auth.getString('papel') === 'viewer') throw new ForbiddenError('Sem permissão.');
     const servico = e.request.pathValue('servico');
-    if (!['vendus'].includes(servico)) throw new NotFoundError('Serviço desconhecido.');
+    if (!['vendus', 'telegram'].includes(servico)) throw new NotFoundError('Serviço desconhecido.');
     const seg = require(`${__hooks}/segredos.js`);
     return e.json(200, seg.estado(e.app, auth.getString('empresa'), servico));
   },
@@ -40,7 +40,7 @@ routerAdd(
       throw new ForbiddenError('Precisas de ser administrador da empresa.');
     }
     const servico = e.request.pathValue('servico');
-    if (!['vendus'].includes(servico)) throw new NotFoundError('Serviço desconhecido.');
+    if (!['vendus', 'telegram'].includes(servico)) throw new NotFoundError('Serviço desconhecido.');
     const valor = ((e.requestInfo().body || {}).valor || '').toString().trim();
     if (valor.length < 8 || valor.length > 300 || /\s/.test(valor)) {
       throw new BadRequestError('Token inválido (8 a 300 caracteres, sem espaços).');
@@ -78,7 +78,7 @@ routerAdd(
       throw new ForbiddenError('Precisas de ser administrador da empresa.');
     }
     const servico = e.request.pathValue('servico');
-    if (!['vendus'].includes(servico)) throw new NotFoundError('Serviço desconhecido.');
+    if (!['vendus', 'telegram'].includes(servico)) throw new NotFoundError('Serviço desconhecido.');
     const seg = require(`${__hooks}/segredos.js`);
     seg.apagar(e.app, auth.getString('empresa'), servico);
     return e.json(200, seg.estado(e.app, auth.getString('empresa'), servico));

@@ -32,6 +32,7 @@ import '../features/sales/presentation/sales_screen.dart';
 import '../features/sales/presentation/venda_detail_screen.dart';
 import '../features/schedule/presentation/plan_detail_screen.dart';
 import '../features/settings/presentation/aprovacoes_screen.dart';
+import '../features/settings/presentation/avisos_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/settings/presentation/team_screen.dart';
 import '../features/shopping/presentation/compras_relatorio_screen.dart';
@@ -297,6 +298,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'aprovacoes',
                 builder: (_, __) => const AprovacoesScreen(),
+              ),
+              GoRoute(
+                path: 'avisos',
+                builder: (_, __) => const AvisosScreen(),
               ),
               // formatos e categorias já não têm página: gerem-se na ficha/receita
               GoRoute(path: 'formatos', redirect: (_, __) => Routes.techSheets),
