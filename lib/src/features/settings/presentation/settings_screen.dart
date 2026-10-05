@@ -404,6 +404,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 helperText:
                     'Não entra nos percentuais acima: o IVA soma-se no fim, em '
                     'cima do preço sem IVA (Fichas técnicas → Quebra do preço). '
+                    'Se "Impostos" acima for o IVA, põe-no a 0 (senão conta '
+                    'duas vezes). '
                     'Também estima o IVA a entregar quando uma venda não traz o '
                     'valor sem IVA (Contabilidade → IVA a separar).',
                 helperMaxLines: 6,

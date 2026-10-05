@@ -319,6 +319,7 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
                   config: config,
                   fmt: fmt,
                   precoVenda: d.ficha.precoVenda,
+                  custoEmbalagem: d.custoEmbalagem,
                   cmvReal: d.ficha.cmvRealPercent(
                     d.custoPreview,
                     config.ivaVendas,

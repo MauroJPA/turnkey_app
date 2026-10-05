@@ -4,6 +4,7 @@ import 'package:gc_turnkey/src/features/tech_sheets/domain/tech_sheet.dart';
 
 void main() {
   ivaPorUltimo();
+  embalagemSeparada();
   // 30+15+30 = 75% em outras rubricas → CMV esperado 25%.
   const config = CostConfig(salario: 30, aluguel: 15, margemLucro: 30);
 
@@ -126,6 +127,36 @@ void ivaPorUltimo() {
       expect(f.margemPercentSemIva(20), closeTo(70, 1e-9));
       // sem IVA: igual ao de antes
       expect(f.cmvRealPercent(), closeTo(25, 1e-9));
+    });
+  });
+}
+
+void embalagemSeparada() {
+  group('Embalagem na quebra', () {
+    const config = CostConfig(salario: 30, aluguel: 15, margemLucro: 30);
+
+    test(
+      'matéria-prima e embalagem em linhas separadas, abaixo/acima certos',
+      () {
+        final q = config.quebraComparada(1.5, 6, custoEmbalagem: 0.5);
+        final nomes = q.linhas.map((l) => l.nome).toList();
+        expect(nomes.take(3), ['Matéria-prima', 'Embalagem', 'Salário']);
+        final mp = q.linhas[0];
+        final emb = q.linhas[1];
+        expect(mp.esperado, closeTo(1.0, 1e-9));
+        expect(emb.esperado, closeTo(0.5, 1e-9));
+        // juntas dão o CMV esperado (25%)
+        expect(mp.esperadoPct + emb.esperadoPct, closeTo(25, 1e-9));
+        // as linhas reais continuam a somar o preço sem IVA
+        final soma = q.linhas.fold<double>(0, (s, l) => s + (l.real ?? 0));
+        expect(soma, closeTo(6, 1e-9));
+      },
+    );
+
+    test('sem embalagem não há linha de embalagem (como antes)', () {
+      final q = config.quebraComparada(1.5, 5);
+      expect(q.linhas.any((l) => l.nome == 'Embalagem'), isFalse);
+      expect(q.linhas.first.esperadoPct, 25);
     });
   });
 }

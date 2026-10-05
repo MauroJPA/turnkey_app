@@ -1612,6 +1612,14 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Interruptor "Usa a embalagem para plataformas" aumenta o custo (e o preço recomendado) quando a ficha tem essa embalagem
 - [ ] Editar e apagar um canal; um canal aparece em todas as fichas; com papel "só ver" não há botões de criar/editar
 
+## 101. Quebra do preço: embalagem e IVA
+
+- [ ] Ficha com embalagem: na Quebra aparece "Embalagem" logo abaixo de "Matéria-prima" e acima de "Salário"
+- [ ] Com "Impostos" = "IVA das vendas" (> 0): aviso vermelho "O IVA está a contar duas vezes" + botão "Tirar o imposto da quebra"
+      (só administradores); confirmar põe Impostos a 0 %, o aviso desaparece e o CMV esperado sobe
+- [ ] Rubricas a 0 % não aparecem; "Matéria-prima" e "Margem de lucro" aparecem sempre
+- [ ] Configurações → Percentuais de custo: a nota do "IVA das vendas" avisa para pôr "Impostos" a 0 se for o IVA
+
 ---
 
 ## Notas / ajustes pedidos

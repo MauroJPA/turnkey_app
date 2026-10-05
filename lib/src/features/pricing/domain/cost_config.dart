@@ -152,18 +152,31 @@ class CostConfig with _$CostConfig {
   /// No real, a matéria-prima é o custo verdadeiro e as rubricas mantêm o seu
   /// percentual do preço sem IVA; a **margem de lucro** é o que sobra
   /// (positiva ou negativa) — assim as linhas somam o preço sem IVA.
-  QuebraComparada quebraComparada(double custo, double precoVendaComIva) {
+  ///
+  /// [custoEmbalagem] (parte de [custo]) aparece numa linha à parte, abaixo
+  /// da matéria-prima.
+  QuebraComparada quebraComparada(
+    double custo,
+    double precoVendaComIva, {
+    double custoEmbalagem = 0,
+  }) {
     final esperado = precoSugerido(custo);
     final temReal = precoVendaComIva > 0;
     final precoVenda = temReal ? semIva(precoVendaComIva) : 0.0;
+    final emb = custoEmbalagem.clamp(0, custo).toDouble();
+    final mp = custo - emb;
+    double pctEsperado(double v) =>
+        emb == 0 ? cmvPercent : (esperado > 0 ? v / esperado * 100 : 0.0);
+    LinhaQuebra linhaCusto(String nome, double v) => LinhaQuebra(
+      nome: nome,
+      esperado: v,
+      esperadoPct: pctEsperado(v),
+      real: temReal ? v : null,
+      realPct: temReal ? v / precoVenda * 100 : null,
+    );
     final linhas = <LinhaQuebra>[
-      LinhaQuebra(
-        nome: 'Matéria-prima',
-        esperado: custo,
-        esperadoPct: cmvPercent,
-        real: temReal ? custo : null,
-        realPct: temReal ? custo / precoVenda * 100 : null,
-      ),
+      linhaCusto('Matéria-prima', mp),
+      if (emb > 0) linhaCusto('Embalagem', emb),
     ];
     var somaOutrosReal = 0.0;
     for (final e in rubricas.entries) {

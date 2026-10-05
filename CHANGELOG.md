@@ -2,6 +2,19 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.75.0 — 2026-10-06 — Quebra do preço: embalagem à parte e IVA só no fim
+
+- **Matéria-prima e Embalagem em linhas separadas**: na Quebra do preço, a *Embalagem* passa a ter a sua linha, logo
+  abaixo da *Matéria-prima* e acima do *Salário* (valor e % no esperado e no real). Juntas continuam a dar o CMV.
+- **IVA a contar duas vezes**: se os **"Impostos" dos percentuais forem iguais ao IVA das vendas** (ex.: 23 % e 23 %), a
+  Quebra mostra um aviso a vermelho — o imposto aparecia dentro da quebra e outra vez no fim. O botão **"Tirar o imposto da
+  quebra"** (administradores, com confirmação) põe "Impostos" a 0 %; o IVA fica só no fim. Em Configurações, a nota do
+  *IVA das vendas* avisa o mesmo.
+- Rubricas a 0 % (ex.: Impostos depois de tirado, Despesas fixas vazias) deixam de aparecer na tabela: menos linhas.
+- Atenção: "Impostos" também é usado nos **Números mágicos** e na **Distribuição teórica**; ao pô-lo a 0 % deixam de
+  contar esse imposto (se tens outro imposto real, como IRC, deixa só essa percentagem).
+- Sem alterações à base de dados. Testes novos.
+
 ## 1.74.0 — 2026-10-06 — Preços por canal: plataformas e terceiros com taxas em cascata
 
 Cada canal de venda tem as suas taxas, e na ficha técnica vês o preço a cobrar e o lucro de cada um.
