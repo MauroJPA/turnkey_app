@@ -43,7 +43,9 @@ class StockBadge extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  baixo ? Icons.warning_amber_rounded : Icons.inventory_2_outlined,
+                  baixo
+                      ? Icons.warning_amber_rounded
+                      : Icons.inventory_2_outlined,
                   size: 14,
                   color: cor,
                 ),

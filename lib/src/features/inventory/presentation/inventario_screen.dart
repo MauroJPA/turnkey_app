@@ -9,18 +9,30 @@ import '../../consumables/presentation/consumiveis_screen.dart';
 import '../../ingredients/presentation/ingredients_screen.dart';
 import '../../packaging/presentation/embalagens_screen.dart';
 import '../application/inventory_providers.dart';
+import '../data/variacao_preco_repository.dart';
 import '../domain/stock_item.dart';
 import 'material_loja_screen.dart';
+import 'variacoes_preco_view.dart';
 
 /// As secções do Inventário.
 enum SecaoInventario {
   ingredientes('Ingredientes', Icons.egg_alt_outlined, Routes.inventory),
-  limpeza('Limpeza e insumos', Icons.cleaning_services_outlined,
-      Routes.inventoryLimpeza),
-  material('Material da loja', Icons.chair_alt_outlined,
-      Routes.inventoryMaterial),
-  embalagens('Embalagens', Icons.inventory_2_outlined,
-      Routes.inventoryEmbalagens);
+  limpeza(
+    'Limpeza e insumos',
+    Icons.cleaning_services_outlined,
+    Routes.inventoryLimpeza,
+  ),
+  material(
+    'Material da loja',
+    Icons.chair_alt_outlined,
+    Routes.inventoryMaterial,
+  ),
+  embalagens(
+    'Embalagens',
+    Icons.inventory_2_outlined,
+    Routes.inventoryEmbalagens,
+  ),
+  precos('Preços', Icons.trending_up, Routes.inventoryPrecos);
 
   const SecaoInventario(this.label, this.icon, this.rota);
   final String label;
@@ -32,6 +44,7 @@ enum SecaoInventario {
     SecaoInventario.limpeza => HelpTopic.consumiveis,
     SecaoInventario.material => HelpTopic.inventario,
     SecaoInventario.embalagens => HelpTopic.embalagens,
+    SecaoInventario.precos => HelpTopic.variacoesPreco,
   };
 
   StockTipo? get tipoStock => switch (this) {
@@ -39,6 +52,7 @@ enum SecaoInventario {
     SecaoInventario.limpeza => StockTipo.consumivel,
     SecaoInventario.material => StockTipo.livre,
     SecaoInventario.embalagens => null,
+    SecaoInventario.precos => null,
   };
 }
 
@@ -54,10 +68,10 @@ class InventarioScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // quantos itens abaixo do mínimo há em cada secção
     final stock = ref.watch(stockPorItemProvider).values;
-    int baixos(SecaoInventario s) => stock
-        .where((i) => i.tipo == s.tipoStock && i.stockBaixo)
-        .length;
+    int baixos(SecaoInventario s) =>
+        stock.where((i) => i.tipo == s.tipoStock && i.stockBaixo).length;
 
+    final subidas = ref.watch(subidasPorVerProvider).length;
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -81,7 +95,9 @@ class InventarioScreen extends ConsumerWidget {
                     child: ChoiceChip(
                       avatar: Icon(s.icon, size: 18),
                       label: Text(
-                        baixos(s) > 0
+                        s == SecaoInventario.precos && subidas > 0
+                            ? '${s.label} · $subidas a subir'
+                            : baixos(s) > 0
                             ? '${s.label} · ${baixos(s)} a acabar'
                             : s.label,
                       ),
@@ -111,6 +127,9 @@ class InventarioScreen extends ConsumerWidget {
               SecaoInventario.embalagens => const EmbalagensScreen(
                 key: ValueKey('inv-embalagens'),
                 embedded: true,
+              ),
+              SecaoInventario.precos => const VariacoesPrecoView(
+                key: ValueKey('inv-precos'),
               ),
             },
           ),

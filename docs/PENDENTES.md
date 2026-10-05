@@ -1,6 +1,6 @@
 # Pendentes (fila de trabalho)
 
-Última versão fechada: **1.81.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
+Última versão fechada: **1.82.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
 (editar → `bash scripts/verificar.sh` → pubspec + CHANGELOG + docs/CHECKLIST_TESTES.md → commit com caminhos
 explícitos → `git branch -f develop main` → `git tag vX.Y.Z`). No fim: `powershell -File scripts\empacotar-producao.ps1`
 e dar ao Mauro o SHA-256 + comando de publicação.
@@ -8,7 +8,7 @@ e dar ao Mauro o SHA-256 + comando de publicação.
 Fila atual (pedido do Mauro em 06/10/2026, **cada item = uma versão**, por esta ordem; marcar ~~feito~~ ao fechar):
 
 - ~~**1.81.0**~~ (feito) Temperatura do forno em cada ficha técnica (campo) + mostrar "°C e minutos" ao assar (Contagem/forno, Produção).
-- **1.82.0** Alerta de variação de preço: quando uma fatura sobe um ingrediente mais de X % (limiar configurável), mostrar as
+- ~~**1.82.0**~~ (feito) Alerta de variação de preço: quando uma fatura sobe um ingrediente mais de X % (limiar configurável), mostrar as
   fichas afetadas e o impacto nas margens (cartão no Início + lista "Variações de preço").
 - **1.83.0** Aprovações dentro da app (só o operador da plataforma): listar contas por aprovar, aprovar/recusar, sem usar `/_/`.
 - **1.84.0** Cartão "Estado dos backups" para administradores (script de backup escreve um ficheiro de estado; aviso se falhar/atrasar).

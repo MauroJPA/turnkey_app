@@ -29,6 +29,7 @@ import '../../ingredients/data/ingredient_product_repository.dart';
 import '../../ingredients/data/ingredient_repository.dart';
 import '../../ingredients/domain/ingredient.dart';
 import '../../ingredients/domain/produto_ingrediente.dart';
+import '../../inventory/data/variacao_preco_repository.dart';
 import '../../packaging/application/embalagem_providers.dart';
 import '../../packaging/domain/embalagem.dart';
 import '../application/analise_faturas_controller.dart';
@@ -1311,6 +1312,34 @@ class _RevisaoState extends ConsumerState<_Revisao> {
           ),
         ),
       );
+      // alerta de variação de preço: preços que subiram acima do limiar
+      ref.invalidate(variacoesPrecoProvider);
+      try {
+        await ref.read(variacoesPrecoProvider.future);
+      } on Object {
+        // sem alerta se não conseguir ler
+      }
+      final recentes = ref
+          .read(subidasPorVerProvider)
+          .where(
+            (v) => DateTime.now().difference(v.criada).inMinutes < 5,
+          )
+          .toList();
+      if (mounted && recentes.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            duration: const Duration(seconds: 12),
+            content: Text(
+              '${recentes.length} preço(s) subiram: '
+              '${recentes.take(3).map((v) => '${v.ingredienteNome} +${v.pct.toStringAsFixed(0)}%').join(', ')}',
+            ),
+            action: SnackBarAction(
+              label: 'Ver impacto',
+              onPressed: () => context.go(Routes.inventoryPrecos),
+            ),
+          ),
+        );
+      }
       if (falhas.isNotEmpty && mounted) {
         await showDialog<void>(
           context: context,

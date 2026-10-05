@@ -62,6 +62,7 @@ class CostConfig {
     this.taxasFinanceiras = 0,
     this.cmv = 100,
     this.ivaVendas = 0,
+    this.alertaPrecoPct = 5,
   });
 
   final String? id;
@@ -79,6 +80,9 @@ class CostConfig {
   /// valor sem IVA.
   final double ivaVendas;
 
+  /// Avisar quando o preço de um ingrediente sobe mais do que isto (%).
+  final double alertaPrecoPct;
+
   CostConfig copyWith({
     double? salario,
     double? aluguel,
@@ -87,6 +91,7 @@ class CostConfig {
     double? taxasFinanceiras,
     double? cmv,
     double? ivaVendas,
+    double? alertaPrecoPct,
   }) => CostConfig(
     id: id,
     salario: salario ?? this.salario,
@@ -96,6 +101,7 @@ class CostConfig {
     taxasFinanceiras: taxasFinanceiras ?? this.taxasFinanceiras,
     cmv: cmv ?? this.cmv,
     ivaVendas: ivaVendas ?? this.ivaVendas,
+    alertaPrecoPct: alertaPrecoPct ?? this.alertaPrecoPct,
   );
 
   factory CostConfig.fromRecord(RecordModel r) {
@@ -128,6 +134,9 @@ class CostConfig {
       taxasFinanceiras: taxas,
       cmv: cmv,
       ivaVendas: r.getDoubleValue('iva_vendas'),
+      alertaPrecoPct: r.getDoubleValue('alerta_preco_pct') > 0
+          ? r.getDoubleValue('alerta_preco_pct')
+          : 5,
     );
   }
 
@@ -139,6 +148,7 @@ class CostConfig {
     'taxas_financeiras': taxasFinanceiras,
     'cmv': cmv,
     'iva_vendas': ivaVendas,
+    'alerta_preco_pct': alertaPrecoPct < 1 ? 5 : alertaPrecoPct,
   };
 
   /// Soma das rubricas de custo (sem matéria-prima nem margem).

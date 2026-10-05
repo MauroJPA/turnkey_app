@@ -3,14 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/inventory_repository.dart';
 import '../domain/stock_item.dart';
 
-final stockListProvider =
-    FutureProvider.autoDispose<List<StockItem>>((ref) {
+final stockListProvider = FutureProvider.autoDispose<List<StockItem>>((ref) {
   return ref.watch(inventoryRepositoryProvider).list();
 });
 
 /// O stock de cada item (chave `tipo:id`), para mostrar nas listas de
 /// ingredientes e de limpeza e insumos.
-final stockPorItemProvider = Provider.autoDispose<Map<String, StockItem>>((ref) {
+final stockPorItemProvider = Provider.autoDispose<Map<String, StockItem>>((
+  ref,
+) {
   final lista = ref.watch(stockListProvider).valueOrNull ?? const <StockItem>[];
   return {for (final i in lista) '${i.tipo.name}:${i.id}': i};
 });
@@ -22,17 +23,21 @@ typedef ItemRef = ({
   String? descricao,
 });
 
-final movimentosProvider =
-    FutureProvider.autoDispose.family<List<MovimentoStock>, ItemRef>(
-  (ref, key) => ref.watch(inventoryRepositoryProvider).movimentos(
-        ingredienteId: key.ingredienteId,
-        fichaId: key.fichaId,
-        consumivelId: key.consumivelId,
-        descricao: key.descricao,
-      ),
-);
+final movimentosProvider = FutureProvider.autoDispose
+    .family<List<MovimentoStock>, ItemRef>(
+      (ref, key) => ref
+          .watch(inventoryRepositoryProvider)
+          .movimentos(
+            ingredienteId: key.ingredienteId,
+            fichaId: key.fichaId,
+            consumivelId: key.consumivelId,
+            descricao: key.descricao,
+          ),
+    );
 
-final inventoryActionsProvider = Provider<InventoryActions>(InventoryActions.new);
+final inventoryActionsProvider = Provider<InventoryActions>(
+  InventoryActions.new,
+);
 
 class InventoryActions {
   InventoryActions(this._ref);
@@ -47,9 +52,10 @@ class InventoryActions {
     String? localizacao,
     bool? favorito,
   }) async {
-    await _ref.read(inventoryRepositoryProvider).ajustar(
-          ingredienteId:
-              item.tipo == StockTipo.ingrediente ? item.id : null,
+    await _ref
+        .read(inventoryRepositoryProvider)
+        .ajustar(
+          ingredienteId: item.tipo == StockTipo.ingrediente ? item.id : null,
           fichaId: item.tipo == StockTipo.ficha ? item.id : null,
           consumivelId: item.tipo == StockTipo.consumivel ? item.id : null,
           descricao: item.tipo == StockTipo.livre ? item.id : null,
@@ -66,9 +72,10 @@ class InventoryActions {
 
   /// Marca/desmarca um item como favorito.
   Future<void> alternarFavorito(StockItem item) async {
-    await _ref.read(inventoryRepositoryProvider).ajustar(
-          ingredienteId:
-              item.tipo == StockTipo.ingrediente ? item.id : null,
+    await _ref
+        .read(inventoryRepositoryProvider)
+        .ajustar(
+          ingredienteId: item.tipo == StockTipo.ingrediente ? item.id : null,
           fichaId: item.tipo == StockTipo.ficha ? item.id : null,
           consumivelId: item.tipo == StockTipo.consumivel ? item.id : null,
           descricao: item.tipo == StockTipo.livre ? item.id : null,
@@ -86,7 +93,9 @@ class InventoryActions {
     double? minimo,
     String? localizacao,
   }) async {
-    await _ref.read(inventoryRepositoryProvider).ajustar(
+    await _ref
+        .read(inventoryRepositoryProvider)
+        .ajustar(
           descricao: descricao,
           unidade: unidade,
           categoria: categoria.isEmpty ? null : categoria,

@@ -31,6 +31,7 @@ enum HelpTopic {
   dre,
   contabilidade,
   embalagens,
+  variacoesPreco,
   consumiveis,
   produtos,
   configuracoes,
@@ -370,6 +371,15 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'A lista de ingredientes segue as regras da UE: por ordem decrescente de peso e com os alergénios a negrito. É calculada sozinha a partir da ficha técnica, das receitas e dos ingredientes. "Completa" usa o nome de cada ingrediente; "Resumida" usa nomes curtos, para etiquetas pequenas.',
       '"Falta completar" mostra o que ainda não está preenchido: nutrição de algum ingrediente, prazo de validade e modo de conservação. "Corrigir a nutrição" leva-te ao ingrediente em falta; "Preencher os dados" abre a ficha.',
       'Ícone da impressora: imprime a etiqueta (completa ou resumida) com a informação nutricional. Ícone de copiar: junta tudo num texto.',
+    ],
+  ),
+  HelpTopic.variacoesPreco: (
+    titulo: 'Variações de preço',
+    paragrafos: [
+      'Sempre que o preço de um ingrediente muda (por exemplo ao aplicar uma fatura), a app regista a variação e mostra aqui o que mudou: o preço por kg antes e depois, a variação em % e as fichas técnicas que ficaram mais caras ou mais baratas — com o custo e a margem antes e depois.',
+      'Aviso: quando um preço sobe mais do que o limiar (por omissão 5 %; muda em Configurações → Percentuais de custo → "Avisar quando um preço sobe mais de"), aparece um cartão "Preços subiram" no Início e a secção Preços do Inventário mostra quantas subidas há por ver. "Marcar como vistas" limpa o aviso neste aparelho.',
+      'Toca numa variação para ver as fichas afetadas. Usa isto para decidir se subes o preço de venda, trocas de fornecedor ou renegocias. As variações ficam guardadas cerca de 4 meses.',
+      'As margens são sobre o preço sem IVA (o IVA soma-se no fim) e só aparecem nas fichas com preço de venda.',
     ],
   ),
   HelpTopic.embalagens: (

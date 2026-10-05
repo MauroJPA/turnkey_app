@@ -160,6 +160,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, __) =>
                     const InventarioScreen(secao: SecaoInventario.embalagens),
               ),
+              GoRoute(
+                path: 'precos',
+                builder: (_, __) =>
+                    const InventarioScreen(secao: SecaoInventario.precos),
+              ),
             ],
           ),
           GoRoute(

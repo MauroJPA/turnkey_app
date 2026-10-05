@@ -55,11 +55,35 @@ onRecordAfterUpdateSuccess((e) => {
       mudou = true;
     }
     if (mudou) {
+      // alerta de variação de preço: foto das fichas antes da cascata...
+      let foto = null;
+      let vp = null;
+      const precoMudou =
+        Math.abs(num(e.record, 'preco') - num(before, 'preco')) > EPS ||
+        Math.abs(
+          num(e.record, 'gramas_embalagem') - num(before, 'gramas_embalagem'),
+        ) > EPS;
+      if (precoMudou) {
+        try {
+          vp = require(`${__hooks}/variacoes_preco.js`);
+          foto = vp.fotografar(e.app, e.record);
+        } catch (err) {
+          console.log('[variacoes] foto: ' + err);
+        }
+      }
       require(`${__hooks}/cascade.js`).runCascade(
         e.app,
         'ingrediente',
         e.record.id,
       );
+      // ... e comparação depois (nunca bloqueia a cascata)
+      if (vp && foto) {
+        try {
+          vp.registar(e.app, e.record, before, foto);
+        } catch (err) {
+          console.log('[variacoes] registo: ' + err);
+        }
+      }
     }
   } catch (err) {
     console.log('[cascata] ingrediente: ' + err);

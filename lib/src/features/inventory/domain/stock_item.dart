@@ -68,18 +68,19 @@ class StockItem {
   final String ultimoUso;
 
   String get unidade => switch (tipo) {
-        StockTipo.ingrediente => unidadeNormalizada(unidadeIng),
-        StockTipo.ficha => 'un',
-        StockTipo.consumivel => 'un',
-        StockTipo.livre => unidadeLivre.isEmpty ? 'un' : unidadeLivre,
-      };
+    StockTipo.ingrediente => unidadeNormalizada(unidadeIng),
+    StockTipo.ficha => 'un',
+    StockTipo.consumivel => 'un',
+    StockTipo.livre => unidadeLivre.isEmpty ? 'un' : unidadeLivre,
+  };
 
   double get valor => quantidade * custoUnitario;
 
   bool get stockBaixo => minimo > 0 && quantidade < minimo;
 
   String quantidadeLabel() {
-    if (tipo == StockTipo.ingrediente && unidadeNormalizada(unidadeIng) != 'g') {
+    if (tipo == StockTipo.ingrediente &&
+        unidadeNormalizada(unidadeIng) != 'g') {
       return quantidadeParaTexto(quantidade, unidadeIng);
     }
     if (tipo == StockTipo.ingrediente) {
@@ -126,31 +127,31 @@ enum MotivoMovimento {
   perda;
 
   static MotivoMovimento fromApi(String? v) => switch (v) {
-        'compra' => MotivoMovimento.compra,
-        'consumo_producao' => MotivoMovimento.consumoProducao,
-        'saida_producao' => MotivoMovimento.saidaProducao,
-        'venda' => MotivoMovimento.venda,
-        'perda' => MotivoMovimento.perda,
-        _ => MotivoMovimento.ajuste,
-      };
+    'compra' => MotivoMovimento.compra,
+    'consumo_producao' => MotivoMovimento.consumoProducao,
+    'saida_producao' => MotivoMovimento.saidaProducao,
+    'venda' => MotivoMovimento.venda,
+    'perda' => MotivoMovimento.perda,
+    _ => MotivoMovimento.ajuste,
+  };
 
   String get api => switch (this) {
-        MotivoMovimento.compra => 'compra',
-        MotivoMovimento.consumoProducao => 'consumo_producao',
-        MotivoMovimento.saidaProducao => 'saida_producao',
-        MotivoMovimento.venda => 'venda',
-        MotivoMovimento.ajuste => 'ajuste',
-        MotivoMovimento.perda => 'perda',
-      };
+    MotivoMovimento.compra => 'compra',
+    MotivoMovimento.consumoProducao => 'consumo_producao',
+    MotivoMovimento.saidaProducao => 'saida_producao',
+    MotivoMovimento.venda => 'venda',
+    MotivoMovimento.ajuste => 'ajuste',
+    MotivoMovimento.perda => 'perda',
+  };
 
   String get label => switch (this) {
-        MotivoMovimento.compra => 'Compra',
-        MotivoMovimento.consumoProducao => 'Consumo (produção)',
-        MotivoMovimento.saidaProducao => 'Saída (produção)',
-        MotivoMovimento.venda => 'Venda',
-        MotivoMovimento.ajuste => 'Ajuste',
-        MotivoMovimento.perda => 'Perda',
-      };
+    MotivoMovimento.compra => 'Compra',
+    MotivoMovimento.consumoProducao => 'Consumo (produção)',
+    MotivoMovimento.saidaProducao => 'Saída (produção)',
+    MotivoMovimento.venda => 'Venda',
+    MotivoMovimento.ajuste => 'Ajuste',
+    MotivoMovimento.perda => 'Perda',
+  };
 }
 
 class MovimentoStock {
@@ -167,9 +168,9 @@ class MovimentoStock {
   final String created;
 
   factory MovimentoStock.fromRecord(RecordModel r) => MovimentoStock(
-        delta: r.getDoubleValue('delta'),
-        motivo: MotivoMovimento.fromApi(r.getStringValue('motivo')),
-        notas: r.getStringValue('notas'),
-        created: r.getStringValue('created'),
-      );
+    delta: r.getDoubleValue('delta'),
+    motivo: MotivoMovimento.fromApi(r.getStringValue('motivo')),
+    notas: r.getStringValue('notas'),
+    created: r.getStringValue('created'),
+  );
 }

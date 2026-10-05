@@ -19,6 +19,7 @@ abstract class Routes {
   static const inventoryLimpeza = '/inventario/limpeza';
   static const inventoryMaterial = '/inventario/material';
   static const inventoryEmbalagens = '/inventario/embalagens';
+  static const inventoryPrecos = '/inventario/precos';
   static const invoices = '/faturas';
   static const sales = '/vendas';
   static const encomendas = '/encomendas';

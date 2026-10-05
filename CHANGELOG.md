@@ -2,6 +2,20 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.82.0 — 2026-10-05 — Alerta de variação de preço
+
+Quando o preço de um ingrediente sobe (por exemplo ao aplicar uma fatura), a app avisa e mostra o que fica afetado.
+
+- **Servidor**: sempre que o preço de um ingrediente muda ≥ 1 %, regista a **variação** (preço por kg antes/depois, % ) e as
+  **fichas técnicas cujo custo mudou** (custo antes/depois e preço de venda). Fica ~4 meses. Só o servidor escreve (coleção
+  `variacoes_preco`, migration `1790990000`).
+- **Inventário → Preços** (nova secção): lista as variações — filtros Subidas / Descidas / Todas — e, ao tocar numa, as **fichas
+  afetadas com o custo e a margem antes → depois** (margem sobre o preço sem IVA). "Marcar como vistas" limpa o aviso neste aparelho.
+- **Início**: cartão "Preços subiram" (com os ingredientes e %) quando há subidas acima do limiar por ver.
+- **Ao aplicar uma fatura**: aviso "N preço(s) subiram: Farinha +20 % …" com o botão **Ver impacto**.
+- **Limiar configurável** em Configurações → Percentuais de custo → "Avisar quando um preço sobe mais de" (5 % por omissão).
+- Testes novos.
+
 ## 1.81.0 — 2026-10-05 — Temperatura do forno em cada produto
 
 Cada produto passa a ter a **temperatura do forno** além do tempo de assadura.

@@ -49,9 +49,7 @@ class _AjusteSheetState extends ConsumerState<_AjusteSheet> {
   final _delta = TextEditingController();
   final _notas = TextEditingController();
   late final _minimo = TextEditingController(
-    text: widget.item.minimo > 0
-        ? widget.item.minimo.toStringAsFixed(0)
-        : '',
+    text: widget.item.minimo > 0 ? widget.item.minimo.toStringAsFixed(0) : '',
   );
   bool _entrada = true;
   MotivoMovimento _motivo = MotivoMovimento.compra;
@@ -62,8 +60,7 @@ class _AjusteSheetState extends ConsumerState<_AjusteSheet> {
     setState(() {
       _entrada = entrada;
       if (!_motivoTocado) {
-        _motivo =
-            entrada ? MotivoMovimento.compra : MotivoMovimento.venda;
+        _motivo = entrada ? MotivoMovimento.compra : MotivoMovimento.venda;
       }
     });
   }
@@ -85,7 +82,9 @@ class _AjusteSheetState extends ConsumerState<_AjusteSheet> {
     }
     setState(() => _busy = true);
     try {
-      await ref.read(inventoryActionsProvider).ajustar(
+      await ref
+          .read(inventoryActionsProvider)
+          .ajustar(
             item: widget.item,
             delta: _entrada ? v : -v,
             motivo: _motivo,
@@ -97,8 +96,9 @@ class _AjusteSheetState extends ConsumerState<_AjusteSheet> {
       if (mounted) Navigator.pop(context);
     } on Object catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -119,10 +119,7 @@ class _AjusteSheetState extends ConsumerState<_AjusteSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            widget.item.nome,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          Text(widget.item.nome, style: Theme.of(context).textTheme.titleLarge),
           Text(
             'Em stock: ${widget.item.quantidadeLabel()}',
             style: Theme.of(context).textTheme.bodySmall,
@@ -227,9 +224,7 @@ class _HistoricoSheet extends ConsumerWidget {
                         return ListTile(
                           dense: true,
                           leading: Icon(
-                            entrada
-                                ? Icons.south_west
-                                : Icons.north_east,
+                            entrada ? Icons.south_west : Icons.north_east,
                             color: entrada
                                 ? Theme.of(context).colorScheme.primary
                                 : Theme.of(context).colorScheme.error,
@@ -320,8 +315,10 @@ class ItemLivreSheetState extends State<ItemLivreSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Novo item livre',
-              style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            'Novo item livre',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 4),
           Text(
             'Qualquer coisa da empresa que não seja ingrediente nem produto.',
@@ -351,10 +348,12 @@ class ItemLivreSheetState extends State<ItemLivreSheet> {
               Expanded(
                 child: TextField(
                   controller: _qtd,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  decoration:
-                      const InputDecoration(labelText: 'Quantidade atual'),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Quantidade atual',
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -375,14 +374,16 @@ class ItemLivreSheetState extends State<ItemLivreSheet> {
           TextField(
             controller: _min,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration:
-                const InputDecoration(labelText: 'Stock mínimo (aviso)'),
+            decoration: const InputDecoration(
+              labelText: 'Stock mínimo (aviso)',
+            ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _local,
-            decoration:
-                const InputDecoration(labelText: 'Localização (opcional)'),
+            decoration: const InputDecoration(
+              labelText: 'Localização (opcional)',
+            ),
           ),
           const SizedBox(height: 16),
           FilledButton(onPressed: _guardar, child: const Text('Criar')),

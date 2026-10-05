@@ -34,6 +34,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _custos = <String, TextEditingController>{
     for (final k in _rubricas.keys) k: TextEditingController(),
     'cmv': TextEditingController(),
+    'alertaPreco': TextEditingController(),
   };
   final _ivaVendas = TextEditingController();
   Moeda _moeda = Moeda.eur;
@@ -98,6 +99,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _custos['despesasFixas']!.text = _n(c.despesasFixas);
     _custos['taxasFinanceiras']!.text = _n(c.taxasFinanceiras);
     _custos['cmv']!.text = _n(c.cmv);
+    _custos['alertaPreco']!.text = _n(c.alertaPrecoPct);
     _ivaVendas.text = c.ivaVendas > 0 ? _n(c.ivaVendas) : '';
   }
 
@@ -121,6 +123,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     despesasFixas: _v('despesasFixas'),
     taxasFinanceiras: _v('taxasFinanceiras'),
     cmv: _v('cmv'),
+    alertaPrecoPct: _v('alertaPreco') < 1 ? 5 : _v('alertaPreco'),
     ivaVendas:
         double.tryParse(_ivaVendas.text.replaceAll(',', '.').trim()) ?? 0,
   );
@@ -462,6 +465,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     'Também estima o IVA a entregar quando uma venda não traz o '
                     'valor sem IVA (Contabilidade → IVA a separar).',
                 helperMaxLines: 6,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _custos['alertaPreco'],
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Avisar quando um preço sobe mais de',
+                suffixText: '%',
+                helperText:
+                    'Ao aplicar uma fatura, a app avisa se um ingrediente '
+                    'ficou mais caro do que isto e mostra as fichas e '
+                    'margens afetadas (Inventário → Preços).',
+                helperMaxLines: 3,
               ),
             ),
             const SizedBox(height: 12),

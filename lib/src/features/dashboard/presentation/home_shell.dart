@@ -13,6 +13,8 @@ import '../../daily_count/presentation/forno_widgets.dart';
 import '../../finance/application/custos_fixos_providers.dart';
 import '../../haccp/application/haccp_providers.dart';
 import '../../inventory/application/inventory_providers.dart';
+import '../../inventory/data/variacao_preco_repository.dart';
+import '../../inventory/domain/variacao_preco.dart';
 import '../../invoices/application/invoice_providers.dart';
 import '../../invoices/domain/fatura.dart';
 import '../../navigation/application/navigation_providers.dart';
@@ -83,6 +85,9 @@ class HomeShell extends ConsumerWidget {
       (s, c) => s + c.custoEstimado,
     );
 
+    final subidas = acessivel('inventario')
+        ? ref.watch(subidasPorVerProvider)
+        : const <VariacaoPreco>[];
     final custosFixos = ref.watch(custosFixosListProvider(false)).valueOrNull;
     final pagamentosProximos =
         custosFixos
@@ -217,6 +222,20 @@ class HomeShell extends ConsumerWidget {
               subtitulo: 'confirma os dados lidos pela IA',
               destaque: true,
               onTap: () => context.go(Routes.invoices),
+            ),
+          if (subidas.isNotEmpty)
+            _StatCard(
+              icon: Icons.trending_up,
+              titulo: 'Preços subiram',
+              valor: '${subidas.length}',
+              subtitulo: subidas
+                  .take(3)
+                  .map(
+                    (v) => '${v.ingredienteNome} +${v.pct.toStringAsFixed(0)}%',
+                  )
+                  .join(', '),
+              destaque: true,
+              onTap: () => context.go(Routes.inventoryPrecos),
             ),
           if (acessivel('financeiro') && (pagamentosProximos?.length ?? 0) > 0)
             _StatCard(

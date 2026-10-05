@@ -21,17 +21,21 @@ class InventoryRepository {
   /// stock atual (0 se não houver linha). Os cookies prontos contam-se na
   /// Contagem diária, não aqui.
   Future<List<StockItem>> list() async {
-    final ings = await _pb.collection('ingredientes').getFullList(
+    final ings = await _pb
+        .collection('ingredientes')
+        .getFullList(
           filter: 'empresa = "$_empresaId" && deletado != true',
           sort: 'nome',
         );
-    final cons = await _pb.collection('consumiveis').getFullList(
+    final cons = await _pb
+        .collection('consumiveis')
+        .getFullList(
           filter: 'empresa = "$_empresaId" && deletado != true',
           sort: 'nome',
         );
-    final inv = await _pb.collection('inventario').getFullList(
-          filter: 'empresa = "$_empresaId"',
-        );
+    final inv = await _pb
+        .collection('inventario')
+        .getFullList(filter: 'empresa = "$_empresaId"');
 
     final invByIng = <String, RecordModel>{};
     final invByCons = <String, RecordModel>{};
@@ -162,7 +166,9 @@ class InventoryRepository {
 
     final inicio = DateTime(desde.year, desde.month, desde.day);
     final fim = DateTime(ate.year, ate.month, ate.day + 1);
-    final recs = await _pb.collection('movimentos_inventario').getFullList(
+    final recs = await _pb
+        .collection('movimentos_inventario')
+        .getFullList(
           filter:
               'empresa = "$_empresaId" && motivo = "compra" && delta > 0 && '
               'created >= "${utc(inicio)}" && created < "${utc(fim)}"',
@@ -181,12 +187,14 @@ class InventoryRepository {
     final campo = ingredienteId != null
         ? 'ingrediente'
         : fichaId != null
-            ? 'ficha'
-            : consumivelId != null
-                ? 'consumivel'
-                : 'descricao';
+        ? 'ficha'
+        : consumivelId != null
+        ? 'consumivel'
+        : 'descricao';
     final id = ingredienteId ?? fichaId ?? consumivelId ?? descricao;
-    final res = await _pb.collection('movimentos_inventario').getList(
+    final res = await _pb
+        .collection('movimentos_inventario')
+        .getList(
           page: 1,
           perPage: 60,
           filter: '$campo = "$id"',

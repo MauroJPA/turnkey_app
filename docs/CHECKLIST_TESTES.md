@@ -1661,6 +1661,14 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Mise en place / Produzir e Agenda: o cartão/linha de assar mostra °C e minutos
 - [ ] Contagem → Opção 2 → botões de assar: o sub-título mostra "170 °C · 11 min"; com dois sabores a temperaturas diferentes aparece o aviso
 
+## 108. Alerta de variação de preço
+
+- [ ] Aplicar uma fatura que sobe o preço de um ingrediente em mais de 5 %: aparece o aviso "N preço(s) subiram" com "Ver impacto"
+- [ ] Início: cartão "Preços subiram" com o nome e a %; ao tocar vai para Inventário → Preços
+- [ ] Inventário → Preços: a variação aparece (antes → depois, %); ao expandir vê as fichas afetadas com custo e margem antes → depois
+- [ ] Filtros Subidas / Descidas / Todas; "Marcar como vistas" tira o cartão do Início e o "· N a subir" do separador
+- [ ] Configurações: mudar o limiar (ex.: 10 %) e guardar; subidas abaixo dele deixam de avisar
+
 ---
 
 ## Notas / ajustes pedidos

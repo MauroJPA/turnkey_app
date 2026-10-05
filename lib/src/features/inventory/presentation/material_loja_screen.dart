@@ -191,8 +191,9 @@ class _MaterialLojaScreenState extends ConsumerState<MaterialLojaScreen> {
                         padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
                         child: Text(
                           k,
-                          style: Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(color: cs.primary),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.labelLarge?.copyWith(color: cs.primary),
                         ),
                       ),
                       for (final i in grupos[k]!) _linha(i),
@@ -232,7 +233,11 @@ class _MaterialLojaScreenState extends ConsumerState<MaterialLojaScreen> {
           if (i.stockBaixo)
             Tooltip(
               message: 'Abaixo do mínimo',
-              child: Icon(Icons.warning_amber_rounded, color: cs.error, size: 20),
+              child: Icon(
+                Icons.warning_amber_rounded,
+                color: cs.error,
+                size: 20,
+              ),
             ),
           const SizedBox(width: 6),
           Text(
