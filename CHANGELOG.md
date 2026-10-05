@@ -2,6 +2,26 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.73.0 — 2026-10-06 — IVA por último na ficha técnica + simulador de revenda
+
+O IVA é cobrado em cima do preço limpo (sem IVA), por isso as contas da ficha passam a fazer-se **sobre o preço sem IVA**
+e o IVA soma-se no fim. Antes, a quebra do preço, o CMV real e a margem usavam o preço de venda **com** IVA, e davam
+margens demasiado optimistas.
+
+- O **"Preço de venda"** da ficha é o preço ao público, **com IVA** (como já era). Na ficha vê-se por baixo o **preço sem
+  IVA** e a **margem sobre o preço sem IVA**; o **CMV real** também é sobre o preço sem IVA.
+- **Quebra do preço (sem IVA)**: todas as rubricas (matéria-prima, salário, aluguel, margem…) são sobre o preço sem IVA,
+  e no fim aparecem **Preço sem IVA → IVA (x%) → Preço final (com IVA)**, no esperado e no real.
+- **"Quanto posso cobrar? (revenda)"**, dentro da Quebra do preço: mostra o **preço de equilíbrio sem IVA** (abaixo dele há
+  prejuízo) e o **desconto máximo**; escreves (ou tocas em 5/10/15/20 %) um **desconto para o revendedor**, dado no preço
+  sem IVA, e vês o **preço sem IVA, o IVA, o valor a cobrar (preço + IVA), o lucro por unidade e a margem**. Avisa quando
+  estás abaixo do equilíbrio.
+- **Preço sugerido** no cartão da ficha, na lista de fichas e na venda: passa a mostrar-se **com IVA** (para comparar com
+  o preço de venda); na quebra aparece sem IVA e com IVA.
+- A taxa é a de **Configurações → Percentuais de custo → IVA das vendas** (a mesma do IVA a separar). Sem taxa definida,
+  nada muda (as contas ficam como antes) e a Quebra avisa para a definir.
+- Sem alterações à base de dados. Testes novos (IVA por último, equilíbrio, lucro).
+
 ## 1.72.0 — 2026-10-05 — Ecrãs largos: conteúdo numa coluna centrada
 
 Revisão no Chrome do computador (ligado ao servidor): em ecrã largo as listas, botões e cartões esticavam por ~1500 px

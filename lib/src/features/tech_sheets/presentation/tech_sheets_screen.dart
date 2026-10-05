@@ -377,7 +377,8 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
       );
     }
 
-    final preco = config?.precoSugerido(f.custoProduto);
+    // compara-se com o preço de venda ao público: com IVA
+    final preco = config?.precoSugeridoComIva(f.custoProduto);
     final formatosTodos = f.formatoId.isEmpty
         ? null
         : ref.watch(formatosProvider).valueOrNull;

@@ -1590,6 +1590,17 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
       o rodapé acompanha a mesma largura
 - [ ] No telemóvel: igual ao que era (sem margens novas)
 
+## 99. IVA por último e simulador de revenda
+
+- [ ] Configurações → Percentuais de custo: definir "IVA das vendas" (ex.: 6 ou 23 %) e guardar
+- [ ] Ficha técnica com preço de venda: por baixo do preço aparece "sem IVA €x" e a margem; o CMV real sobe face ao de antes
+      (é sobre o preço sem IVA); "Sugerido (com IVA)" = sugerido sem IVA × (1 + IVA)
+- [ ] Quebra do preço (sem IVA): as linhas somam o "PREÇO SEM IVA"; abaixo "IVA (x%)" e "PREÇO FINAL (com IVA)" = preço de venda
+- [ ] "Quanto posso cobrar? (revenda)": preço atual sem IVA, equilíbrio e desconto máximo coerentes; escolher 10 % mostra
+      preço sem IVA × 0,90, o IVA por cima, o valor a cobrar, o lucro e a margem; um desconto acima do máximo mostra o aviso a vermelho
+- [ ] Sem IVA definido: as contas ficam como antes e a Quebra mostra o aviso para definir o IVA
+- [ ] Lista de fichas e nova venda: o "sugerido" vem com IVA
+
 ---
 
 ## Notas / ajustes pedidos

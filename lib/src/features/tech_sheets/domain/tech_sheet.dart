@@ -102,17 +102,27 @@ class FichaTecnica with _$FichaTecnica {
 
   bool get temPrecoVenda => precoVenda > 0;
 
-  /// CMV real: custo da matéria-prima como % do preço de venda praticado.
-  /// `null` se ainda não há preço de venda ou custo. [custo] permite usar o
-  /// custo recalculado em vez do guardado.
-  double? cmvRealPercent([double? custo]) {
+  /// Preço de venda (ao público, com IVA) sem o IVA de [ivaPct] %. O IVA é
+  /// cobrado em cima do preço limpo, por isso as contas fazem-se sobre este.
+  double precoSemIva([double ivaPct = 0]) =>
+      precoVenda / (1 + (ivaPct < 0 ? 0 : ivaPct) / 100);
+
+  /// CMV real: custo da matéria-prima como % do preço de venda praticado
+  /// **sem IVA**. `null` se ainda não há preço de venda ou custo. [custo]
+  /// permite usar o custo recalculado em vez do guardado.
+  double? cmvRealPercent([double? custo, double ivaPct = 0]) {
     final c = custo ?? custoProduto;
-    return temPrecoVenda && c > 0 ? c / precoVenda * 100 : null;
+    return temPrecoVenda && c > 0 ? c / precoSemIva(ivaPct) * 100 : null;
   }
 
+  /// Margem sobre o preço de venda **sem IVA** (0 se não houver preço
+  /// definido). Sem [ivaPct], o preço é usado tal e qual.
+  double margemPercentSemIva(double ivaPct, [double? custo]) => temPrecoVenda
+      ? (1 - (custo ?? custoProduto) / precoSemIva(ivaPct)) * 100
+      : 0;
+
   /// Margem de lucro sobre o preço de venda (0 se não houver preço definido).
-  double get margemPercent =>
-      temPrecoVenda ? (1 - custoProduto / precoVenda) * 100 : 0;
+  double get margemPercent => margemPercentSemIva(0);
 
   factory FichaTecnica.fromRecord(RecordModel r) {
     final rawNutri = r.data['nutri'];

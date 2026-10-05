@@ -92,7 +92,7 @@ class _VendaFormSheetState extends ConsumerState<_VendaFormSheet> {
     final config = ref.read(costConfigProvider).valueOrNull;
     final preco = ficha.temPrecoVenda
         ? ficha.precoVenda
-        : (config?.precoSugerido(ficha.custoProduto) ?? 0);
+        : (config?.precoSugeridoComIva(ficha.custoProduto) ?? 0);
     setState(() => _linhas.add(_Linha(ficha: ficha, precoInicial: preco)));
   }
 

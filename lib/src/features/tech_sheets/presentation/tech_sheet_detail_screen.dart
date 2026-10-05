@@ -19,6 +19,7 @@ import '../domain/tech_sheet.dart';
 import '../domain/tech_sheet_item.dart';
 import 'declaracao_nutricional_sheet.dart';
 import 'ficha_form_sheet.dart';
+import 'quebra_preco.dart';
 
 class TechSheetDetailScreen extends ConsumerStatefulWidget {
   const TechSheetDetailScreen({super.key, required this.fichaId});
@@ -179,7 +180,8 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
         actions: [
           detailAsync.maybeWhen(
             data: (d) => IconButton(
-              tooltip: 'Informação do produto: nutrição, ingredientes, etiqueta',
+              tooltip:
+                  'Informação do produto: nutrição, ingredientes, etiqueta',
               icon: const Icon(Icons.local_dining_outlined),
               onPressed: () =>
                   context.push(Routes.fichaInformacao(widget.fichaId)),
@@ -311,12 +313,15 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
                   fmt: fmt,
                 ),
               if (config != null)
-                _PriceBreakdown(
+                QuebraPrecoTile(
                   custo: d.custoPreview,
                   config: config,
                   fmt: fmt,
                   precoVenda: d.ficha.precoVenda,
-                  cmvReal: d.ficha.cmvRealPercent(d.custoPreview),
+                  cmvReal: d.ficha.cmvRealPercent(
+                    d.custoPreview,
+                    config.ivaVendas,
+                  ),
                 ),
               const SizedBox(height: 24),
             ],
@@ -359,11 +364,12 @@ class _Header extends StatelessWidget {
     );
 
     final ficha = detail.ficha;
-    final sugerido = config?.precoSugerido(detail.custoPreview);
+    final iva = config?.ivaVendas ?? 0;
+    final sugerido = config?.precoSugeridoComIva(detail.custoPreview);
     final cmvEsperado = (config != null && config!.cmvPercent > 0)
         ? config!.cmvPercent
         : null;
-    final cmvReal = ficha.cmvRealPercent(detail.custoPreview);
+    final cmvReal = ficha.cmvRealPercent(detail.custoPreview, iva);
     final cs = Theme.of(context).colorScheme;
     final Color? corReal = cmvReal == null || cmvEsperado == null
         ? null
@@ -418,11 +424,18 @@ class _Header extends StatelessWidget {
                             color: ficha.temPrecoVenda ? cs.primary : cs.error,
                           ),
                         ),
-                        if (ficha.temPrecoVenda)
+                        if (ficha.temPrecoVenda) ...[
+                          if (iva > 0)
+                            Text(
+                              'sem IVA ${fmt(ficha.precoSemIva(iva))}',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
                           Text(
-                            'margem ${ficha.margemPercent.toStringAsFixed(0)}%',
+                            'margem ${ficha.margemPercentSemIva(iva, detail.custoPreview).toStringAsFixed(0)}%',
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
+                        ],
                       ],
                     ),
                   ),
@@ -435,7 +448,10 @@ class _Header extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               coluna(
-                cell('Preço sugerido', sugerido == null ? '—' : fmt(sugerido)),
+                cell(
+                  iva > 0 ? 'Sugerido (com IVA)' : 'Preço sugerido',
+                  sugerido == null ? '—' : fmt(sugerido),
+                ),
               ),
               coluna(
                 cell(
@@ -528,10 +544,7 @@ class _AvisoIncompleto extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        itens.join(', '),
-                        style: TextStyle(color: corTexto),
-                      ),
+                      Text(itens.join(', '), style: TextStyle(color: corTexto)),
                     ],
                   ),
                 ),
@@ -622,165 +635,6 @@ class _SlotSection extends StatelessWidget {
                   : null,
             ),
         const Divider(height: 1),
-      ],
-    );
-  }
-}
-
-class _PriceBreakdown extends StatelessWidget {
-  const _PriceBreakdown({
-    required this.custo,
-    required this.config,
-    required this.fmt,
-    this.precoVenda = 0,
-    this.cmvReal,
-  });
-  final double custo;
-  final double precoVenda;
-  final double? cmvReal;
-  final CostConfig config;
-  final MoneyFmt fmt;
-
-  static String _pct(double v) => '${v.toStringAsFixed(1)}%';
-
-  Widget _celula(
-    BuildContext context,
-    double? valor,
-    double? pct, {
-    bool negrito = false,
-    Color? cor,
-  }) {
-    final tt = Theme.of(context).textTheme;
-    if (valor == null) {
-      return SizedBox(
-        width: 84,
-        child: Text('—', textAlign: TextAlign.end, style: tt.bodyMedium),
-      );
-    }
-    final estilo = TextStyle(
-      fontWeight: negrito ? FontWeight.bold : null,
-      color: cor,
-    );
-    return SizedBox(
-      width: 84,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(fmt(valor), style: estilo),
-          if (pct != null)
-            Text(_pct(pct), style: tt.bodySmall?.copyWith(color: cor)),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final q = config.quebraComparada(custo, precoVenda);
-    final semReal = q.precoReal == null;
-    return ExpansionTile(
-      title: const Text('Quebra do preço'),
-      subtitle: Text(
-        config.cmvPercent <= 0
-            ? 'Percentuais somam ≥ 100% — ajusta em Configurações'
-            : 'CMV esperado ${config.cmvPercent.toStringAsFixed(1)}%'
-                  '${cmvReal == null ? '' : ' · real ${cmvReal!.toStringAsFixed(1)}%'}',
-      ),
-      childrenPadding: const EdgeInsets.symmetric(horizontal: 16),
-      expandedAlignment: Alignment.centerLeft,
-      expandedCrossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Flexible(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 440),
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Row(
-                        children: [
-                          const Expanded(child: SizedBox.shrink()),
-                          SizedBox(
-                            width: 84,
-                            child: Text(
-                              'Esperado',
-                              textAlign: TextAlign.end,
-                              style: tt.labelMedium,
-                            ),
-                          ),
-                          SizedBox(
-                            width: 84,
-                            child: Text(
-                              'Real',
-                              textAlign: TextAlign.end,
-                              style: tt.labelMedium,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    for (final l in q.linhas)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(child: Text(l.nome)),
-                            _celula(context, l.esperado, l.esperadoPct),
-                            _celula(
-                              context,
-                              l.real,
-                              l.realPct,
-                              cor: (l.real != null && l.real! < 0)
-                                  ? cs.error
-                                  : null,
-                            ),
-                          ],
-                        ),
-                      ),
-                    const Divider(),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        children: [
-                          const Expanded(
-                            child: Text(
-                              'PREÇO FINAL',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          _celula(context, q.precoEsperado, 100, negrito: true),
-                          _celula(
-                            context,
-                            q.precoReal,
-                            semReal ? null : 100,
-                            negrito: true,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 4, bottom: 8),
-          child: Text(
-            semReal
-                ? 'Define o preço de venda para ver a coluna Real.'
-                : 'Esperado = preço sugerido pelos percentuais. Real = o preço '
-                      'de venda que praticas: a matéria-prima é o custo verdadeiro '
-                      'e a margem de lucro é o que sobra.',
-            style: tt.bodySmall,
-          ),
-        ),
       ],
     );
   }

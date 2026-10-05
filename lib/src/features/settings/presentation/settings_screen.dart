@@ -402,10 +402,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 labelText: 'IVA das vendas',
                 suffixText: '%',
                 helperText:
-                    'Não entra nos percentuais acima. Serve para estimar o IVA '
-                    'a entregar quando uma venda não traz o valor sem IVA '
-                    '(Painel financeiro → IVA a separar).',
-                helperMaxLines: 3,
+                    'Não entra nos percentuais acima: o IVA soma-se no fim, em '
+                    'cima do preço sem IVA (Fichas técnicas → Quebra do preço). '
+                    'Também estima o IVA a entregar quando uma venda não traz o '
+                    'valor sem IVA (Contabilidade → IVA a separar).',
+                helperMaxLines: 6,
               ),
             ),
             const SizedBox(height: 12),
