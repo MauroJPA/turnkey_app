@@ -2,6 +2,16 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.78.0 — 2026-10-06 — O botão "Atualizar" passa a atualizar mesmo
+
+- **Problema**: depois de publicar uma versão nova, o aviso "Há uma versão nova da app" aparecia, mas **"Atualizar" não
+  atualizava** no Chrome do computador — a app antiga continuava (só um Ctrl+Shift+R resolvia). O botão limpava a cache da
+  app, mas o próprio Chrome guardava o ficheiro antigo na sua cache de rede.
+- **Correção**: "Atualizar" limpa a cache da app **e obriga o Chrome a pedir ao servidor os ficheiros novos** (página,
+  `main.dart.js`, scripts, versão…) antes de recarregar. Funciona a partir desta versão: na primeira vez que passares para
+  a 1.78.0 ainda precisas de **Ctrl+Shift+R** (a app que está aberta é a antiga); a partir daí o botão chega.
+- Sem alterações à base de dados.
+
 ## 1.77.0 — 2026-10-06 — Receita: barra de topo com espaço para o nome
 
 - **Receita (detalhe)**: a barra tinha 6 ícones (Agendar, Procedimento, Nutrição, Histórico, Editar, Ajuda) e, em telemóvel, o

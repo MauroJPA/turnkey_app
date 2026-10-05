@@ -1630,6 +1630,12 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Receita: o nome cabe (mesmo em telemóvel); à vista Agendar, Editar e Ajuda; o menu ⋮ tem Procedimento e imagens,
       Informação nutricional e Histórico, e cada um abre o que diz
 
+## 104. Botão "Atualizar"
+
+- [ ] Depois de publicar uma versão nova (a partir da 1.78.0): abrir a app antiga, esperar/voltar ao separador → aparece o
+      aviso; tocar em "Atualizar" carrega logo a versão nova (sem Ctrl+Shift+R) e o aviso desaparece
+- [ ] Vale no telemóvel (Chrome) e no computador
+
 ---
 
 ## Notas / ajustes pedidos

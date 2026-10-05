@@ -202,6 +202,7 @@ Depois:
   e a pasta no bucket podem ficar como estão; só o nome do remoto cifrado é usado pelos scripts.)
 - **Painel do PocketBase** (`/_/` → Settings → Application): confirma o *Application name* `gc_turnkey`.
 - Se a app pedir para voltar a entrar, é normal (o browser guarda a app antiga em cache): recarrega a página.
+- Se o aviso "Há uma versão nova" ficar e o botão "Atualizar" não resolver (versões até à 1.77.0), faz **Ctrl+Shift+R** (computador) uma vez; a partir da 1.78.0 o botão atualiza sozinho.
 
 **Atualizar para a 1.8.0 (faturas com vários documentos por PDF):** a imagem Docker passou a incluir o `qpdf`
 (para cortar PDFs). Segue o mesmo procedimento de atualização acima (`gc_turnkey.sh atualizar` reconstrói a imagem).

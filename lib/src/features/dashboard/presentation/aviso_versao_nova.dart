@@ -17,7 +17,8 @@ const versaoCompilada = versaoApp;
 
 /// Aviso "Há uma versão nova": compara a versão desta app com a do servidor
 /// (`version.json`, lido sem cache) ao abrir, a cada 10 minutos e quando a
-/// página volta a ficar visível. "Atualizar" limpa a cache da app e recarrega.
+/// página volta a ficar visível. "Atualizar" limpa a cache da app, obriga o navegador a pedir os ficheiros
+/// novos ao servidor e recarrega.
 class AvisoVersaoNova extends StatefulWidget {
   const AvisoVersaoNova({super.key});
 
@@ -81,6 +82,33 @@ class _AvisoVersaoNovaState extends State<AvisoVersaoNova> {
     } on Object {
       // recarrega na mesma
     }
+    // A cache de rede do Chrome pode ainda ter a app antiga (o servidor não
+    // diz quando ela caduca): pede cada ficheiro principal com "no-cache", o
+    // que obriga a validar com o servidor e atualiza a cache. Só depois recarrega.
+    const ficheiros = [
+      '',
+      'index.html',
+      'flutter_bootstrap.js',
+      'flutter.js',
+      'main.dart.js',
+      'gc_dispositivo.js',
+      'flutter_service_worker.js',
+      'version.json',
+      'manifest.json',
+    ];
+    await Future.wait([
+      for (final f in ficheiros)
+        http
+            .get(
+              Uri.base.resolve(f),
+              headers: const {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache',
+              },
+            )
+            .then<void>((_) {})
+            .catchError((Object _) {}),
+    ]);
     html.window.location.reload();
   }
 
