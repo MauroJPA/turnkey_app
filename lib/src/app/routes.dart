@@ -40,6 +40,7 @@ abstract class Routes {
   static const equipamentos = '/financeiro/equipamentos';
   static const numerosMagicos = '/financeiro/numeros-magicos';
   static const relatorios = '/financeiro/relatorios';
+  static const rentabilidade = '/financeiro/rentabilidade';
   static const embalagens = '/embalagens';
   static const consumiveis = '/consumiveis';
   static const settings = '/opcoes';

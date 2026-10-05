@@ -1702,6 +1702,14 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] A lupa de um ingrediente lista os lotes de produção que usaram o mesmo lote do fornecedor
 - [ ] Leitura não vê "Novo lote"; só proprietário/administrador vê "Apagar lote"
 
+## 113. Rentabilidade por sabor e canal
+
+- [ ] Contabilidade → Rentabilidade: aparece o ranking com lucro por unidade, margem % e €/h
+- [ ] Trocar de "Loja física" para uma plataforma: o lucro baixa conforme as taxas do canal
+- [ ] Ordenar por "Lucro por hora de forno" e por "Margem %": a lista muda de ordem
+- [ ] "Un. por fornada": escrever um valor muda o €/h; apagar volta à média das fornadas
+- [ ] Produtos sem tempo de assadura mostram "— /h"; produtos sem preço de venda ficam de fora (aviso em baixo)
+
 ---
 
 ## Notas / ajustes pedidos

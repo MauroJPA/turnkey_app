@@ -35,6 +35,7 @@ enum HelpTopic {
   aprovacoes,
   avisos,
   lotes,
+  rentabilidade,
   consumiveis,
   produtos,
   configuracoes,
@@ -374,6 +375,16 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'A lista de ingredientes segue as regras da UE: por ordem decrescente de peso e com os alergénios a negrito. É calculada sozinha a partir da ficha técnica, das receitas e dos ingredientes. "Completa" usa o nome de cada ingrediente; "Resumida" usa nomes curtos, para etiquetas pequenas.',
       '"Falta completar" mostra o que ainda não está preenchido: nutrição de algum ingrediente, prazo de validade e modo de conservação. "Corrigir a nutrição" leva-te ao ingrediente em falta; "Preencher os dados" abre a ficha.',
       'Ícone da impressora: imprime a etiqueta (completa ou resumida) com a informação nutricional. Ícone de copiar: junta tudo num texto.',
+    ],
+  ),
+  HelpTopic.rentabilidade: (
+    titulo: 'Rentabilidade por sabor e canal',
+    paragrafos: [
+      'Mostra que produtos dão mais lucro. Escolhe o canal — Loja física ou uma plataforma/revendedor que criaste na ficha técnica (com as suas taxas) — e vê o ranking. O lucro é sem IVA, ao preço de venda que o produto tem hoje na ficha, depois das taxas do canal e dos custos da empresa (as percentagens de Configurações sobre o que chega a nós).',
+      'Ordena por: Lucro por unidade; Lucro por hora de forno (lucro por unidade × unidades por fornada × 60 ÷ tempo de assadura — quanto renderia uma hora de forno cheia só com esse produto); ou Margem %. O número em baixo à direita é "€/h".',
+      '"Un. por fornada": a app estima pela média das tuas fornadas dos últimos 60 dias; podes escrever outro valor (fica guardado neste aparelho). Precisa do tempo de assadura na ficha para o lucro por hora.',
+      'A barra mostra o lucro por unidade (verde) ou o prejuízo (vermelho). Ficam de fora os produtos sem custo ou sem preço de venda. Não inclui a embalagem extra de plataformas.',
+      'Usa isto para decidir o que promover, o que fazer menos em horas de forno apertadas, onde subir preço e que canais compensam.',
     ],
   ),
   HelpTopic.lotes: (

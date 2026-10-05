@@ -2,6 +2,16 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.87.0 — 2026-10-06 — Rentabilidade por sabor e canal
+
+Rentabilidade por sabor e canal: que produtos deixam mais lucro.
+
+- **Contabilidade → Rentabilidade** (nova secção): ranking dos produtos com custo e preço de venda, com o lucro **por unidade**, a **margem %** e o **lucro por hora de forno**. Escolhes a **Loja física** ou um **canal** (plataforma/revendedor da ficha técnica) e a lista refaz-se com as taxas desse canal em cascata.
+- O lucro é **sem IVA**, ao preço de venda que o produto já tem, depois das taxas do canal e das percentagens de custo das Configurações (salário, aluguel…). Ordena por lucro por unidade, por hora de forno ou por margem.
+- **Lucro por hora de forno** = lucro por unidade × unidades por fornada × 60 ÷ tempo de assadura. As unidades por fornada vêm da média das fornadas dos últimos 60 dias; podes escrever outro valor (fica guardado neste aparelho).
+- Barra verde (lucro) ou vermelha (prejuízo) em cada produto; os produtos sem custo ou sem preço de venda são contados à parte. Sem alterações no servidor.
+- Testes do cálculo (loja, canal com taxas, ordem, prejuízo, sem tempo de forno, média das fornadas).
+
 ## 1.86.0 — 2026-10-06 — Rastreabilidade por lote com QR
 
 Rastreabilidade por lote (Reg. (CE) 178/2002, art. 18.º): sabes de que lotes de ingredientes veio cada lote que produziste.

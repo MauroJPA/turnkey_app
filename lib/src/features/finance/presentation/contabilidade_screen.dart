@@ -15,6 +15,7 @@ import 'iva_card.dart';
 import 'numeros_magicos_screen.dart';
 import 'painel_financeiro_screen.dart';
 import 'relatorio_geral_sheet.dart';
+import 'rentabilidade_view.dart';
 import 'seletor_periodo.dart';
 
 /// As secções da Contabilidade.
@@ -24,6 +25,11 @@ enum SecaoContabilidade {
   custos('Custos fixos', Icons.request_quote_outlined, Routes.custosFixos),
   equipamentos('Equipamentos', Icons.kitchen_outlined, Routes.equipamentos),
   numeros('Números mágicos', Icons.calculate_outlined, Routes.numerosMagicos),
+  rentabilidade(
+    'Rentabilidade',
+    Icons.leaderboard_outlined,
+    Routes.rentabilidade,
+  ),
   relatorios('Relatórios e IVA', Icons.summarize_outlined, Routes.relatorios);
 
   const SecaoContabilidade(this.label, this.icon, this.rota);
@@ -37,6 +43,7 @@ enum SecaoContabilidade {
     SecaoContabilidade.custos => HelpTopic.custosFixos,
     SecaoContabilidade.equipamentos => HelpTopic.equipamentos,
     SecaoContabilidade.numeros => HelpTopic.numerosMagicos,
+    SecaoContabilidade.rentabilidade => HelpTopic.rentabilidade,
     SecaoContabilidade.relatorios => HelpTopic.contabilidade,
   };
 }
@@ -105,6 +112,9 @@ class ContabilidadeScreen extends ConsumerWidget {
               SecaoContabilidade.numeros => const NumerosMagicosScreen(
                 key: ValueKey('cont-numeros'),
                 embedded: true,
+              ),
+              SecaoContabilidade.rentabilidade => const RentabilidadeView(
+                key: ValueKey('cont-rentabilidade'),
               ),
               SecaoContabilidade.relatorios => const _Relatorios(
                 key: ValueKey('cont-relatorios'),
