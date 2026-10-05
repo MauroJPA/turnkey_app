@@ -236,36 +236,6 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
             ),
             orElse: () => const SizedBox.shrink(),
           ),
-          detailAsync.maybeWhen(
-            data: (d) => IconButton(
-              tooltip: 'Procedimento e imagens',
-              icon: const Icon(Icons.menu_book_outlined),
-              onPressed: () => showProcedimentoSheet(context, d.receita),
-            ),
-            orElse: () => const SizedBox.shrink(),
-          ),
-          detailAsync.maybeWhen(
-            data: (d) => IconButton(
-              tooltip: 'Informação nutricional',
-              icon: const Icon(Icons.local_dining_outlined),
-              onPressed: () =>
-                  showNutricaoReceitaSheet(context, receita: d.receita),
-            ),
-            orElse: () => const SizedBox.shrink(),
-          ),
-          detailAsync.maybeWhen(
-            data: (d) => IconButton(
-              tooltip: 'Histórico',
-              icon: const Icon(Icons.history),
-              onPressed: () => showHistorySheet(
-                context,
-                tipo: 'receita',
-                id: widget.recipeId,
-                titulo: d.receita.nome,
-              ),
-            ),
-            orElse: () => const SizedBox.shrink(),
-          ),
           if (_podeEditar)
             detailAsync.maybeWhen(
               data: (d) => IconButton(
@@ -288,6 +258,39 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
               ),
               orElse: () => const SizedBox.shrink(),
             ),
+          // o menos usado fica num menu (o título da receita precisa de espaço)
+          detailAsync.maybeWhen(
+            data: (d) => PopupMenuButton<void>(
+              tooltip: 'Mais',
+              itemBuilder: (_) => [
+                PopupMenuItem(
+                  onTap: () => showProcedimentoSheet(context, d.receita),
+                  child: const _ItemMenu(
+                    Icons.menu_book_outlined,
+                    'Procedimento e imagens',
+                  ),
+                ),
+                PopupMenuItem(
+                  onTap: () =>
+                      showNutricaoReceitaSheet(context, receita: d.receita),
+                  child: const _ItemMenu(
+                    Icons.local_dining_outlined,
+                    'Informação nutricional',
+                  ),
+                ),
+                PopupMenuItem(
+                  onTap: () => showHistorySheet(
+                    context,
+                    tipo: 'receita',
+                    id: widget.recipeId,
+                    titulo: d.receita.nome,
+                  ),
+                  child: const _ItemMenu(Icons.history, 'Histórico'),
+                ),
+              ],
+            ),
+            orElse: () => const SizedBox.shrink(),
+          ),
           const HelpActions(topic: HelpTopic.receitaDetalhe),
         ],
       ),
@@ -471,6 +474,24 @@ class _Header extends StatelessWidget {
           cell('Custo/kg', fmt(detail.custoPorKg), aviso: pendente),
         ],
       ),
+    );
+  }
+}
+
+/// Linha de um menu: ícone e texto alinhados.
+class _ItemMenu extends StatelessWidget {
+  const _ItemMenu(this.icon, this.texto);
+  final IconData icon;
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 20),
+        const SizedBox(width: 12),
+        Expanded(child: Text(texto)),
+      ],
     );
   }
 }

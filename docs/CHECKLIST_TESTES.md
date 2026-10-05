@@ -1625,6 +1625,11 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Faturas: os grupos aparecem do mês mais recente para o mais antigo, com o nome por extenso ("Outubro de 2026")
 - [ ] Ordenar por Data ascendente: os meses invertem (mais antigo primeiro); ordenar por Fornecedor/Valor mantém o mais recente primeiro
 
+## 103. Receita: barra de topo
+
+- [ ] Receita: o nome cabe (mesmo em telemóvel); à vista Agendar, Editar e Ajuda; o menu ⋮ tem Procedimento e imagens,
+      Informação nutricional e Histórico, e cada um abre o que diz
+
 ---
 
 ## Notas / ajustes pedidos

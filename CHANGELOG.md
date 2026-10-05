@@ -2,6 +2,15 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.77.0 — 2026-10-06 — Receita: barra de topo com espaço para o nome
+
+- **Receita (detalhe)**: a barra tinha 6 ícones (Agendar, Procedimento, Nutrição, Histórico, Editar, Ajuda) e, em telemóvel, o
+  nome da receita ficava cortado. Ficam à vista **Agendar produção**, **Editar** e **Ajuda**; **Procedimento e imagens,
+  Informação nutricional e Histórico** passam para o menu **⋮**.
+- Vistos sem problemas, com dados reais: Receitas (lista e detalhe), Informação do produto da ficha (declaração nutricional,
+  ingredientes, alergénios) e Faturas (já com os meses por ordem).
+- Sem alterações à base de dados.
+
 ## 1.76.0 — 2026-10-06 — Faturas: meses por ordem e com nome
 
 Revisão no servidor (Chrome, dados reais):
