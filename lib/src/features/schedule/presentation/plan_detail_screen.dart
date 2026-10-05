@@ -14,6 +14,7 @@ import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../recipes/domain/recipe.dart';
 import '../../recipes/presentation/recipe_picker_sheet.dart';
+import '../../tech_sheets/domain/assar_texto.dart';
 import '../application/schedule_providers.dart';
 import '../data/schedule_repository.dart';
 import '../domain/production_plan.dart';
@@ -332,8 +333,12 @@ class _Body extends ConsumerWidget {
                                 'recheio ${pr.recheio}',
                               '${pr.kg.toStringAsFixed(2)} kg',
                               if (pr.unidades > 0) '~${pr.unidades} un',
-                              if (pr.tempoAssaduraMin > 0)
-                                'assar ${pr.tempoAssaduraMin} min',
+                              if (pr.tempoAssaduraMin > 0 ||
+                                  pr.temperaturaFornoC > 0)
+                                textoAssar(
+                                  pr.tempoAssaduraMin,
+                                  pr.temperaturaFornoC,
+                                ).toLowerCase(),
                             ].join(' · '),
                             style: Theme.of(context).textTheme.bodySmall,
                           ),

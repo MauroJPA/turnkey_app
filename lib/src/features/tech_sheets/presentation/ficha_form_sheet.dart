@@ -55,6 +55,11 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
         ? '${widget.existente!.validadeDias}'
         : '',
   );
+  late final _temperatura = TextEditingController(
+    text: (widget.existente?.temperaturaFornoC ?? 0) > 0
+        ? '${widget.existente!.temperaturaFornoC}'
+        : '',
+  );
   late final _assadura = TextEditingController(
     text: (widget.existente?.tempoAssaduraMin ?? 0) > 0
         ? '${widget.existente!.tempoAssaduraMin}'
@@ -80,6 +85,7 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
     _descricao.dispose();
     _validade.dispose();
     _assadura.dispose();
+    _temperatura.dispose();
     _conservacao.dispose();
     super.dispose();
   }
@@ -112,6 +118,7 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
         descricao: _descricao.text,
         validadeDias: int.tryParse(_validade.text.trim()) ?? 0,
         tempoAssaduraMin: int.tryParse(_assadura.text.trim()) ?? 0,
+        temperaturaFornoC: int.tryParse(_temperatura.text.trim()) ?? 0,
         conservacao: _conservacaoSel == _outro
             ? _conservacao.text
             : _conservacaoSel,
@@ -298,6 +305,27 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
                 final n = int.tryParse(t);
                 return (n == null || n < 1 || n > 600)
                     ? 'Entre 1 e 600 minutos'
+                    : null;
+              },
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _temperatura,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Temperatura do forno (°C)',
+                suffixText: '°C',
+                helperText:
+                    'Aparece ao assar, junto com o tempo: "Assar a 170 °C '
+                    'durante 11 min".',
+                helperMaxLines: 2,
+              ),
+              validator: (v) {
+                final t = (v ?? '').trim();
+                if (t.isEmpty) return null;
+                final n = int.tryParse(t);
+                return (n == null || n < 50 || n > 400)
+                    ? 'Entre 50 e 400 °C'
                     : null;
               },
             ),

@@ -15,6 +15,7 @@ import '../../pricing/data/cost_config_repository.dart';
 import '../../pricing/domain/cost_config.dart';
 import '../../recipes/presentation/item_picker_sheet.dart';
 import '../application/tech_sheets_providers.dart';
+import '../domain/assar_texto.dart';
 import '../domain/tech_sheet.dart';
 import '../domain/tech_sheet_item.dart';
 import 'canais_preco.dart';
@@ -258,7 +259,7 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
                     ],
                   ),
                 ),
-              if (d.ficha.tempoAssaduraMin > 0)
+              if (d.ficha.tempoAssaduraMin > 0 || d.ficha.temperaturaFornoC > 0)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
                   child: Row(
@@ -266,7 +267,10 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
                       const Icon(Icons.timer_outlined, size: 16),
                       const SizedBox(width: 6),
                       Text(
-                        'Assar ${d.ficha.tempoAssaduraMin} min',
+                        textoAssar(
+                          d.ficha.tempoAssaduraMin,
+                          d.ficha.temperaturaFornoC,
+                        ),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],

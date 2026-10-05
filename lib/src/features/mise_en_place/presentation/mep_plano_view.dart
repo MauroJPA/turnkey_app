@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/formatting/quantities.dart';
+import '../../tech_sheets/domain/assar_texto.dart';
 import '../domain/mep_plano.dart';
 
 /// O mise en place calculado: "Produzir primeiro" (massa, recheios,
@@ -49,7 +50,7 @@ class MepPlanoView extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
         ),
-        if (plano.tempoAssaduraMin > 0)
+        if (plano.tempoAssaduraMin > 0 || plano.temperaturaFornoC > 0)
           Card(
             margin: const EdgeInsets.only(bottom: 8),
             color: cs.secondaryContainer,
@@ -57,15 +58,17 @@ class MepPlanoView extends StatelessWidget {
               dense: true,
               leading: const Icon(Icons.timer_outlined),
               title: Text(
-                'Assar ${plano.tempoAssaduraMin} min',
+                textoAssar(plano.tempoAssaduraMin, plano.temperaturaFornoC),
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
-              subtitle: const Text('Tempo de assadura da ficha técnica'),
+              subtitle: const Text('Forno e tempo da ficha técnica'),
             ),
           ),
         if (plano.intermedios.isNotEmpty) ...[
-          Text('Produzir primeiro',
-              style: Theme.of(context).textTheme.titleSmall),
+          Text(
+            'Produzir primeiro',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
           for (final it in plano.intermedios)
             Card(
               margin: const EdgeInsets.symmetric(vertical: 3),
@@ -73,8 +76,10 @@ class MepPlanoView extends StatelessWidget {
                 controlAffinity: ListTileControlAffinity.leading,
                 value: feitos.contains('int:${it.receitaId}'),
                 onChanged: (v) => onToggle('int:${it.receitaId}', v ?? false),
-                title: Text(it.nome,
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                title: Text(
+                  it.nome,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
                 subtitle: Text(
                   it.eMassa
                       ? '${gramasParaTexto(it.gramas)} · massa'
@@ -100,7 +105,7 @@ class MepPlanoView extends StatelessWidget {
               subtitle: Text(
                 c.faltaStock
                     ? '${quantidadeParaTexto(c.gramas, c.unidade)} · em stock só '
-                        '${quantidadeParaTexto(c.emStock, c.unidade)}'
+                          '${quantidadeParaTexto(c.emStock, c.unidade)}'
                     : '${quantidadeParaTexto(c.gramas, c.unidade)} · em stock',
                 style: TextStyle(
                   color: c.faltaStock ? cs.error : cs.onSurfaceVariant,

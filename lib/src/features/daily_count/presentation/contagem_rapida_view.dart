@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/storage/prefs_locais.dart';
 import '../../../core/widgets/quantidade_stepper.dart';
 import '../../invoices/domain/invoice_erros.dart';
+import '../../tech_sheets/domain/assar_texto.dart';
 import '../../tech_sheets/domain/tech_sheet.dart';
 import '../application/contagem_providers.dart';
 import '../domain/contagem_dia.dart';
@@ -65,6 +66,13 @@ class _ContagemRapidaViewState extends ConsumerState<ContagemRapidaView> {
   final _abertura = <String, double>{};
   final _fecho = <String, double>{};
   final _forno = <String, double>{};
+
+  /// As temperaturas (°C) dos sabores que estão a ir ao forno agora.
+  Set<int> get _temperaturasNoForno => {
+    for (final f in widget.fichas)
+      if ((_forno[f.id] ?? 0) > 0 && f.temperaturaFornoC > 0)
+        f.temperaturaFornoC,
+  };
   final _perdas = <String, double>{};
   MotivoDesperdicio _motivo = MotivoDesperdicio.queimado;
 
@@ -668,11 +676,22 @@ class _ContagemRapidaViewState extends ConsumerState<ContagemRapidaView> {
                   f,
                   valor: _forno[f.id] ?? 0,
                   destaque: (_forno[f.id] ?? 0) > 0,
-                  sub: f.tempoAssaduraMin > 0
-                      ? '${f.tempoAssaduraMin} min'
+                  sub: f.tempoAssaduraMin > 0 || f.temperaturaFornoC > 0
+                      ? textoAssarCurto(f.tempoAssaduraMin, f.temperaturaFornoC)
                       : 'sem tempo na ficha',
-                  corSub: f.tempoAssaduraMin > 0 ? null : cs.outline,
+                  corSub: f.tempoAssaduraMin > 0 || f.temperaturaFornoC > 0
+                      ? null
+                      : cs.outline,
                   onChanged: (v) => setState(() => _forno[f.id] = v),
+                ),
+              if (_temperaturasNoForno.length > 1)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    'Atenção: temperaturas diferentes no mesmo forno '
+                    '(${(_temperaturasNoForno.toList()..sort()).map((t) => '$t °C').join(', ')}).',
+                    style: tt.bodySmall?.copyWith(color: cs.error),
+                  ),
                 ),
               const SizedBox(height: 10),
               FilledButton.icon(

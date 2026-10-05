@@ -195,6 +195,7 @@ routerAdd(
       merge(comprarItem, ep.comprar);
       merge(intermediosItem, ep.produzir);
       let tempoAssadura = 0;
+      let temperaturaForno = 0;
 
       if (fmt && fmt.unidades > 0) {
         const fichaId =
@@ -208,9 +209,9 @@ routerAdd(
           );
         if (fichaId) {
           try {
-            tempoAssadura = Math.round(
-              app.findRecordById('fichas_tecnicas', fichaId).getFloat('tempo_assadura_min') || 0,
-            );
+            const fichaForno = app.findRecordById('fichas_tecnicas', fichaId);
+            tempoAssadura = Math.round(fichaForno.getFloat('tempo_assadura_min') || 0);
+            temperaturaForno = Math.round(fichaForno.getFloat('temperatura_forno_c') || 0);
           } catch (_) {}
           const slots = app.findRecordsByFilter(
             'itens_ficha',
@@ -292,6 +293,7 @@ routerAdd(
         formato: fmt ? fmt.nome : '',
         recheio: recheioNome,
         tempoAssaduraMin: tempoAssadura,
+        temperaturaFornoC: temperaturaForno,
         prioridade: it.getString('prioridade') || 'media',
         horaLimite: it.getString('hora_limite'),
         comprar: comprarLista,
@@ -1177,6 +1179,7 @@ routerAdd(
       formatoId: info.formatoId,
       formato: info.formatoNome,
       tempoAssaduraMin: Math.round(ficha.getFloat('tempo_assadura_min') || 0),
+      temperaturaFornoC: Math.round(ficha.getFloat('temperatura_forno_c') || 0),
       recheio: '',
       comprar: comprar,
       intermedios: intermedios,

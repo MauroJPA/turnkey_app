@@ -4,7 +4,8 @@ import 'package:pocketbase/pocketbase.dart';
 /// "Produção DD/MM/AAAA", com os nomes das receitas se houver.
 String tituloPadraoProducao(DateTime data, List<String> nomesReceitas) {
   final hoje = DateTime.now();
-  final ehHoje = data.year == hoje.year &&
+  final ehHoje =
+      data.year == hoje.year &&
       data.month == hoje.month &&
       data.day == hoje.day;
   final dd = data.day.toString().padLeft(2, '0');
@@ -23,24 +24,24 @@ enum Prioridade {
   baixa;
 
   static Prioridade fromApi(String? v) => Prioridade.values.firstWhere(
-        (p) => p.name == v,
-        orElse: () => Prioridade.media,
-      );
+    (p) => p.name == v,
+    orElse: () => Prioridade.media,
+  );
 
   String get api => name;
 
   String get label => switch (this) {
-        Prioridade.alta => 'Alta',
-        Prioridade.media => 'Média',
-        Prioridade.baixa => 'Baixa',
-      };
+    Prioridade.alta => 'Alta',
+    Prioridade.media => 'Média',
+    Prioridade.baixa => 'Baixa',
+  };
 
   /// Peso para ordenar (0 = mais urgente).
   int get peso => switch (this) {
-        Prioridade.alta => 0,
-        Prioridade.media => 1,
-        Prioridade.baixa => 2,
-      };
+    Prioridade.alta => 0,
+    Prioridade.media => 1,
+    Prioridade.baixa => 2,
+  };
 }
 
 /// Estado de um plano de produção.
@@ -50,17 +51,17 @@ enum EstadoProducao {
   cancelada;
 
   static EstadoProducao fromApi(String? v) => EstadoProducao.values.firstWhere(
-        (e) => e.name == v,
-        orElse: () => EstadoProducao.planeada,
-      );
+    (e) => e.name == v,
+    orElse: () => EstadoProducao.planeada,
+  );
 
   String get api => name;
 
   String get label => switch (this) {
-        EstadoProducao.planeada => 'Planeada',
-        EstadoProducao.concluida => 'Concluída',
-        EstadoProducao.cancelada => 'Cancelada',
-      };
+    EstadoProducao.planeada => 'Planeada',
+    EstadoProducao.concluida => 'Concluída',
+    EstadoProducao.cancelada => 'Cancelada',
+  };
 }
 
 /// Um plano de produção para um dia: cabeçalho (data, título, estado).
@@ -189,17 +190,19 @@ class PlanoNecessario {
   final int aComprarSacos;
 
   factory PlanoNecessario.fromJson(Map<String, dynamic> j) => PlanoNecessario(
-        ingredienteId: j['ingredienteId'] as String? ?? '',
-        nome: j['nome'] as String? ?? '',
-        fornecedor: j['fornecedor'] as String? ?? '',
-        gramas: (j['gramas'] as num?)?.toDouble() ?? 0,
-        custo: (j['custo'] as num?)?.toDouble() ?? 0,
-        emStock: (j['emStock'] as num?)?.toDouble() ?? 0,
-        aComprar: (j['aComprar'] as num?)?.toDouble() ?? 0,
-        embalagemG: (j['embalagemG'] as num?)?.toDouble() ?? 0,
-        aComprarSacos: (j['aComprarSacos'] as num?)?.toInt() ?? 0,
-        unidade: j['unidade'] == 'ml' || j['unidade'] == 'un' ? j['unidade'] as String : 'g',
-      );
+    ingredienteId: j['ingredienteId'] as String? ?? '',
+    nome: j['nome'] as String? ?? '',
+    fornecedor: j['fornecedor'] as String? ?? '',
+    gramas: (j['gramas'] as num?)?.toDouble() ?? 0,
+    custo: (j['custo'] as num?)?.toDouble() ?? 0,
+    emStock: (j['emStock'] as num?)?.toDouble() ?? 0,
+    aComprar: (j['aComprar'] as num?)?.toDouble() ?? 0,
+    embalagemG: (j['embalagemG'] as num?)?.toDouble() ?? 0,
+    aComprarSacos: (j['aComprarSacos'] as num?)?.toInt() ?? 0,
+    unidade: j['unidade'] == 'ml' || j['unidade'] == 'un'
+        ? j['unidade'] as String
+        : 'g',
+  );
 }
 
 /// Uma receita a produzir (linha de `produzir` no plano).
@@ -225,20 +228,24 @@ class PlanoProduzir {
   final String horaLimite;
 
   factory PlanoProduzir.fromJson(Map<String, dynamic> j) => PlanoProduzir(
-        receitaId: j['receitaId'] as String? ?? '',
-        nome: j['nome'] as String? ?? '',
-        kg: (j['kg'] as num?)?.toDouble() ?? 0,
-        unidades: (j['unidades'] as num?)?.toInt() ?? 0,
-        formato: j['formato'] as String? ?? '',
-        recheio: j['recheio'] as String? ?? '',
-        prioridade: Prioridade.fromApi(j['prioridade'] as String?),
-        horaLimite: j['horaLimite'] as String? ?? '',
-      );
+    receitaId: j['receitaId'] as String? ?? '',
+    nome: j['nome'] as String? ?? '',
+    kg: (j['kg'] as num?)?.toDouble() ?? 0,
+    unidades: (j['unidades'] as num?)?.toInt() ?? 0,
+    formato: j['formato'] as String? ?? '',
+    recheio: j['recheio'] as String? ?? '',
+    prioridade: Prioridade.fromApi(j['prioridade'] as String?),
+    horaLimite: j['horaLimite'] as String? ?? '',
+  );
 }
 
 /// Uma quantidade de um item (ingrediente ou intermédio) numa receita.
 class PlanoQtd {
-  const PlanoQtd({required this.nome, required this.gramas, this.unidade = 'g'});
+  const PlanoQtd({
+    required this.nome,
+    required this.gramas,
+    this.unidade = 'g',
+  });
   final String nome;
   final double gramas;
 
@@ -246,10 +253,12 @@ class PlanoQtd {
   final String unidade;
 
   factory PlanoQtd.fromJson(Map<String, dynamic> j) => PlanoQtd(
-        nome: j['nome'] as String? ?? '',
-        gramas: (j['gramas'] as num?)?.toDouble() ?? 0,
-        unidade: j['unidade'] == 'ml' || j['unidade'] == 'un' ? j['unidade'] as String : 'g',
-      );
+    nome: j['nome'] as String? ?? '',
+    gramas: (j['gramas'] as num?)?.toDouble() ?? 0,
+    unidade: j['unidade'] == 'ml' || j['unidade'] == 'un'
+        ? j['unidade'] as String
+        : 'g',
+  );
 }
 
 /// Detalhe de UMA receita do plano — para o "mise en place".
@@ -262,6 +271,7 @@ class PlanoPorReceita {
     this.formato = '',
     this.recheio = '',
     this.tempoAssaduraMin = 0,
+    this.temperaturaFornoC = 0,
     this.comprar = const [],
     this.intermedios = const [],
   });
@@ -275,24 +285,28 @@ class PlanoPorReceita {
 
   /// Minutos de forno do produto (da ficha técnica); 0 = não definido.
   final int tempoAssaduraMin;
+
+  /// Temperatura do forno (°C); 0 = não definida.
+  final int temperaturaFornoC;
   final List<PlanoQtd> comprar;
   final List<PlanoQtd> intermedios;
 
   factory PlanoPorReceita.fromJson(Map<String, dynamic> j) => PlanoPorReceita(
-        receitaId: j['receitaId'] as String? ?? '',
-        nome: j['nome'] as String? ?? '',
-        kg: (j['kg'] as num?)?.toDouble() ?? 0,
-        unidades: (j['unidades'] as num?)?.toInt() ?? 0,
-        formato: j['formato'] as String? ?? '',
-        recheio: j['recheio'] as String? ?? '',
-        tempoAssaduraMin: (j['tempoAssaduraMin'] as num?)?.toInt() ?? 0,
-        comprar: ((j['comprar'] as List?) ?? const [])
-            .map((e) => PlanoQtd.fromJson(Map<String, dynamic>.from(e as Map)))
-            .toList(),
-        intermedios: ((j['intermedios'] as List?) ?? const [])
-            .map((e) => PlanoQtd.fromJson(Map<String, dynamic>.from(e as Map)))
-            .toList(),
-      );
+    receitaId: j['receitaId'] as String? ?? '',
+    nome: j['nome'] as String? ?? '',
+    kg: (j['kg'] as num?)?.toDouble() ?? 0,
+    unidades: (j['unidades'] as num?)?.toInt() ?? 0,
+    formato: j['formato'] as String? ?? '',
+    recheio: j['recheio'] as String? ?? '',
+    tempoAssaduraMin: (j['tempoAssaduraMin'] as num?)?.toInt() ?? 0,
+    temperaturaFornoC: (j['temperaturaFornoC'] as num?)?.toInt() ?? 0,
+    comprar: ((j['comprar'] as List?) ?? const [])
+        .map((e) => PlanoQtd.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList(),
+    intermedios: ((j['intermedios'] as List?) ?? const [])
+        .map((e) => PlanoQtd.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList(),
+  );
 }
 
 /// Resposta agregada de `GET /api/gc_turnkey/producoes/{id}/plano`.
@@ -309,27 +323,24 @@ class PlanoResposta {
   final List<PlanoPorReceita> porReceita;
   final double custoTotal;
 
-  double get totalAComprar =>
-      necessarios.fold(0, (s, n) => s + n.aComprar);
+  double get totalAComprar => necessarios.fold(0, (s, n) => s + n.aComprar);
 
   factory PlanoResposta.fromJson(Map<String, dynamic> j) => PlanoResposta(
-        necessarios: ((j['necessarios'] as List?) ?? const [])
-            .map((e) => PlanoNecessario.fromJson(
-                  Map<String, dynamic>.from(e as Map),
-                ))
-            .toList(),
-        produzir: ((j['produzir'] as List?) ?? const [])
-            .map((e) => PlanoProduzir.fromJson(
-                  Map<String, dynamic>.from(e as Map),
-                ))
-            .toList(),
-        porReceita: ((j['porReceita'] as List?) ?? const [])
-            .map((e) => PlanoPorReceita.fromJson(
-                  Map<String, dynamic>.from(e as Map),
-                ))
-            .toList(),
-        custoTotal: (j['custoTotal'] as num?)?.toDouble() ?? 0,
-      );
+    necessarios: ((j['necessarios'] as List?) ?? const [])
+        .map(
+          (e) => PlanoNecessario.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
+        .toList(),
+    produzir: ((j['produzir'] as List?) ?? const [])
+        .map((e) => PlanoProduzir.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList(),
+    porReceita: ((j['porReceita'] as List?) ?? const [])
+        .map(
+          (e) => PlanoPorReceita.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
+        .toList(),
+    custoTotal: (j['custoTotal'] as num?)?.toDouble() ?? 0,
+  );
 }
 
 /// Movimento (consumo ou saída) devolvido por `.../concluir`.
@@ -340,9 +351,9 @@ class MovimentoResumo {
   final double gramas;
 
   factory MovimentoResumo.fromJson(Map<String, dynamic> j) => MovimentoResumo(
-        nome: j['nome'] as String? ?? '',
-        gramas: (j['gramas'] as num?)?.toDouble() ?? 0,
-      );
+    nome: j['nome'] as String? ?? '',
+    gramas: (j['gramas'] as num?)?.toDouble() ?? 0,
+  );
 }
 
 /// Um componente da ficha (recheio, cobertura, extra) com a quantidade por
@@ -359,18 +370,18 @@ class FichaComponente {
   final double gPorUnidade;
 
   String get slotLabel => switch (slot) {
-        'recheio_base' => 'Recheio',
-        'recheio_top' => 'Recheio (topo)',
-        'cobertura_base' => 'Cobertura',
-        'cobertura_top' => 'Cobertura (topo)',
-        _ => 'Extra',
-      };
+    'recheio_base' => 'Recheio',
+    'recheio_top' => 'Recheio (topo)',
+    'cobertura_base' => 'Cobertura',
+    'cobertura_top' => 'Cobertura (topo)',
+    _ => 'Extra',
+  };
 
   factory FichaComponente.fromJson(Map<String, dynamic> j) => FichaComponente(
-        slot: j['slot'] as String? ?? 'extra',
-        nome: j['nome'] as String? ?? '',
-        gPorUnidade: (j['gPorUnidade'] as num?)?.toDouble() ?? 0,
-      );
+    slot: j['slot'] as String? ?? 'extra',
+    nome: j['nome'] as String? ?? '',
+    gPorUnidade: (j['gPorUnidade'] as num?)?.toDouble() ?? 0,
+  );
 }
 
 /// Resposta de `GET /api/gc_turnkey/fichas/resolver`.
@@ -388,14 +399,14 @@ class FichaResolvida {
   bool get existe => fichaId.isNotEmpty;
 
   factory FichaResolvida.fromJson(Map<String, dynamic> j) => FichaResolvida(
-        fichaId: j['fichaId'] as String? ?? '',
-        nome: j['nome'] as String? ?? '',
-        componentes: ((j['componentes'] as List?) ?? const [])
-            .map((e) => FichaComponente.fromJson(
-                  Map<String, dynamic>.from(e as Map),
-                ))
-            .toList(),
-      );
+    fichaId: j['fichaId'] as String? ?? '',
+    nome: j['nome'] as String? ?? '',
+    componentes: ((j['componentes'] as List?) ?? const [])
+        .map(
+          (e) => FichaComponente.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
+        .toList(),
+  );
 }
 
 /// Resposta de `POST /api/gc_turnkey/producoes/{id}/concluir`.
@@ -413,19 +424,19 @@ class ConclusaoResumo {
   final double custoTotal;
 
   factory ConclusaoResumo.fromJson(Map<String, dynamic> j) => ConclusaoResumo(
-        consumos: ((j['consumos'] as List?) ?? const [])
-            .map((e) => MovimentoResumo.fromJson(
-                  Map<String, dynamic>.from(e as Map),
-                ))
-            .toList(),
-        saidas: ((j['saidas'] as List?) ?? const [])
-            .map((e) => MovimentoResumo.fromJson(
-                  Map<String, dynamic>.from(e as Map),
-                ))
-            .toList(),
-        faltas: ((j['faltas'] as List?) ?? const [])
-            .map((e) => e.toString())
-            .toList(),
-        custoTotal: (j['custoTotal'] as num?)?.toDouble() ?? 0,
-      );
+    consumos: ((j['consumos'] as List?) ?? const [])
+        .map(
+          (e) => MovimentoResumo.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
+        .toList(),
+    saidas: ((j['saidas'] as List?) ?? const [])
+        .map(
+          (e) => MovimentoResumo.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
+        .toList(),
+    faltas: ((j['faltas'] as List?) ?? const [])
+        .map((e) => e.toString())
+        .toList(),
+    custoTotal: (j['custoTotal'] as num?)?.toDouble() ?? 0,
+  );
 }

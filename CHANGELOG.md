@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.81.0 — 2026-10-05 — Temperatura do forno em cada produto
+
+Cada produto passa a ter a **temperatura do forno** além do tempo de assadura.
+
+- **Ficha técnica → Editar → "Temperatura do forno (°C)"** (50 a 400 °C), junto ao tempo de assadura.
+- Aparece **junto com o tempo**: "Assar a 170 °C durante 11 min" na ficha, na **Mise en place / Produzir**, na **Agenda** (detalhe do
+  plano) e nos botões de **assar da Contagem** ("170 °C · 11 min").
+- **Aviso na Contagem**: se pões ao forno, ao mesmo tempo, sabores com temperaturas diferentes, aparece "Atenção: temperaturas
+  diferentes no mesmo forno (165 °C, 180 °C)".
+- Nova coluna `temperatura_forno_c` nas fichas (migration `1790980000_temperatura_forno`); fichas existentes ficam sem
+  temperatura até a preencheres. Testes novos.
+
 ## 1.80.0 — 2026-10-06 — Segurança do servidor e carregamento mais rápido
 
 Revisão de segurança e de agilidade (ver `docs/SEGURANCA.md`, secção "Revisão de 2026-10-06"):

@@ -1654,6 +1654,13 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Entrar com Google continua a funcionar; as imagens/fotos de faturas abrem
 - [ ] `curl -I https://…/` mostra Content-Security-Policy e Strict-Transport-Security
 
+## 107. Temperatura do forno em cada produto
+
+- [ ] Ficha → Editar: o campo "Temperatura do forno (°C)" aceita 50–400 e guarda; vazio = não definida
+- [ ] Ficha (detalhe): mostra "Assar a 170 °C durante 11 min" (só tempo ou só temperatura também se lêem bem)
+- [ ] Mise en place / Produzir e Agenda: o cartão/linha de assar mostra °C e minutos
+- [ ] Contagem → Opção 2 → botões de assar: o sub-título mostra "170 °C · 11 min"; com dois sabores a temperaturas diferentes aparece o aviso
+
 ---
 
 ## Notas / ajustes pedidos

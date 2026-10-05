@@ -27,18 +27,16 @@ class MepIngrediente {
   bool get faltaStock => emStock < gramas;
 
   factory MepIngrediente.fromJson(Map<String, dynamic> j) => MepIngrediente(
-        ingredienteId: j['ingredienteId'] as String? ?? '',
-        nome: j['nome'] as String? ?? '',
-        gramas: (j['gramas'] as num?)?.toDouble() ?? 0,
-        emStock: (j['emStock'] as num?)?.toDouble() ?? 0,
-        pesoG: (j['pesoG'] as num?)?.toDouble(),
-        unidade: j['unidade'] == 'ml' || j['unidade'] == 'un'
-            ? j['unidade'] as String
-            : 'g',
-        produtoIds: [
-          for (final p in (j['produtoIds'] as List? ?? const [])) '$p',
-        ],
-      );
+    ingredienteId: j['ingredienteId'] as String? ?? '',
+    nome: j['nome'] as String? ?? '',
+    gramas: (j['gramas'] as num?)?.toDouble() ?? 0,
+    emStock: (j['emStock'] as num?)?.toDouble() ?? 0,
+    pesoG: (j['pesoG'] as num?)?.toDouble(),
+    unidade: j['unidade'] == 'ml' || j['unidade'] == 'un'
+        ? j['unidade'] as String
+        : 'g',
+    produtoIds: [for (final p in (j['produtoIds'] as List? ?? const [])) '$p'],
+  );
 }
 
 class MepIntermedio {
@@ -57,11 +55,11 @@ class MepIntermedio {
   final bool eMassa;
 
   factory MepIntermedio.fromJson(Map<String, dynamic> j) => MepIntermedio(
-        receitaId: j['receitaId'] as String? ?? '',
-        nome: j['nome'] as String? ?? '',
-        gramas: (j['gramas'] as num?)?.toDouble() ?? 0,
-        eMassa: j['eMassa'] as bool? ?? false,
-      );
+    receitaId: j['receitaId'] as String? ?? '',
+    nome: j['nome'] as String? ?? '',
+    gramas: (j['gramas'] as num?)?.toDouble() ?? 0,
+    eMassa: j['eMassa'] as bool? ?? false,
+  );
 }
 
 class MepPlano {
@@ -75,6 +73,7 @@ class MepPlano {
     this.recheio = '',
     this.fichaId = '',
     this.tempoAssaduraMin = 0,
+    this.temperaturaFornoC = 0,
     this.comprar = const [],
     this.intermedios = const [],
   });
@@ -93,26 +92,30 @@ class MepPlano {
 
   /// Minutos de forno do produto final (0 = não definido na ficha).
   final int tempoAssaduraMin;
+
+  /// Temperatura do forno (°C) do produto final (0 = não definida).
+  final int temperaturaFornoC;
   final List<MepIngrediente> comprar;
   final List<MepIntermedio> intermedios;
 
   factory MepPlano.fromJson(Map<String, dynamic> j) => MepPlano(
-        receitaId: j['receitaId'] as String? ?? '',
-        nome: j['nome'] as String? ?? '',
-        kg: (j['kg'] as num?)?.toDouble() ?? 0,
-        unidades: (j['unidades'] as num?)?.toInt() ?? 0,
-        formato: j['formato'] as String? ?? '',
-        formatoId: j['formatoId'] as String? ?? '',
-        recheio: j['recheio'] as String? ?? '',
-        fichaId: j['fichaId'] as String? ?? '',
-        tempoAssaduraMin: (j['tempoAssaduraMin'] as num?)?.toInt() ?? 0,
-        comprar: ((j['comprar'] as List?) ?? const [])
-            .map((e) =>
-                MepIngrediente.fromJson(Map<String, dynamic>.from(e as Map)))
-            .toList(),
-        intermedios: ((j['intermedios'] as List?) ?? const [])
-            .map((e) =>
-                MepIntermedio.fromJson(Map<String, dynamic>.from(e as Map)))
-            .toList(),
-      );
+    receitaId: j['receitaId'] as String? ?? '',
+    nome: j['nome'] as String? ?? '',
+    kg: (j['kg'] as num?)?.toDouble() ?? 0,
+    unidades: (j['unidades'] as num?)?.toInt() ?? 0,
+    formato: j['formato'] as String? ?? '',
+    formatoId: j['formatoId'] as String? ?? '',
+    recheio: j['recheio'] as String? ?? '',
+    fichaId: j['fichaId'] as String? ?? '',
+    tempoAssaduraMin: (j['tempoAssaduraMin'] as num?)?.toInt() ?? 0,
+    temperaturaFornoC: (j['temperaturaFornoC'] as num?)?.toInt() ?? 0,
+    comprar: ((j['comprar'] as List?) ?? const [])
+        .map(
+          (e) => MepIngrediente.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
+        .toList(),
+    intermedios: ((j['intermedios'] as List?) ?? const [])
+        .map((e) => MepIntermedio.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList(),
+  );
 }
