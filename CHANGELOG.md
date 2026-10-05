@@ -2,6 +2,12 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.71.0 — 2026-10-05 — Receitas: importar dentro do "+"
+
+- Em **Receitas**, o botão **+** passa a oferecer **Nova receita** (à mão) e **Importar receitas (CSV / colar)**: tudo o
+  que é criar receitas está no mesmo sítio. O ícone **Lixeira** volta a estar à vista (deixa de ser preciso o menu ⋮).
+- Sem alterações à base de dados.
+
 ## 1.70.0 — 2026-10-05 — Revisão de interface (2): barras de topo
 
 Continuação da revisão em largura de telemóvel — as barras de topo com ícones a mais escondiam ou cortavam o título:

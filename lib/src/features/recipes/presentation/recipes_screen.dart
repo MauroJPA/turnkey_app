@@ -139,38 +139,33 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
                 _sortAsc = asc;
               }),
             ),
+          IconButton(
+            tooltip: _trash ? 'Ver ativas' : 'Lixeira',
+            icon: Icon(
+              _trash ? Icons.menu_book_outlined : Icons.delete_outline,
+            ),
+            onPressed: () => setState(() => _trash = !_trash),
+          ),
+          // "+": nova receita à mão, ou importar várias de uma vez
           if (_podeEditar && !_trash)
-            IconButton(
+            PopupMenuButton<void>(
               tooltip: 'Nova receita',
               icon: const Icon(Icons.add),
-              onPressed: _busy ? null : _add,
-            ),
-          PopupMenuButton<void>(
-            tooltip: 'Mais',
-            itemBuilder: (_) => [
-              if (_podeEditar && !_trash)
+              enabled: !_busy,
+              itemBuilder: (_) => [
                 PopupMenuItem(
-                  onTap: _busy
-                      ? null
-                      : () => showImportarReceitasSheet(context),
-                  child: const ListTile(
-                    leading: Icon(Icons.upload_file_outlined),
-                    title: Text('Importar receitas (CSV / colar)'),
-                    contentPadding: EdgeInsets.zero,
+                  onTap: _add,
+                  child: const _ItemMenu(Icons.edit_outlined, 'Nova receita'),
+                ),
+                PopupMenuItem(
+                  onTap: () => showImportarReceitasSheet(context),
+                  child: const _ItemMenu(
+                    Icons.upload_file_outlined,
+                    'Importar receitas (CSV / colar)',
                   ),
                 ),
-              PopupMenuItem(
-                onTap: () => setState(() => _trash = !_trash),
-                child: ListTile(
-                  leading: Icon(
-                    _trash ? Icons.menu_book_outlined : Icons.delete_outline,
-                  ),
-                  title: Text(_trash ? 'Ver ativas' : 'Lixeira'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-            ],
-          ),
+              ],
+            ),
           const HelpActions(topic: HelpTopic.receitas),
         ],
       ),
@@ -378,6 +373,24 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
       apagar: () =>
           _run(() => ref.read(recipeActionsProvider).moveToTrash(r.id)),
       child: tile,
+    );
+  }
+}
+
+/// Linha de um menu: ícone e texto alinhados.
+class _ItemMenu extends StatelessWidget {
+  const _ItemMenu(this.icon, this.texto);
+  final IconData icon;
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 20),
+        const SizedBox(width: 12),
+        Expanded(child: Text(texto)),
+      ],
     );
   }
 }

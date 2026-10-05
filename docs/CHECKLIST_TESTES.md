@@ -1579,6 +1579,11 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Receitas: ícones Ordenar, + e ⋮ (Importar, Lixeira); "Lixeira" alterna para "Ver ativas"
 - [ ] Fichas: o título "Fichas" cabe inteiro com Ordenar, Lixeira, + e ajuda
 
+## 97. Receitas: "+" com importar
+
+- [ ] Receitas → "+": mostra "Nova receita" e "Importar receitas (CSV / colar)"; cada uma abre o que diz
+- [ ] Receitas: Lixeira à vista na barra (sem menu ⋮); na lixeira o "+" não aparece
+
 ---
 
 ## Notas / ajustes pedidos

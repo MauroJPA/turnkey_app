@@ -79,7 +79,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'As suas massas, recheios e coberturas.',
       'Cada receita é feita de ingredientes (e pode usar outras receitas lá dentro).',
       'Use "+" para criar uma receita. Toque numa receita para ver os detalhes e o custo.',
-      'O ícone de carregar ficheiro importa receitas: cola o texto copiado da folha de cálculo (ou escolhe um CSV) com uma linha por ingrediente — nome da receita, categoria, ingrediente, quantidade em gramas. Os ingredientes sem correspondência ficam pendentes na receita, para ligares depois. Receitas com nome que já existe são ignoradas.',
+      'O botão + abre duas opções: "Nova receita" (à mão) ou "Importar receitas": cola o texto copiado da folha de cálculo (ou escolhe um CSV) com uma linha por ingrediente — nome da receita, categoria, ingrediente, quantidade em gramas. Os ingredientes sem correspondência ficam pendentes na receita, para ligares depois. Receitas com nome que já existe são ignoradas.',
       'Ao criar uma receita pode já escrever o procedimento e anexar imagens (opcional).',
       'Os chips por baixo da pesquisa filtram por categoria (só mostram as que as tuas receitas realmente usam); as categorias são geríveis em Configurações → Categorias de receitas.',
       'O botão de ordenar (seta) organiza por Nome, Categoria ou Custo — toca outra vez no mesmo critério para inverter a ordem.',
