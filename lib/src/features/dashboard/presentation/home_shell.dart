@@ -26,6 +26,7 @@ import '../../schedule/application/schedule_providers.dart';
 import '../../schedule/domain/production_plan.dart';
 import '../../settings/application/empresa_providers.dart';
 import '../../settings/data/aprovacoes_repository.dart';
+import '../../settings/data/backups_repository.dart';
 import '../../settings/data/empresa_repository.dart';
 import '../../settings/domain/empresa.dart';
 import '../../shopping/application/shopping_providers.dart';
@@ -86,6 +87,7 @@ class HomeShell extends ConsumerWidget {
       (s, c) => s + c.custoEstimado,
     );
 
+    final backups = ref.watch(estadoBackupsProvider).valueOrNull;
     final contasPorAprovar =
         ref.watch(aprovacoesProvider).valueOrNull?.pendentes ??
         const <ContaPendente>[];
@@ -226,6 +228,15 @@ class HomeShell extends ConsumerWidget {
               subtitulo: 'confirma os dados lidos pela IA',
               destaque: true,
               onTap: () => context.go(Routes.invoices),
+            ),
+          if (backups != null && backups.problema())
+            _StatCard(
+              icon: Icons.backup_outlined,
+              titulo: 'Backup com problema',
+              valor: '!',
+              subtitulo: backups.avisos().take(2).join(' '),
+              destaque: true,
+              onTap: () => context.go(Routes.settings),
             ),
           if (contasPorAprovar.isNotEmpty)
             _StatCard(

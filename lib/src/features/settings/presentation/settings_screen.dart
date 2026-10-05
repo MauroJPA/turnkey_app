@@ -17,6 +17,7 @@ import '../application/settings_providers.dart';
 import '../data/aprovacoes_repository.dart';
 import '../data/empresa_repository.dart';
 import '../domain/empresa.dart';
+import 'backups_card.dart';
 import 'integracoes_sheet.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -522,6 +523,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => showIntegracoesSheet(context),
               ),
+
+            // ---- Estado dos backups (administradores) ----
+            if (ref.read(currentPapelProvider).canEditConfig) ...[
+              const Divider(height: 28),
+              Text(
+                'Estado dos backups',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const BackupsCard(),
+              const Divider(height: 28),
+            ],
 
             // ---- Aprovações (só o operador da plataforma) ----
             if (ref.watch(aprovacoesProvider).valueOrNull?.operador ?? false)

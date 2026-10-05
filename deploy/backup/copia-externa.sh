@@ -23,6 +23,16 @@ LOG="$LOGS/copia-externa.log"
 
 log() { local l; l="$(date '+%F %T') [${2:-INFO}] $1"; echo "$l" | tee -a "$LOG"; }
 
+# Estado para a app (Configurações -> Estado dos backups): data/backup_externo.json
+ESTADO="$RAIZ/data/backup_externo.json"
+estado() {  # estado true|false "ficheiro" "mensagem"
+  local msg; msg="$(printf '%s' "$3" | tr -d '"\\\r\n' | cut -c1-250)"
+  mkdir -p "$RAIZ/data" 2>/dev/null || return 0
+  printf '{"ok":%s,"quando":"%s","ficheiro":"%s","mensagem":"%s"}\n' \
+    "$1" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$2" "$msg" > "$ESTADO.tmp" 2>/dev/null \
+    && mv -f "$ESTADO.tmp" "$ESTADO" 2>/dev/null || true
+}
+
 carregar_env() {
   [ -f "$RAIZ/.env" ] || return 0
   set -a; # shellcheck disable=SC1091
@@ -45,7 +55,7 @@ alertar() {  # alertar "assunto" "corpo"
   fi
 }
 
-falhar() { log "$1" ERRO; alertar "[gc_turnkey] FALHA no backup externo" "$1 -- ver $LOG"; exit 1; }
+falhar() { log "$1" ERRO; estado false "${NOME:-}" "$1"; alertar "[gc_turnkey] FALHA no backup externo" "$1 -- ver $LOG"; exit 1; }
 
 command -v rclone >/dev/null 2>&1 || falhar "rclone não está instalado (apt install rclone, ou https://rclone.org/install/)."
 [ -d "$PASTA" ] || falhar "Pasta de backups não existe: $PASTA"
@@ -73,4 +83,5 @@ fi
 rclone delete "${REMOTE}diario" --min-age "${DIAS_DIARIOS}d" >/dev/null 2>&1 || log "Limpeza dos diários falhou - não bloqueia." AVISO
 rclone delete "${REMOTE}mensal" --min-age "$((MESES_MENSAIS * 31))d" >/dev/null 2>&1 || log "Limpeza dos mensais falhou - não bloqueia." AVISO
 
+estado true "$NOME" "Enviado e confirmado."
 log "Concluído."

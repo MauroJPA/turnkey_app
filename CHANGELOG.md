@@ -2,6 +2,22 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.84.0 — 2026-10-05 — Estado dos backups
+
+Vês se os backups estão a correr, sem abrir o servidor.
+
+- **Configurações → Estado dos backups** (administradores): o **último backup automático** (há quanto tempo e tamanho), quantos há
+  guardados e o estado da **cópia para fora do servidor** (Google Drive/B2, cifrada): *ok*, *FALHOU* ou *sem informação* (o script
+  nunca correu). Fica a vermelho com as frases do que está mal.
+- **Início**: cartão **"Backup com problema"** quando o último backup tem mais de **30 h**, não há nenhum, ou a cópia externa
+  falhou/está atrasada (só para administradores).
+- Servidor: `GET /api/gc_turnkey/backups/estado` (só owner/admin; não devolve caminhos). Lê os `.zip` de `pb_data/backups`
+  e o ficheiro `pb_data/backup_externo.json`, que o `deploy/backup/copia-externa.sh` passa a escrever (ok/falha + hora +
+  mensagem) a cada execução. **O script só escreve o estado depois de o publicares no servidor** (`deploy/backup/` vai no pacote;
+  copia-o para o sítio onde o agendamento o chama, se o tiveres fora da pasta do pacote).
+- 8 testes de segurança novos (sem sessão, papéis, formato, sem caminhos) e 7 testes da lógica de "em dia / problema".
+- Sem alterações à base de dados.
+
 ## 1.83.0 — 2026-10-05 — Aprovações de contas dentro da app
 
 Aprovas contas novas dentro da app, sem abrir o painel `/_/` do PocketBase.

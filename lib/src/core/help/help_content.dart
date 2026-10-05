@@ -423,7 +423,8 @@ const Map<HelpTopic, HelpEntry> helpContent = {
     paragrafos: [
       'Empresa: nome, moeda e regra de arredondamento.',
       'Aparência: modo claro/escuro, cor da app e logótipo. Aplica-se a toda a equipa.',
-      'Percentuais de custo (tudo sobre o preço sem IVA): defines o CMV (matéria-prima) e os custos (salário, aluguer, serviços…); a margem de lucro é o que sobra — sobe se reduzires custos, desce se os aumentares, e o CMV não muda. O preço sugerido é custo ÷ CMV. O "IVA das vendas" é à parte: soma-se no fim sobre o preço sem IVA e estima o IVA a entregar na Contabilidade. Já não há "Impostos" nos percentuais (era o IVA).',
+      'Estado dos backups (só administradores): mostra o último backup automático do servidor (um por noite), quantos há guardados e se a cópia para fora do servidor (Google Drive/B2, cifrada) correu bem. Se algo falha ou está atrasado há mais de 30 h, aparece um aviso aqui e um cartão "Backup com problema" no Início. "Sem informação" na cópia externa quer dizer que o script ainda não correu (ver docs/BACKUPS.md).',
+      'Percentuais de custo (tudo sobre o preço sem IVA) defines o CMV (matéria-prima) e os custos (salário, aluguer, serviços…); a margem de lucro é o que sobra — sobe se reduzires custos, desce se os aumentares, e o CMV não muda. O preço sugerido é custo ÷ CMV. O "IVA das vendas" é à parte: soma-se no fim sobre o preço sem IVA e estima o IVA a entregar na Contabilidade. Já não há "Impostos" nos percentuais (era o IVA).',
       'A Equipa tem página própria, acessível aqui. Os formatos de cookie criam-se na própria ficha técnica e as categorias na própria receita.',
     ],
   ),

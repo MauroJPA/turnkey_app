@@ -782,6 +782,35 @@ def teste_aprovacoes_na_app():
     check(s == 404, 'conta inexistente => 404', f'status {s}')
 
 
+def teste_estado_backups():
+    sec('7a3. Estado dos backups (só administradores)')
+    s, _, _ = call('GET', '/api/gc_turnkey/backups/estado')
+    check(s in (401, 403), 'sem sessão não vê o estado dos backups', f'status {s}')
+    for quem in ('editorA', 'viewerA', 'editorB'):
+        s, _, _ = call('GET', '/api/gc_turnkey/backups/estado', tok=tok[quem])
+        check(s == 403, f'{quem}: não vê o estado dos backups', f'status {s}')
+    # sem nada preparado: devolve a forma certa e "desconhecido"
+    s, r, _ = call('GET', '/api/gc_turnkey/backups/estado', tok=tok['adminA'])
+    check(s == 200 and 'local' in r and r.get('externo', {}).get('estado') == 'desconhecido',
+          'admin vê o estado (cópia externa desconhecida se o script nunca correu)', f'status {s} {str(r)[:100]}')
+    if tmp:
+        dados = os.path.join(tmp, 'data')
+        os.makedirs(os.path.join(dados, 'backups'), exist_ok=True)
+        with open(os.path.join(dados, 'backups', 'backup_teste.zip'), 'wb') as f:
+            f.write(b'x' * 2048)
+        with open(os.path.join(dados, 'backup_externo.json'), 'w', encoding='utf-8') as f:
+            f.write('{"ok":false,"quando":"2026-10-05T03:30:00Z","ficheiro":"backup_teste.zip","mensagem":"rclone falhou"}')
+        s, r, _ = call('GET', '/api/gc_turnkey/backups/estado', tok=tok['ownerA'])
+        ult = (r.get('local') or {}).get('ultimo') or {}
+        check(s == 200 and r['local']['total'] == 1 and ult.get('nome') == 'backup_teste.zip' and ult.get('tamanho') == 2048,
+              'o proprietário vê o último backup local (nome e tamanho)', str(r)[:140])
+        check(r.get('externo', {}).get('estado') == 'falha' and r['externo'].get('mensagem') == 'rclone falhou',
+              'a falha da cópia externa chega à app')
+        txt = json.dumps(r)
+        check(dados.replace('\\', '/') not in txt.replace('\\', '/') and 'pbsec_' not in txt,
+              'a resposta não revela caminhos do servidor')
+
+
 def teste_segredos():
     sec('7b. Segredos cifrados (token do Vendus)')
     url = '/api/gc_turnkey/integracoes/vendus'
@@ -2145,6 +2174,7 @@ def main():
         teste_uploads()
         teste_aprovacao()
         teste_aprovacoes_na_app()
+        teste_estado_backups()
         teste_segredos()
         teste_sem_chave()
         teste_faturas_ia()

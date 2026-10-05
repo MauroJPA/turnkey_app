@@ -1676,6 +1676,13 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Aprovar: a pessoa, ao tocar "Verificar novamente", segue para criar a empresa; Recusar (com confirmação) apaga o pedido
 - [ ] Um utilizador normal (editor/admin de outra empresa) não vê o cartão nem a entrada; abrir /opcoes/aprovacoes diz "só o operador"
 
+## 110. Estado dos backups
+
+- [ ] Configurações (administrador): aparece "Estado dos backups" com o último backup, quantos há e a cópia externa; Editor/Leitura não vêem
+- [ ] Parar/atrasar os backups (ou testar com um servidor sem backups): o cartão fica vermelho e o Início mostra "Backup com problema"
+- [ ] No servidor, depois de correr `bash backup/copia-externa.sh`, o estado da cópia externa passa de "sem informação" a "ok · há N min"
+- [ ] Forçar uma falha da cópia externa (ex.: renomear o remoto): aparece "FALHOU" com a mensagem
+
 ---
 
 ## Notas / ajustes pedidos
