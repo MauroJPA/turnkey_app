@@ -11,6 +11,9 @@ import '../../navigation/domain/nav_config.dart';
 import '../../navigation/domain/pagina_app.dart';
 import 'aviso_versao_nova.dart';
 
+/// Largura máxima do conteúdo em ecrãs largos (computador).
+const double _larguraMaxima = 960;
+
 /// Casca das secções principais: mostra a barra de navegação inferior (as
 /// páginas e a ordem escolhidas em Configurações → Navegação) e aplica as
 /// permissões por página: sem acesso mostra um aviso; "só ver" trata a
@@ -58,8 +61,15 @@ class MainShell extends ConsumerWidget {
       corpo = child;
     }
 
+    // ecrãs largos (computador): a app fica numa coluna centrada, como no
+    // telemóvel — em vez de linhas e botões esticados por 1500 px
     return Scaffold(
-      body: corpo,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: _larguraMaxima),
+          child: corpo,
+        ),
+      ),
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -68,14 +78,27 @@ class MainShell extends ConsumerWidget {
           if (!location.startsWith(Routes.invoices))
             const AnaliseFaturasFaixa(),
           if (abas.length >= 2)
-            NavigationBar(
-              selectedIndex: selecionada,
-              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-              onDestinationSelected: (i) => context.go(abas[i].rota),
-              destinations: [
-                for (final a in abas)
-                  NavigationDestination(icon: Icon(a.icon), label: a.label),
-              ],
+            ColoredBox(
+              color: Theme.of(context).colorScheme.surfaceContainer,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: _larguraMaxima),
+                  child: NavigationBar(
+                    backgroundColor: Colors.transparent,
+                    selectedIndex: selecionada,
+                    labelBehavior:
+                        NavigationDestinationLabelBehavior.alwaysShow,
+                    onDestinationSelected: (i) => context.go(abas[i].rota),
+                    destinations: [
+                      for (final a in abas)
+                        NavigationDestination(
+                          icon: Icon(a.icon),
+                          label: a.label,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
             ),
         ],
       ),

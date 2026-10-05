@@ -2,6 +2,15 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.72.0 — 2026-10-05 — Ecrãs largos: conteúdo numa coluna centrada
+
+Revisão no Chrome do computador (ligado ao servidor): em ecrã largo as listas, botões e cartões esticavam por ~1500 px
+(cartões do Início enormes e vazios, linhas muito afastadas do valor, rodapé com os ícones separados).
+
+- Todo o conteúdo e o **rodapé** ficam agora numa **coluna centrada de, no máximo, 960 px** — como no telemóvel. Em
+  telemóvel e tablet estreito nada muda.
+- Sem alterações à base de dados.
+
 ## 1.71.0 — 2026-10-05 — Receitas: importar dentro do "+"
 
 - Em **Receitas**, o botão **+** passa a oferecer **Nova receita** (à mão) e **Importar receitas (CSV / colar)**: tudo o

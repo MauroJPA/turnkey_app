@@ -1584,6 +1584,12 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Receitas → "+": mostra "Nova receita" e "Importar receitas (CSV / colar)"; cada uma abre o que diz
 - [ ] Receitas: Lixeira à vista na barra (sem menu ⋮); na lixeira o "+" não aparece
 
+## 98. Ecrãs largos
+
+- [ ] No computador (janela larga): o Início, as listas e a Contabilidade ficam numa coluna centrada (máx. 960 px);
+      o rodapé acompanha a mesma largura
+- [ ] No telemóvel: igual ao que era (sem margens novas)
+
 ---
 
 ## Notas / ajustes pedidos
