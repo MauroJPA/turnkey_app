@@ -12,6 +12,7 @@ abstract class Routes {
   static const production = '/produzir';
   static const miseEnPlace = '/mise-en-place';
   static const productionLotes = '/produzir/lotes';
+  static const productionPrevisao = '/produzir/previsao';
   static const loteBase = '/lote';
   static String lote(String codigo) => '/lote/${Uri.encodeComponent(codigo)}';
   static const schedule = '/agenda';

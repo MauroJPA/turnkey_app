@@ -1720,6 +1720,16 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] "PDF": abre a tabela para imprimir/guardar em PDF; os produtos desmarcados não aparecem
 - [ ] Depois de recarregar a página, o desconto, os degraus e os produtos desmarcados mantêm-se
 
+## 115. Quantos assar amanhã
+
+- [ ] Produção → Quantos assar: aparece a lista por sabor com o total e as fornadas (precisa de vendas ligadas a fichas)
+- [ ] Mudar o dia (amanhã, qui 8/10…): os números mudam conforme as vendas desse dia da semana
+- [ ] Ajuste +20 % / −20 % / +50 %: a lista e o total sobem/descem
+- [ ] "Descontar o que já há em stock" ligado/desligado: o "a assar" baixa quando há stock
+- [ ] Cada sabor mostra a confiança (ponto), os dias usados, o modelo, o erro e a % de desperdício
+- [ ] Copiar: cola a lista "Assar amanhã" com os sabores e o total
+- [ ] Numa loja nova (poucas vendas) aparece "pouco histórico" e o ponto vermelho
+
 ---
 
 ## Notas / ajustes pedidos

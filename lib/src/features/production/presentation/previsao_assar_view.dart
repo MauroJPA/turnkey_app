@@ -1,0 +1,321 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/widgets/async_value_view.dart';
+import '../../finance/data/capacidade_forno_repository.dart';
+import '../../tech_sheets/application/tech_sheets_providers.dart';
+import '../application/previsao_providers.dart';
+import '../domain/previsao_assar.dart';
+
+const _diasSemana = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
+
+String _rotuloDia(DateTime d, int offset) => offset == 1
+    ? 'Amanhã'
+    : '${_diasSemana[d.weekday - 1]} ${d.day}/${d.month}';
+
+String _n(double v) => v == v.roundToDouble()
+    ? v.toStringAsFixed(0)
+    : v.toStringAsFixed(1).replaceAll('.', ',');
+
+/// "Quantos assar amanhã": por sabor, o que convém ter pronto, calculado pelas
+/// vendas dos mesmos dias da semana nas últimas semanas, pelo desperdício e
+/// pelo que ainda há em stock. A app testa vários modelos nos dias passados e
+/// usa o que erra menos — quanto mais histórico, melhor acerta.
+class PrevisaoAssarView extends ConsumerStatefulWidget {
+  const PrevisaoAssarView({super.key});
+
+  @override
+  ConsumerState<PrevisaoAssarView> createState() => _PrevisaoAssarViewState();
+}
+
+class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
+  int _offset = 1; // dias a partir de hoje
+  double _ajuste = 0;
+  bool _descontarStock = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final consumo = ref.watch(consumoRecenteProvider);
+    final fichas = ref.watch(fichasListProvider(false));
+    final stock = ref.watch(stockAgoraProvider).valueOrNull ?? const {};
+    final porFornada = ref.watch(capacidadeFornoProvider).valueOrNull ?? 0;
+    final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final agora = DateTime.now();
+    final hoje = DateTime(agora.year, agora.month, agora.day);
+    final alvo = hoje.add(Duration(days: _offset));
+
+    return AsyncValueView<List<ConsumoDia>>(
+      value: consumo,
+      onRetry: () => ref.invalidate(consumoRecenteProvider),
+      data: (dados) {
+        final nomes = {
+          for (final f in fichas.valueOrNull ?? const [])
+            f.id: f.subnome.isEmpty ? f.nome : '${f.nome} · ${f.subnome}',
+        };
+        final previsoes = [
+          for (final p in preverDia(
+            hoje: hoje,
+            alvo: alvo,
+            consumo: dados,
+            ajustePct: _ajuste,
+          ))
+            if (nomes.containsKey(p.fichaId)) p,
+        ];
+        int aAssar(PrevisaoFicha p) {
+          final s = _descontarStock ? (stock[p.fichaId] ?? 0) : 0.0;
+          final v = (p.sugerido - s).ceil();
+          return v < 0 ? 0 : v;
+        }
+
+        final lista = [...previsoes]
+          ..sort((a, b) => aAssar(b).compareTo(aAssar(a)));
+        final total = lista.fold<int>(0, (s, p) => s + aAssar(p));
+        final fornadas = porFornada > 0 ? total / porFornada : null;
+
+        String texto() {
+          final b = StringBuffer(
+            'Assar ${_rotuloDia(alvo, _offset).toLowerCase()} '
+            '(${_diasSemana[alvo.weekday - 1]} ${alvo.day}/${alvo.month}):',
+          );
+          for (final p in lista) {
+            final q = aAssar(p);
+            if (q > 0) b.write('\n• ${nomes[p.fichaId]}: $q');
+          }
+          b.write('\nTotal: $total');
+          return b.toString();
+        }
+
+        return ListView(
+          padding: const EdgeInsets.only(bottom: 24),
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+              child: Text(
+                'O que convém ter pronto, sabor a sabor, pelas vendas dos mesmos '
+                'dias da semana, pelo desperdício e pelo que ainda há.',
+                style: tt.bodySmall,
+              ),
+            ),
+            SizedBox(
+              height: 52,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                children: [
+                  for (var o = 1; o <= 7; o++)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(_rotuloDia(hoje.add(Duration(days: o)), o)),
+                        selected: _offset == o,
+                        onSelected: (_) => setState(() => _offset = o),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 44,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: [
+                  for (final a in const [-20.0, 0.0, 20.0, 50.0])
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(
+                          a == 0
+                              ? 'Dia normal'
+                              : '${a > 0 ? '+' : '−'}${a.abs().toStringAsFixed(0)}%'
+                                    '${a == 50 ? ' (evento)' : ''}',
+                        ),
+                        selected: _ajuste == a,
+                        onSelected: (_) => setState(() => _ajuste = a),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            SwitchListTile(
+              dense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              title: const Text('Descontar o que já há em stock'),
+              subtitle: Text(
+                stock.isEmpty
+                    ? 'Sem stock registado agora.'
+                    : 'Pelas contagens e contas de hoje (estimativa se ainda '
+                          'não contaste o fecho).',
+              ),
+              value: _descontarStock,
+              onChanged: (v) => setState(() => _descontarStock = v),
+            ),
+            Card(
+              margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '$total para assar',
+                            style: tt.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            fornadas == null
+                                ? 'Ainda sem fornadas registadas para estimar as fornadas.'
+                                : '≈ ${fornadas.toStringAsFixed(1).replaceAll('.', ',')} fornadas '
+                                      'de ${porFornada.toStringAsFixed(0)} un',
+                            style: tt.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Copiar a lista',
+                      onPressed: total == 0
+                          ? null
+                          : () async {
+                              final msg = ScaffoldMessenger.of(context);
+                              await Clipboard.setData(
+                                ClipboardData(text: texto()),
+                              );
+                              msg.showSnackBar(
+                                const SnackBar(content: Text('Lista copiada.')),
+                              );
+                            },
+                      icon: const Icon(Icons.copy),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (lista.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(32),
+                child: Center(
+                  child: Text(
+                    'Ainda não há vendas de produtos com ficha técnica nas '
+                    'últimas semanas. Quando as vendas entrarem (Vendus ou '
+                    'importação), a previsão aparece aqui.',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            for (final p in lista)
+              _Linha(
+                nome: nomes[p.fichaId] ?? '',
+                p: p,
+                stock: stock[p.fichaId] ?? 0,
+                descontar: _descontarStock,
+                aAssar: aAssar(p),
+              ),
+            if (lista.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Text(
+                  'Como funciona: para cada sabor, a app olha para as últimas '
+                  '$semanasDeHistorico semanas, só os dias iguais a este (e em '
+                  'que a loja vendeu), testa vários modelos nos dias já passados '
+                  'e usa o que errou menos. A margem de segurança vem desse erro '
+                  'e desaparece nos sabores que costumam ir para o lixo. Com mais '
+                  'semanas de vendas acerta melhor. Feriados e tempo não entram — '
+                  'usa o ajuste do dia.',
+                  style: tt.bodySmall?.copyWith(color: cs.outline),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _Linha extends StatelessWidget {
+  const _Linha({
+    required this.nome,
+    required this.p,
+    required this.stock,
+    required this.descontar,
+    required this.aAssar,
+  });
+
+  final String nome;
+  final PrevisaoFicha p;
+  final double stock;
+  final bool descontar;
+  final int aAssar;
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final cor = switch (p.confianca) {
+      Confianca.alta => Colors.green,
+      Confianca.media => Colors.orange,
+      Confianca.baixa => cs.error,
+    };
+    final detalhe = [
+      'prevê vender ${_n(p.previsto)}',
+      if (p.margem >= 0.5) '+${_n(p.margem)} de margem',
+      if (descontar && stock > 0) 'há ${_n(stock)} em stock',
+    ].join(' · ');
+    final tecnico = [
+      p.deFallback
+          ? 'só ${p.pontos} dia(s) igual(is): média geral do sabor'
+          : '${p.pontos} dias iguais · ${p.modelo.label}',
+      if (p.erroMedio != null) 'erra ±${_n(p.erroMedio!)} em média',
+      if (p.desperdicioPct >= 1)
+        '${p.desperdicioPct.toStringAsFixed(0)}% foi para o lixo',
+    ].join(' · ');
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(nome, style: tt.titleSmall),
+                const SizedBox(height: 2),
+                Text(detalhe, style: tt.bodySmall),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Icon(Icons.circle, size: 9, color: cor),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        '${p.confianca.label} — $tecnico',
+                        style: tt.bodySmall?.copyWith(color: cs.outline),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            '$aAssar',
+            style: tt.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: aAssar == 0 ? cs.outline : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

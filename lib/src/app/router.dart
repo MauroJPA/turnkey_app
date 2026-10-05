@@ -112,6 +112,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, __) => const CartReviewScreen(),
               ),
               GoRoute(
+                path: 'previsao',
+                builder: (_, __) =>
+                    const ProducaoScreen(secao: SecaoProducao.previsao),
+              ),
+              GoRoute(
                 path: 'lotes',
                 builder: (_, __) =>
                     const ProducaoScreen(secao: SecaoProducao.lotes),

@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.89.0 — 2026-10-06 — Quantos assar amanhã
+
+"Quantos assar amanhã": a previsão, sabor a sabor, do que convém ter pronto.
+
+- **Produção → Quantos assar** (nova secção): escolhes o dia (amanhã ou um dos 6 seguintes) e a app diz, por sabor, quantas unidades ter prontas, o total e as **fornadas** (pela média das tuas fornadas dos últimos 60 dias). O botão de copiar dá a lista em texto.
+- **Como prevê**: olha para as últimas 12 semanas, só os dias **iguais** ao escolhido (as quintas-feiras, por exemplo) em que a loja vendeu — um dia fechado não conta como zero. Para cada sabor testa 4 modelos nos dias já passados (mais peso às últimas semanas, média, mediana, igual à semana passada), mede quanto cada um teria errado e **usa o que erra menos**. Quanto mais histórico, melhor acerta; com pouco histórico usa a média geral do sabor e avisa (ponto vermelho/laranja/verde = confiança).
+- **Margem de segurança** = o erro do modelo (para não faltar), que **encolhe** nos sabores que vão para o lixo (5 % ou mais do que se faz, pelo Desperdício da Contagem) e **desaparece** a partir de 15 %.
+- **Descontar o que já há em stock** (ligado por defeito): tira o que ainda tens nos locais, pela contagem de fecho de hoje ou a estimativa pelas contas.
+- **Ajuste do dia**: −20 %, +20 % ou +50 % (evento) sobe ou desce tudo de uma vez — a app não sabe de feriados, chuva ou encomendas especiais.
+- Só lê vendas e registos já existentes: sem alterações no servidor. Testes do cálculo (modelos, erro, escolha do modelo, margem, desperdício, dias fechados, histórico curto).
+
 ## 1.88.0 — 2026-10-06 — Tabela de preços para revendedores
 
 Tabela de preços para revendedores, em PDF ou WhatsApp.

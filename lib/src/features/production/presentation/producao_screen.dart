@@ -9,12 +9,14 @@ import '../../schedule/application/schedule_providers.dart';
 import '../../schedule/domain/production_plan.dart';
 import '../../schedule/presentation/schedule_screen.dart';
 import '../../traceability/presentation/lotes_view.dart';
+import 'previsao_assar_view.dart';
 import 'production_screen.dart';
 
 /// As secções da Produção.
 enum SecaoProducao {
   produzir('Produzir', Icons.blender_outlined, Routes.production),
   agenda('Agenda', Icons.event_note_outlined, Routes.schedule),
+  previsao('Quantos assar', Icons.auto_graph, Routes.productionPrevisao),
   lotes('Lotes', Icons.qr_code_2, Routes.productionLotes);
 
   const SecaoProducao(this.label, this.icon, this.rota);
@@ -25,6 +27,7 @@ enum SecaoProducao {
   HelpTopic get ajuda => switch (this) {
     SecaoProducao.produzir => HelpTopic.produzir,
     SecaoProducao.agenda => HelpTopic.agenda,
+    SecaoProducao.previsao => HelpTopic.previsaoAssar,
     SecaoProducao.lotes => HelpTopic.lotes,
   };
 }
@@ -104,6 +107,9 @@ class ProducaoScreen extends ConsumerWidget {
               SecaoProducao.agenda => const ScheduleScreen(
                 key: ValueKey('prod-agenda'),
                 embedded: true,
+              ),
+              SecaoProducao.previsao => const PrevisaoAssarView(
+                key: ValueKey('prod-previsao'),
               ),
               SecaoProducao.lotes => const LotesView(
                 key: ValueKey('prod-lotes'),
