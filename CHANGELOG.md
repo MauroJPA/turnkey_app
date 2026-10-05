@@ -2,6 +2,21 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.80.0 — 2026-10-06 — Segurança do servidor e carregamento mais rápido
+
+Revisão de segurança e de agilidade (ver `docs/SEGURANCA.md`, secção "Revisão de 2026-10-06"):
+
+- **Cabeçalhos de segurança** na app web (hook novo `pb/hooks/web_cabecalhos.pb.js`): *Content-Security-Policy* restritiva (a
+  app só fala com ela própria — mesmo que alguém injetasse código, não o conseguia enviar para fora; sem iframes),
+  *Strict-Transport-Security* (atrás de HTTPS, também na API), *Referrer-Policy*, *Permissions-Policy*, *nosniff*.
+- **Atualizações apanhadas logo**: os ficheiros da app passam a ir com `Cache-Control: no-cache` + ETag. O navegador confirma
+  com o servidor (resposta de 304, sem descarregar) e apanha uma versão nova na hora — acaba o "Atualizar não atualiza".
+- **Carregamento ~3× mais leve**: o pacote cria versões comprimidas (`.gz`) dos ficheiros grandes e o servidor serve-as
+  (`main.dart.js` 5,0 MB → 1,4 MB). Só afeta o primeiro carregamento/atualizações (depois fica em cache).
+- **Contentor com menos privilégios** (`deploy/compose.yaml`): sem capacidades extra e sem escalada de permissões.
+- Testes de segurança novos (cabeçalhos da app e da API, HSTS só atrás de HTTPS).
+- Sem alterações à base de dados.
+
 ## 1.79.0 — 2026-10-06 — Sem "Impostos" nos percentuais; o CMV é teu e a margem é o que sobra
 
 - **"Impostos" saiu** dos Percentuais de custo e da Quebra do preço: o IVA só aparece no fim (preço sem IVA → IVA → preço

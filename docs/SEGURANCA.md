@@ -74,6 +74,29 @@ nos hooks. No PC de desenvolvimento: `pb\atualizar-pocketbase.ps1`; no servidor 
 `pb_data` para `pb_data_antes_*`, guarda o binário antigo como `pocketbase.exe.antiga`).
 Um servidor já a correr só passa à nova versão quando o reiniciares.
 
+## Revisão de 2026-10-06 (v1.80.0)
+
+Auditoria ao código e ao servidor em produção (só leitura). **Confirmado OK:** o servidor só se vê dentro da tailnet (o nome
+`…ts.net` não existe no DNS público: não há *Funnel*); sem sessão a API devolve listas vazias/401; os hooks só falam com sítios
+fixos (Vendus, Gemini, Anthropic) e o `qpdf` recebe só números validados (sem shell); filtros sempre parametrizados; ficheiros
+de faturas protegidos; contentor em `127.0.0.1`, sem root, `GC_TURNKEY_DEV=0`, descarga do PocketBase com SHA-256 conferido.
+
+**Corrigido nesta versão:** faltavam *Content-Security-Policy*, *Strict-Transport-Security*, *Referrer-Policy* e
+*Permissions-Policy* (agora no hook `web_cabecalhos.pb.js`, com teste), cache da app sem `no-cache` (versões novas ficavam presas
+no navegador) e o contentor tinha capacidades a mais (`cap_drop: ALL`, `no-new-privileges`).
+
+**Continua por fazer (por ti, no servidor):**
+1. **Painel `/_/` acessível na tailnet** (responde 200 a qualquer máquina da tailnet; só a palavra-passe o protege). Limitar por ACL
+   do Tailscale (só o teu PC/telemóvel) ou mudar a porta; superutilizador com palavra-passe forte e única e **MFA** ligado.
+2. **Proxy fiável**: em *Definições → Application → Trusted proxy headers* pôr `X-Forwarded-For` — sem isso o limite de pedidos trata
+   toda a gente como um só IP (e um abuso bloqueia o login a todos).
+3. **MFA/OTP** nas contas dos proprietários (o PocketBase suporta; precisa de email/SMTP) e palavras-passe com mínimo de 12.
+4. **Quiosque**: usar uma conta própria de papel *Editor* (nunca a do proprietário) no aparelho da loja; o cartão NFC identifica a
+   pessoa, mas a sessão do aparelho é a da conta.
+5. **Backups**: confirmar cópia **fora do servidor e cifrada** (ver `docs/BACKUPS.md`) e testar uma restauração por trimestre.
+6. Manter o PocketBase e o Debian atualizados; `flutter pub outdated` antes de cada ciclo.
+7. Dados pessoais (nomes e cartões da equipa): são dados pessoais (RGPD) — só o necessário, apagar quando a pessoa sai.
+
 ## O que **fica por fazer** (depende de ti / do servidor)
 
 1. **Reiniciar o PocketBase** depois de gerar a chave de cifra (ver acima) — as migrations novas

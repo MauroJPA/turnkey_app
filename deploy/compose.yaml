@@ -20,6 +20,11 @@ services:
     ports:
       - "127.0.0.1:${GC_TURNKEY_PORTA:-8091}:8090"
     env_file: .env
+    # menos privilégios: sem capacidades extra nem escalada de permissões
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     environment:
       GC_TURNKEY_DEV: "0"
       TZ: Europe/Lisbon

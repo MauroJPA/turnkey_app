@@ -27,6 +27,20 @@ New-Item -ItemType Directory -Force "$saida\docs", "$saida\backup" | Out-Null
 
 Write-Host "2/4  A juntar ficheiros ..."
 Copy-Item "build\web" "$saida\web" -Recurse
+
+# Comprime os ficheiros grandes da app (<ficheiro>.gz ao lado): o servidor
+# (pb/hooks/web_cabecalhos.pb.js) serve-os a quem aceita gzip -> o primeiro
+# carregamento no telemovel passa de ~12 MB para ~3 MB.
+$tiposGz = ".js", ".wasm", ".json", ".css", ".svg", ".otf", ".ttf", ".html", ".frag"
+Get-ChildItem "$saida\web" -Recurse -File | Where-Object {
+  $tiposGz -contains $_.Extension.ToLower() -and $_.Length -ge 1024
+} | ForEach-Object {
+  $dest = $_.FullName + ".gz"
+  $in = [System.IO.File]::OpenRead($_.FullName)
+  $out = [System.IO.File]::Create($dest)
+  $gz = New-Object System.IO.Compression.GZipStream($out, [System.IO.Compression.CompressionLevel]::Optimal)
+  $in.CopyTo($gz); $gz.Dispose(); $out.Dispose(); $in.Dispose()
+}
 Copy-Item "pb\hooks" "$saida\hooks" -Recurse
 Copy-Item "pb\migrations" "$saida\migrations" -Recurse
 foreach ($f in "Dockerfile", "compose.yaml", ".env.example", "gc_turnkey.sh") {

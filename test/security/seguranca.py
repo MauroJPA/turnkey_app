@@ -674,9 +674,20 @@ def teste_implantacao():
         aviso('CORS aberto (*)', 'restringir ao domínio da app no proxy; o token vai em Authorization (não em cookie), risco baixo')
     else:
         ok('CORS restrito')
-    for cab in ('Strict-Transport-Security', 'X-Content-Type-Options', 'X-Frame-Options', 'Content-Security-Policy'):
-        if not h.get(cab):
-            aviso(f'cabeçalho {cab} ausente', 'pôr no proxy/host (ver docs/SEGURANCA.md)')
+    # a app web (hook pb/hooks/web_cabecalhos.pb.js): CSP, nosniff, sem iframes, cache a validar
+    s, _, hp = call('GET', '/', headers={'X-Forwarded-Proto': 'https'})
+    csp = hp.get('Content-Security-Policy') or ''
+    check("connect-src 'self'" in csp and "frame-ancestors 'none'" in csp and "object-src 'none'" in csp,
+          'a app leva Content-Security-Policy restritiva (só fala com ela própria, sem iframes)', csp[:80])
+    check(hp.get('X-Content-Type-Options') == 'nosniff', 'a app leva X-Content-Type-Options: nosniff')
+    check((hp.get('Referrer-Policy') or '') == 'no-referrer', 'a app leva Referrer-Policy: no-referrer')
+    check((hp.get('Cache-Control') or '') == 'no-cache', 'a app leva Cache-Control: no-cache (versão nova apanha-se logo)')
+    check('max-age' in (hp.get('Strict-Transport-Security') or ''), 'atrás de HTTPS leva Strict-Transport-Security')
+    s, _, ha = call('GET', '/api/health', headers={'X-Forwarded-Proto': 'https'})
+    check('max-age' in (ha.get('Strict-Transport-Security') or ''), 'a API também leva Strict-Transport-Security atrás de HTTPS')
+    check((ha.get('X-Content-Type-Options') or '') == 'nosniff', 'a API leva nosniff')
+    s, _, hs = call('GET', '/')
+    check(not hs.get('Strict-Transport-Security'), 'sem HTTPS não se manda HSTS')
     s, r, _ = call('GET', '/api/collections', tok=tok['ownerA'])
     check(s in (401, 403), 'utilizadores normais não veem o esquema das coleções', f'status {s}')
     s, r, _ = call('GET', '/api/settings', tok=tok['ownerA'])

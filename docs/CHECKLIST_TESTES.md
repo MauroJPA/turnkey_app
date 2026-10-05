@@ -1646,6 +1646,14 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Contabilidade → Números mágicos: a linha "IVA incluído nas vendas" e o aviso "IVA + CMV…" se somarem 100 %
 - [ ] Empresa nova (onboarding): CMV 100 % (preço sugerido = custo) até definires os percentuais
 
+## 106. Segurança do servidor e carregamento
+
+- [ ] Depois de publicar: abrir a app e, nas ferramentas do navegador (Rede), `main.dart.js` vem com *Content-Encoding: gzip* (~1,4 MB)
+- [ ] Publicar outra versão: o aviso aparece e "Atualizar" carrega logo a nova (sem Ctrl+Shift+R)
+- [ ] Imprimir uma ficha/talão/relatório continua a abrir o diálogo de impressão
+- [ ] Entrar com Google continua a funcionar; as imagens/fotos de faturas abrem
+- [ ] `curl -I https://…/` mostra Content-Security-Policy e Strict-Transport-Security
+
 ---
 
 ## Notas / ajustes pedidos
