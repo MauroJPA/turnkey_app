@@ -1601,6 +1601,17 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Sem IVA definido: as contas ficam como antes e a Quebra mostra o aviso para definir o IVA
 - [ ] Lista de fichas e nova venda: o "sugerido" vem com IVA
 
+## 100. Preços por canal (plataformas e terceiros)
+
+- [ ] Ficha técnica → "Preços por canal": aparece a "Loja física" e o botão "Novo canal"
+- [ ] Novo canal "Uber Eats" com 1 taxa de 30 %: o preço sem IVA = preço da loja ÷ 0,70; o IVA soma-se no fim; a taxa em €
+      e o "chega a nós" = preço da loja; lucro igual ao da loja
+- [ ] Novo canal "Revendedor" com 2 taxas (Plataforma 30 %, Revendedor 20 % + 0,20 €): preço = ((loja + 0,20) ÷ 0,80) ÷ 0,70;
+      as duas taxas somam a diferença; subir/descer uma taxa muda o preço
+- [ ] "E se vendo ao preço da loja?" mostra o lucro menor e a taxa máxima; com taxas altas mostra prejuízo a vermelho
+- [ ] Interruptor "Usa a embalagem para plataformas" aumenta o custo (e o preço recomendado) quando a ficha tem essa embalagem
+- [ ] Editar e apagar um canal; um canal aparece em todas as fichas; com papel "só ver" não há botões de criar/editar
+
 ---
 
 ## Notas / ajustes pedidos

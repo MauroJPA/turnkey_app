@@ -17,6 +17,7 @@ import '../../recipes/presentation/item_picker_sheet.dart';
 import '../application/tech_sheets_providers.dart';
 import '../domain/tech_sheet.dart';
 import '../domain/tech_sheet_item.dart';
+import 'canais_preco.dart';
 import 'declaracao_nutricional_sheet.dart';
 import 'ficha_form_sheet.dart';
 import 'quebra_preco.dart';
@@ -322,6 +323,17 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
                     d.custoPreview,
                     config.ivaVendas,
                   ),
+                ),
+              if (config != null)
+                CanaisPrecoTile(
+                  custo: d.custoPreview,
+                  custoPlataforma: d.temEmbalagemPlataforma
+                      ? d.custoPlataforma
+                      : null,
+                  config: config,
+                  fmt: fmt,
+                  precoVenda: d.ficha.precoVenda,
+                  podeEditar: _podeEditar,
                 ),
               const SizedBox(height: 24),
             ],

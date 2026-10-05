@@ -2,6 +2,27 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.74.0 — 2026-10-06 — Preços por canal: plataformas e terceiros com taxas em cascata
+
+Cada canal de venda tem as suas taxas, e na ficha técnica vês o preço a cobrar e o lucro de cada um.
+
+- **Canais ilimitados**: na ficha técnica, **"Preços por canal (plataformas e terceiros)" → "Novo canal"**. Cada canal tem um
+  nome e uma lista **ordenada de taxas**; cada taxa tem um nome, uma **% do preço** desse nível e/ou um **€ fixo por venda**
+  (ex.: *Plataforma 30%* ; *Plataforma 30% → Revendedor 20% + 0,20 €*). Podes ter quantos canais e quantas taxas quiseres,
+  cada canal com os seus valores. Os canais são da empresa: criam-se uma vez e aparecem em todas as fichas. Lápis para editar,
+  apagar dentro do editor.
+- **Cascata**: a ordem é a pela qual cada taxa tira a sua parte do que o cliente paga (a primeira é a de fora, ex. a
+  plataforma; a última é a mais perto de nós, ex. o revendedor); cada % é sobre o valor do seu nível.
+- Para cada canal (e para a **Loja física**, sem taxas): **preço sem IVA que mantém o lucro da loja** (preço limpo + taxas),
+  **+ IVA no fim = valor a cobrar ao cliente**; cada taxa em €; o que **chega a nós**; o **lucro por unidade** e a margem; e
+  uma **barra** com para onde vai o preço (taxas, custo, estrutura, lucro).
+- **"E se vendo ao preço da loja?"**: o que chega a nós, o lucro (a vermelho se for prejuízo) e a **taxa máxima que o canal
+  aguenta** antes de dar prejuízo — para saberes onde podes negociar taxas ou subir preços.
+- Interruptor **"Usa a embalagem para plataformas"**: soma ao custo a *Embalagem para plataformas* da ficha (o preço
+  recomendado já a cobre).
+- Nova coleção `canais_venda` (migration `1790960000_canais_venda`): protegida por empresa e papel como as restantes.
+- Testes novos das contas em cascata (taxas %, fixas, 100%, IVA por último).
+
 ## 1.73.0 — 2026-10-06 — IVA por último na ficha técnica + simulador de revenda
 
 O IVA é cobrado em cima do preço limpo (sem IVA), por isso as contas da ficha passam a fazer-se **sobre o preço sem IVA**

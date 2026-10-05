@@ -1,6 +1,6 @@
 # Pendentes (fila de trabalho)
 
-Última versão fechada: **1.73.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
+Última versão fechada: **1.74.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
 (editar → `bash scripts/verificar.sh` → pubspec + CHANGELOG + docs/CHECKLIST_TESTES.md → commit com caminhos
 explícitos → `git branch -f develop main` → `git tag vX.Y.Z`). No fim: `powershell -File scripts\empacotar-producao.ps1`
 e dar ao Mauro o SHA-256 + comando de publicação.
@@ -15,7 +15,7 @@ e dar ao Mauro o SHA-256 + comando de publicação.
 
 ## Notas para quem retomar
 - Pacote publicado no servidor ainda é o **1.48.2**; tudo depois está só empacotado/commitado. Antes do deploy:
-  `df -h /` no servidor. Migrations novas até `1790950000`.
+  `df -h /` no servidor. Migrations novas até `1790960000`.
 - NFC do quiosque só funciona em Chrome/Android com **HTTPS**.
 - Estilo de trabalho: respostas em português; botões nunca soltos num `Row` (usar `Expanded`/`Wrap` com
   `minimumSize: Size(0, 44)`); erros ao utilizador sempre com `mensagemAmigavel(e)`.
