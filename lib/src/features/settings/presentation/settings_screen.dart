@@ -14,6 +14,7 @@ import '../../pricing/data/cost_config_repository.dart';
 import '../../pricing/domain/cost_config.dart';
 import '../application/empresa_providers.dart';
 import '../application/settings_providers.dart';
+import '../data/aprovacoes_repository.dart';
 import '../data/empresa_repository.dart';
 import '../domain/empresa.dart';
 import 'integracoes_sheet.dart';
@@ -520,6 +521,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 subtitle: const Text('Token do Vendus (guardado cifrado)'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => showIntegracoesSheet(context),
+              ),
+
+            // ---- Aprovações (só o operador da plataforma) ----
+            if (ref.watch(aprovacoesProvider).valueOrNull?.operador ?? false)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.how_to_reg_outlined),
+                title: const Text('Aprovações de contas'),
+                subtitle: Text(
+                  (ref
+                                  .watch(aprovacoesProvider)
+                                  .valueOrNull
+                                  ?.pendentes
+                                  .length ??
+                              0) >
+                          0
+                      ? '${ref.watch(aprovacoesProvider).valueOrNull!.pendentes.length} por aprovar'
+                      : 'Ninguém à espera',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.go(Routes.aprovacoes),
               ),
 
             // ---- Equipa ----

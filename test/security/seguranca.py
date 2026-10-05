@@ -141,6 +141,7 @@ def arrancar():
                    check=True, capture_output=True)
     env = {k: v for k, v in os.environ.items() if k not in ('GC_TURNKEY_DEV', 'VENDUS_API_KEY', 'VENDUS_SYNC_EMPRESA')}
     env['GC_TURNKEY_ENC_KEY'] = 'K' * 32  # chave-mestra só de teste
+    env['GC_TURNKEY_OPERADORES'] = 'ownera@seg.local'  # operador da plataforma (só de teste)
     env.update(ambiente_ia_falsa())
     porta = URL.rsplit(':', 1)[1]
     proc = subprocess.Popen(
@@ -738,6 +739,47 @@ def teste_aprovacao():
     if s == 200:
         s2, r2, _ = call('GET', f'/api/collections/users/records/{r["id"]}', tok=su)
         check(r2.get('aprovado') is True, 'membros criados por um proprietário nascem aprovados')
+
+
+def teste_aprovacoes_na_app():
+    sec('7a2. Aprovações dentro da app (operador da plataforma)')
+    # o operador de teste é ownerA e tem de estar aprovado
+    call('PATCH', f'/api/collections/users/records/{users["ownerA"]}', {'aprovado': True}, su)
+    novos = {}
+    for n in ('novo1', 'novo2'):
+        s, r, _ = call('POST', '/api/collections/users/records',
+                       {'email': f'{n}@seg.local', 'password': 'Novo1234567', 'passwordConfirm': 'Novo1234567'})
+        novos[n] = r.get('id')
+    s, _, _ = call('GET', '/api/gc_turnkey/aprovacoes')
+    check(s in (401, 403), 'sem sessão não vê as aprovações', f'status {s}')
+    for quem in ('ownerB', 'adminA', 'editorA', 'viewerA'):
+        s, r, _ = call('GET', '/api/gc_turnkey/aprovacoes', tok=tok[quem])
+        check(s == 200 and r.get('operador') is False and not r.get('pendentes'),
+              f'{quem}: não é operador e não vê contas por aprovar', f'status {s} {str(r)[:80]}')
+        s, _, _ = call('POST', f'/api/gc_turnkey/aprovacoes/{novos["novo1"]}/aprovar', {}, tok[quem])
+        check(s == 403, f'{quem}: não aprova', f'status {s}')
+        s, _, _ = call('POST', f'/api/gc_turnkey/aprovacoes/{novos["novo1"]}/recusar', {}, tok[quem])
+        check(s == 403, f'{quem}: não recusa', f'status {s}')
+    # um utilizador por aprovar também não
+    s, r, _ = call('POST', '/api/collections/users/auth-with-password', {'identity': 'novo1@seg.local', 'password': 'Novo1234567'})
+    s, r2, _ = call('GET', '/api/gc_turnkey/aprovacoes', tok=r.get('token'))
+    check(s == 200 and r2.get('operador') is False, 'por aprovar: não é operador')
+    s, r, _ = call('GET', '/api/gc_turnkey/aprovacoes', tok=tok['ownerA'])
+    emails = [p.get('email') for p in r.get('pendentes', [])]
+    check(r.get('operador') is True and 'novo1@seg.local' in emails and 'novo2@seg.local' in emails,
+          'o operador vê as contas por aprovar', str(r)[:120])
+    s, _, _ = call('POST', f'/api/gc_turnkey/aprovacoes/{novos["novo1"]}/aprovar', {}, tok['ownerA'])
+    check(s == 200, 'o operador aprova')
+    s, r, _ = call('GET', f'/api/collections/users/records/{novos["novo1"]}', tok=su)
+    check(r.get('aprovado') is True, 'a conta aprovada fica aprovada')
+    s, _, _ = call('POST', f'/api/gc_turnkey/aprovacoes/{novos["novo1"]}/recusar', {}, tok['ownerA'])
+    check(s == 400, 'não se recusa uma conta já aprovada', f'status {s}')
+    s, _, _ = call('POST', f'/api/gc_turnkey/aprovacoes/{novos["novo2"]}/recusar', {}, tok['ownerA'])
+    check(s == 200, 'o operador recusa (apaga) uma conta por aprovar')
+    s, _, _ = call('GET', f'/api/collections/users/records/{novos["novo2"]}', tok=su)
+    check(s == 404, 'a conta recusada deixou de existir', f'status {s}')
+    s, _, _ = call('POST', '/api/gc_turnkey/aprovacoes/idquenaoexiste1/aprovar', {}, tok['ownerA'])
+    check(s == 404, 'conta inexistente => 404', f'status {s}')
 
 
 def teste_segredos():
@@ -2102,6 +2144,7 @@ def main():
         teste_endpoints()
         teste_uploads()
         teste_aprovacao()
+        teste_aprovacoes_na_app()
         teste_segredos()
         teste_sem_chave()
         teste_faturas_ia()

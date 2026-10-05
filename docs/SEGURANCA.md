@@ -46,9 +46,9 @@ Qualquer pessoa pode criar conta, mas **só entra depois de tu a aprovares**.
   empresa.
 - Contas que já existiam ficaram aprovadas. Membros criados por um proprietário (Equipa)
   nascem aprovados.
-- Ainda **não há aviso automático** de novos registos (não há email configurado): consulta o
-  filtro de vez em quando. Se quiseres, o próximo passo é uma página "Aprovações" na app só para
-  ti e/ou um email quando alguém se regista.
+- **Desde a 1.83.0 aprovas dentro da app** (Configurações → Aprovações de contas, e cartão "Contas por aprovar" no Início), sem
+  abrir o `/_/`. Só o *operador da plataforma* vê e decide: os emails em `GC_TURNKEY_OPERADORES` (`.env` do servidor) ou, se a variável
+  não existir, o proprietário aprovado mais antigo. Os endpoints (`/api/gc_turnkey/aprovacoes…`) estão cobertos pelos testes de segurança.
 
 ## Segredos cifrados (token do Vendus e futuros)
 

@@ -25,6 +25,7 @@ import '../../orders/data/configuracoes_encomendas_repository.dart';
 import '../../schedule/application/schedule_providers.dart';
 import '../../schedule/domain/production_plan.dart';
 import '../../settings/application/empresa_providers.dart';
+import '../../settings/data/aprovacoes_repository.dart';
 import '../../settings/data/empresa_repository.dart';
 import '../../settings/domain/empresa.dart';
 import '../../shopping/application/shopping_providers.dart';
@@ -85,6 +86,9 @@ class HomeShell extends ConsumerWidget {
       (s, c) => s + c.custoEstimado,
     );
 
+    final contasPorAprovar =
+        ref.watch(aprovacoesProvider).valueOrNull?.pendentes ??
+        const <ContaPendente>[];
     final subidas = acessivel('inventario')
         ? ref.watch(subidasPorVerProvider)
         : const <VariacaoPreco>[];
@@ -222,6 +226,18 @@ class HomeShell extends ConsumerWidget {
               subtitulo: 'confirma os dados lidos pela IA',
               destaque: true,
               onTap: () => context.go(Routes.invoices),
+            ),
+          if (contasPorAprovar.isNotEmpty)
+            _StatCard(
+              icon: Icons.how_to_reg_outlined,
+              titulo: 'Contas por aprovar',
+              valor: '${contasPorAprovar.length}',
+              subtitulo: contasPorAprovar
+                  .take(3)
+                  .map((c) => c.email)
+                  .join(', '),
+              destaque: true,
+              onTap: () => context.go(Routes.aprovacoes),
             ),
           if (subidas.isNotEmpty)
             _StatCard(

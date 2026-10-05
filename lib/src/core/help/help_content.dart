@@ -32,6 +32,7 @@ enum HelpTopic {
   contabilidade,
   embalagens,
   variacoesPreco,
+  aprovacoes,
   consumiveis,
   produtos,
   configuracoes,
@@ -371,6 +372,15 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'A lista de ingredientes segue as regras da UE: por ordem decrescente de peso e com os alergénios a negrito. É calculada sozinha a partir da ficha técnica, das receitas e dos ingredientes. "Completa" usa o nome de cada ingrediente; "Resumida" usa nomes curtos, para etiquetas pequenas.',
       '"Falta completar" mostra o que ainda não está preenchido: nutrição de algum ingrediente, prazo de validade e modo de conservação. "Corrigir a nutrição" leva-te ao ingrediente em falta; "Preencher os dados" abre a ficha.',
       'Ícone da impressora: imprime a etiqueta (completa ou resumida) com a informação nutricional. Ícone de copiar: junta tudo num texto.',
+    ],
+  ),
+  HelpTopic.aprovacoes: (
+    titulo: 'Aprovações de contas',
+    paragrafos: [
+      'Qualquer pessoa pode criar conta, mas só entra depois de ser aprovada. Quem se regista fica no ecrã "A tua conta aguarda aprovação".',
+      'Esta página (só para o operador da plataforma) lista as contas por aprovar. "Aprovar" deixa a pessoa continuar (criar a empresa dela); "Recusar" apaga o pedido — se quiser entrar, tem de se registar de novo.',
+      'O operador é o proprietário mais antigo, ou os emails indicados na variável GC_TURNKEY_OPERADORES do servidor (separados por vírgula). Quando há contas à espera aparece um cartão "Contas por aprovar" no Início.',
+      'Não precisas de abrir o painel de administração do PocketBase (/_/) para isto.',
     ],
   ),
   HelpTopic.variacoesPreco: (

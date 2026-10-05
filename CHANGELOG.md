@@ -2,6 +2,19 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.83.0 — 2026-10-05 — Aprovações de contas dentro da app
+
+Aprovas contas novas dentro da app, sem abrir o painel `/_/` do PocketBase.
+
+- **Configurações → Aprovações de contas** (só o *operador da plataforma*): lista quem se registou e espera, com **Aprovar** e
+  **Recusar** (recusar apaga o pedido; com confirmação). Mostra a data do pedido.
+- **Início**: cartão **"Contas por aprovar"** quando há alguém à espera.
+- **Quem é o operador**: os emails de `GC_TURNKEY_OPERADORES` no `.env` do servidor (separados por vírgula) ou, se a variável não
+  existir, o **proprietário aprovado mais antigo** (tu). Os outros utilizadores recebem "não és operador" e nenhum dado.
+- Servidor: `GET /api/gc_turnkey/aprovacoes`, `POST …/{id}/aprovar` e `…/{id}/recusar` — exigem sessão e operador; recusar só funciona
+  em contas ainda por aprovar. 21 testes de segurança novos (sem sessão, papéis, por aprovar, inexistente…).
+- Sem alterações à base de dados.
+
 ## 1.82.0 — 2026-10-05 — Alerta de variação de preço
 
 Quando o preço de um ingrediente sobe (por exemplo ao aplicar uma fatura), a app avisa e mostra o que fica afetado.

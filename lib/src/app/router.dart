@@ -31,6 +31,7 @@ import '../features/sales/presentation/produtos_nao_identificados_screen.dart';
 import '../features/sales/presentation/sales_screen.dart';
 import '../features/sales/presentation/venda_detail_screen.dart';
 import '../features/schedule/presentation/plan_detail_screen.dart';
+import '../features/settings/presentation/aprovacoes_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/settings/presentation/team_screen.dart';
 import '../features/shopping/presentation/compras_relatorio_screen.dart';
@@ -293,6 +294,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, __) => const SettingsScreen(),
             routes: [
               GoRoute(path: 'equipa', builder: (_, __) => const TeamScreen()),
+              GoRoute(
+                path: 'aprovacoes',
+                builder: (_, __) => const AprovacoesScreen(),
+              ),
               // formatos e categorias já não têm página: gerem-se na ficha/receita
               GoRoute(path: 'formatos', redirect: (_, __) => Routes.techSheets),
               GoRoute(

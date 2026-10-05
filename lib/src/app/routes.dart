@@ -40,6 +40,7 @@ abstract class Routes {
   static const consumiveis = '/consumiveis';
   static const settings = '/opcoes';
   static const team = '/opcoes/equipa';
+  static const aprovacoes = '/opcoes/aprovacoes';
   static const navegacao = '/opcoes/navegacao';
   /// Antiga página "Produtos" (hoje: a informação do produto dentro da ficha).
   static const produtos = '/produtos';

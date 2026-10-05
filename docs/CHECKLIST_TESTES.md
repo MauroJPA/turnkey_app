@@ -1669,6 +1669,13 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Filtros Subidas / Descidas / Todas; "Marcar como vistas" tira o cartão do Início e o "· N a subir" do separador
 - [ ] Configurações: mudar o limiar (ex.: 10 %) e guardar; subidas abaixo dele deixam de avisar
 
+## 109. Aprovações de contas dentro da app
+
+- [ ] Registar uma conta nova (outro navegador): fica "a aguardar aprovação"
+- [ ] Início (operador): cartão "Contas por aprovar" com o email; Configurações mostra "Aprovações de contas — N por aprovar"
+- [ ] Aprovar: a pessoa, ao tocar "Verificar novamente", segue para criar a empresa; Recusar (com confirmação) apaga o pedido
+- [ ] Um utilizador normal (editor/admin de outra empresa) não vê o cartão nem a entrada; abrir /opcoes/aprovacoes diz "só o operador"
+
 ---
 
 ## Notas / ajustes pedidos
