@@ -585,6 +585,7 @@ class _AparenciaControls extends StatelessWidget {
         Text('Modo', style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: 6),
         SegmentedButton<TemaApp>(
+          showSelectedIcon: false,
           segments: const [
             ButtonSegment(value: TemaApp.claro, label: Text('Claro')),
             ButtonSegment(value: TemaApp.sistema, label: Text('Automático')),

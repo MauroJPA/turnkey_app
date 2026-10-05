@@ -12,6 +12,7 @@ class PaginaApp {
     this.icon,
     this.descricao, {
     this.rotasExtra = const [],
+    this.rotuloCurto,
   });
 
   /// Identificador estável, guardado na configuração (nunca muda).
@@ -24,6 +25,11 @@ class PaginaApp {
   /// Outras rotas que também pertencem a esta página (ex.: a Agenda faz parte
   /// da Produção).
   final List<String> rotasExtra;
+
+  /// Nome curto para o rodapé (cabe numa só linha em telemóveis estreitos).
+  final String? rotuloCurto;
+
+  String get rotuloRodape => rotuloCurto ?? label;
 }
 
 /// Chave do Início: está sempre disponível e sempre primeiro no rodapé.
@@ -86,6 +92,7 @@ const paginasApp = <PaginaApp>[
     'Contagem diária',
     Icons.fact_check_outlined,
     'Assados, sobras e desperdício por local',
+    rotuloCurto: 'Contagem',
   ),
   PaginaApp(
     'haccp',
@@ -100,6 +107,7 @@ const paginasApp = <PaginaApp>[
     'Quiosque de tarefas',
     Icons.touch_app_outlined,
     'Cartão NFC e um botão por tarefa diária',
+    rotuloCurto: 'Quiosque',
   ),
   PaginaApp(
     'encomendas',
@@ -114,6 +122,7 @@ const paginasApp = <PaginaApp>[
     'Contabilidade',
     Icons.account_balance_outlined,
     'Lucro, DRE, custos, IVA e relatórios',
+    rotuloCurto: 'Contas',
   ),
   PaginaApp(
     'configuracoes',
@@ -121,6 +130,7 @@ const paginasApp = <PaginaApp>[
     'Configurações',
     Icons.settings_outlined,
     'Empresa, aparência, custos',
+    rotuloCurto: 'Opções',
   ),
   PaginaApp(
     'equipa',

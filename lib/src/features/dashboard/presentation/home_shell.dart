@@ -388,6 +388,8 @@ class _StatCard extends StatelessWidget {
                     ),
                     Text(
                       subtitulo,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],

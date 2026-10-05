@@ -2,6 +2,19 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.69.0 — 2026-10-05 — Revisão final de interface (telemóvel)
+
+Revisão de alinhamentos e textos nos ecrãs, em largura de telemóvel:
+
+- **Rodapé**: "Contagem diária" partia-se em duas linhas e desalinhava os ícones e o realce. Passa a "Contagem"
+  (nome curto só no rodapé; o resto da app mantém o nome completo). Outros nomes longos também têm versão curta se
+  forem postos no rodapé: Quiosque, Contas (Contabilidade), Opções (Configurações).
+- **Botões de escolha** (Claro / Automático / Escuro, períodos, etc.): margens menores e sem o visto, para o texto
+  caber numa só linha ("Automático" partia-se em "Automáti-co"). Vale para toda a app.
+- **Início**: o cartão "HACCP por fazer" mostra no máximo 2 linhas de texto (com reticências) em vez de uma lista
+  comprida de controlos; o número continua ao lado.
+- Sem alterações à base de dados.
+
 ## 1.68.0 — 2026-10-05 — Contabilidade: as finanças numa só página
 
 Seis páginas soltas de finanças passam a **uma só**, **Contabilidade**, com secções (toque para mudar):

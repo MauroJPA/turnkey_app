@@ -42,15 +42,14 @@ class AppTheme {
     Color? fundo,
     Color? texto,
     String? fontFamily,
-  }) =>
-      _base(
-        Brightness.light,
-        brand ?? seed,
-        secundaria: secundaria,
-        fundo: fundo,
-        texto: texto,
-        fontFamily: fontFamily,
-      );
+  }) => _base(
+    Brightness.light,
+    brand ?? seed,
+    secundaria: secundaria,
+    fundo: fundo,
+    texto: texto,
+    fontFamily: fontFamily,
+  );
 
   static ThemeData dark(
     Color? brand, {
@@ -58,15 +57,14 @@ class AppTheme {
     Color? fundo,
     Color? texto,
     String? fontFamily,
-  }) =>
-      _base(
-        Brightness.dark,
-        brand ?? seed,
-        secundaria: secundaria,
-        fundo: fundo,
-        texto: texto,
-        fontFamily: fontFamily,
-      );
+  }) => _base(
+    Brightness.dark,
+    brand ?? seed,
+    secundaria: secundaria,
+    fundo: fundo,
+    texto: texto,
+    fontFamily: fontFamily,
+  );
 
   /// Interpreta uma cor hex (`#RRGGBB` ou `RRGGBB`); `null` se inválida.
   static Color? parseHex(String value) {
@@ -131,10 +129,11 @@ class AppTheme {
     // Parte da tipografia M3 (tem todos os papéis preenchidos) e só ajusta
     // peso/espaçamento onde interessa — mais seguro do que construir de
     // raiz (evita ficar com estilos nulos nalgum canto da app).
-    final baseText = (isDark
-            ? Typography.material2021().white
-            : Typography.material2021().black)
-        .apply(bodyColor: scheme.onSurface, displayColor: scheme.onSurface);
+    final baseText =
+        (isDark
+                ? Typography.material2021().white
+                : Typography.material2021().black)
+            .apply(bodyColor: scheme.onSurface, displayColor: scheme.onSurface);
     final textTheme = baseText.copyWith(
       headlineSmall: baseText.headlineSmall?.copyWith(
         fontWeight: FontWeight.w700,
@@ -210,8 +209,10 @@ class AppTheme {
           alpha: isDark ? 0.5 : 0.6,
         ),
         isDense: true,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusSm),
           borderSide: BorderSide.none,
@@ -239,8 +240,10 @@ class AppTheme {
           minimumSize: const Size.fromHeight(50),
           padding: const EdgeInsets.symmetric(horizontal: 20),
           shape: roundedSm,
-          textStyle:
-              textTheme.labelLarge?.copyWith(fontSize: 15.5, letterSpacing: 0),
+          textStyle: textTheme.labelLarge?.copyWith(
+            fontSize: 15.5,
+            letterSpacing: 0,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -249,8 +252,10 @@ class AppTheme {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           side: BorderSide(color: scheme.outlineVariant),
           shape: roundedSm,
-          textStyle:
-              textTheme.labelLarge?.copyWith(fontSize: 15.5, letterSpacing: 0),
+          textStyle: textTheme.labelLarge?.copyWith(
+            fontSize: 15.5,
+            letterSpacing: 0,
+          ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -282,6 +287,10 @@ class AppTheme {
             ),
           ),
           visualDensity: VisualDensity.standard,
+          // margens menores: os nomes cabem numa linha em telemóveis estreitos
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: 8),
+          ),
         ),
       ),
 
@@ -308,9 +317,7 @@ class AppTheme {
         dragHandleSize: const Size(36, 4),
         showDragHandle: true,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(radiusLg),
-          ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(radiusLg)),
         ),
       ),
 
@@ -328,8 +335,9 @@ class AppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: scheme.inverseSurface,
-        contentTextStyle:
-            textTheme.bodyMedium?.copyWith(color: scheme.onInverseSurface),
+        contentTextStyle: textTheme.bodyMedium?.copyWith(
+          color: scheme.onInverseSurface,
+        ),
         actionTextColor: scheme.inversePrimary,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusSm),

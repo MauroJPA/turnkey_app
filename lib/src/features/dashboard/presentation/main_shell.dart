@@ -29,7 +29,7 @@ class MainShell extends ConsumerWidget {
     final abas = <({String rota, IconData icon, String label})>[
       (rota: Routes.home, icon: Icons.home_outlined, label: 'Início'),
       for (final p in config.rodapePara(papel))
-        (rota: p.rota, icon: p.icon, label: p.label),
+        (rota: p.rota, icon: p.icon, label: p.rotuloRodape),
     ];
 
     var selecionada = 0;

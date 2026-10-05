@@ -1564,6 +1564,14 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Configurações → Navegação: só aparece "Contabilidade" (sem Painel financeiro/Custos fixos/Equipamentos/Números
       mágicos); o ? de cada secção mostra a ajuda dessa secção
 
+## 95. Revisão final de interface
+
+- [ ] Rodapé com 5 páginas (Início, Produção, Contagem, Compras, Inventário): todos os nomes numa só linha, ícones
+      alinhados, o realce da página atual centrado
+- [ ] Configurações → Aparência → Modo: "Claro / Automático / Escuro" cada um numa só linha
+- [ ] Início: o cartão "HACCP por fazer" não cresce com a lista de controlos (2 linhas)
+- [ ] Os botões de escolha de período (Dia / Semana / Mês / Ano) e os de tipo (Fixo / Variável) continuam legíveis
+
 ---
 
 ## Notas / ajustes pedidos

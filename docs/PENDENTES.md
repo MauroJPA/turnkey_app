@@ -1,6 +1,6 @@
 # Pendentes (fila de trabalho)
 
-Última versão fechada: **1.68.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
+Última versão fechada: **1.69.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
 (editar → `bash scripts/verificar.sh` → pubspec + CHANGELOG + docs/CHECKLIST_TESTES.md → commit com caminhos
 explícitos → `git branch -f develop main` → `git tag vX.Y.Z`). No fim: `powershell -File scripts\empacotar-producao.ps1`
 e dar ao Mauro o SHA-256 + comando de publicação.
@@ -9,7 +9,7 @@ e dar ao Mauro o SHA-256 + comando de publicação.
 2. ~~1.68.0~~ (feito; docs/wip removido) **Finanças simplificadas + página Contabilidade.** *(trabalho a meio, guardado em `docs/wip/`: `1.68.0-contabilidade.patch` (aplicar com `git apply`) + `contabilidade_screen.dart.txt` (copiar para `lib/src/features/finance/presentation/contabilidade_screen.dart`). Falta: rotas no `router.dart` (usar `ContabilidadeScreen(secao: …)` em painelFinanceiro/dre/custosFixos/equipamentos/numerosMagicos + nova `Routes.relatorios`), `HelpTopic.contabilidade`, catálogo (uma só entrada «Contabilidade»; sai custosFixos/equipamentos/numerosMagicos; Início usa `acessivel('financeiro')` nos pagamentos), testes `navegacao_test`, docs.)* Nova página "Contabilidade" (faturação, IVA,
    números da empresa, relatório geral, compras do período, DRE) e simplificar Painel financeiro / Custos fixos /
    Equipamentos / Números mágicos / DRE / Análise de vendas (menos páginas soltas, tudo a poucos toques).
-3. **1.69.0 — Revisão final de interface**: alinhamentos de texto e botões, tamanhos, consistência (pedido do
+3. ~~1.69.0 — Revisão final de interface~~ (feito): alinhamentos de texto e botões, tamanhos, consistência (pedido do
    Mauro: "veja e reveja tudo… alinhamentos de textos, botões, etc."); ver cada ecrã em largura de telemóvel.
 4. Empacotar a versão final e entregar SHA-256 + comando de publicação.
 
