@@ -17,7 +17,10 @@ import 'custos_fixos_import_sheet.dart';
 import 'organizar_custos_ia_sheet.dart';
 
 class CustosFixosScreen extends ConsumerStatefulWidget {
-  const CustosFixosScreen({super.key});
+  const CustosFixosScreen({super.key, this.embedded = false});
+
+  /// Dentro da página Contabilidade: sem seta de voltar, título nem ajuda.
+  final bool embedded;
 
   @override
   ConsumerState<CustosFixosScreen> createState() => _CustosFixosScreenState();
@@ -71,22 +74,16 @@ class _CustosFixosScreenState extends ConsumerState<CustosFixosScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(Routes.home),
-        ),
-        title: const Text('Custos fixos'),
+        automaticallyImplyLeading: false,
+        toolbarHeight: widget.embedded ? 48 : null,
+        leading: widget.embedded
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.go(Routes.home),
+              ),
+        title: widget.embedded ? null : const Text('Custos fixos'),
         actions: [
-          IconButton(
-            tooltip: 'Equipamentos (depreciação)',
-            icon: const Icon(Icons.kitchen_outlined),
-            onPressed: () => context.push(Routes.equipamentos),
-          ),
-          IconButton(
-            tooltip: 'Números mágicos',
-            icon: const Icon(Icons.calculate_outlined),
-            onPressed: () => context.push(Routes.numerosMagicos),
-          ),
           if (podeEditar)
             IconButton(
               tooltip: 'Organizar com IA (fixo / variável)',
@@ -108,7 +105,8 @@ class _CustosFixosScreenState extends ConsumerState<CustosFixosScreen> {
             ),
             onPressed: () => setState(() => _arquivados = !_arquivados),
           ),
-          const HelpActions(topic: HelpTopic.custosFixos),
+          if (!widget.embedded)
+            const HelpActions(topic: HelpTopic.custosFixos),
         ],
       ),
       floatingActionButton: podeEditar

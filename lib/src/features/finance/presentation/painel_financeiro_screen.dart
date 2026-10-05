@@ -17,7 +17,10 @@ import 'relatorio_geral_sheet.dart';
 import 'seletor_periodo.dart';
 
 class PainelFinanceiroScreen extends ConsumerStatefulWidget {
-  const PainelFinanceiroScreen({super.key});
+  const PainelFinanceiroScreen({super.key, this.embedded = false});
+
+  /// Dentro da página Contabilidade: sem seta de voltar, título nem ajuda.
+  final bool embedded;
 
   @override
   ConsumerState<PainelFinanceiroScreen> createState() =>
@@ -34,30 +37,27 @@ class _PainelFinanceiroScreenState
     final fmt = ref.watch(moneyFormatProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(Routes.home),
-        ),
-        title: const Text('Painel financeiro'),
-        actions: [
-          if (ref.watch(currentPapelProvider).canEditConfig)
-            IconButton(
-              icon: const Icon(Icons.summarize_outlined),
-              tooltip: 'Relatório geral (Excel / CSV)',
-              onPressed: () => showRelatorioGeralSheet(
-                context,
-                periodoDoPainel: _periodo,
+      appBar: widget.embedded
+          ? null
+          : AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.go(Routes.home),
               ),
+              title: const Text('Painel financeiro'),
+              actions: [
+                if (ref.watch(currentPapelProvider).canEditConfig)
+                  IconButton(
+                    icon: const Icon(Icons.summarize_outlined),
+                    tooltip: 'Relatório geral (Excel / CSV)',
+                    onPressed: () => showRelatorioGeralSheet(
+                      context,
+                      periodoDoPainel: _periodo,
+                    ),
+                  ),
+                const HelpActions(topic: HelpTopic.painelFinanceiro),
+              ],
             ),
-          IconButton(
-            icon: const Icon(Icons.description_outlined),
-            tooltip: 'Ver DRE',
-            onPressed: () => context.push(Routes.dre),
-          ),
-          const HelpActions(topic: HelpTopic.painelFinanceiro),
-        ],
-      ),
       body: Column(
         children: [
           SeletorPeriodo(

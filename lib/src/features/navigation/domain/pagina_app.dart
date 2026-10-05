@@ -111,30 +111,9 @@ const paginasApp = <PaginaApp>[
   PaginaApp(
     'financeiro',
     Routes.painelFinanceiro,
-    'Painel financeiro',
-    Icons.insights_outlined,
-    'Entradas, saídas e lucro por semana/mês',
-  ),
-  PaginaApp(
-    'custosFixos',
-    Routes.custosFixos,
-    'Custos fixos',
-    Icons.request_quote_outlined,
-    'Aluguel, salários e outras despesas',
-  ),
-  PaginaApp(
-    'equipamentos',
-    Routes.equipamentos,
-    'Equipamentos',
-    Icons.kitchen_outlined,
-    'Custo e depreciação mensal',
-  ),
-  PaginaApp(
-    'numerosMagicos',
-    Routes.numerosMagicos,
-    'Números mágicos',
-    Icons.calculate_outlined,
-    'Venda mínima para cobrir tudo',
+    'Contabilidade',
+    Icons.account_balance_outlined,
+    'Lucro, DRE, custos, IVA e relatórios',
   ),
   PaginaApp(
     'configuracoes',

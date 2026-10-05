@@ -29,6 +29,7 @@ enum HelpTopic {
   numerosMagicos,
   painelFinanceiro,
   dre,
+  contabilidade,
   embalagens,
   consumiveis,
   produtos,
@@ -296,6 +297,13 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Leitura de cartões: só funciona no Chrome do Android e com a app aberta por HTTPS. Na primeira vez o navegador pede permissão para o NFC.',
     ],
   ),
+  HelpTopic.contabilidade: (
+    titulo: 'Contabilidade',
+    paragrafos: [
+      'Os números da empresa numa só página, em secções: Resumo (entradas, saídas e lucro), DRE, Custos fixos, Equipamentos, Números mágicos e Relatórios e IVA. Toca na secção para mudar; o ? no canto explica a que estás a ver.',
+      'Relatórios e IVA: escolhe o período e vê o IVA a separar (cobrado nas vendas menos o das faturas de compra). Daqui também sais para o Relatório geral (Excel/CSV, só administradores), as faturas do mês para a contabilista, "O que comprei", a Análise de vendas e os Relatórios HACCP.',
+    ],
+  ),
   HelpTopic.custosFixos: (
     titulo: 'Custos fixos',
     paragrafos: [
@@ -307,7 +315,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Ícone das faíscas (✨, canto superior): a IA lê os teus custos e sugere, para cada um, se é fixo ou variável e porquê — e, nos variáveis, o que fazer se apertar (reduzir, pausar ou cortar). Tu escolhes quais sugestões aplicar; nada muda sem confirmares.',
       '"Dia de pagamento" (opcional): o dia do mês em que pagas este custo. Se estiver preenchido, aparece um aviso "Pagamentos por vir" no Início quando faltar uma semana ou menos.',
       'Ícone de nuvem/upload (canto superior): importa vários custos de uma vez a partir de um ficheiro .csv com as colunas nome, valor mensal e (opcional) dia de pagamento.',
-      'Ícone da panela (canto superior): abre "Equipamentos", onde regista o forno, o balcão, os computadores… — a depreciação mensal deles entra automaticamente aqui como despesa, sem precisar de criar um custo fixo à parte.',
+      'Equipamentos (forno, balcão, computadores…) têm a sua secção ao lado: a depreciação mensal deles entra automaticamente como despesa, sem precisar de criar um custo fixo à parte.',
       'Arquivar mantém o histórico sem contar no total atual; só apagar remove por completo.',
     ],
   ),
@@ -338,7 +346,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       '"Distribuição teórica" mostra, com as percentagens atuais de Configurações → Percentuais de custo, para onde o valor vendido deveria ir (matéria-prima, salário, aluguel...). É um modelo, não o dinheiro que saiu de verdade — isso são os Custos fixos, mostrados por cima.',
       'A seta ao lado de cada número compara com o período anterior (a semana anterior, ou o mês civil anterior). O Dia é um único dia, a Semana vai de domingo a sábado, o Mês do dia 1 ao último dia e o Ano de 1 de janeiro a 31 de dezembro; as datas exatas aparecem por cima e as setas levam-te a períodos passados.',
       'Se houver vendas sem produto identificado (ex.: de uma importação de CSV), o custo delas não é conhecido — aparece um aviso e o lucro fica sobrestimado nessa medida.',
-      'Ícone do relatório (canto superior, só administradores): gera o Relatório geral num ficheiro Excel (.xlsx, uma folha por relatório) ou em CSV (.zip), para os últimos 12 meses (ou 6, ou este ano, ou o período do painel). Inclui resumo mensal, vendas por canal e sabor, produção, custo por sabor (com histórico de preços de compra), despesas por categoria e tesouraria. As folhas que a app ainda não regista (plataformas de entrega, pessoal, eventos, origem dos clientes) vão como modelos por preencher; a folha "Leia-me" diz o que está completo. Margens são sem IVA: o valor sem IVA vem do Vendus quando existe, ou estima-se com a taxa que escolheres.',
+      'Relatório geral (secção "Relatórios e IVA", só administradores): gera o Relatório geral num ficheiro Excel (.xlsx, uma folha por relatório) ou em CSV (.zip), para os últimos 12 meses (ou 6, ou este ano, ou o período do painel). Inclui resumo mensal, vendas por canal e sabor, produção, custo por sabor (com histórico de preços de compra), despesas por categoria e tesouraria. As folhas que a app ainda não regista (plataformas de entrega, pessoal, eventos, origem dos clientes) vão como modelos por preencher; a folha "Leia-me" diz o que está completo. Margens são sem IVA: o valor sem IVA vem do Vendus quando existe, ou estima-se com a taxa que escolheres.',
       '"IVA a separar": o IVA cobrado nas vendas menos o IVA das faturas de compra confirmadas = o que há a entregar ao Estado (ou crédito de IVA, se as compras tiveram mais). Vê-se por dia, semana, mês ou ano, e há uma lista "Dia a dia". O IVA das vendas vem do Vendus quando existe; senão estima-se com a taxa "IVA das vendas" que defines em Configurações → Percentuais de custo. Reserva este valor: não é lucro teu.',
       '"Dicas para melhorar" (só administradores): toca em "Gerar dicas com IA" e a IA lê os números do período mostrado e do anterior (receita, lucro, custos fixos e variáveis, CMV, imposto) e sugere o que atacar. Faz isto no fim de cada semana ou mês para ir melhorando. São sugestões geradas por IA — avalia antes de agir. Os fixos não se eliminam; os variáveis podem reduzir-se ou cortar-se.',
     ],

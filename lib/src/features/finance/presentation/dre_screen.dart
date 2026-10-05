@@ -19,7 +19,10 @@ import 'seletor_periodo.dart';
 /// relatório clássico (receita → custo → lucro bruto → despesas → resultado)
 /// e pronta a imprimir.
 class DreScreen extends ConsumerStatefulWidget {
-  const DreScreen({super.key});
+  const DreScreen({super.key, this.embedded = false});
+
+  /// Dentro da página Contabilidade: sem seta de voltar, título nem ajuda.
+  final bool embedded;
 
   @override
   ConsumerState<DreScreen> createState() => _DreScreenState();
@@ -36,11 +39,15 @@ class _DreScreenState extends ConsumerState<DreScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(Routes.painelFinanceiro),
-        ),
-        title: const Text('DRE'),
+        automaticallyImplyLeading: false,
+        toolbarHeight: widget.embedded ? 48 : null,
+        leading: widget.embedded
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.go(Routes.painelFinanceiro),
+              ),
+        title: widget.embedded ? null : const Text('DRE'),
         actions: [
           IconButton(
             icon: const Icon(Icons.print_outlined),
@@ -52,7 +59,7 @@ class _DreScreenState extends ConsumerState<DreScreen> {
                       _dreHtml(async.valueOrNull!, nomeEmpresa, fmt),
                     ),
           ),
-          const HelpActions(topic: HelpTopic.dre),
+          if (!widget.embedded) const HelpActions(topic: HelpTopic.dre),
         ],
       ),
       body: Column(

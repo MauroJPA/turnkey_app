@@ -15,7 +15,8 @@ void main() {
       expect(paginaDaRota('/opcoes/navegacao')?.chave, 'configuracoes');
       expect(paginaDaRota('/opcoes')?.chave, 'configuracoes');
       expect(paginaDaRota('/financeiro/dre')?.chave, 'financeiro');
-      expect(paginaDaRota('/financeiro/custos-fixos')?.chave, 'custosFixos');
+      expect(paginaDaRota('/financeiro/custos-fixos')?.chave, 'financeiro');
+      expect(paginaDaRota('/financeiro/relatorios')?.chave, 'financeiro');
       expect(paginaDaRota('/vendas/analise')?.chave, 'vendas');
       expect(paginaDaRota('/receitas/abc123')?.chave, 'receitas');
     });

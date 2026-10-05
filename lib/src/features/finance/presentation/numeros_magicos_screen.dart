@@ -16,7 +16,10 @@ import 'seletor_periodo.dart';
 /// resto é lucro. Junta custos reais (fixos, variáveis, depreciação de
 /// equipamentos) com os percentuais de imposto/CMV de Configurações.
 class NumerosMagicosScreen extends ConsumerStatefulWidget {
-  const NumerosMagicosScreen({super.key});
+  const NumerosMagicosScreen({super.key, this.embedded = false});
+
+  /// Dentro da página Contabilidade: sem seta de voltar, título nem ajuda.
+  final bool embedded;
 
   @override
   ConsumerState<NumerosMagicosScreen> createState() =>
@@ -32,14 +35,16 @@ class _NumerosMagicosScreenState extends ConsumerState<NumerosMagicosScreen> {
     final fmt = ref.watch(moneyFormatProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(Routes.home),
-        ),
-        title: const Text('Números mágicos'),
-        actions: const [HelpActions(topic: HelpTopic.numerosMagicos)],
-      ),
+      appBar: widget.embedded
+          ? null
+          : AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.go(Routes.home),
+              ),
+              title: const Text('Números mágicos'),
+              actions: const [HelpActions(topic: HelpTopic.numerosMagicos)],
+            ),
       body: Column(
         children: [
           SeletorPeriodo(

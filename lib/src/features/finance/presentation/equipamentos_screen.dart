@@ -16,7 +16,10 @@ import 'equipamento_form_sheet.dart';
 import 'equipamentos_import_sheet.dart';
 
 class EquipamentosScreen extends ConsumerStatefulWidget {
-  const EquipamentosScreen({super.key});
+  const EquipamentosScreen({super.key, this.embedded = false});
+
+  /// Dentro da página Contabilidade: sem seta de voltar, título nem ajuda.
+  final bool embedded;
 
   @override
   ConsumerState<EquipamentosScreen> createState() => _EquipamentosScreenState();
@@ -67,11 +70,15 @@ class _EquipamentosScreenState extends ConsumerState<EquipamentosScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(Routes.custosFixos),
-        ),
-        title: const Text('Equipamentos'),
+        automaticallyImplyLeading: false,
+        toolbarHeight: widget.embedded ? 48 : null,
+        leading: widget.embedded
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.go(Routes.custosFixos),
+              ),
+        title: widget.embedded ? null : const Text('Equipamentos'),
         actions: [
           if (podeEditar)
             IconButton(
@@ -88,7 +95,8 @@ class _EquipamentosScreenState extends ConsumerState<EquipamentosScreen> {
             ),
             onPressed: () => setState(() => _arquivados = !_arquivados),
           ),
-          const HelpActions(topic: HelpTopic.equipamentos),
+          if (!widget.embedded)
+            const HelpActions(topic: HelpTopic.equipamentos),
         ],
       ),
       floatingActionButton: podeEditar

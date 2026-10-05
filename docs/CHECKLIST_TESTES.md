@@ -1551,6 +1551,19 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Lista de Receitas e de Fichas: botões de categoria com a contagem; ficha: tocar numa categoria já usada
       preenche o campo.
 
+## 94. Contabilidade numa só página
+
+- [ ] Início → Contabilidade (rodapé/grelha "Tudo"): abre com as secções Resumo, DRE, Custos fixos, Equipamentos,
+      Números mágicos e Relatórios e IVA; tocar numa muda de secção sem sair da página
+- [ ] Cada secção funciona como antes (Resumo: períodos e setas; Custos fixos: novo custo, importar, IA; Equipamentos:
+      novo e importar; Números mágicos: períodos; DRE: imprimir)
+- [ ] Relatórios e IVA: o cartão do IVA muda com o período; as 5 ligações (relatório geral só administradores)
+      abrem os ecrãs certos
+- [ ] Os endereços antigos (/financeiro/dre, /financeiro/custos-fixos, /financeiro/equipamentos,
+      /financeiro/numeros-magicos) abrem a Contabilidade na secção certa
+- [ ] Configurações → Navegação: só aparece "Contabilidade" (sem Painel financeiro/Custos fixos/Equipamentos/Números
+      mágicos); o ? de cada secção mostra a ajuda dessa secção
+
 ---
 
 ## Notas / ajustes pedidos

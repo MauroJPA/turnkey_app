@@ -218,7 +218,7 @@ class HomeShell extends ConsumerWidget {
               destaque: true,
               onTap: () => context.go(Routes.invoices),
             ),
-          if (acessivel('custosFixos') && (pagamentosProximos?.length ?? 0) > 0)
+          if (acessivel('financeiro') && (pagamentosProximos?.length ?? 0) > 0)
             _StatCard(
               icon: Icons.event_available_outlined,
               titulo: 'Pagamentos por vir',

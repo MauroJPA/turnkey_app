@@ -170,7 +170,9 @@ class _RelatoriosState extends ConsumerState<_Relatorios> {
         ListTile(
           leading: const Icon(Icons.shopping_basket_outlined),
           title: const Text('O que comprei'),
-          subtitle: const Text('Compras do período por dia, fornecedor ou produto'),
+          subtitle: const Text(
+            'Compras do período por dia, fornecedor ou produto',
+          ),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push(Routes.comprasRelatorio),
         ),
@@ -184,7 +186,9 @@ class _RelatoriosState extends ConsumerState<_Relatorios> {
         ListTile(
           leading: const Icon(Icons.fact_check_outlined),
           title: const Text('Relatórios HACCP'),
-          subtitle: const Text('Registos de segurança alimentar, para imprimir'),
+          subtitle: const Text(
+            'Registos de segurança alimentar, para imprimir',
+          ),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push(Routes.haccp),
         ),

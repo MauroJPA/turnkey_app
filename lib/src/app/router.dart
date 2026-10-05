@@ -12,11 +12,7 @@ import '../features/daily_count/presentation/contagem_screen.dart';
 import '../features/dashboard/presentation/home_shell.dart';
 import '../features/dashboard/presentation/main_shell.dart';
 import '../features/finance/presentation/analise_vendas_screen.dart';
-import '../features/finance/presentation/custos_fixos_screen.dart';
-import '../features/finance/presentation/dre_screen.dart';
-import '../features/finance/presentation/equipamentos_screen.dart';
-import '../features/finance/presentation/numeros_magicos_screen.dart';
-import '../features/finance/presentation/painel_financeiro_screen.dart';
+import '../features/finance/presentation/contabilidade_screen.dart';
 import '../features/haccp/presentation/haccp_screen.dart';
 import '../features/inventory/presentation/inventario_screen.dart';
 import '../features/invoices/presentation/invoice_review_screen.dart';
@@ -77,14 +73,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
     },
     routes: [
-      GoRoute(
-        path: Routes.splash,
-        builder: (_, __) => const _SplashScreen(),
-      ),
-      GoRoute(
-        path: Routes.login,
-        builder: (_, __) => const LoginScreen(),
-      ),
+      GoRoute(path: Routes.splash, builder: (_, __) => const _SplashScreen()),
+      GoRoute(path: Routes.login, builder: (_, __) => const LoginScreen()),
       GoRoute(
         path: Routes.onboarding,
         builder: (_, __) => const OnboardingScreen(),
@@ -104,10 +94,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (_, __, child) => MainShell(child: child),
         routes: [
-          GoRoute(
-            path: Routes.home,
-            builder: (_, __) => const HomeShell(),
-          ),
+          GoRoute(path: Routes.home, builder: (_, __) => const HomeShell()),
           // Produção: Produzir (+ mise en place) e Agenda numa só página
           GoRoute(
             path: Routes.production,
@@ -181,9 +168,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: ':id',
-                builder: (_, state) => InvoiceReviewScreen(
-                  faturaId: state.pathParameters['id']!,
-                ),
+                builder: (_, state) =>
+                    InvoiceReviewScreen(faturaId: state.pathParameters['id']!),
               ),
             ],
           ),
@@ -201,9 +187,8 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
               GoRoute(
                 path: ':id',
-                builder: (_, state) => VendaDetailScreen(
-                  vendaId: state.pathParameters['id']!,
-                ),
+                builder: (_, state) =>
+                    VendaDetailScreen(vendaId: state.pathParameters['id']!),
               ),
             ],
           ),
@@ -229,34 +214,20 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          GoRoute(
-            path: Routes.haccp,
-            builder: (_, __) => const HaccpScreen(),
-          ),
+          GoRoute(path: Routes.haccp, builder: (_, __) => const HaccpScreen()),
           GoRoute(
             path: Routes.colaboradores,
             builder: (_, __) => const ColaboradoresScreen(),
           ),
-          GoRoute(
-            path: Routes.painelFinanceiro,
-            builder: (_, __) => const PainelFinanceiroScreen(),
-          ),
-          GoRoute(
-            path: Routes.dre,
-            builder: (_, __) => const DreScreen(),
-          ),
-          GoRoute(
-            path: Routes.custosFixos,
-            builder: (_, __) => const CustosFixosScreen(),
-          ),
-          GoRoute(
-            path: Routes.equipamentos,
-            builder: (_, __) => const EquipamentosScreen(),
-          ),
-          GoRoute(
-            path: Routes.numerosMagicos,
-            builder: (_, __) => const NumerosMagicosScreen(),
-          ),
+          // Contabilidade: uma página, várias secções (cada uma com o seu endereço)
+          for (final s in SecaoContabilidade.values)
+            GoRoute(
+              path: s.rota,
+              pageBuilder: (_, __) => NoTransitionPage(
+                key: const ValueKey('contabilidade'),
+                child: ContabilidadeScreen(secao: s),
+              ),
+            ),
           // endereços antigos (favoritos, links): vão para a secção certa
           GoRoute(
             path: Routes.embalagens,
@@ -276,9 +247,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: ':id',
-                builder: (_, state) => RecipeDetailScreen(
-                  recipeId: state.pathParameters['id']!,
-                ),
+                builder: (_, state) =>
+                    RecipeDetailScreen(recipeId: state.pathParameters['id']!),
               ),
             ],
           ),
@@ -300,9 +270,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: ':id',
-                builder: (_, state) => TechSheetDetailScreen(
-                  fichaId: state.pathParameters['id']!,
-                ),
+                builder: (_, state) =>
+                    TechSheetDetailScreen(fichaId: state.pathParameters['id']!),
                 routes: [
                   GoRoute(
                     path: 'informacao',
@@ -318,15 +287,9 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: Routes.settings,
             builder: (_, __) => const SettingsScreen(),
             routes: [
-              GoRoute(
-                path: 'equipa',
-                builder: (_, __) => const TeamScreen(),
-              ),
+              GoRoute(path: 'equipa', builder: (_, __) => const TeamScreen()),
               // formatos e categorias já não têm página: gerem-se na ficha/receita
-              GoRoute(
-                path: 'formatos',
-                redirect: (_, __) => Routes.techSheets,
-              ),
+              GoRoute(path: 'formatos', redirect: (_, __) => Routes.techSheets),
               GoRoute(
                 path: 'categorias-receita',
                 redirect: (_, __) => Routes.recipes,

@@ -2,6 +2,23 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.68.0 — 2026-10-05 — Contabilidade: as finanças numa só página
+
+Seis páginas soltas de finanças passam a **uma só**, **Contabilidade**, com secções (toque para mudar):
+
+- **Resumo** (o antigo Painel financeiro: entradas, saídas, lucro), **DRE**, **Custos fixos**, **Equipamentos**,
+  **Números mágicos** e **Relatórios e IVA**.
+- **Relatórios e IVA** (novo): o período, o **IVA a separar** e, logo abaixo, todos os relatórios no mesmo sítio —
+  Relatório geral (Excel/CSV, só administradores), faturas para a contabilista, "O que comprei", Análise de vendas e
+  Relatórios HACCP.
+- Menos ícones escondidos: os atalhos de Custos fixos para Equipamentos/Números mágicos e do Painel para a DRE
+  deixaram de existir (são secções ao lado). O relatório geral saiu do ícone do Painel para "Relatórios e IVA".
+- Nas Configurações → Navegação há uma só entrada **Contabilidade** (antes eram quatro: Painel financeiro, Custos
+  fixos, Equipamentos, Números mágicos). Os endereços antigos continuam a funcionar e abrem a secção certa.
+- O aviso "Pagamentos por vir" do Início segue a permissão de Contabilidade.
+- Ajuda: novo tópico "Contabilidade"; textos de Custos fixos e do Painel atualizados.
+- Sem alterações à base de dados.
+
 ## 1.67.0 — 2026-10-04 — Formatos de cookie e categorias de receita sem páginas próprias
 
 Duas páginas de configuração que não precisavam de existir, porque o que fazem se faz melhor onde se usa:
