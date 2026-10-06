@@ -2448,6 +2448,73 @@ def teste_faturas_pendente_embalagem():
           'a propagação do fornecedor não mexe na marca', str(prod_prop)[:160])
 
 
+def teste_faturas_equipamento():
+    """8e. Linhas de fatura que são equipamentos (depreciação e custos)."""
+    sec('8e. Equipamentos nas faturas')
+    dados_ia = {'linhas': [
+        {'descricao': 'Forno convecção 5 tabuleiros', 'quantidade': 1, 'unidade': 'un'},
+        {'descricao': 'Batedeira planetária', 'quantidade': 1, 'unidade': 'un'},
+    ]}
+
+    def fatura():
+        st, f, _ = call('POST', '/api/collections/faturas/records',
+                        {'empresa': empresas['A'], 'autor': users['adminA'], 'tipo': 'fatura', 'estado': 'analisada',
+                         'fornecedor': 'Hostelaria SA', 'numero': 'FT 77', 'data_fatura': '2026-09-18 00:00:00.000Z',
+                         'dados_ia': dados_ia}, su)
+        assert st == 200, (st, f)
+        return f['id']
+
+    def equip(nome, custo=1800.0, vida=8):
+        return {'nome': nome, 'custo': custo, 'vidaUtilAnos': vida}
+
+    def lista(quem='adminA'):
+        st, r, _ = call('GET', '/api/collections/equipamentos/records?perPage=200', tok=tok[quem])
+        return r.get('items', []) if st == 200 else []
+
+    fid = fatura()
+    url = f'/api/gc_turnkey/faturas/{fid}/aplicar'
+    linha0 = {'index': 0, 'acao': 'preco', 'descricaoFatura': 'Forno convecção 5 tabuleiros',
+              'equipamento': equip('Forno convecção')}
+    linha1 = {'index': 1, 'acao': 'pendente', 'descricaoFatura': 'Batedeira planetária'}
+
+    # a equipa (editor) não regista equipamentos, tal como não os cria na lista
+    st, r, _ = call('POST', url, {'linhas': [linha0, linha1]}, tok['editorA'])
+    check(st == 403, 'o papel Editor não regista equipamentos pela fatura', f'status {st} {str(r)[:120]}')
+    check(not [e for e in lista() if e['nome'] == 'Forno convecção'], 'e nada ficou criado (a transação desfez-se)')
+
+    st, r, _ = call('POST', url, {'linhas': [linha0, linha1]}, tok['adminA'])
+    check(st == 200 and r.get('equipamentos') == 1 and r.get('pendentes') == 1,
+          'administrador: 1 equipamento registado, 1 linha por rever', f'{st} {str(r)[:160]}')
+    forno = [e for e in lista() if e['nome'] == 'Forno convecção']
+    check(len(forno) == 1 and abs(forno[0]['custo'] - 1800) < 1e-6 and forno[0]['vida_util_anos'] == 8
+          and forno[0]['empresa'] == empresas['A'], 'o equipamento tem custo, vida útil e empresa certos', str(forno)[:200])
+    check('FT 77' in forno[0].get('notas', '') and 'Hostelaria' in forno[0].get('notas', ''),
+          'as notas dizem de que fatura veio', str(forno[0].get('notas'))[:120])
+    st, itens, _ = call('GET', f"/api/collections/faturas_itens/records?filter=fatura='{fid}'&perPage=20", tok=tok['adminA'])
+    ligados = [i for i in itens.get('items', []) if i.get('equipamento') == forno[0]['id'] and i.get('aplicado')]
+    check(len(ligados) == 1, 'a linha da fatura ficou ligada ao equipamento e aplicada', str(itens)[:200])
+
+    # reaplicar não duplica
+    st, r, _ = call('POST', url, {'linhas': [linha0, linha1]}, tok['adminA'])
+    check(st == 200 and r.get('equipamentos') == 0 and r.get('puladas') == 1, 'reaplicar não cria o equipamento outra vez',
+          f'{st} {str(r)[:160]}')
+    check(len([e for e in lista() if e['nome'] == 'Forno convecção']) == 1, 'continua só 1 equipamento')
+
+    # dados inválidos não criam nada (a linha fica por decidir)
+    fid2 = fatura()
+    st, r, _ = call('POST', f'/api/gc_turnkey/faturas/{fid2}/aplicar',
+                    {'linhas': [dict(linha0, equipamento=equip('Sem custo', custo=0)),
+                                dict(linha1, acao='preco', equipamento=equip('Sem vida', vida=0))]}, tok['adminA'])
+    check(st == 200 and r.get('equipamentos') == 0 and r.get('pendentes') == 2,
+          'custo ou vida útil a zero: nada criado, linhas por decidir', f'{st} {str(r)[:160]}')
+
+    # isolamento: a empresa B não vê estes equipamentos
+    check(not [e for e in lista('ownerB') if e['empresa'] == empresas['A']], 'a empresa B não vê os equipamentos da A')
+    # o IA/linha de outra empresa não passa
+    st, r, _ = call('POST', url, {'linhas': [linha0]}, tok['ownerB'])
+    check(st in (400, 403, 404), 'a empresa B não aplica faturas da empresa A', f'status {st}')
+
+
 def teste_produtos():
     """9. Ingredientes genéricos e produtos de compra: custo pela compra mais recente."""
     sec('9. Ingredientes genéricos e produtos')
@@ -3102,6 +3169,7 @@ def main():
         teste_faturas_linha_manual()
         teste_notas_pagina()
         teste_faturas_pendente_embalagem()
+        teste_faturas_equipamento()
         teste_produtos()
         teste_juntar_marcas_fornecedores()
         teste_produto_na_receita()

@@ -50,6 +50,7 @@ class FaturaLinhaIa {
     this.categoriaConsumivel = '',
     this.embalagem = false,
     this.tipoEmbalagem = '',
+    this.equipamento = false,
   });
 
   final String descricao;
@@ -76,6 +77,10 @@ class FaturaLinhaIa {
   /// A IA acha que é material de embalar (caixa, saco, adesivo…), não um
   /// ingrediente nem um consumível de limpeza.
   final bool embalagem;
+
+  /// A IA acha que é um equipamento (forno, batedeira, balcão, computador…):
+  /// um bem duradouro que se deprecia, não um ingrediente nem um consumível.
+  final bool equipamento;
 
   /// `Caixa`, `Saco`, `Saqueta`, `Adesivo`, `Fita`, `Cartão` ou `Outro` (só se
   /// [embalagem]) — ver `kTiposEmbalagem`.
@@ -138,6 +143,7 @@ class FaturaLinhaIa {
     categoriaConsumivel: (j['categoria_consumivel'] ?? '').toString().trim(),
     embalagem: j['tipo_item'] == 'embalagem',
     tipoEmbalagem: (j['tipo_embalagem'] ?? '').toString().trim(),
+    equipamento: j['tipo_item'] == 'equipamento',
   );
 }
 
@@ -282,6 +288,7 @@ class ItemFaturaAnterior {
     this.ingredienteId,
     this.consumivelId,
     this.embalagemId,
+    this.equipamentoId,
     this.produtoId,
     this.descricaoFatura = '',
     this.marca = '',
@@ -296,6 +303,9 @@ class ItemFaturaAnterior {
   final String? ingredienteId;
   final String? consumivelId;
   final String? embalagemId;
+
+  /// Equipamento criado a partir desta linha (entrou na depreciação).
+  final String? equipamentoId;
 
   /// Produto de compra (marca) tocado por esta linha — só existe quando o
   /// preço já foi aplicado a um ingrediente. `null` = ainda não há nada para
@@ -325,6 +335,7 @@ class ItemFaturaAnterior {
     ingredienteId: _naoVazio(r.getStringValue('ingrediente')),
     consumivelId: _naoVazio(r.getStringValue('consumivel')),
     embalagemId: _naoVazio(r.getStringValue('embalagem')),
+    equipamentoId: _naoVazio(r.getStringValue('equipamento')),
     produtoId: _naoVazio(r.getStringValue('produto')),
     descricaoFatura: r.getStringValue('descricao_fatura'),
     marca: r.getStringValue('marca'),

@@ -228,6 +228,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
     titulo: 'Rever fatura',
     paragrafos: [
       'Confere cada linha que a IA leu. A imagem da fatura fica visível (ao lado, em ecrã grande; por cima, no telemóvel — toca para ampliar; "Ocultar fatura" dá mais espaço às linhas). PDF abre à parte.',
+      'Equipamentos: se a linha é um bem duradouro (forno, batedeira, balcão, frigorífico, computador…), escolhe o tipo "Equipamento" (a IA já o sugere quando o reconhece; só o proprietário e o administrador o veem). Confirma o nome, o custo total pago e a vida útil em anos: a app mostra logo a depreciação mensal. Ao aplicar, o equipamento entra na lista de Contabilidade → Equipamentos e passa a somar na depreciação e nos custos da empresa. Fica ligado à fatura (nas notas). Uma linha já aplicada não cria o equipamento outra vez.',
       'Cada linha tem 5 tipos: Ingrediente, Embalagem, Limpeza / insumo, Bebida e Revenda (estes três últimos ficam todos em "Limpeza e insumos" — só muda a categoria sugerida). Escolhe o que a linha é antes de a ligar.',
       'Toca em "Ingrediente" para ligar a linha ao ingrediente certo (já vem pré-escolhido pelo nome mais parecido) ou escolhe "Criar ingrediente novo".',
       'Numa linha de Embalagem: o "Tipo" e, numa linha de Bebida/Revenda, a "Categoria" são texto livre — escreve um novo se o que precisas não estiver nas sugestões. "Peças compradas" (só embalagens) já vem preenchido pela quantidade que a IA leu (ex. rolo de 500 adesivos) — antes tinhas de corrigir isto depois em Embalagens. Em "Formatos de cookie" da embalagem, "+ Novo formato" cria um formato só com o nome (completa o peso depois em Configurações → Formatos de cookie).',
@@ -340,7 +341,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
   HelpTopic.equipamentos: (
     titulo: 'Equipamentos',
     paragrafos: [
-      'Cada peça de equipamento da loja (forno, balcão, computador, vitrine…) com o preço de compra e a vida útil em anos.',
+      'Cada peça de equipamento da loja (forno, balcão, computador, vitrine…) com o preço de compra e a vida útil em anos. Também se regista ao rever uma fatura: escolhe o tipo "Equipamento" na linha e ele aparece aqui (as notas dizem de que fatura veio).',
       'A "depreciação mensal" é o preço de compra dividido pela vida útil em meses — é o desgaste do equipamento, em euros por mês. Soma-se automaticamente ao painel financeiro, ao DRE e aos Números mágicos como despesa, sem precisar de a registar outra vez em Custos fixos.',
       'Ícone de upload (canto superior): importa vários equipamentos de uma vez a partir de um ficheiro .csv com as colunas nome, custo e vida útil (anos).',
       'Não é preciso substituir nada quando o equipamento acaba a vida útil — arquiva-o e cria o novo, se for o caso.',

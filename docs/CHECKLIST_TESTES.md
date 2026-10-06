@@ -2010,6 +2010,20 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Se já havia uma produção da previsão nesse dia, continua a perguntar "Já está agendado" antes
 - [ ] "Fechar" volta ao Quantos assar
 
+## 145. Faturas: linhas que são equipamentos
+
+- [ ] Rever uma fatura com um equipamento (ex.: forno): a linha vem com o tipo "Equipamento" sugerido pela IA (ou escolhe-se o chip "Equipamento" à mão)
+- [ ] A linha mostra Nome, Custo total e Vida útil (5 anos); sem os campos de preço/embalagem; e a frase "Depreciação: € … por mês"
+- [ ] Mudar o custo ou os anos atualiza a depreciação mensal na hora
+- [ ] Ação "Registar equipamento" (por omissão) / "Por rever depois" / "Ignorar"
+- [ ] Aplicar: confirmação diz "Regista N equipamento(s)…"; no fim "N equipamento(s) registado(s)"
+- [ ] Contabilidade → Equipamentos mostra o novo equipamento, com o custo e a vida útil, e as notas "Fatura … · fornecedor · data"
+- [ ] A depreciação mensal total e o painel financeiro/DRE sobem com esse equipamento
+- [ ] Reabrir a fatura: a linha aparece em "já aplicadas" e reaplicar não duplica o equipamento
+- [ ] Custo 0 ou vida útil vazia: avisa "falta o nome, o custo total ou a vida útil" e não aplica
+- [ ] Como Editor: o chip "Equipamento" não aparece e uma linha sugerida pela IA fica como ingrediente/por rever
+- [ ] Numa lista de preços não há o tipo "Equipamento"
+
 ---
 
 ## Notas / ajustes pedidos

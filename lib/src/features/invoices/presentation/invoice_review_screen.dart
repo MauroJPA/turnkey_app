@@ -10,6 +10,7 @@ import '../../../app/router.dart';
 import '../../../core/data/marcas_fornecedores_providers.dart';
 import '../../../core/formatting/busca.dart';
 import '../../../core/formatting/dates.dart';
+import '../../../core/formatting/money_provider.dart';
 import '../../../core/formatting/quantities.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
@@ -24,6 +25,7 @@ import '../../consumables/presentation/consumiveis_screen.dart'
 import '../../consumables/presentation/consumivel_sheet.dart';
 import '../../cookie_formats/application/cookie_format_providers.dart';
 import '../../cookie_formats/domain/cookie_format.dart';
+import '../../finance/application/equipamentos_providers.dart';
 import '../../ingredients/application/ingredients_providers.dart';
 import '../../ingredients/data/ingredient_product_repository.dart';
 import '../../ingredients/data/ingredient_repository.dart';
@@ -351,7 +353,11 @@ enum TipoLinha {
   embalagem,
   limpezaInsumo,
   bebida,
-  revenda;
+  revenda,
+
+  /// Um bem duradouro (forno, batedeira, balcão…): vai para a lista de
+  /// equipamentos e entra na depreciação e nos custos da empresa.
+  equipamento;
 
   bool get ehConsumivel =>
       this == limpezaInsumo || this == bebida || this == revenda;
@@ -370,6 +376,7 @@ enum TipoLinha {
     limpezaInsumo => 'Limpeza / insumo',
     bebida => 'Bebida',
     revenda => 'Revenda',
+    equipamento => 'Equipamento',
   };
 
   /// Rótulo do seletor "escolher produto…" para este tipo.
@@ -405,14 +412,20 @@ TipoLinha _tipoConsumivelDe(String categoria) {
 
 /// Tipo inicial de uma linha: o que já estava decidido numa ronda anterior
 /// (se houver) manda; senão, o que a IA sugeriu.
-TipoLinha _tipoInicial(FaturaLinhaIa ia, ItemFaturaAnterior? anterior) {
+TipoLinha _tipoInicial(
+  FaturaLinhaIa ia,
+  ItemFaturaAnterior? anterior, {
+  bool podeEquipamento = false,
+}) {
   if (anterior != null) {
+    if (anterior.equipamentoId != null) return TipoLinha.equipamento;
     if (anterior.embalagemId != null) return TipoLinha.embalagem;
     if (anterior.consumivelId != null) {
       return TipoLinha.limpezaInsumo; // a categoria real vem do `cons` ligado
     }
     if (anterior.ingredienteId != null) return TipoLinha.ingrediente;
   }
+  if (ia.equipamento && podeEquipamento) return TipoLinha.equipamento;
   if (ia.embalagem) return TipoLinha.embalagem;
   if (ia.consumivel) return TipoLinha.limpezaInsumo;
   return TipoLinha.ingrediente;
@@ -429,8 +442,12 @@ AcaoFatura _acaoInicial({
   required Consumivel? consMatch,
   required Embalagem? embMatch,
   required bool isLista,
+  bool podeEquipamento = false,
 }) {
   if (anterior != null) return anterior.acao;
+  // equipamento lido pela IA: já vem para registar (a pessoa confirma o
+  // custo e a vida útil antes de aplicar)
+  if (ia.equipamento && podeEquipamento && !isLista) return AcaoFatura.preco;
   if (ia.embalagem) {
     return embMatch != null ? AcaoFatura.preco : AcaoFatura.pendente;
   }
@@ -447,10 +464,17 @@ class _LinhaState {
     Embalagem? embMatch,
     required bool isLista,
     this.anterior,
+    bool podeEquipamento = false,
   }) : aplicadaAnterior = anterior?.aplicado ?? false,
-       tipo = consMatch != null && _tipoInicial(ia, anterior).ehConsumivel
+       tipo =
+           consMatch != null &&
+               _tipoInicial(
+                 ia,
+                 anterior,
+                 podeEquipamento: podeEquipamento,
+               ).ehConsumivel
            ? _tipoConsumivelDe(consMatch.categoria)
-           : _tipoInicial(ia, anterior),
+           : _tipoInicial(ia, anterior, podeEquipamento: podeEquipamento),
        cons = consMatch,
        embalagemSel = embMatch,
        categoria = TextEditingController(
@@ -505,6 +529,19 @@ class _LinhaState {
                          : '')),
        ),
        nome = TextEditingController(text: ia.descricao),
+       // equipamento: o total pago (se a fatura o diz) e 5 anos de vida útil
+       custoEquip = TextEditingController(
+         text: (ia.total ?? 0) > 0
+             ? ia.total!.toStringAsFixed(2)
+             : ((ia.precoUnitario ?? 0) > 0
+                   ? ((ia.precoUnitario!) *
+                             ((ia.quantidade ?? 1) > 0
+                                 ? (ia.quantidade ?? 1)
+                                 : 1))
+                         .toStringAsFixed(2)
+                   : ''),
+       ),
+       vidaUtil = TextEditingController(text: '5'),
        acao = _acaoInicial(
          ia: ia,
          anterior: anterior,
@@ -512,6 +549,7 @@ class _LinhaState {
          consMatch: consMatch,
          embMatch: embMatch,
          isLista: isLista,
+         podeEquipamento: podeEquipamento,
        );
 
   final FaturaLinhaIa ia;
@@ -607,6 +645,18 @@ class _LinhaState {
   /// Nome para o registo novo / para o renomear.
   final TextEditingController nome;
 
+  /// Equipamento: custo total pago (€) e vida útil em anos — a depreciação
+  /// mensal é custo ÷ (anos × 12).
+  final TextEditingController custoEquip;
+  final TextEditingController vidaUtil;
+
+  double get custoEquipV => _n(custoEquip);
+  double get vidaUtilV => _n(vidaUtil);
+
+  /// Depreciação por mês (para mostrar à pessoa); 0 se faltar custo ou vida.
+  double get depreciacaoMensal =>
+      custoEquipV > 0 && vidaUtilV > 0 ? custoEquipV / (vidaUtilV * 12) : 0;
+
   AcaoFatura acao;
 
   double _n(TextEditingController c) =>
@@ -666,6 +716,8 @@ class _LinhaState {
           : switch (tipo) {
               TipoLinha.embalagem => embalagemSel != null,
               TipoLinha.ingrediente => ingrediente != null,
+              // o equipamento cria-se com o que está escrito (validado ao aplicar)
+              TipoLinha.equipamento => true,
               _ => false,
             });
 
@@ -678,6 +730,9 @@ class _LinhaState {
     ingredienteId: ingredienteId,
     consumivelId: consumivelId,
     embalagemId: embalagemId,
+    equipamento: tipo == TipoLinha.equipamento
+        ? (nome: nome.text.trim(), custo: custoEquipV, vidaUtilAnos: vidaUtilV)
+        : null,
     descricaoFatura: ia.descricao,
     quantidadeG: tipo.ehConsumivel ? _n(pecas) : gramasComprados,
     precoUnitario: _n(preco),
@@ -722,6 +777,10 @@ class _RevisaoState extends ConsumerState<_Revisao> {
   bool _verFatura = true;
 
   bool get _isLista => widget.fatura.tipo == FaturaTipo.listaPrecos;
+
+  /// Só o proprietário e o administrador registam equipamentos (como na lista
+  /// de equipamentos); numa lista de preços não faz sentido.
+  bool get _podeEquipamento => ehProprietarioOuAdmin(ref) && !_isLista;
 
   @override
   void initState() {
@@ -769,6 +828,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       embMatch: embMatch,
       isLista: _isLista,
       anterior: ant,
+      podeEquipamento: _podeEquipamento,
     );
   }
 
@@ -819,6 +879,8 @@ class _RevisaoState extends ConsumerState<_Revisao> {
             final m = _matchIngrediente(l.ia);
             l.ingrediente = m?.ingrediente;
             l.produto = m?.produto;
+          case TipoLinha.equipamento:
+            if (l.nome.text.trim().isEmpty) l.nome.text = l.ia.descricao;
           case TipoLinha.limpezaInsumo:
           case TipoLinha.bebida:
           case TipoLinha.revenda:
@@ -1084,6 +1146,24 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       );
       return;
     }
+    final equipInvalido = aAplicar.firstWhereOrNull(
+      (l) =>
+          l.tipo == TipoLinha.equipamento &&
+          (l.nome.text.trim().isEmpty ||
+              l.custoEquipV <= 0 ||
+              l.vidaUtilV <= 0),
+    );
+    if (equipInvalido != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Equipamento "${equipInvalido.ia.descricao}": falta o nome, o custo '
+            'total ou a vida útil (anos).',
+          ),
+        ),
+      );
+      return;
+    }
     final semUnidade = aAplicar.where(
       (l) => l.tipo == TipoLinha.ingrediente && l.problemaUnidade != null,
     );
@@ -1101,6 +1181,9 @@ class _RevisaoState extends ConsumerState<_Revisao> {
         .length;
     final novosEmb = aAplicar
         .where((l) => l.criarNovo && l.tipo == TipoLinha.embalagem)
+        .length;
+    final equipamentos = aAplicar
+        .where((l) => l.tipo == TipoLinha.equipamento)
         .length;
     final renomes = aAplicar.where((l) => l.renomear).length;
     final pendentesFicam = _linhas
@@ -1140,6 +1223,9 @@ class _RevisaoState extends ConsumerState<_Revisao> {
         if (novosCons > 0)
           'Cria $novosCons produto(s) de limpeza/insumos/revenda novo(s).',
         if (novosEmb > 0) 'Cria $novosEmb embalagem(ns) nova(s).',
+        if (equipamentos > 0)
+          'Regista $equipamentos equipamento(s): entram na lista de '
+              'equipamentos, na depreciação mensal e nos custos.',
         if (renomes > 0)
           'Renomeia $renomes ingrediente(s) — muda em todas as receitas e '
               'fichas que o usam.',
@@ -1221,6 +1307,8 @@ class _RevisaoState extends ConsumerState<_Revisao> {
             } else {
               embIds[l] = l.embalagemSel?.id;
             }
+          case TipoLinha.equipamento:
+            break; // criado no servidor, ao aplicar
           case TipoLinha.limpezaInsumo:
           case TipoLinha.bebida:
           case TipoLinha.revenda:
@@ -1294,6 +1382,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       ref.invalidate(consumiveisListProvider);
       ref.invalidate(consumivelDocumentosProvider);
       ref.invalidate(embalagensListProvider);
+      ref.invalidate(equipamentosListProvider);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1306,6 +1395,8 @@ class _RevisaoState extends ConsumerState<_Revisao> {
               if (novosCons > 0)
                 '$novosCons produto(s) de limpeza/insumos/revenda',
               if (novosEmb > 0) '$novosEmb embalagem(ns)',
+              if (res.equipamentos > 0)
+                '${res.equipamentos} equipamento(s) registado(s)',
               if (renomes > 0) '$renomes renomeado(s)',
               if (res.pendentes > 0) '${res.pendentes} por rever',
             ].join(' · '),
@@ -1321,9 +1412,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       }
       final recentes = ref
           .read(subidasPorVerProvider)
-          .where(
-            (v) => DateTime.now().difference(v.criada).inMinutes < 5,
-          )
+          .where((v) => DateTime.now().difference(v.criada).inMinutes < 5)
           .toList();
       if (mounted && recentes.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1795,6 +1884,73 @@ class _RevisaoState extends ConsumerState<_Revisao> {
     ];
   }
 
+  /// Campos de uma linha que é um equipamento (forno, batedeira, balcão…):
+  /// nome, custo total e vida útil. A depreciação mensal vê-se logo.
+  List<Widget> _blocoEquipamento(_LinhaState l) {
+    final fmt = ref.watch(moneyFormatProvider);
+    return [
+      TextField(
+        key: ValueKey('equip-nome-${l.index}'),
+        controller: l.nome,
+        decoration: const InputDecoration(
+          labelText: 'Nome do equipamento',
+          isDense: true,
+        ),
+        onChanged: (_) => setState(() {}),
+      ),
+      const SizedBox(height: 8),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: TextField(
+              key: ValueKey('equip-custo-${l.index}'),
+              controller: l.custoEquip,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Custo total',
+                prefixText: '€ ',
+                helperText: 'O total pago (com todas as unidades)',
+                helperMaxLines: 2,
+                isDense: true,
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              key: ValueKey('equip-vida-${l.index}'),
+              controller: l.vidaUtil,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Vida útil',
+                suffixText: 'anos',
+                helperText: 'Em quantos anos se paga',
+                helperMaxLines: 2,
+                isDense: true,
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 6),
+      Text(
+        l.depreciacaoMensal > 0
+            ? 'Depreciação: ${fmt(l.depreciacaoMensal)} por mês — entra na '
+                  'lista de equipamentos e nos custos da empresa.'
+            : 'Indica o custo e a vida útil para calcular a depreciação '
+                  'mensal (Contabilidade → Equipamentos).',
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+    ];
+  }
+
   /// Campos de uma linha de embalagem (caixa, saco, saqueta, adesivo…).
   List<Widget> _blocoEmbalagem(_LinhaState l) {
     final cs = Theme.of(context).colorScheme;
@@ -1931,6 +2087,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       : switch (l.tipo) {
           TipoLinha.ingrediente => l.ingrediente?.nome,
           TipoLinha.embalagem => l.embalagemSel?.nome,
+          TipoLinha.equipamento => 'Equipamento registado',
           _ => null,
         };
 
@@ -2067,12 +2224,15 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                     runSpacing: 6,
                     children: [
                       for (final t in TipoLinha.values)
-                        ChoiceChip(
-                          label: Text(t.label),
-                          visualDensity: VisualDensity.compact,
-                          selected: l.tipo == t,
-                          onSelected: (_) => _mudarTipo(l, t),
-                        ),
+                        if (t != TipoLinha.equipamento ||
+                            _podeEquipamento ||
+                            l.tipo == TipoLinha.equipamento)
+                          ChoiceChip(
+                            label: Text(t.label),
+                            visualDensity: VisualDensity.compact,
+                            selected: l.tipo == t,
+                            onSelected: (_) => _mudarTipo(l, t),
+                          ),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -2080,6 +2240,8 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                     ..._blocoConsumivel(l)
                   else if (l.tipo == TipoLinha.embalagem)
                     ..._blocoEmbalagem(l)
+                  else if (l.tipo == TipoLinha.equipamento)
+                    ..._blocoEquipamento(l)
                   else
                     InkWell(
                       onTap: () => _escolherIngrediente(l),
@@ -2201,73 +2363,76 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                       ),
                     ),
                   const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      if (!_isLista && l.tipo == TipoLinha.ingrediente) ...[
-                        Expanded(child: _campoComprado(l)),
-                        const SizedBox(width: 8),
-                      ],
-                      if (l.tipo == TipoLinha.embalagem) ...[
+                  if (l.tipo != TipoLinha.equipamento)
+                    Row(
+                      children: [
+                        if (!_isLista && l.tipo == TipoLinha.ingrediente) ...[
+                          Expanded(child: _campoComprado(l)),
+                          const SizedBox(width: 8),
+                        ],
+                        if (l.tipo == TipoLinha.embalagem) ...[
+                          Expanded(
+                            child: TextField(
+                              controller: l.pecas,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              decoration: const InputDecoration(
+                                labelText: 'Peças compradas',
+                                isDense: true,
+                                helperText: 'ex.: 500 (rolo de 500 adesivos)',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        if (!_isLista && l.tipo.ehConsumivel) ...[
+                          Expanded(
+                            child: TextField(
+                              controller: l.pecas,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              decoration: const InputDecoration(
+                                labelText: 'Comprado',
+                                isDense: true,
+                                helperText: 'unidades (ex.: 24 latas)',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
                         Expanded(
                           child: TextField(
-                            controller: l.pecas,
+                            controller: l.preco,
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
-                            decoration: const InputDecoration(
-                              labelText: 'Peças compradas',
+                            decoration: InputDecoration(
+                              labelText: l.tipo == TipoLinha.ingrediente
+                                  ? 'Preço embalagem'
+                                  // O total pago nesta compra, não o preço de
+                                  // 1 peça/unidade — o app divide pelo que foi
+                                  // comprado sozinho (embalagens.custoPeca /
+                                  // consumiveis.preco por unidade).
+                                  : (l.tipo == TipoLinha.embalagem ||
+                                            l.tipo.ehConsumivel
+                                        ? 'Preço da compra'
+                                        : 'Preço'),
+                              helperText:
+                                  l.tipo == TipoLinha.embalagem ||
+                                      l.tipo.ehConsumivel
+                                  ? 'O total pago, não o preço de 1 unidade'
+                                  : null,
+                              prefixText: '€ ',
                               isDense: true,
-                              helperText: 'ex.: 500 (rolo de 500 adesivos)',
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
                       ],
-                      if (!_isLista && l.tipo.ehConsumivel) ...[
-                        Expanded(
-                          child: TextField(
-                            controller: l.pecas,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            decoration: const InputDecoration(
-                              labelText: 'Comprado',
-                              isDense: true,
-                              helperText: 'unidades (ex.: 24 latas)',
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                      Expanded(
-                        child: TextField(
-                          controller: l.preco,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          decoration: InputDecoration(
-                            labelText: l.tipo == TipoLinha.ingrediente
-                                ? 'Preço embalagem'
-                                // O total pago nesta compra, não o preço de
-                                // 1 peça/unidade — o app divide pelo que foi
-                                // comprado sozinho (embalagens.custoPeca /
-                                // consumiveis.preco por unidade).
-                                : (l.tipo == TipoLinha.embalagem ||
-                                          l.tipo.ehConsumivel
-                                      ? 'Preço da compra'
-                                      : 'Preço'),
-                            helperText:
-                                l.tipo == TipoLinha.embalagem ||
-                                    l.tipo.ehConsumivel
-                                ? 'O total pago, não o preço de 1 unidade'
-                                : null,
-                            prefixText: '€ ',
-                            isDense: true,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
                   if (l.tipo == TipoLinha.ingrediente) ...[
                     const SizedBox(height: 8),
                     _campoEmbalagem(l),
@@ -2303,7 +2468,15 @@ class _RevisaoState extends ConsumerState<_Revisao> {
                             a == AcaoFatura.preco ||
                             a == AcaoFatura.pendente ||
                             a == AcaoFatura.ignorar)
-                          DropdownMenuItem(value: a, child: Text(a.label)),
+                          DropdownMenuItem(
+                            value: a,
+                            child: Text(
+                              l.tipo == TipoLinha.equipamento &&
+                                      a == AcaoFatura.preco
+                                  ? 'Registar equipamento'
+                                  : a.label,
+                            ),
+                          ),
                     ],
                     onChanged: (a) =>
                         setState(() => l.acao = a ?? AcaoFatura.pendente),
@@ -2569,10 +2742,7 @@ class _EmbalagemPickerState extends State<_EmbalagemPicker> {
                 ),
                 subtitle: Text(
                   [
-                    if (itens[i].tipo.isNotEmpty)
-                      itens[i].tipo
-                    else
-                      'Sem tipo',
+                    if (itens[i].tipo.isNotEmpty) itens[i].tipo else 'Sem tipo',
                     if (itens[i].fornecedor.isNotEmpty) itens[i].fornecedor,
                   ].join(' · '),
                 ),

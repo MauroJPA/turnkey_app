@@ -31,6 +31,10 @@ typedef LinhaAAplicar = ({
   String? ingredienteId,
   String? consumivelId,
   String? embalagemId,
+
+  /// Linha que é um equipamento: o servidor cria-o em `equipamentos` (custo
+  /// total e vida útil em anos) e ele entra na depreciação mensal.
+  ({String nome, double custo, double vidaUtilAnos})? equipamento,
   String descricaoFatura,
   double quantidadeG,
   double precoUnitario,
@@ -46,6 +50,7 @@ typedef LinhaAAplicar = ({
 /// Resultado de aplicar as linhas de uma fatura.
 typedef ResultadoAplicar = ({
   int precos,
+  int equipamentos,
   int precosIgnorados,
   int movimentos,
   int pendentes,
@@ -323,6 +328,12 @@ class InvoiceRepository {
               if (l.produtoId != null) 'produtoId': l.produtoId,
               if (l.consumivelId != null) 'consumivelId': l.consumivelId,
               if (l.embalagemId != null) 'embalagemId': l.embalagemId,
+              if (l.equipamento != null)
+                'equipamento': {
+                  'nome': l.equipamento!.nome,
+                  'custo': l.equipamento!.custo,
+                  'vidaUtilAnos': l.equipamento!.vidaUtilAnos,
+                },
               if (l.marca.isNotEmpty) 'marca': l.marca,
               'produtoNome': l.produtoNome,
             },
@@ -332,6 +343,7 @@ class InvoiceRepository {
     final m = res as Map;
     return (
       precos: (m['precos'] as num?)?.toInt() ?? 0,
+      equipamentos: (m['equipamentos'] as num?)?.toInt() ?? 0,
       precosIgnorados: (m['precosIgnorados'] as num?)?.toInt() ?? 0,
       movimentos: (m['movimentos'] as num?)?.toInt() ?? 0,
       pendentes: (m['pendentes'] as num?)?.toInt() ?? 0,

@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.5.0 — 2026-10-06 — Faturas: linhas que são equipamentos
+
+Uma linha de fatura pode ser um **equipamento**: vai para a lista de equipamentos e soma na depreciação e nos custos da empresa.
+
+- **Novo tipo "Equipamento"** em cada linha, ao rever a fatura (ao lado de Ingrediente, Embalagem, Limpeza…). Só aparece ao proprietário e ao administrador, tal como a lista de equipamentos. Não aparece em listas de preços.
+- **A IA já o sugere**: quando uma linha é um forno, batedeira, frigorífico, balcão, computador, balança, máquina… (um bem duradouro, não um consumível nem um utensílio barato), a linha vem como "Equipamento", pronta a registar. A pessoa confirma.
+- **Três campos**: nome (vem da fatura), **custo total** pago (vem do total da linha) e **vida útil em anos** (5 por omissão). A app mostra logo **a depreciação mensal** ("€ 18,75 por mês").
+- **Ao aplicar**, o equipamento é criado em **Contabilidade → Equipamentos**, com a fatura nas notas (número, fornecedor e data), e passa a contar na **depreciação mensal**, no painel financeiro, na DRE e nos números mágicos. O resumo diz "N equipamento(s) registado(s)".
+- **Não duplica**: reaplicar ou reabrir a fatura não cria o equipamento outra vez. Se faltar o nome, o custo ou a vida útil, avisa antes de aplicar.
+- No servidor, só proprietário/administrador regista equipamentos pela fatura (o Editor recebe "sem permissão"); nova migration `1791110000_faturas_equipamento` (liga a linha da fatura ao equipamento).
+- Testes: leitura do tipo pela IA, linha anterior com equipamento e, no servidor, permissões, ligação, reaplicar, valores inválidos e isolamento entre empresas.
+
 ## 2.4.0 — 2026-10-06 — Plano pronto: agendar e compras num só ecrã
 
 Do "Quantos assar" à lista de compras num só caminho: depois de agendar, vês **tudo num só ecrã**.

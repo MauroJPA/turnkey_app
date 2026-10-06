@@ -94,7 +94,7 @@ function analisarImagemIA(opts) {
       '"quantidade": number|null, "unidade": string|null, "preco_unitario": ' +
       'number|null, "total": number|null, "embalagem_g": number|null, "embalagem_unidade": "g"|"ml"|"un", ' +
       '"caracteristica": string|null, ' +
-      '"tipo_item": "ingrediente"|"consumivel"|"embalagem", "categoria_consumivel": ' +
+      '"tipo_item": "ingrediente"|"consumivel"|"embalagem"|"equipamento", "categoria_consumivel": ' +
       '"limpeza"|"desinfecao"|"higiene"|"insumo"|"outro"|null, "tipo_embalagem": ' +
       '"Caixa"|"Saco"|"Saqueta"|"Adesivo"|"Fita"|"Cartão"|"Outro"|null}]}]}. ' +
       '"paginas" são os números (a começar em 1) das páginas do ficheiro onde ' +
@@ -132,6 +132,12 @@ function analisarImagemIA(opts) {
       'fita-cola, cartão, rótulos. Para embalagens, nome_generico é o tipo sem ' +
       'marca/medida ("Caixa take-away", "Adesivo redondo") e tipo_embalagem é o ' +
       'que mais se aproxima da lista dada; para as outras linhas é null. ' +
+      '"equipamento" é um bem duradouro comprado para a loja/cozinha, que se ' +
+      'deprecia durante anos e não se gasta nem se come: fornos, batedeiras, ' +
+      'frigoríficos, arcas, balcões, máquinas, computadores, balanças, caixas ' +
+      'registadoras, mobiliário. Utensílios baratos e descartáveis (colheres, ' +
+      'formas, tabuleiros, panos) NÃO são equipamento. Num equipamento, ' +
+      'nome_generico é o tipo sem marca nem modelo ("Forno de convecção"). ' +
       'quantidade é o número que aparece na coluna da quantidade, na unidade ' +
       'que a fatura indica (un, kg, g, L, cx…), sem multiplicar: "2 un" de ' +
       '"Noz moscada 15g" -> quantidade 2, unidade "un", embalagem_g 15; ' +

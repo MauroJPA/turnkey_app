@@ -184,6 +184,14 @@ empresa. O WhatsApp está no código mas **desligado** por omissão (precisa de 
 - A app já não pede o CanvasKit nem tipos de letra a `gstatic.com` (`--no-web-resources-cdn`): menos dependência externa; a CSP
   continua a permitir só a própria origem para o essencial.
 
+## Equipamentos nas faturas (2.5.0)
+
+- `POST /faturas/{id}/aplicar` aceita, por linha, um objeto `equipamento` (`nome`, `custo`, `vidaUtilAnos`) e cria o registo em
+  `equipamentos` (empresa da própria fatura, nunca a do pedido). **Só proprietário/administrador** — como a lista de equipamentos
+  (`createRule`); o Editor recebe 403 e a transação desfaz-se por inteiro. Custo e vida útil têm de ser > 0 (senão a linha fica por decidir).
+- `faturas_itens.equipamento` liga a linha ao registo criado: reaplicar a fatura salta as linhas já aplicadas (não duplica).
+- Testado em `teste_faturas_equipamento` (403 do Editor, ligação, reaplicar, valores inválidos, isolamento entre empresas).
+
 ## Riscos aceites / notas
 
 - O administrador pode editar o perfil da empresa (desenho) e, tecnicamente, o campo `plano`

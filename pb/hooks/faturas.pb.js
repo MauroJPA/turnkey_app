@@ -97,6 +97,7 @@ routerAdd(
       soData(fatura.getString('created'));
 
     let precos = 0;
+    let equipamentos = 0;
     let precosIgnorados = 0;
     let movimentos = 0;
     let puladas = 0; // linhas já aplicadas antes (não se tocam outra vez)
@@ -144,6 +145,37 @@ routerAdd(
         let produtoTocadoId = '';
         let marcaFinal = '';
         let fornecedorFinal = '';
+
+        // Equipamento (forno, batedeira, balcão…): cria o registo em
+        // `equipamentos`, que entra na depreciação mensal e nos custos. Só o
+        // proprietário/administrador (as mesmas regras da própria lista).
+        let equipId = '';
+        if (acao !== 'ignorar' && acao !== 'pendente' && l.equipamento && !ingId && !consId && !embId) {
+          if (!isSuper && auth.getString('papel') !== 'owner' && auth.getString('papel') !== 'admin') {
+            throw new ForbiddenError('Só o proprietário ou o administrador regista equipamentos.');
+          }
+          const eq = l.equipamento || {};
+          const nomeEq = String(eq.nome || '').trim().substring(0, 100);
+          const custoEq = Number(eq.custo || 0);
+          const vidaEq = Number(eq.vidaUtilAnos || 0);
+          if (nomeEq && custoEq > 0 && vidaEq > 0 && vidaEq <= 100) {
+            const reg = new Record(tx.findCollectionByNameOrId('equipamentos'));
+            reg.set('empresa', empresaId);
+            reg.set('nome', nomeEq);
+            reg.set('custo', Math.round(custoEq * 100) / 100);
+            reg.set('vida_util_anos', vidaEq);
+            reg.set(
+              'notas',
+              ('Fatura' + (numero ? ' ' + numero : '') +
+                (fornecedorFatura ? ' · ' + fornecedorFatura : '') +
+                (dataFatura ? ' · ' + dataFatura : '')).substring(0, 300),
+            );
+            tx.save(reg);
+            equipId = reg.id;
+            equipamentos++;
+            fornecedorFinal = fornecedorFatura;
+          }
+        }
 
         // Embalagens (caixas, sacos, adesivos…): preço por peça (sem stock).
         if (acao !== 'ignorar' && acao !== 'pendente' && embId && !ingId && !consId) {
@@ -353,7 +385,7 @@ routerAdd(
         }
 
         const aplicadaAgora =
-          acao !== 'ignorar' && acao !== 'pendente' && (!!ingId || !!consId || !!embId);
+          acao !== 'ignorar' && acao !== 'pendente' && (!!ingId || !!consId || !!embId || !!equipId);
 
         const row = existente || new Record(tx.findCollectionByNameOrId('faturas_itens'));
         row.set('empresa', empresaId);
@@ -362,6 +394,8 @@ routerAdd(
         row.set('ingrediente', ingId || '');
         row.set('consumivel', consId || '');
         row.set('embalagem', embId || '');
+        // mantém o equipamento já criado numa ronda anterior
+        row.set('equipamento', equipId || row.getString('equipamento') || '');
         row.set('descricao_fatura', String(l.descricaoFatura || ''));
         row.set('quantidade_g', q);
         row.set('preco_unitario', pu);
@@ -406,6 +440,7 @@ routerAdd(
 
     return e.json(200, {
       precos: precos,
+      equipamentos: equipamentos,
       precosIgnorados: precosIgnorados,
       movimentos: movimentos,
       puladas: puladas,
