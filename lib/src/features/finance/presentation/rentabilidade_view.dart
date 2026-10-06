@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/routes.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/storage/prefs_locais.dart';
 import '../../../core/widgets/async_value_view.dart';
@@ -216,6 +218,14 @@ class _RentabilidadeViewState extends ConsumerState<RentabilidadeView> {
                   style: tt.bodySmall?.copyWith(color: cs.outline),
                 ),
               ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => context.go(Routes.saudeDados),
+                icon: const Icon(Icons.health_and_safety_outlined, size: 18),
+                label: const Text('Ver o que falta preencher'),
+              ),
+            ),
             if (semPreco > 0)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),

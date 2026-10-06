@@ -11,6 +11,7 @@ import '../features/daily_count/presentation/contagem_relatorios_screen.dart';
 import '../features/daily_count/presentation/contagem_screen.dart';
 import '../features/dashboard/presentation/home_shell.dart';
 import '../features/dashboard/presentation/main_shell.dart';
+import '../features/data_health/presentation/saude_dados_screen.dart';
 import '../features/finance/presentation/analise_vendas_screen.dart';
 import '../features/finance/presentation/contabilidade_screen.dart';
 import '../features/haccp/presentation/haccp_screen.dart';
@@ -327,6 +328,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, __) => const SettingsScreen(),
             routes: [
               GoRoute(path: 'equipa', builder: (_, __) => const TeamScreen()),
+              GoRoute(
+                path: 'dados',
+                builder: (_, __) => const SaudeDadosScreen(),
+              ),
               GoRoute(
                 path: 'aprovacoes',
                 builder: (_, __) => const AprovacoesScreen(),

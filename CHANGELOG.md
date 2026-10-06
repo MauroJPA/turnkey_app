@@ -2,6 +2,21 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.100.0 — 2026-10-06 — Saúde dos dados
+
+Saúde dos dados: o que falta preencher para tudo ficar certo.
+
+- **Configurações → Saúde dos dados** (e "Ver o que falta preencher" na Rentabilidade): uma percentagem de dados completos e a lista do que falta, com a consequência de cada coisa.
+  - **Produtos sem preço de venda** (não entram na Rentabilidade nem na tabela de revendedores);
+  - **sem custo calculado** (a ficha não tem ingredientes ou eles não têm preço);
+  - **sem tempo de assadura** (sem lucro por hora de forno nem cronómetro);
+  - **sem temperatura do forno**;
+  - **ingredientes comprados sem preço** (o custo das fichas fica incompleto);
+  - **ingredientes sem informação nutricional** (a etiqueta fica incompleta).
+- Os de preços e custos vêm abertos e a vermelho — são os que mais pesam. Toca num produto para abrir a ficha e corrigir. Os ingredientes de fabrico próprio não precisam de preço.
+- Não incomoda: não há avisos nem cartões no Início; só aparece aqui, quando quiseres ver.
+- Sem alterações no servidor. Testes: cada tipo de falta, ingredientes de fabrico próprio, lixeira, percentagem e ordem.
+
 ## 1.99.0 — 2026-10-06 — Alertas de validade por lote
 
 Alertas de validade por lote.

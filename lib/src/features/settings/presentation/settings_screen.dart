@@ -549,6 +549,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onTap: () => context.go(Routes.navegacao),
               ),
 
+            // ---- Saúde dos dados ----
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.health_and_safety_outlined),
+              title: const Text('Saúde dos dados'),
+              subtitle: const Text(
+                'O que falta preencher nas fichas e nos ingredientes',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.go(Routes.saudeDados),
+            ),
+
             // ---- Avisos e resumo diário ----
             if (ref.read(currentPapelProvider).canEditConfig)
               ListTile(

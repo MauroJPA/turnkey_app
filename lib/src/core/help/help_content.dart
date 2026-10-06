@@ -37,6 +37,7 @@ enum HelpTopic {
   lotes,
   rentabilidade,
   pessoasPonto,
+  saudeDados,
   pessoasEscala,
   pessoasFerias,
   pessoasNotas,
@@ -429,6 +430,14 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Para a administração: toca no nome de alguém e define o horário habitual — marca os dias em que trabalha, as horas de entrada e saída e a pausa ("Igual ao primeiro dia marcado" copia as horas). Faz isto uma só vez por pessoa: a escala de todas as semanas fica feita. Para um dia especial, toca nesse dia: outro turno ou folga só nesse dia (fica com uma moldura e "(alterado)"); "Voltar ao habitual" desfaz.',
       'A escala respeita as férias, baixas e faltas aprovadas (aparecem a verde/laranja) e os dias em que a empresa não trabalha (Configurações → Dias de trabalho, "—").',
       'No Ponto, ao lado das horas de cada pessoa passa a aparecer as horas previstas e o saldo (horas a mais ou a menos) até ontem; no quiosque, depois de encostar o cartão, aparece o horário de hoje. "Imprimir o mapa de horário" faz a folha da semana para afixar (a lei pede o mapa de horário de trabalho afixado).',
+    ],
+  ),
+  HelpTopic.saudeDados: (
+    titulo: 'Saúde dos dados',
+    paragrafos: [
+      'Mostra o que falta preencher para a Rentabilidade, o Quantos assar e as etiquetas ficarem certos, e a percentagem do que já está completo.',
+      'Produtos sem preço de venda (não entram na Rentabilidade nem na tabela de revendedores), sem custo calculado (a ficha não tem ingredientes ou eles não têm preço), sem tempo de assadura (sem lucro por hora de forno) e sem temperatura do forno. Ingredientes comprados sem preço (o custo das fichas fica incompleto) e sem informação nutricional (a etiqueta fica incompleta). Os ingredientes de fabrico próprio não precisam de preço.',
+      'Toca num produto para abrir a ficha e corrigir; "Resolve primeiro os de preços e custos" (a vermelho). Puxa para baixo para atualizar. Não é um aviso: só aparece aqui, quando quiseres ver.',
     ],
   ),
   HelpTopic.pessoasPonto: (

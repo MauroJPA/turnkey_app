@@ -1837,6 +1837,14 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] O resumo diário traz a secção "Validades a acabar"
 - [ ] Lotes sem validade registada nunca dão aviso
 
+## 128. Saúde dos dados
+
+- [ ] Configurações → Saúde dos dados: mostra a percentagem e os grupos com o número de itens em falta
+- [ ] Tocar num produto abre a ficha técnica; tocar num ingrediente abre o Inventário
+- [ ] Depois de pôr o preço de venda numa ficha e voltar atrás (puxar para baixo), o produto sai da lista
+- [ ] Os ingredientes de fabrico próprio não aparecem em "sem preço"
+- [ ] Rentabilidade → "Ver o que falta preencher" abre esta página
+
 ---
 
 ## Notas / ajustes pedidos
