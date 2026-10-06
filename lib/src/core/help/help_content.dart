@@ -37,6 +37,7 @@ enum HelpTopic {
   lotes,
   rentabilidade,
   pessoasPonto,
+  pessoasFerias,
   previsaoAssar,
   tabelaRevendedores,
   consumiveis,
@@ -399,6 +400,15 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'A margem de segurança (um pouco acima do previsto, para não faltar) vem do erro desse modelo. Nos sabores que costumam ir para o lixo (5 % ou mais do que se faz, medido pelo Desperdício da Contagem) a margem encolhe e a partir de 15 % desaparece.',
       '"Descontar o que já há em stock" tira o que ainda tens nos locais (contagem de fecho de hoje, ou a estimativa pelas contas). O total mostra também as fornadas, pela média das tuas fornadas dos últimos 60 dias.',
       'O ajuste do dia (−20 %, +20 %, +50 % evento) sobe ou desce tudo de uma vez: a app não sabe de feriados, chuva ou encomendas especiais. Com mais semanas de vendas a previsão acerta melhor — no início, com pouco histórico, trata-a como uma sugestão. Precisa de vendas ligadas a fichas técnicas (Vendus ou importação).',
+    ],
+  ),
+  HelpTopic.pessoasFerias: (
+    titulo: 'Mapa de férias e ausências',
+    paragrafos: [
+      'Aqui pedes férias, vês o saldo de dias e quem está fora em cada dia. "Pedir férias" → escolhe as datas → o pedido fica "Por aprovar" até o proprietário ou um administrador o aprovar (ou recusar). Podes apagar um pedido teu que ainda não foi decidido.',
+      'Os dias contam-se como a lei manda: dias úteis, de segunda a sexta, sem feriados nacionais (a app sabe a Páscoa e os feriados móveis; feriados municipais não entram). O direito por omissão é 22 dias úteis por ano; a administração muda o de cada pessoa em "Direito a férias" (por exemplo, no ano de entrada). "Restam" desconta os dias gozados e os pedidos pendentes.',
+      'O mapa do mês mostra uma linha por pessoa e um quadrado por dia: verde = férias, verde claro = por aprovar, laranja = baixa, vermelho = falta; os fins de semana e feriados ficam mais escuros. Toda a equipa vê as férias aprovadas dos colegas; as baixas e faltas só as vê a própria pessoa e a administração (são dados pessoais).',
+      'A administração também regista ausências de qualquer pessoa (férias, baixa, falta) com "Registar férias / ausência" e imprime o "Mapa de férias" do ano. A lei pede que o mapa seja elaborado até 15 de abril e fique afixado até 31 de outubro. A app avisa quando os períodos se sobrepõem para a mesma pessoa.',
     ],
   ),
   HelpTopic.pessoasPonto: (

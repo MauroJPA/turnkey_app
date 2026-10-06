@@ -6,11 +6,13 @@ import '../../../app/routes.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/help_actions.dart';
+import 'ferias_view.dart';
 import 'ponto_view.dart';
 
 /// As secções de Pessoas.
 enum SecaoPessoas {
-  ponto('Ponto', Icons.access_time, Routes.pessoasPonto);
+  ponto('Ponto', Icons.access_time, Routes.pessoasPonto),
+  ferias('Férias', Icons.beach_access_outlined, Routes.pessoasFerias);
 
   const SecaoPessoas(this.label, this.icon, this.rota);
   final String label;
@@ -19,6 +21,7 @@ enum SecaoPessoas {
 
   HelpTopic get ajuda => switch (this) {
     SecaoPessoas.ponto => HelpTopic.pessoasPonto,
+    SecaoPessoas.ferias => HelpTopic.pessoasFerias,
   };
 }
 
@@ -75,6 +78,9 @@ class PessoasScreen extends ConsumerWidget {
             child: switch (secao) {
               SecaoPessoas.ponto => const PontoView(
                 key: ValueKey('pessoas-ponto'),
+              ),
+              SecaoPessoas.ferias => const FeriasView(
+                key: ValueKey('pessoas-ferias'),
               ),
             },
           ),

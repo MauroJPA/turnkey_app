@@ -146,6 +146,13 @@ empresa. O WhatsApp está no código mas **desligado** por omissão (precisa de 
 - A página "Pessoas" vem oculta para o papel Leitura. A hora vem do relógio do aparelho que marca (no quiosque offline é a hora real da
   marcação); o servidor guarda também a data de criação.
 
+## Férias e ausências (1.93.0)
+
+- `ferias`: quem não é administrador só consegue criar pedidos (`estado = pedido`) para a sua própria conta; só o proprietário/administrador
+  aprova, recusa ou regista por outros. Todos veem as férias aprovadas; baixas, faltas e pedidos só o próprio e a administração (dados de
+  saúde e pessoais). Cada um apaga só os seus pedidos ainda por decidir.
+- `ferias_direito` (dias de férias por pessoa e ano): só a administração escreve; cada um lê o seu.
+
 ## Riscos aceites / notas
 
 - O administrador pode editar o perfil da empresa (desenho) e, tecnicamente, o campo `plano`

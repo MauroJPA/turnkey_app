@@ -1770,6 +1770,17 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] "Copiar a folha do mês (CSV)" cola uma linha por jornada
 - [ ] Um utilizador Editor só vê as suas marcações; Leitura não vê a página Pessoas
 
+## 121. Mapa de férias
+
+- [ ] Pessoas → Férias: "Pedir férias" → escolher datas: mostra os dias úteis (sem fins de semana e feriados) e envia o pedido
+- [ ] Como administrador: o pedido aparece em "Por aprovar"; Aprovar → fica verde no mapa e conta em "Gozados"; Recusar → desaparece do mapa
+- [ ] Um pedido que se sobrepõe a outro da mesma pessoa é recusado com aviso
+- [ ] Um utilizador Editor vê as férias aprovadas dos colegas mas não as baixas nem os pedidos deles
+- [ ] "Registar férias / ausência" (administração): escolher outra pessoa e tipo Baixa/Falta; sem "Aprovar já" fica por aprovar
+- [ ] "Direito a férias": mudar os dias de uma pessoa e confirmar o "Restam" dela
+- [ ] "Imprimir o mapa": abre o mapa do ano com os períodos de cada pessoa e o total de dias úteis
+- [ ] O mapa do mês rola na horizontal no telemóvel e mostra os fins de semana mais escuros
+
 ---
 
 ## Notas / ajustes pedidos

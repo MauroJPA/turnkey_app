@@ -1012,6 +1012,75 @@ def teste_ponto():
     call('DELETE', f'/api/collections/ponto_registos/records/{meu}', tok=tok['adminA'])
 
 
+def teste_ferias():
+    sec('7a8. Mapa de férias e ausências')
+    uid = users['editorA']
+    base = {'empresa': empresas['A'], 'pessoa': f'u:{uid}', 'nome': 'Editor A', 'user': uid, 'tipo': 'ferias',
+            'data_inicio': '2026-09-07 00:00:00.000Z', 'data_fim': '2026-09-11 00:00:00.000Z', 'dias_uteis': 5, 'estado': 'pedido'}
+    s, _, _ = call('POST', '/api/collections/ferias/records', base, tok['viewerA'])
+    check(s in (400, 403), 'leitura não pede férias', f'status {s}')
+    s, r, _ = call('POST', '/api/collections/ferias/records', base, tok['editorA'])
+    check(s == 200, 'editor pede férias para si', f'status {s} {str(r)[:100]}')
+    pedido = r.get('id')
+    s, _, _ = call('POST', '/api/collections/ferias/records', {**base, 'estado': 'aprovado'}, tok['editorA'])
+    check(s in (400, 403), 'editor não se auto-aprova', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/ferias/records',
+                   {**base, 'pessoa': f"u:{users['viewerA']}", 'user': users['viewerA']}, tok['editorA'])
+    check(s in (400, 403), 'editor não pede férias em nome de outra conta', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/ferias/records', {**base, 'empresa': empresas['B']}, tok['editorA'])
+    check(s in (400, 403), 'não se pedem férias numa empresa alheia', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/ferias/records', {**base, 'tipo': 'sabatico'}, tok['editorA'])
+    check(s == 400, 'tipo de ausência inválido é recusado', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/ferias/records/{pedido}', {'estado': 'aprovado'}, tok['editorA'])
+    check(s in (403, 404), 'o editor não aprova o próprio pedido', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/ferias/records/{pedido}', {'estado': 'aprovado'}, tok['editorB'])
+    check(s in (403, 404), 'empresa B não decide pedidos da A', f'status {s}')
+    # visibilidade: pedidos e baixas só o próprio e a administração
+    s, r, _ = call('GET', '/api/collections/ferias/records', tok=tok['viewerA'])
+    check(s == 200 and not any(i.get('id') == pedido for i in r.get('items', [])), 'um colega não vê pedidos pendentes dos outros')
+    s, r, _ = call('GET', '/api/collections/ferias/records', tok=tok['editorA'])
+    check(s == 200 and any(i.get('id') == pedido for i in r.get('items', [])), 'o próprio vê o seu pedido')
+    s, r, _ = call('GET', '/api/collections/ferias/records', tok=tok['adminA'])
+    check(s == 200 and any(i.get('id') == pedido for i in r.get('items', [])), 'a administração vê os pedidos')
+    s, _, _ = call('GET', f'/api/collections/ferias/records/{pedido}', tok=tok['editorB'])
+    check(s == 404, 'empresa B não vê férias da A', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/ferias/records/{pedido}', {'estado': 'aprovado', 'decidido_por': users['adminA']}, tok['adminA'])
+    check(s == 200, 'o administrador aprova', f'status {s}')
+    s, r, _ = call('GET', '/api/collections/ferias/records', tok=tok['viewerA'])
+    check(s == 200 and any(i.get('id') == pedido for i in r.get('items', [])), 'depois de aprovadas, as férias são visíveis à equipa')
+    # baixa: privada
+    s, r, _ = call('POST', '/api/collections/ferias/records', {**base, 'tipo': 'baixa', 'estado': 'aprovado'}, tok['adminA'])
+    check(s == 200, 'o administrador regista uma baixa', f'status {s}')
+    baixa = r.get('id')
+    s, r, _ = call('GET', '/api/collections/ferias/records', tok=tok['viewerA'])
+    check(s == 200 and not any(i.get('id') == baixa for i in r.get('items', [])), 'baixas não são visíveis aos colegas (dados de saúde)')
+    # apagar
+    s, _, _ = call('DELETE', f'/api/collections/ferias/records/{pedido}', tok=tok['editorA'])
+    check(s in (403, 404), 'o editor não apaga férias já aprovadas', f'status {s}')
+    s, r, _ = call('POST', '/api/collections/ferias/records', {**base, 'data_inicio': '2026-11-02 00:00:00.000Z', 'data_fim': '2026-11-03 00:00:00.000Z'}, tok['editorA'])
+    outro = r.get('id')
+    s, _, _ = call('DELETE', f'/api/collections/ferias/records/{outro}', tok=tok['editorA'])
+    check(s in (200, 204), 'o editor cancela um pedido seu ainda pendente', f'status {s}')
+    # direito a férias
+    d = {'empresa': empresas['A'], 'pessoa': f'u:{uid}', 'user': uid, 'ano': 2026, 'dias': 25}
+    s, _, _ = call('POST', '/api/collections/ferias_direito/records', d, tok['editorA'])
+    check(s in (400, 403), 'o editor não define o seu direito a férias', f'status {s}')
+    s, r, _ = call('POST', '/api/collections/ferias_direito/records', d, tok['adminA'])
+    check(s == 200, 'o administrador define o direito a férias', f'status {s} {str(r)[:100]}')
+    did = r.get('id')
+    s, _, _ = call('POST', '/api/collections/ferias_direito/records', d, tok['adminA'])
+    check(s == 400, 'só um direito por pessoa e ano', f'status {s}')
+    s, r, _ = call('GET', '/api/collections/ferias_direito/records', tok=tok['editorA'])
+    check(s == 200 and any(i.get('id') == did for i in r.get('items', [])), 'cada um vê o seu direito')
+    s, r, _ = call('GET', '/api/collections/ferias_direito/records', tok=tok['viewerA'])
+    check(s == 200 and not any(i.get('id') == did for i in r.get('items', [])), 'os outros não vêem o direito dos colegas')
+    s, _, _ = call('GET', f'/api/collections/ferias_direito/records/{did}', tok=tok['editorB'])
+    check(s == 404, 'empresa B não vê o direito a férias da A', f'status {s}')
+    for rid in (pedido, baixa):
+        call('DELETE', f'/api/collections/ferias/records/{rid}', tok=tok['adminA'])
+    call('DELETE', f'/api/collections/ferias_direito/records/{did}', tok=tok['adminA'])
+
+
 def teste_estado_backups():
     sec('7a3. Estado dos backups (só administradores)')
     s, _, _ = call('GET', '/api/gc_turnkey/backups/estado')
@@ -2412,6 +2481,7 @@ def main():
         teste_lotes()
         teste_quiosque_offline()
         teste_ponto()
+        teste_ferias()
         teste_segredos()
         teste_sem_chave()
         teste_faturas_ia()

@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.93.0 — 2026-10-06 — Mapa de férias
+
+Mapa de férias e ausências (Pessoas → Férias).
+
+- **Pedir férias**: escolhes as datas, a app calcula os **dias úteis** (segunda a sexta, sem feriados nacionais — a Páscoa e os feriados móveis estão calculados) e o pedido fica "Por aprovar" até o proprietário/administrador **aprovar ou recusar**. Podes apagar um pedido teu que ainda não foi decidido. A app avisa se as datas se sobrepõem a outra ausência da mesma pessoa.
+- **Saldo**: direito (22 dias úteis por omissão), gozados, pedidos pendentes e quantos restam, por ano. A administração muda o direito de cada pessoa em **Direito a férias** (por exemplo, no ano de entrada).
+- **Mapa do mês**: uma linha por pessoa e um quadrado por dia — verde = férias, verde claro = por aprovar, laranja = baixa, vermelho = falta; fins de semana e feriados mais escuros. Rola na horizontal.
+- **Quem vê o quê**: a equipa vê as **férias aprovadas** dos colegas; **baixas, faltas e pedidos** só os vê a própria pessoa e a administração (dados pessoais/de saúde).
+- **Administração**: "Registar férias / ausência" para qualquer pessoa (férias, baixa, falta, outro; com "Aprovar já"), lista **Por aprovar** com Aprovar/Recusar, e **Imprimir o mapa** de férias do ano (PDF, com o aviso de que deve ficar afixado de 15 de abril a 31 de outubro).
+- Servidor: migration `1791040000_ferias` (coleções `ferias` e `ferias_direito`). Sem endpoints novos.
+- Testes: Páscoa e feriados, dias úteis (fins de semana, feriados, mudança de ano), saldo, sobreposições, mapa em HTML com escape; 24 verificações de segurança novas (pedidos só para si, não se auto-aprovam, empresa, privacidade das baixas, direito a férias).
+
 ## 1.92.0 — 2026-10-06 — Registo de ponto
 
 Registo de ponto: entrada, pausa e saída, na app e no quiosque.

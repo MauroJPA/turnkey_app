@@ -30,6 +30,7 @@ abstract class Routes {
   static const encomendas = '/encomendas';
   static const pessoas = '/pessoas';
   static const pessoasPonto = '/pessoas/ponto';
+  static const pessoasFerias = '/pessoas/ferias';
   static const contagem = '/contagem';
   static const contagemRelatorios = '/contagem/relatorios';
   static const haccp = '/haccp';
