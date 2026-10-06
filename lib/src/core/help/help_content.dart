@@ -38,6 +38,7 @@ enum HelpTopic {
   rentabilidade,
   pessoasPonto,
   pessoasFerias,
+  pessoasNotas,
   previsaoAssar,
   tabelaRevendedores,
   consumiveis,
@@ -400,6 +401,14 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'A margem de segurança (um pouco acima do previsto, para não faltar) vem do erro desse modelo. Nos sabores que costumam ir para o lixo (5 % ou mais do que se faz, medido pelo Desperdício da Contagem) a margem encolhe e a partir de 15 % desaparece.',
       '"Descontar o que já há em stock" tira o que ainda tens nos locais (contagem de fecho de hoje, ou a estimativa pelas contas). O total mostra também as fornadas, pela média das tuas fornadas dos últimos 60 dias.',
       'O ajuste do dia (−20 %, +20 %, +50 % evento) sobe ou desce tudo de uma vez: a app não sabe de feriados, chuva ou encomendas especiais. Com mais semanas de vendas a previsão acerta melhor — no início, com pouco histórico, trata-a como uma sugestão. Precisa de vendas ligadas a fichas técnicas (Vendus ou importação).',
+    ],
+  ),
+  HelpTopic.pessoasNotas: (
+    titulo: 'Notas da equipa',
+    paragrafos: [
+      'Um quadro de anotações partilhado: deixa um recado para os colegas, regista uma ocorrência (algo que se avariou, uma reclamação, um acidente) ou cria um lembrete.',
+      'Tipos: Recado, Ocorrência e Lembrete. Num lembrete escolhes o dia: a partir desse dia a nota aparece no Início ("Notas para hoje") até a arquivares. "Fixar" põe a nota no topo; "Arquivar (já tratada)" tira-a da lista sem a apagar (vês em "Arquivadas" e podes voltar a abri-la).',
+      'Toda a equipa (menos a Leitura) vê as notas e pode fixá-las ou arquivá-las; só quem escreveu a nota (ou a administração) altera o texto ou a apaga. Não ponhas aqui palavras-passe nem dados pessoais sensíveis.',
     ],
   ),
   HelpTopic.pessoasFerias: (

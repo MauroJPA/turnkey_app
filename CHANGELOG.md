@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.94.0 — 2026-10-06 — Notas da equipa
+
+Notas da equipa (Pessoas → Notas) e novos cartões no Início.
+
+- **Notas**: um quadro partilhado para **recados**, **ocorrências** (avarias, reclamações, acidentes) e **lembretes**. Escreve, **fixa** no topo, **arquiva** quando está tratada (ficam em "Arquivadas" e podes voltar a abri-las), procura por texto, filtra por tipo.
+- **Lembretes com dia**: a partir do dia escolhido aparece no Início o cartão **"Notas para hoje"**, até arquivares a nota.
+- **Quem pode o quê**: toda a equipa (menos a Leitura) vê as notas e pode fixá-las/arquivá-las; só quem escreveu (ou a administração) altera o texto ou apaga.
+- **Início**: novo cartão **"Férias por aprovar"** para o proprietário/administrador (só aparece se houver pedidos).
+- Servidor: migration `1791050000_anotacoes` (coleção `anotacoes`). Sem endpoints novos.
+- Testes: ordenação, filtros, lembretes, "há quanto tempo"; 18 verificações de segurança (autor, empresa, Leitura sem acesso, colega só fixa/arquiva, texto longo).
+
 ## 1.93.0 — 2026-10-06 — Mapa de férias
 
 Mapa de férias e ausências (Pessoas → Férias).

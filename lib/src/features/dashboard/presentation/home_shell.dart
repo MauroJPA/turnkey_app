@@ -22,6 +22,10 @@ import '../../navigation/domain/pagina_app.dart';
 import '../../navigation/presentation/todas_paginas_sheet.dart';
 import '../../orders/application/encomendas_providers.dart';
 import '../../orders/data/configuracoes_encomendas_repository.dart';
+import '../../people/application/ferias_providers.dart';
+import '../../people/application/notas_providers.dart';
+import '../../people/domain/ferias.dart';
+import '../../people/domain/nota.dart';
 import '../../schedule/application/schedule_providers.dart';
 import '../../schedule/domain/production_plan.dart';
 import '../../settings/application/empresa_providers.dart';
@@ -88,6 +92,19 @@ class HomeShell extends ConsumerWidget {
     );
 
     final backups = ref.watch(estadoBackupsProvider).valueOrNull;
+    final podeVerPessoas = acessivel('pessoas');
+    final notasHoje = podeVerPessoas
+        ? ref.watch(notasParaHojeProvider)
+        : const <Nota>[];
+    final feriasPorAprovar =
+        podeVerPessoas && ref.watch(currentPapelProvider).canEditConfig
+        ? (ref
+                  .watch(feriasAnoProvider(hoje.year))
+                  .valueOrNull
+                  ?.where((a) => a.estado == EstadoAusencia.pedido)
+                  .toList() ??
+              const <Ausencia>[])
+        : const <Ausencia>[];
     final contasPorAprovar =
         ref.watch(aprovacoesProvider).valueOrNull?.pendentes ??
         const <ContaPendente>[];
@@ -249,6 +266,27 @@ class HomeShell extends ConsumerWidget {
                   .join(', '),
               destaque: true,
               onTap: () => context.go(Routes.aprovacoes),
+            ),
+          if (feriasPorAprovar.isNotEmpty)
+            _StatCard(
+              icon: Icons.beach_access_outlined,
+              titulo: 'Férias por aprovar',
+              valor: '${feriasPorAprovar.length}',
+              subtitulo: feriasPorAprovar.take(3).map((a) => a.nome).join(', '),
+              destaque: true,
+              onTap: () => context.go(Routes.pessoasFerias),
+            ),
+          if (notasHoje.isNotEmpty)
+            _StatCard(
+              icon: Icons.sticky_note_2_outlined,
+              titulo: 'Notas para hoje',
+              valor: '${notasHoje.length}',
+              subtitulo: notasHoje
+                  .take(3)
+                  .map((n) => n.titulo.isNotEmpty ? n.titulo : n.texto)
+                  .join(' · '),
+              destaque: true,
+              onTap: () => context.go(Routes.pessoasNotas),
             ),
           if (subidas.isNotEmpty)
             _StatCard(

@@ -7,12 +7,14 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/help_actions.dart';
 import 'ferias_view.dart';
+import 'notas_view.dart';
 import 'ponto_view.dart';
 
 /// As secções de Pessoas.
 enum SecaoPessoas {
   ponto('Ponto', Icons.access_time, Routes.pessoasPonto),
-  ferias('Férias', Icons.beach_access_outlined, Routes.pessoasFerias);
+  ferias('Férias', Icons.beach_access_outlined, Routes.pessoasFerias),
+  notas('Notas', Icons.sticky_note_2_outlined, Routes.pessoasNotas);
 
   const SecaoPessoas(this.label, this.icon, this.rota);
   final String label;
@@ -22,6 +24,7 @@ enum SecaoPessoas {
   HelpTopic get ajuda => switch (this) {
     SecaoPessoas.ponto => HelpTopic.pessoasPonto,
     SecaoPessoas.ferias => HelpTopic.pessoasFerias,
+    SecaoPessoas.notas => HelpTopic.pessoasNotas,
   };
 }
 
@@ -44,13 +47,19 @@ class PessoasScreen extends ConsumerWidget {
         title: const Text('Pessoas'),
         actions: [HelpActions(topic: secao.ajuda)],
       ),
-      floatingActionButton: admin && secao == SecaoPessoas.ponto
-          ? FloatingActionButton.extended(
-              onPressed: () => novaMarcacaoManual(context, ref),
-              icon: const Icon(Icons.add),
-              label: const Text('Marcação manual'),
-            )
-          : null,
+      floatingActionButton: switch (secao) {
+        SecaoPessoas.ponto when admin => FloatingActionButton.extended(
+          onPressed: () => novaMarcacaoManual(context, ref),
+          icon: const Icon(Icons.add),
+          label: const Text('Marcação manual'),
+        ),
+        SecaoPessoas.notas => FloatingActionButton.extended(
+          onPressed: () => mostrarNota(context),
+          icon: const Icon(Icons.add),
+          label: const Text('Nova nota'),
+        ),
+        _ => null,
+      },
       body: Column(
         children: [
           SizedBox(
@@ -81,6 +90,9 @@ class PessoasScreen extends ConsumerWidget {
               ),
               SecaoPessoas.ferias => const FeriasView(
                 key: ValueKey('pessoas-ferias'),
+              ),
+              SecaoPessoas.notas => const NotasView(
+                key: ValueKey('pessoas-notas'),
               ),
             },
           ),

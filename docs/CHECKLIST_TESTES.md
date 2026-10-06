@@ -1781,6 +1781,16 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] "Imprimir o mapa": abre o mapa do ano com os períodos de cada pessoa e o total de dias úteis
 - [ ] O mapa do mês rola na horizontal no telemóvel e mostra os fins de semana mais escuros
 
+## 122. Notas da equipa
+
+- [ ] Pessoas → Notas → "Nova nota": criar um recado, uma ocorrência e um lembrete com dia
+- [ ] Fixar uma nota: vai para o topo com o alfinete; Arquivar: sai da lista e aparece em "Arquivadas"; "Voltar às notas" repõe
+- [ ] Um lembrete com o dia de hoje (ou anterior) mostra o cartão "Notas para hoje" no Início; ao arquivar o cartão desaparece
+- [ ] Um colega só consegue fixar/arquivar uma nota de outro, não editar nem apagar (a administração pode tudo)
+- [ ] A pesquisa encontra notas pelo texto, título ou autor
+- [ ] Como administrador, um pedido de férias pendente mostra o cartão "Férias por aprovar" no Início
+- [ ] O nível Leitura não vê a página Pessoas
+
 ---
 
 ## Notas / ajustes pedidos
