@@ -191,6 +191,23 @@ class ScheduleRepository {
     return ((res as Map)['linhas'] as num?)?.toInt() ?? 0;
   }
 
+  /// Como [gerarListaCompras], mas devolve também quantos ingredientes ficam
+  /// por comprar (o stock não chega) e o custo estimado.
+  Future<({int linhas, int aComprar, double custo})> gerarListaComprasResumo(
+    String planId,
+  ) async {
+    final res = await _pb.send(
+      '/api/gc_turnkey/producoes/$planId/lista-compras',
+      method: 'POST',
+    );
+    final m = res is Map ? res : const <String, dynamic>{};
+    return (
+      linhas: (m['linhas'] as num?)?.toInt() ?? 0,
+      aComprar: (m['aComprar'] as num?)?.toInt() ?? 0,
+      custo: (m['custo'] as num?)?.toDouble() ?? 0,
+    );
+  }
+
   Future<ConclusaoResumo> concluir(String planId) async {
     final res = await _pb.send(
       '/api/gc_turnkey/producoes/$planId/concluir',

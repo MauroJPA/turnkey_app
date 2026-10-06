@@ -1926,6 +1926,15 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Uma ficha sem preço de venda mostra "sem preço de venda" e nenhuma sugestão
 - [ ] Como Leitura: vê a sugestão mas não o botão Aplicar
 
+## 138. Compras automáticas ao agendar o Quantos assar
+
+- [ ] Quantos assar → "Agendar produção para hoje/amanhã": a mensagem diz quantos ingredientes faltam e o custo aproximado, com "Ver compras"
+- [ ] "Ver compras" abre a lista com as linhas dessa produção (fornecedor e embalagem certos)
+- [ ] Num ingrediente comprado de duas marcas/fornecedores, a linha automática sugere a mais barata ao kg
+- [ ] Um produto fixado numa receita continua a ser o comprado nessa linha
+- [ ] Com stock suficiente: "O stock chega: não falta comprar nada"
+- [ ] Desmarcar "Preparar também a lista de compras": agenda sem mexer na lista, e fica desmarcado da vez seguinte
+
 ---
 
 ## Notas / ajustes pedidos

@@ -444,6 +444,38 @@ routerAdd(
     }
 
     let linhas = 0;
+    let aComprar = 0;
+    let custoTotal = 0;
+
+    // Quando a receita não fixa um produto e o ingrediente já se comprou de
+    // várias formas (marca/fornecedor), sugere o mais barato ao kg — só com
+    // preços dos últimos 150 dias.
+    const produtoMaisBarato = (tx, ingId) => {
+      const lista = tx.findRecordsByFilter(
+        'ingrediente_produtos',
+        'empresa = {:e} && ingrediente = {:i} && preco > 0 && embalagem_g > 0',
+        '',
+        0,
+        0,
+        { e: ctx.empresaId, i: ingId },
+      );
+      if (lista.length < 2) return null;
+      const limite = Date.now() - 150 * 86400000;
+      let melhor = null;
+      let melhorCusto = 0;
+      for (const p of lista) {
+        const d = String(p.getString('preco_atualizado_em')).substring(0, 10);
+        const t = d ? new Date(d + 'T00:00:00Z').getTime() : 0;
+        if (t < limite) continue;
+        const c = p.getFloat('preco') / p.getFloat('embalagem_g');
+        if (melhor === null || c < melhorCusto) {
+          melhor = p;
+          melhorCusto = c;
+        }
+      }
+      return melhor;
+    };
+
     app.runInTransaction((tx) => {
       for (const ingId in agg) {
         let ing;
@@ -495,9 +527,11 @@ routerAdd(
           const prod = parte.prod;
           const necessarioP = necessario * (parte.g / totalB);
           const faltaP = faltaG * (parte.g / totalB);
-          const embProd = prod ? num(prod, 'embalagem_g') : 0;
+          // produto de referência: o fixado na receita ou, sem fixar, o mais barato
+          const refProd = prod || produtoMaisBarato(tx, ingId);
+          const embProd = refProd ? num(refProd, 'embalagem_g') : 0;
           const embG = embProd > 0 ? embProd : num(ing, 'gramas_embalagem');
-          const precoProd = prod ? num(prod, 'preco') : 0;
+          const precoProd = refProd ? num(refProd, 'preco') : 0;
           const cpg =
             embProd > 0 && precoProd > 0
               ? precoProd / embProd
@@ -527,11 +561,11 @@ routerAdd(
           row.set('produto', chave);
           row.set(
             'descricao',
-            prod
-              ? ing.getString('nome') + ' — ' + (prod.getString('marca') || prod.getString('nome'))
+            refProd
+              ? ing.getString('nome') + ' — ' + (refProd.getString('marca') || refProd.getString('nome'))
               : ing.getString('nome'),
           );
-          row.set('fornecedor', (prod && prod.getString('fornecedor')) || ing.getString('fornecedor'));
+          row.set('fornecedor', (refProd && refProd.getString('fornecedor')) || ing.getString('fornecedor'));
           row.set('quantidade_necessaria_g', necessarioP);
           row.set('quantidade_comprar_g', comprar);
           row.set('embalagem_g', embG);
@@ -540,6 +574,10 @@ routerAdd(
           tx.save(row);
           manter[row.id] = true;
           linhas++;
+          if (comprar > 0) {
+            aComprar++;
+            custoTotal += comprar * cpg;
+          }
         }
         // linhas antigas deste ingrediente (ex.: de um produto que já não está fixado)
         const antigas = tx.findRecordsByFilter(
@@ -554,7 +592,7 @@ routerAdd(
       }
     });
 
-    return e.json(200, { linhas: linhas });
+    return e.json(200, { linhas: linhas, aComprar: aComprar, custo: Math.round(custoTotal * 100) / 100 });
   },
   $apis.requireAuth('users', '_superusers'),
 );

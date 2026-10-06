@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/routes.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/errors/mensagem_amigavel.dart';
+import '../../../core/formatting/money_provider.dart';
 import '../../../core/storage/prefs_locais.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../finance/data/capacidade_forno_repository.dart';
@@ -17,6 +18,7 @@ import '../../sales/domain/estado_vendus.dart';
 import '../../schedule/application/schedule_providers.dart';
 import '../../schedule/data/schedule_repository.dart';
 import '../../schedule/domain/production_plan.dart';
+import '../../shopping/application/shopping_providers.dart';
 import '../../tech_sheets/application/tech_sheets_providers.dart';
 import '../application/previsao_providers.dart';
 import '../domain/previsao_assar.dart';
@@ -35,6 +37,9 @@ String _n(double v) => v == v.roundToDouble()
 /// vendas dos mesmos dias da semana nas últimas semanas, pelo desperdício e
 /// pelo que ainda há em stock. A app testa vários modelos nos dias passados e
 /// usa o que erra menos — quanto mais histórico, melhor acerta.
+/// Preferência local: gerar a lista de compras ao agendar a produção.
+const chaveGerarCompras = 'previsao_gerar_compras';
+
 class PrevisaoAssarView extends ConsumerStatefulWidget {
   const PrevisaoAssarView({super.key});
 
@@ -47,6 +52,9 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
   double _ajuste = 0;
   bool _descontarStock = true;
   bool _agendando = false;
+
+  /// Preparar a lista de compras ao agendar (ligado por omissão).
+  bool get _gerarCompras => lerPref(chaveGerarCompras) != '0';
   bool _sincronizando = false;
 
   /// Quando se sincronizou o Vendus automaticamente nesta sessão (para não
@@ -217,15 +225,39 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
       }
       ref.invalidate(plansListProvider);
       final falharam = itens.length - validos.length;
+      // a lista de compras sai logo daqui (o que falta, contra o stock de hoje)
+      String compras = '';
+      var paraCompras = false;
+      if (_gerarCompras) {
+        try {
+          final r = await repo.gerarListaComprasResumo(plano.id);
+          ref.invalidate(shoppingListProvider);
+          if (r.aComprar > 0) {
+            paraCompras = true;
+            final fmt = ref.read(moneyFormatProvider);
+            compras =
+                ' Faltam ${r.aComprar} ingrediente(s) para comprar'
+                '${r.custo > 0 ? ' (≈ ${fmt(r.custo)})' : ''}.';
+          } else if (r.linhas > 0) {
+            compras = ' O stock chega: não falta comprar nada.';
+          }
+        } on Object {
+          compras = ' (Não consegui preparar a lista de compras.)';
+        }
+      }
       messenger.showSnackBar(
         SnackBar(
           content: Text(
             'Produção agendada: ${validos.length} produto(s) para $rotulo'
-            '${falharam > 0 ? ' ($falharam sem receita ligada ficaram de fora)' : ''}.',
+            '${falharam > 0 ? ' ($falharam sem receita ligada ficaram de fora)' : ''}.'
+            '$compras',
           ),
+          duration: const Duration(seconds: 8),
           action: SnackBarAction(
-            label: 'Ver',
-            onPressed: () => router.go('${Routes.schedule}/${plano.id}'),
+            label: paraCompras ? 'Ver compras' : 'Ver',
+            onPressed: () => router.go(
+              paraCompras ? Routes.shopping : '${Routes.schedule}/${plano.id}',
+            ),
           ),
         ),
       );
@@ -495,7 +527,24 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
                       ],
                     ),
                     if (total > 0 && podeAgendar) ...[
-                      const SizedBox(height: 12),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        title: const Text('Preparar também a lista de compras'),
+                        subtitle: const Text(
+                          'O que falta para esta produção, contra o stock de hoje',
+                        ),
+                        value: _gerarCompras,
+                        onChanged: (v) {
+                          guardarPref(
+                            chaveGerarCompras,
+                            (v ?? true) ? '1' : '0',
+                          );
+                          setState(() {});
+                        },
+                      ),
+                      const SizedBox(height: 4),
                       FilledButton.icon(
                         style: FilledButton.styleFrom(
                           minimumSize: const Size(0, 48),

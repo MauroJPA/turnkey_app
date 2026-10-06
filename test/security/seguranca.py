@@ -2873,6 +2873,7 @@ def teste_compras_produto():
     check(len(auto) == 1 and auto[0]['embalagem_g'] == 5000 and abs(auto[0]['quantidade_comprar_g'] - 5000) < 1e-6,
           'automático: embalagem de 5 kg (compra mais recente)', str(auto)[:220])
     check(fixa and abs(fixa[0]['custo_estimado'] - 2.0) < 1e-6, 'custo estimado do produto fixado (2 €)', str(fixa)[:220])
+    check(r.get('aComprar', 0) >= 2 and r.get('custo', 0) > 0, 'a resposta diz quantos ingredientes faltam e o custo estimado', str(r)[:120])
 
     # deixa de fixar: fica só o automático (2 kg -> 1 embalagem de 5 kg)
     call('PATCH', f'/api/collections/itens_receita/records/{it1}', {'produto': ''}, t)
@@ -2880,6 +2881,18 @@ def teste_compras_produto():
     ls = linhas()
     check(len(ls) == 1 and not ls[0].get('produto') and abs(ls[0]['quantidade_necessaria_g'] - 2000) < 1e-6
           and abs(ls[0]['quantidade_comprar_g'] - 5000) < 1e-6, 'sem produto fixado: uma só linha (2 kg → 1 embalagem de 5 kg)', str(ls)[:260])
+
+    # o automático sugere o produto mais barato ao kg (0,90 €/kg < 1,00 €/kg), mesmo não sendo o mais recente
+    produto('Farinha bio', 'Moinho Bio', 1000, 0.9, '2026-08-20')
+    st, r, _ = call('POST', f"/api/gc_turnkey/producoes/{prod['id']}/lista-compras", {}, t)
+    ls = linhas()
+    check(len(ls) == 1 and 'Moinho Bio' in ls[0]['descricao'] and abs(ls[0]['embalagem_g'] - 1000) < 1e-6
+          and not ls[0].get('produto'), 'sem produto fixado: sugere o mais barato ao kg', str(ls)[:260])
+    # preços antigos (> 150 dias) não contam para a sugestão
+    produto('Farinha antiga', 'Velharia', 1000, 0.1, '2026-01-01')
+    st, r, _ = call('POST', f"/api/gc_turnkey/producoes/{prod['id']}/lista-compras", {}, t)
+    ls = linhas()
+    check(len(ls) == 1 and 'Velharia' not in ls[0]['descricao'], 'um preço com mais de 150 dias não é sugerido', str(ls)[:260])
 
 
 def teste_alergenios_produto():

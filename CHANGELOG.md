@@ -2,6 +2,16 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.109.0 — 2026-10-06 — Compras automáticas ao agendar o Quantos assar
+
+Ao agendar o "Quantos assar", a lista de compras fica logo pronta.
+
+- **Quantos assar → "Agendar produção para…"** passa a preparar também a **lista de compras** dessa produção, contra o stock de hoje, e diz logo: *"Produção agendada: 6 produto(s) para amanhã. Faltam 5 ingredientes para comprar (≈ €32,40)"* com o botão **"Ver compras"**. Se o stock chega, diz *"O stock chega: não falta comprar nada"*.
+- **Sem passos extra**: antes tinhas de abrir a produção e gerar a lista à parte. Se não quiseres, desmarca **"Preparar também a lista de compras"** (fica lembrado neste aparelho).
+- **Fornecedor mais barato**: nas linhas em que a receita não fixa um produto, a lista sugere a marca/fornecedor **mais barato ao kg** entre os que já compraste (só preços dos últimos 150 dias e se houver pelo menos dois), com a embalagem e o custo desse produto. Os produtos fixados nas receitas mantêm-se.
+- O servidor passa a responder também quantos ingredientes ficam por comprar e o custo estimado (a lista gerada à mão, na Agenda, continua igual).
+- Testes: sugestão do mais barato, preço antigo ignorado, produto fixado respeitado e a resposta com o resumo.
+
 ## 1.108.0 — 2026-10-06 — Sugestão de preço quando um ingrediente sobe
 
 Quando um ingrediente sobe, a app sugere o novo preço de venda.
