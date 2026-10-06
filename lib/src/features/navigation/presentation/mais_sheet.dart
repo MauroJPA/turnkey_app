@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/storage/prefs_locais.dart';
 import '../../ingredients/application/ingredients_providers.dart';
 import '../../recipes/application/recipes_providers.dart';
 import '../../tech_sheets/application/tech_sheets_providers.dart';
@@ -216,7 +217,9 @@ class _Grupos extends ConsumerWidget {
                         child: _PaginaTile(
                           pagina: p,
                           cor: prefs.cor(p.chave),
-                          aoAbrir: () => aoAbrir(p.rota),
+                          aoAbrir: () => aoAbrir(
+                            rotaAoAbrir(p, lerPref(chaveUltimaSeccao(p.chave))),
+                          ),
                           aoEscolherCor: () => aoEscolherCor(p, prefs),
                         ),
                       ),

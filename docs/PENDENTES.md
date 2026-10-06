@@ -1,6 +1,6 @@
 # Pendentes (fila de trabalho)
 
-Última versão fechada: **2.2.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
+Última versão fechada: **2.3.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
 (editar → `bash scripts/verificar.sh` → pubspec + CHANGELOG + docs/CHECKLIST_TESTES.md → commit com caminhos
 explícitos → `git branch -f develop main` → `git tag vX.Y.Z`). No fim: `powershell -File scripts\empacotar-producao.ps1`
 e dar ao Mauro o SHA-256 + comando de publicação.
@@ -29,7 +29,7 @@ Princípio: prático, ágil, menos cliques e menos ecrã; nenhuma funcionalidade
 - ~~**2.0.0**~~ (feito) Início "Hoje": saudação, 3 atalhos à escolha, "Precisa de ti" com o botão que resolve na própria linha, "Para saber" fechado.
 - ~~**2.1.0**~~ (feito) Menu "Mais" agrupado por tarefa + pesquisa global (páginas, ingredientes, fichas) em vez da grelha de mosaicos.
 - ~~**2.2.0**~~ (feito) Opções em grupos com estado ("Vendus sem sincronizar", "Backup ok"); cada grupo abre uma página curta.
-- **2.3.0** Hubs com poucos separadores (Contabilidade 8 → 3, etc.) e lembrar o último separador de cada hub.
+- ~~**2.3.0**~~ (feito) Hubs com poucos separadores (Contabilidade 8 → 3, etc.) e lembrar o último separador de cada hub.
 - **2.4.0** "Plano de amanhã" em 3 passos: o que assar → agendar → compras, num só caminho.
 
 ## Fila aprovada pelo Mauro em 06/10/2026 (cada item = uma versão; princípio: ágil, poupar tempo, nunca atrapalhar a rotina)

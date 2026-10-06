@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../../core/widgets/hub_segmentos.dart';
 import '../../consumables/presentation/consumiveis_screen.dart';
 import '../../ingredients/presentation/ingredients_screen.dart';
 import '../../packaging/presentation/embalagens_screen.dart';
@@ -88,34 +89,34 @@ class InventarioScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          SizedBox(
-            height: 56,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              children: [
-                for (final s in SecaoInventario.values)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      avatar: Icon(s.icon, size: 18),
-                      label: Text(
-                        s == SecaoInventario.precos && subidas > 0
-                            ? '${s.label} · $subidas a subir'
-                            : s == SecaoInventario.precos && poupancas > 0
-                            ? '${s.label} · $poupancas a poupar'
-                            : baixos(s) > 0
-                            ? '${s.label} · ${baixos(s)} a acabar'
-                            : s.label,
-                      ),
-                      selected: secao == s,
-                      onSelected: (_) {
-                        if (secao != s) context.go(s.rota);
-                      },
-                    ),
-                  ),
-              ],
-            ),
+          HubSegmentos<SecaoInventario>(
+            principais: const [
+              SecaoInventario.ingredientes,
+              SecaoInventario.limpeza,
+              SecaoInventario.precos,
+            ],
+            extras: const [
+              SecaoInventario.material,
+              SecaoInventario.embalagens,
+            ],
+            atual: secao,
+            rotulo: (s) => switch (s) {
+              SecaoInventario.limpeza => 'Limpeza',
+              SecaoInventario.material => 'Material da loja',
+              _ => s.label,
+            },
+            icone: (s) => s.icon,
+            aoEscolher: (s) => context.go(s.rota),
+            // o que está a acabar / a mudar de preço vê-se sem abrir
+            emblema: (s) {
+              if (s == SecaoInventario.precos) {
+                if (subidas > 0) return (texto: '↑$subidas', alerta: true);
+                if (poupancas > 0) return (texto: '↓$poupancas', alerta: false);
+                return null;
+              }
+              final n = baixos(s);
+              return n > 0 ? (texto: '$n', alerta: true) : null;
+            },
           ),
           Expanded(
             child: switch (secao) {

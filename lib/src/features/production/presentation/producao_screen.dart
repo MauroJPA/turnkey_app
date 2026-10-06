@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../../core/widgets/hub_segmentos.dart';
 import '../../schedule/application/schedule_providers.dart';
 import '../../schedule/domain/production_plan.dart';
 import '../../schedule/presentation/schedule_screen.dart';
@@ -71,30 +72,15 @@ class ProducaoScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          SizedBox(
-            height: 56,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              children: [
-                for (final s in SecaoProducao.values)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      avatar: Icon(s.icon, size: 18),
-                      label: Text(
-                        s == SecaoProducao.agenda && porFazer > 0
-                            ? '${s.label} · $porFazer por fazer'
-                            : s.label,
-                      ),
-                      selected: secao == s,
-                      onSelected: (_) {
-                        if (secao != s) context.go(s.rota);
-                      },
-                    ),
-                  ),
-              ],
-            ),
+          HubSegmentos<SecaoProducao>(
+            principais: SecaoProducao.values,
+            atual: secao,
+            rotulo: (s) => s.label,
+            icone: (s) => s.icon,
+            aoEscolher: (s) => context.go(s.rota),
+            emblema: (s) => s == SecaoProducao.agenda && porFazer > 0
+                ? (texto: '$porFazer', alerta: false)
+                : null,
           ),
           Expanded(
             child: switch (secao) {

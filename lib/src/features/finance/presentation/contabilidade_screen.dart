@@ -6,6 +6,7 @@ import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../../core/widgets/hub_segmentos.dart';
 import '../../invoices/presentation/contabilidade_sheet.dart';
 import '../domain/periodo.dart';
 import 'custos_fixos_screen.dart';
@@ -77,26 +78,23 @@ class ContabilidadeScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          SizedBox(
-            height: 56,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              children: [
-                for (final s in SecaoContabilidade.values)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      avatar: Icon(s.icon, size: 18),
-                      label: Text(s.label),
-                      selected: secao == s,
-                      onSelected: (_) {
-                        if (secao != s) context.go(s.rota);
-                      },
-                    ),
-                  ),
-              ],
-            ),
+          HubSegmentos<SecaoContabilidade>(
+            principais: const [
+              SecaoContabilidade.resumo,
+              SecaoContabilidade.custos,
+              SecaoContabilidade.relatorios,
+            ],
+            extras: const [
+              SecaoContabilidade.dre,
+              SecaoContabilidade.equipamentos,
+              SecaoContabilidade.numeros,
+              SecaoContabilidade.rentabilidade,
+              SecaoContabilidade.revendedores,
+            ],
+            atual: secao,
+            rotulo: (s) => s.label,
+            icone: (s) => s.icon,
+            aoEscolher: (s) => context.go(s.rota),
           ),
           Expanded(
             child: switch (secao) {

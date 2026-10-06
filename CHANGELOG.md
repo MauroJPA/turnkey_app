@@ -2,6 +2,20 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.3.0 — 2026-10-06 — Separadores dos hubs sempre à vista e última secção lembrada
+
+Acabaram-se as barras de separadores que deslizam: cada página com várias secções mostra **poucas secções, todas à vista**, e a app **lembra onde estiveste**.
+
+- **Separadores do mesmo tamanho e sempre visíveis**, sem deslizar para os encontrar. O que sobra fica num **"Mais ▾"**:
+  - **Contabilidade**: Resumo · Custos fixos · Relatórios e IVA · Mais ▾ (DRE, Equipamentos, Números mágicos, Rentabilidade, Revendedores) — passa de 8 separadores a 3 + "Mais".
+  - **Pessoas**: Ponto · Férias · Escala · Notas · Mais ▾ (Formações).
+  - **Inventário**: Ingredientes · Limpeza · Preços · Mais ▾ (Material da loja, Embalagens). O que está a acabar ou a mudar de preço aparece num número ao lado ("2", "↑3" a subir, "↓1" a poupar).
+  - **Produção**: Produzir · Agenda · Quantos assar · Lotes (as 4 cabem; a Agenda mostra quantas há por fazer).
+- Quando a secção aberta está no "Mais ▾", o botão mostra o nome dela.
+- **A app lembra a última secção vista** em Contabilidade, Pessoas e Inventário: ao voltar a esta página (pelo rodapé ou pelo "Mais") abres onde ficaste — por exemplo, nos Relatórios. A Produção abre sempre em "Produzir". A memória é só do aparelho.
+- Qualquer secção continua a 2 toques pela pesquisa do "Mais" (acrescentámos os "Números mágicos").
+- Testes: regras da memória (só páginas com secções, nunca rotas de detalhe) e secções de cada página na pesquisa.
+
 ## 2.2.0 — 2026-10-06 — Configurações em grupos, com o estado à vista
 
 As Configurações deixam de ser uma página de 1000 linhas: passam a ser uma **lista de grupos com o estado à vista**.

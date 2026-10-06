@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/auth/permissions.dart';
+import '../../../core/storage/prefs_locais.dart';
 import '../../invoices/presentation/analise_faturas_widgets.dart';
 import '../../navigation/application/navigation_providers.dart';
+import '../../navigation/domain/destinos_app.dart';
 import '../../navigation/domain/nav_config.dart';
 import '../../navigation/domain/pagina_app.dart';
 import '../../navigation/presentation/mais_sheet.dart';
@@ -30,12 +32,17 @@ class MainShell extends ConsumerWidget {
     final papel = ref.watch(currentPapelProvider);
     final config = ref.watch(navConfigAtualProvider);
 
-    final abas = <({String rota, IconData icon, String label})>[
-      (rota: Routes.home, icon: Icons.home_outlined, label: 'Início'),
+    final abas = <({String chave, String rota, IconData icon, String label})>[
+      (
+        chave: chaveInicio,
+        rota: Routes.home,
+        icon: Icons.home_outlined,
+        label: 'Início',
+      ),
       // configurações antigas podem ter 4 ou 5: as primeiras ficam no rodapé,
       // as outras vão para o "Mais"
       for (final p in config.rodapePara(papel).take(rodapeMaximo))
-        (rota: p.rota, icon: p.icon, label: p.rotuloRodape),
+        (chave: p.chave, rota: p.rota, icon: p.icon, label: p.rotuloRodape),
     ];
 
     var selecionada = 0;
@@ -56,6 +63,11 @@ class MainShell extends ConsumerWidget {
           (a) => a.rota != Routes.home && location.startsWith(a.rota),
         )) {
       selecionada = abas.length;
+    }
+    // lembra a última secção vista (Ponto, Relatórios…) para voltar a ela
+    if (pagina != null && deveLembrar(pagina.chave, location)) {
+      final k = chaveUltimaSeccao(pagina.chave);
+      if (lerPref(k) != location) guardarPref(k, location);
     }
     final nivel = pagina == null
         ? NivelAcesso.editar
@@ -100,9 +112,22 @@ class MainShell extends ConsumerWidget {
                     selectedIndex: selecionada,
                     labelBehavior:
                         NavigationDestinationLabelBehavior.alwaysShow,
-                    onDestinationSelected: (i) => i == abas.length
-                        ? showMaisSheet(context)
-                        : context.go(abas[i].rota),
+                    onDestinationSelected: (i) {
+                      if (i == abas.length) {
+                        showMaisSheet(context);
+                        return;
+                      }
+                      final a = abas[i];
+                      final p = paginaPorChave(a.chave);
+                      context.go(
+                        p == null
+                            ? a.rota
+                            : rotaAoAbrir(
+                                p,
+                                lerPref(chaveUltimaSeccao(a.chave)),
+                              ),
+                      );
+                    },
                     destinations: [
                       for (final a in abas)
                         NavigationDestination(

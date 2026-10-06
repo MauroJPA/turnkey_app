@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gc_turnkey/src/app/routes.dart';
 import 'package:gc_turnkey/src/features/navigation/domain/destinos_app.dart';
 import 'package:gc_turnkey/src/features/navigation/domain/pagina_app.dart';
 
@@ -81,6 +82,73 @@ void main() {
         procurarDestinos('a', _tudo, maximo: 3).length,
         lessThanOrEqualTo(3),
       );
+    });
+  });
+
+  group('última secção vista', () {
+    final inventario = paginaPorChave('inventario')!;
+    final producao = paginaPorChave('producao')!;
+
+    test('só as páginas com memória lembram', () {
+      expect(deveLembrar('inventario', Routes.inventoryPrecos), isTrue);
+      expect(deveLembrar('pessoas', Routes.pessoasFerias), isTrue);
+      expect(deveLembrar('financeiro', Routes.relatorios), isTrue);
+      expect(deveLembrar('producao', Routes.schedule), isFalse);
+    });
+
+    test('rotas de detalhe não se lembram', () {
+      expect(deveLembrar('inventario', '/inventario/abc'), isFalse);
+      expect(deveLembrar('financeiro', '/financeiro/xpto'), isFalse);
+    });
+
+    test('abre na última secção, se válida', () {
+      expect(
+        rotaAoAbrir(inventario, Routes.inventoryPrecos),
+        Routes.inventoryPrecos,
+      );
+    });
+
+    test('sem memória, ou com rota de outra página, abre a própria página', () {
+      expect(rotaAoAbrir(inventario, null), Routes.inventory);
+      expect(rotaAoAbrir(inventario, Routes.pessoasFerias), Routes.inventory);
+      expect(rotaAoAbrir(inventario, '/lixo'), Routes.inventory);
+    });
+
+    test('a Produção abre sempre em Produzir', () {
+      expect(rotaAoAbrir(producao, Routes.schedule), Routes.production);
+    });
+
+    test('as secções de cada hub com memória estão todas na pesquisa', () {
+      for (final r in [
+        Routes.painelFinanceiro,
+        Routes.dre,
+        Routes.custosFixos,
+        Routes.equipamentos,
+        Routes.numerosMagicos,
+        Routes.rentabilidade,
+        Routes.tabelaRevendedores,
+        Routes.relatorios,
+      ]) {
+        expect(rotasDaPagina('financeiro'), contains(r));
+      }
+      for (final r in [
+        Routes.pessoasPonto,
+        Routes.pessoasFerias,
+        Routes.pessoasEscala,
+        Routes.pessoasNotas,
+        Routes.pessoasFormacoes,
+      ]) {
+        expect(rotasDaPagina('pessoas'), contains(r));
+      }
+      for (final r in [
+        Routes.inventory,
+        Routes.inventoryLimpeza,
+        Routes.inventoryMaterial,
+        Routes.inventoryEmbalagens,
+        Routes.inventoryPrecos,
+      ]) {
+        expect(rotasDaPagina('inventario'), contains(r));
+      }
     });
   });
 }

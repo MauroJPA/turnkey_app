@@ -318,7 +318,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
   HelpTopic.contabilidade: (
     titulo: 'Contabilidade',
     paragrafos: [
-      'Os números da empresa numa só página, em secções: Resumo (entradas, saídas e lucro), DRE, Custos fixos, Equipamentos, Números mágicos e Relatórios e IVA. Toca na secção para mudar; o ? no canto explica a que estás a ver.',
+      'Os números da empresa numa só página, em secções: Resumo (entradas, saídas e lucro), Custos fixos e Relatórios e IVA estão sempre à vista; DRE, Equipamentos, Números mágicos, Rentabilidade e Revendedores estão em "Mais ▾" (ou procura-os no "Mais" do rodapé). A app lembra a última secção que viste e volta a ela da próxima vez. O ? no canto explica a que estás a ver.',
       'Relatórios e IVA: escolhe o período e vê o IVA a separar (cobrado nas vendas menos o das faturas de compra). Daqui também sais para o Relatório geral (Excel/CSV, só administradores), as faturas do mês para a contabilista, "O que comprei", a Análise de vendas e os Relatórios HACCP.',
     ],
   ),

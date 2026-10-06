@@ -183,6 +183,14 @@ const seccoesApp = <DestinoApp>[
     palavras: 'iva exportar contabilista',
   ),
   DestinoApp(
+    rota: Routes.numerosMagicos,
+    label: 'Números mágicos',
+    icon: Icons.calculate_outlined,
+    pagina: 'financeiro',
+    dentroDe: 'Contabilidade',
+    palavras: 'ponto de equilibrio preco minimo',
+  ),
+  DestinoApp(
     rota: Routes.rentabilidade,
     label: 'Rentabilidade por sabor',
     icon: Icons.leaderboard_outlined,
@@ -247,6 +255,36 @@ const seccoesApp = <DestinoApp>[
     palavras: 'rodape papeis acessos',
   ),
 ];
+
+/// Páginas com várias secções onde faz sentido voltar à última vista (quem
+/// vai e volta entre o Ponto e as Férias, ou fica nos Relatórios). Fora a
+/// Produção, que abre sempre em "Produzir".
+const paginasComMemoria = {'financeiro', 'pessoas', 'inventario'};
+
+/// As rotas (a da página e as das secções) que pertencem à página [chave].
+Set<String> rotasDaPagina(String chave) => {
+  for (final d in todosDestinos())
+    if (d.pagina == chave) d.rota,
+};
+
+/// A rota onde guardar a "última secção vista" quando se está em [location].
+bool deveLembrar(String chave, String location) =>
+    paginasComMemoria.contains(chave) &&
+    rotasDaPagina(chave).contains(location);
+
+/// Onde abre a página [p]: na última secção vista, se a há e é válida; senão
+/// na própria página.
+String rotaAoAbrir(PaginaApp p, String? guardada) {
+  if (guardada != null &&
+      paginasComMemoria.contains(p.chave) &&
+      rotasDaPagina(p.chave).contains(guardada)) {
+    return guardada;
+  }
+  return p.rota;
+}
+
+/// Chave da preferência (neste aparelho) com a última secção vista de [chave].
+String chaveUltimaSeccao(String chave) => 'ultima_seccao_$chave';
 
 /// Como o menu "Mais" agrupa as páginas, por tarefa (não por tipo de ecrã).
 /// Uma página só aparece num grupo.

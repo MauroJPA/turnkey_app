@@ -1988,6 +1988,18 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Operador da plataforma: "Aprovações de contas" aparece em Manutenção, com "N por aprovar" a vermelho quando há
 - [ ] A seta ← das sub-páginas volta à lista de Configurações
 
+## 143. Separadores dos hubs sempre à vista e última secção lembrada
+
+- [ ] Contabilidade: separadores "Resumo · Custos fixos · Relatórios e IVA · Mais ▾", todos visíveis sem deslizar; "Mais ▾" abre DRE, Equipamentos, Números mágicos, Rentabilidade, Revendedores
+- [ ] Escolher uma secção do "Mais ▾": o botão passa a mostrar o nome dela (ex.: "DRE ▾") e o menu assinala-a
+- [ ] Pessoas: "Ponto · Férias · Escala · Notas · Mais ▾" (Formações no "Mais")
+- [ ] Inventário: "Ingredientes · Limpeza · Preços · Mais ▾" (Material da loja e Embalagens); números a vermelho nas secções com itens a acabar; "↑N" em Preços quando há subidas
+- [ ] Produção: 4 separadores; "Quantos assar" cabe (pode ficar em 2 linhas) e a Agenda mostra o número por fazer
+- [ ] Sair de Contabilidade a meio dos Relatórios e voltar pelo rodapé ou pelo "Mais": abre nos Relatórios
+- [ ] O mesmo em Pessoas (Férias) e Inventário (Preços)
+- [ ] Produção abre sempre em "Produzir", mesmo depois de ver a Agenda
+- [ ] Em ecrã largo (computador) os separadores não ficam esticados de forma estranha
+
 ---
 
 ## Notas / ajustes pedidos
