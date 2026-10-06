@@ -170,7 +170,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: (empresaAsync.isLoading || configAsync.isLoading)
           ? const Center(child: CircularProgressIndicator())
           : (empresaAsync.hasError || configAsync.hasError)
-          ? Center(child: Text('${empresaAsync.error ?? configAsync.error}'))
+          ? Center(
+              child: Text(
+                mensagemAmigavel(
+                  (empresaAsync.error ?? configAsync.error)!,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            )
           : _form(empresaAsync.value!, configAsync.value!),
     );
   }

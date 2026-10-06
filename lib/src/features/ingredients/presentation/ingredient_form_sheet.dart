@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/data/marcas_fornecedores_providers.dart';
+import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/nutrition/nutrition.dart';
 import '../../../core/widgets/autocomplete_text_field.dart';
 import '../application/ingredients_providers.dart';
@@ -197,7 +198,7 @@ class _IngredientFormSheetState extends ConsumerState<_IngredientFormSheet> {
       });
       _aviso('Rótulo lido. Confere os valores antes de adicionar.');
     } on Object catch (e) {
-      _aviso('$e');
+      _aviso(mensagemAmigavel(e));
     } finally {
       if (mounted) setState(() => _lendo = false);
     }

@@ -2,6 +2,13 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.106.1 — 2026-10-06 — Erros sempre em português, sem texto técnico
+
+Correção: os erros já não mostram texto técnico nem o endereço do servidor.
+
+- Em alguns sítios (Configurações quando o servidor não responde, o login, a criação da empresa, as Encomendas, a leitura de rótulos, juntar marcas e fornecedores, ligar ingredientes automaticamente) aparecia o erro "em bruto", com o endereço interno do servidor. Passam todos a mostrar uma frase em português ("Sem ligação ao servidor…", "O servidor não conseguiu concluir…").
+- Sem alterações no servidor nem na base de dados.
+
 ## 1.106.0 — 2026-10-06 — Formações e certificados das pessoas
 
 Formações e certificados das pessoas, com validade e aviso antes de caducar.

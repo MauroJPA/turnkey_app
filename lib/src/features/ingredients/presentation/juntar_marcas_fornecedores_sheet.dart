@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/data/marcas_fornecedores_providers.dart';
+import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/formatting/capitalizar.dart';
 import '../../../core/widgets/autocomplete_text_field.dart';
 
@@ -101,7 +102,7 @@ class _JuntarSheetState extends ConsumerState<_JuntarSheet> {
     } on Object catch (e) {
       setState(() {
         _busy = false;
-        _erro = 'Não foi possível juntar: $e';
+        _erro = 'Não foi possível juntar: ${mensagemAmigavel(e)}';
       });
     }
   }

@@ -58,7 +58,7 @@ Future<void> ligarPendentesAutomaticamente(
     } on Object catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao ligar automaticamente: $e')),
+          SnackBar(content: Text('Erro ao ligar automaticamente: ${mensagemAmigavel(e)}')),
         );
       }
     }
@@ -92,7 +92,7 @@ Future<void> ligarPendentesAutomaticamente(
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Erro ao ligar: $e')));
+        ).showSnackBar(SnackBar(content: Text('Erro ao ligar: ${mensagemAmigavel(e)}')));
       }
     }
   }

@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/nutrition/nutrition.dart';
 import '../application/ingredients_providers.dart';
 import '../data/ingredient_repository.dart';
@@ -216,7 +217,7 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
       }
     } on Object catch (e) {
       messenger.hideCurrentSnackBar();
-      if (mounted) _snack('$e');
+      if (mounted) _snack(mensagemAmigavel(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -247,7 +248,7 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
         _snack('Foto da tabela nutricional anexada.');
       }
     } on Object catch (e) {
-      if (mounted) _snack('$e');
+      if (mounted) _snack(mensagemAmigavel(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -261,7 +262,7 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
           .removerFotoNutri(widget.ingrediente.id);
       if (mounted) setState(() => _temFoto = false);
     } on Object catch (e) {
-      if (mounted) _snack('$e');
+      if (mounted) _snack(mensagemAmigavel(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -340,7 +341,7 @@ class _NutricaoSheetState extends ConsumerState<_NutricaoSheet> {
           );
       if (mounted) Navigator.pop(context);
     } on Object catch (e) {
-      if (mounted) _snack('$e');
+      if (mounted) _snack(mensagemAmigavel(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

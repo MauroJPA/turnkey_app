@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/auth_controller.dart';
+import '../../../core/errors/mensagem_amigavel.dart';
 import '../../settings/data/empresa_repository.dart';
 import '../../settings/domain/empresa.dart';
 
@@ -42,7 +43,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       await ref.read(authControllerProvider.notifier).reload();
       // O redirect do router leva para a home assim que o AuthState muda.
     } on Object catch (e) {
-      setState(() => _error = e.toString());
+      setState(() => _error = mensagemAmigavel(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

@@ -72,7 +72,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } on ClientException catch (e) {
       setState(() => _error = _friendlyError(e));
     } on Object catch (e) {
-      setState(() => _error = e.toString());
+      setState(() => _error = mensagemAmigavel(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -189,13 +189,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   String _friendlyError(ClientException e) {
-    final msg = e.response['message']?.toString() ?? e.toString();
+    final msg = e.response['message']?.toString() ?? '';
     if (msg.contains('Failed to authenticate')) {
       return 'Email ou palavra-passe incorretos.';
     }
-    if (e.statusCode == 0) {
-      return 'Sem ligação ao servidor.';
-    }
+    if (e.statusCode == 0 || msg.isEmpty) return mensagemAmigavel(e);
     return msg;
   }
 

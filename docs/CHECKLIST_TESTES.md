@@ -1905,6 +1905,11 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Como membro da equipa (sem ser admin): vê e regista só os seus; não vê os dos colegas
 - [ ] O resumo diário (Configurações → Avisos → testar) traz a secção "Formações a caducar"
 
+## 135. Erros sempre em português, sem texto técnico
+
+- [ ] Com o servidor desligado, abrir Configurações (sem sessão em cache): aparece "Sem ligação ao servidor…" e não um texto técnico com endereço
+- [ ] Login com a palavra-passe errada continua a dizer "Email ou palavra-passe incorretos."
+
 ---
 
 ## Notas / ajustes pedidos

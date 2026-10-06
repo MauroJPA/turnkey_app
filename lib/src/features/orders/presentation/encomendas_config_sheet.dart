@@ -95,7 +95,7 @@ class _EncomendasConfigSheetState
         ),
         error: (e, _) => SizedBox(
           height: 100,
-          child: Center(child: Text('Erro: $e')),
+          child: Center(child: Text(mensagemAmigavel(e))),
         ),
         data: (config) {
           _carregarSeNecessario(config);
