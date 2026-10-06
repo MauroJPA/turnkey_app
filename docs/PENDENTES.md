@@ -24,6 +24,22 @@ Fila atual (pedido do Mauro em 06/10/2026, **cada item = uma versão**, por esta
 - ~~**1.94.0**~~ (feito) Pessoas → Notas: anotações da equipa (livro de ocorrências / recados) com fixar e arquivar.
 - No fim: empacotar, dar SHA-256 + comando; atualizar docs/SEGURANCA.md se houver novos endpoints.
 
+## Ideias da revisão geral (06/10/2026) — por ordem de valor/esforço
+Ainda **não aprovadas pelo Mauro**; cada uma que for avante = uma versão própria.
+
+1. **Escala semanal da equipa** (mapa de horário de trabalho, obrigação legal em PT): turnos por pessoa e dia, a partir dos dias de trabalho e das férias; base para horas previstas × ponto e para horas extra / banco de horas.
+2. **Dias de trabalho e férias nos avisos**: o resumo diário, o HACCP "por fazer" e "Quantos assar" ignoram as folgas; quem está de férias não conta como atrasado.
+3. **Alerta de "saída por marcar"** no resumo diário (Telegram/email) e no Início para a administração.
+4. **Quantos assar → Agendar produção** (uma toque cria a produção/lista de compras com as quantidades) e comparar previsão × vendido real (a app aprende com o erro).
+5. **Validade por lote**: alertas de ingredientes e produtos a expirar usando os lotes (1.86.0) e o stock.
+6. **Saúde dos dados**: lista das fichas sem preço/tempo/temperatura, ingredientes sem preço, produtos sem alergénios — o que falta para a previsão, a rentabilidade e as etiquetas ficarem certas.
+7. **Importação automática diária das vendas (Vendus)** para a previsão estar sempre atual.
+8. **App que abre sem Wi-Fi** (service worker): hoje o quiosque só continua offline se já estiver aberto.
+9. **Segurança**: início de sessão com verificação em 2 passos, bloqueio por tentativas, teste de restauro dos backups e espaço em disco no cartão de backups.
+10. **Fornecedores**: comparador de preços do mesmo ingrediente entre faturas/fornecedores.
+11. **Custo do desperdício** por motivo e por sabor (a Contagem já regista o motivo).
+12. **Formações e certificados** das pessoas (HACCP, manipulador de alimentos) com validade e aviso.
+
 ## Notas para quem retomar
 - Pacote publicado no servidor ainda é o **1.48.2**; tudo depois está só empacotado/commitado. Antes do deploy:
   `df -h /` no servidor. Migrations novas até `1790970000`.
