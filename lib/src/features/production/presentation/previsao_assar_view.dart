@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/routes.dart';
+import '../../../core/auth/current_user.dart';
+import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/storage/prefs_locais.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../finance/data/capacidade_forno_repository.dart';
+import '../../mise_en_place/data/mep_repository.dart';
 import '../../pricing/data/cost_config_repository.dart';
 import '../../pricing/domain/dias_trabalho.dart';
+import '../../schedule/application/schedule_providers.dart';
+import '../../schedule/data/schedule_repository.dart';
+import '../../schedule/domain/production_plan.dart';
 import '../../tech_sheets/application/tech_sheets_providers.dart';
 import '../application/previsao_providers.dart';
 import '../domain/previsao_assar.dart';
@@ -36,6 +44,142 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
   int? _escolhido; // dias a partir de hoje (null = o primeiro dia de trabalho)
   double _ajuste = 0;
   bool _descontarStock = true;
+  bool _agendando = false;
+
+  // a avaliação dos últimos dias só se refaz quando os dados mudam
+  List<ConsumoDia>? _avalDados;
+  Set<int>? _avalDias;
+  List<AvaliacaoDia> _aval = const [];
+
+  List<AvaliacaoDia> _avaliacoes(
+    DateTime hoje,
+    List<ConsumoDia> dados,
+    Set<int> dias,
+  ) {
+    if (!identical(_avalDados, dados) || _avalDias?.length != dias.length) {
+      _avalDados = dados;
+      _avalDias = dias;
+      _aval = avaliarPrevisoes(hoje: hoje, consumo: dados, diasTrabalho: dias);
+    }
+    return _aval;
+  }
+
+  /// Cria a produção desse dia com as quantidades da previsão: um toque.
+  Future<void> _agendar(
+    DateTime alvo,
+    String rotulo,
+    List<({String fichaId, int unidades})> itens,
+  ) async {
+    if (itens.isEmpty || _agendando) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+    setState(() => _agendando = true);
+    try {
+      // já há uma produção da previsão para este dia?
+      final planos = await ref.read(plansListProvider.future);
+      ProducaoPlan? existente;
+      for (final p in planos) {
+        if (p.estado == EstadoProducao.planeada &&
+            p.data.year == alvo.year &&
+            p.data.month == alvo.month &&
+            p.data.day == alvo.day &&
+            p.titulo.startsWith('Previsão')) {
+          existente = p;
+        }
+      }
+      if (existente != null) {
+        if (!mounted) return;
+        final r = await showDialog<String>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Já está agendado'),
+            content: Text(
+              'Já tens a produção da previsão para $rotulo '
+              '("${existente!.titulo}"). Queres abri-la ou criar outra?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancelar'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, 'outra'),
+                child: const Text('Criar outra'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, 'abrir'),
+                child: const Text('Abrir'),
+              ),
+            ],
+          ),
+        );
+        if (r == null) return;
+        if (r == 'abrir') {
+          router.go('${Routes.schedule}/${existente.id}');
+          return;
+        }
+      }
+      final mep = ref.read(mepRepositoryProvider);
+      final resultados = await Future.wait([
+        for (final i in itens)
+          () async {
+            try {
+              return await mep.planoFicha(i.fichaId, i.unidades);
+            } on Object {
+              return null;
+            }
+          }(),
+      ]);
+      final validos = [
+        for (final p in resultados)
+          if (p != null && p.receitaId.isNotEmpty && p.kg > 0) p,
+      ];
+      if (validos.isEmpty) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Não consegui agendar: estes produtos não têm receita de massa '
+              'ligada na ficha técnica.',
+            ),
+          ),
+        );
+        return;
+      }
+      final repo = ref.read(scheduleRepositoryProvider);
+      final plano = await repo.createPlan(
+        data: alvo,
+        titulo: 'Previsão: assar $rotulo',
+      );
+      for (final p in validos) {
+        await repo.addItem(
+          plano.id,
+          receitaId: p.receitaId,
+          quantidadeKg: p.kg,
+          formatoId: p.formatoId.isEmpty ? null : p.formatoId,
+          fichaId: p.fichaId,
+          unidadesPrevistas: p.unidades,
+        );
+      }
+      ref.invalidate(plansListProvider);
+      final falharam = itens.length - validos.length;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Produção agendada: ${validos.length} produto(s) para $rotulo'
+            '${falharam > 0 ? ' ($falharam sem receita ligada ficaram de fora)' : ''}.',
+          ),
+          action: SnackBarAction(
+            label: 'Ver',
+            onPressed: () => router.go('${Routes.schedule}/${plano.id}'),
+          ),
+        ),
+      );
+    } on Object catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
+    } finally {
+      if (mounted) setState(() => _agendando = false);
+    }
+  }
 
   Future<void> _editarCapacidade(double auto) async {
     final c = TextEditingController(text: lerPref(chaveCapacidadeForno) ?? '');
@@ -82,6 +226,7 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
     final porFornada = capacidadeFornoEscolhida(auto);
     final tt = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
+    final podeAgendar = ref.watch(currentPapelProvider).canEditBusiness;
     final agora = DateTime.now();
     final hoje = DateTime(agora.year, agora.month, agora.day);
     final diasTrab =
@@ -99,7 +244,7 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
       value: consumo,
       onRetry: () => ref.invalidate(consumoRecenteProvider),
       data: (dados) {
-        final nomes = {
+        final nomes = <String, String>{
           for (final f in fichas.valueOrNull ?? const [])
             f.id: f.subnome.isEmpty ? f.nome : '${f.nome} · ${f.subnome}',
         };
@@ -239,49 +384,79 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
               margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '$total para assar',
-                            style: tt.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '$total para assar',
+                                style: tt.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                fornadas == null
+                                    ? 'Ainda sem fornadas registadas para estimar as fornadas.'
+                                    : '≈ ${fornadas.toStringAsFixed(1).replaceAll('.', ',')} fornadas '
+                                          'de ${porFornada.toStringAsFixed(0)} un'
+                                          '${lerPref(chaveCapacidadeForno) == null && auto < capacidadeAutoSuspeita ? ' (média baixa: toca no lápis e escreve a capacidade do forno)' : ''}',
+                                style: tt.bodySmall,
+                              ),
+                            ],
                           ),
-                          Text(
-                            fornadas == null
-                                ? 'Ainda sem fornadas registadas para estimar as fornadas.'
-                                : '≈ ${fornadas.toStringAsFixed(1).replaceAll('.', ',')} fornadas '
-                                      'de ${porFornada.toStringAsFixed(0)} un'
-                                      '${lerPref(chaveCapacidadeForno) == null && auto < capacidadeAutoSuspeita ? ' (média baixa: toca no lápis e escreve a capacidade do forno)' : ''}',
-                            style: tt.bodySmall,
-                          ),
-                        ],
+                        ),
+                        IconButton(
+                          tooltip: 'Unidades por fornada',
+                          onPressed: () => _editarCapacidade(auto),
+                          icon: const Icon(Icons.edit_outlined),
+                        ),
+                        IconButton(
+                          tooltip: 'Copiar a lista',
+                          onPressed: total == 0
+                              ? null
+                              : () async {
+                                  final msg = ScaffoldMessenger.of(context);
+                                  await Clipboard.setData(
+                                    ClipboardData(text: texto()),
+                                  );
+                                  msg.showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Lista copiada.'),
+                                    ),
+                                  );
+                                },
+                          icon: const Icon(Icons.copy),
+                        ),
+                      ],
+                    ),
+                    if (total > 0 && podeAgendar) ...[
+                      const SizedBox(height: 12),
+                      FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size(0, 48),
+                        ),
+                        onPressed: _agendando
+                            ? null
+                            : () => _agendar(
+                                alvo,
+                                _rotuloDia(alvo, offset).toLowerCase(),
+                                [
+                                  for (final p in lista)
+                                    if (aAssar(p) > 0)
+                                      (fichaId: p.fichaId, unidades: aAssar(p)),
+                                ],
+                              ),
+                        icon: const Icon(Icons.event_available_outlined),
+                        label: Text(
+                          'Agendar produção para ${_rotuloDia(alvo, offset).toLowerCase()}',
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      tooltip: 'Unidades por fornada',
-                      onPressed: () => _editarCapacidade(auto),
-                      icon: const Icon(Icons.edit_outlined),
-                    ),
-                    IconButton(
-                      tooltip: 'Copiar a lista',
-                      onPressed: total == 0
-                          ? null
-                          : () async {
-                              final msg = ScaffoldMessenger.of(context);
-                              await Clipboard.setData(
-                                ClipboardData(text: texto()),
-                              );
-                              msg.showSnackBar(
-                                const SnackBar(content: Text('Lista copiada.')),
-                              );
-                            },
-                      icon: const Icon(Icons.copy),
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -308,6 +483,11 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
                 vendidoHoje: vendidoHoje[p.fichaId] ?? 0,
               ),
             if (lista.isNotEmpty)
+              _ComoAcertou(
+                avaliacoes: _avaliacoes(hoje, dados, diasTrab),
+                nomes: nomes,
+              ),
+            if (lista.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                 child: Text(
@@ -324,6 +504,81 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
           ],
         );
       },
+    );
+  }
+}
+
+/// "Como tem acertado": a previsão refeita para os últimos dias (só com o
+/// que havia antes de cada um) contra o que se vendeu.
+class _ComoAcertou extends StatelessWidget {
+  const _ComoAcertou({required this.avaliacoes, required this.nomes});
+
+  final List<AvaliacaoDia> avaliacoes;
+  final Map<String, String> nomes;
+
+  @override
+  Widget build(BuildContext context) {
+    if (avaliacoes.isEmpty) return const SizedBox.shrink();
+    final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final erro = erroMedioPct(avaliacoes) ?? 0;
+    final certo = (100 - erro).clamp(0, 100);
+    return Card(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: ExpansionTile(
+        shape: const Border(),
+        collapsedShape: const Border(),
+        leading: const Icon(Icons.fact_check_outlined),
+        title: Text(
+          'Como a previsão tem acertado: ${certo.toStringAsFixed(0)} %',
+        ),
+        subtitle: Text(
+          'Nos últimos ${avaliacoes.length} dias de venda, em média errou '
+          '${erro.toStringAsFixed(0)} % por sabor.',
+          style: tt.bodySmall,
+        ),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        children: [
+          for (final a in avaliacoes)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 74,
+                    child: Text(
+                      '${nomesDiasCurtos[a.dia.weekday - 1]} ${a.dia.day}/${a.dia.month}',
+                      style: tt.bodySmall,
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      'previsto ${_n(a.previsto)} · vendido ${_n(a.vendido)}',
+                      style: tt.bodySmall,
+                    ),
+                  ),
+                  Text(
+                    a.desvioPct.abs() < 1
+                        ? 'certo'
+                        : '${a.desvioPct > 0 ? 'sobrou' : 'faltou'} ${a.desvioPct.abs().toStringAsFixed(0)} %',
+                    style: tt.bodySmall?.copyWith(
+                      color: a.desvioPct < -5
+                          ? cs.error
+                          : (a.desvioPct > 5 ? Colors.orange : cs.primary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(height: 4),
+          if (avaliacoes.first.piores.isNotEmpty)
+            Text(
+              'Onde mais falhou (${nomesDiasCurtos[avaliacoes.first.dia.weekday - 1]}): '
+              '${avaliacoes.first.piores.map((p) => '${nomes[p.fichaId] ?? '—'} (previsto ${_n(p.previsto)}, vendido ${_n(p.vendido)})').join('; ')}.',
+              style: tt.bodySmall?.copyWith(color: cs.outline),
+            ),
+        ],
+      ),
     );
   }
 }

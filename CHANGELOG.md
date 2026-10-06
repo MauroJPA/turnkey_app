@@ -2,6 +2,16 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.98.0 — 2026-10-06 — Quantos assar: agendar e avaliar
+
+Quantos assar → agendar a produção num toque, e ver como a previsão tem acertado.
+
+- **"Agendar produção para hoje/amanhã…"**: um botão por baixo do total cria a **produção desse dia** na Agenda com as quantidades da previsão (já com o stock e as vendas de hoje descontados), cada produto com a sua massa e formato, pronto para ver a lista de compras e o mise en place. Abre-se com "Ver". Sem formulários.
+- Se já agendaste a previsão para esse dia, a app pergunta se queres **abrir a que já existe** ou criar outra (não duplica à toa).
+- Os produtos que não têm receita de massa ligada na ficha técnica ficam de fora, e a mensagem diz quantos.
+- **"Como a previsão tem acertado"**: refaz a previsão dos últimos 7 dias de venda, só com o que havia antes de cada dia, e compara com o que se vendeu: percentagem de acerto, o dia a dia ("previsto 95 · vendido 102 · faltou 7 %") e os sabores onde mais falhou. Assim vês se podes confiar na previsão (e quando "faltou" ou "sobrou" demais).
+- Sem alterações no servidor. Testes: avaliação (acerta/erra, dias de folga, sem histórico, erro ponderado). Verificado no browser: agendou a produção de hoje com o produto que tem massa ligada.
+
 ## 1.97.0 — 2026-10-06 — Saída por marcar
 
 "Saída por marcar": a app avisa quando alguém se esquece da saída — e deixa resolver num toque.

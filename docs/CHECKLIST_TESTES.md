@@ -1819,6 +1819,15 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] O resumo diário traz a secção "Saída por marcar" com a entrada de ontem esquecida
 - [ ] Um turno da noite (22:00–06:00) não aparece como esquecido às 05:00
 
+## 126. Quantos assar: agendar e avaliar
+
+- [ ] Produção → Quantos assar → "Agendar produção para hoje/amanhã": cria a produção na Agenda com os produtos e quantidades da lista
+- [ ] Voltar a carregar no botão para o mesmo dia: pergunta "Abrir" ou "Criar outra"
+- [ ] Produtos sem receita de massa na ficha ficam de fora, e a mensagem diz quantos
+- [ ] Na produção criada: lista de compras e mise en place trazem as quantidades certas
+- [ ] "Como a previsão tem acertado": mostra a % de acerto e, aberto, os últimos 7 dias com "faltou/sobrou" e os sabores que mais falharam
+- [ ] Um utilizador de Leitura não vê o botão "Agendar produção"
+
 ---
 
 ## Notas / ajustes pedidos

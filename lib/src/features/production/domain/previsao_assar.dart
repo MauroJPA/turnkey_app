@@ -288,3 +288,104 @@ List<PrevisaoFicha> preverDia({
   out.sort((a, b) => b.sugerido.compareTo(a.sugerido));
   return out;
 }
+
+/// Como a previsão se portou num dia que já passou.
+class AvaliacaoDia {
+  const AvaliacaoDia({
+    required this.dia,
+    required this.previsto,
+    required this.vendido,
+    required this.erroAbsoluto,
+    this.piores = const [],
+  });
+
+  final DateTime dia;
+
+  /// Soma do que a previsão esperava vender (dos sabores que já tinham histórico).
+  final double previsto;
+
+  /// O que se vendeu desses sabores nesse dia.
+  final double vendido;
+
+  /// Soma dos erros de cada sabor (sem sinais que se anulem).
+  final double erroAbsoluto;
+
+  /// Os sabores onde mais falhou: (id, previsto, vendido).
+  final List<({String fichaId, double previsto, double vendido})> piores;
+
+  /// Erro ponderado em % do vendido (0 = acertou tudo).
+  double get erroPct => vendido <= 0 ? 0 : erroAbsoluto / vendido * 100;
+
+  /// Previsto − vendido em % do vendido (positivo = sobrou, negativo = faltou).
+  double get desvioPct =>
+      vendido <= 0 ? 0 : (previsto - vendido) / vendido * 100;
+}
+
+/// Refaz a previsão dos últimos [dias] dias de trabalho, só com o que havia
+/// antes de cada um, e compara com o que se vendeu: é o "como tenho acertado".
+/// Os dias em que não houve vendas (loja fechada) saltam-se.
+List<AvaliacaoDia> avaliarPrevisoes({
+  required DateTime hoje,
+  required List<ConsumoDia> consumo,
+  int dias = 7,
+  Set<int> diasTrabalho = todosOsDias,
+}) {
+  final hoje0 = _d(hoje);
+  // vendido por dia e sabor
+  final real = <DateTime, Map<String, double>>{};
+  for (final c in consumo) {
+    if (c.vendido <= 0) continue;
+    final d = _d(c.dia);
+    final m = real.putIfAbsent(d, () => {});
+    m[c.fichaId] = (m[c.fichaId] ?? 0) + c.vendido;
+  }
+  final out = <AvaliacaoDia>[];
+  for (var i = 1; i <= dias + 7 && out.length < dias; i++) {
+    final d = DateTime(hoje0.year, hoje0.month, hoje0.day - i);
+    final vendidoDia = real[d];
+    if (vendidoDia == null || !diasTrabalho.contains(d.weekday)) continue;
+    // a previsão que se teria feito nessa manhã
+    final previsoes = preverDia(
+      hoje: d,
+      alvo: d,
+      consumo: consumo,
+      diasTrabalho: diasTrabalho,
+    );
+    if (previsoes.isEmpty) continue;
+    var prev = 0.0, vend = 0.0, erro = 0.0;
+    final porSabor = <({String fichaId, double previsto, double vendido})>[];
+    for (final p in previsoes) {
+      final v = vendidoDia[p.fichaId] ?? 0;
+      prev += p.previsto;
+      vend += v;
+      erro += (p.previsto - v).abs();
+      porSabor.add((fichaId: p.fichaId, previsto: p.previsto, vendido: v));
+    }
+    porSabor.sort(
+      (a, b) => (b.previsto - b.vendido).abs().compareTo(
+        (a.previsto - a.vendido).abs(),
+      ),
+    );
+    out.add(
+      AvaliacaoDia(
+        dia: d,
+        previsto: prev,
+        vendido: vend,
+        erroAbsoluto: erro,
+        piores: porSabor.take(3).toList(),
+      ),
+    );
+  }
+  return out;
+}
+
+/// O erro médio (ponderado) de várias avaliações, em % do vendido; `null` se
+/// não há nada para comparar.
+double? erroMedioPct(Iterable<AvaliacaoDia> avaliacoes) {
+  var e = 0.0, v = 0.0;
+  for (final a in avaliacoes) {
+    e += a.erroAbsoluto;
+    v += a.vendido;
+  }
+  return v <= 0 ? null : e / v * 100;
+}
