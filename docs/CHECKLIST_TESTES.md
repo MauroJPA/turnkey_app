@@ -1802,6 +1802,14 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] "Imprimir o mapa de horário" abre a semana com horas por pessoa
 - [ ] Um Editor vê a escala mas não consegue mudar nada; Leitura não vê a página
 
+## 124. Folgas e ausências nos avisos e no HACCP
+
+- [ ] Configurações → Dias de trabalho: desmarcar domingo. No domingo, o quiosque mostra as tarefas diárias com "Dia de folga" e o Início não mostra "HACCP por fazer"
+- [ ] Na segunda-feira seguinte, as tarefas diárias do sábado aparecem "Fazer hoje" e não "Em atraso"
+- [ ] Avisos → Ver pré-visualização num dia de folga: aparece "Hoje é dia de folga: o resumo automático não é enviado"
+- [ ] Com alguém de férias aprovadas hoje: o resumo mostra "Ausentes hoje: Ana (férias)"; uma baixa aparece só como "(ausente)"
+- [ ] Uma tarefa HACCP realmente esquecida em dias de trabalho continua a aparecer "Em atraso"
+
 ---
 
 ## Notas / ajustes pedidos

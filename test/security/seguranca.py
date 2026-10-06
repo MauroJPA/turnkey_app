@@ -857,6 +857,31 @@ def teste_avisos():
         check(env.get('corpo', {}).get('chat_id') == '987654' and 'Resumo de' in env.get('corpo', {}).get('text', ''),
               'a mensagem vai para o chat configurado')
         check(TOKEN_TG not in json.dumps(r), 'a resposta nunca contém o token')
+        # dias de folga e ausências no resumo
+        import datetime as _dt
+        hoje = _dt.date.today()
+        s, r, _ = call('GET', f'/api/collections/configuracoes_custo/records?filter=empresa%3D%22{empresas["A"]}%22', tok=su)
+        cc = (r.get('items') or [None])[0] if s == 200 else None
+        if cc:
+            outros = ','.join(str(d) for d in range(1, 8) if d != hoje.isoweekday())
+            call('PATCH', f'/api/collections/configuracoes_custo/records/{cc["id"]}', {'dias_trabalho': outros}, su)
+            s, r, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': False}, tok['adminA'])
+            check(s == 200 and 'dia de folga' in r.get('texto', ''), 'hoje de folga: o resumo diz que não é enviado automaticamente', str(r)[:140])
+            call('PATCH', f'/api/collections/configuracoes_custo/records/{cc["id"]}', {'dias_trabalho': ''}, su)
+            s, r, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': False}, tok['adminA'])
+            check(s == 200 and 'dia de folga' not in r.get('texto', ''), 'dia de trabalho: sem aviso de folga')
+        aus = {'empresa': empresas['A'], 'pessoa': 'c:ausente-teste', 'nome': 'Ana Teste', 'tipo': 'ferias', 'estado': 'aprovado',
+               'data_inicio': hoje.isoformat() + ' 00:00:00.000Z', 'data_fim': hoje.isoformat() + ' 00:00:00.000Z'}
+        s, ra, _ = call('POST', '/api/collections/ferias/records', aus, su)
+        s, rb, _ = call('POST', '/api/collections/ferias/records',
+                        {**aus, 'pessoa': 'c:baixa-teste', 'nome': 'Rui Teste', 'tipo': 'baixa'}, su)
+        s, r, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': False}, tok['adminA'])
+        texto = r.get('texto', '')
+        check('Ana Teste (férias)' in texto, 'quem está de férias hoje aparece no resumo', texto[-200:])
+        check('Rui Teste (ausente)' in texto and 'baixa' not in texto.lower(), 'baixas aparecem só como "ausente" (dados de saúde)', texto[-200:])
+        for x in (ra, rb):
+            if x.get('id'):
+                call('DELETE', f'/api/collections/ferias/records/{x["id"]}', tok=su)
         # sem SMTP: mensagem clara
         call('PATCH', f'/api/collections/avisos_config/records/{cfg_id}', {'email_ativo': True, 'email_para': 'x@exemplo.pt', 'telegram_ativo': False}, tok['adminA'])
         s, r, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': True}, tok['adminA'])

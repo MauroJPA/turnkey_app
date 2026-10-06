@@ -29,8 +29,14 @@ cronAdd('avisos_diarios', '* * * * *', () => {
       if (minAgora < alvo || minAgora > alvo + 180) continue;
       const empresaId = cfg.getString('empresa');
       const resumo = avisos.montar($app, empresaId, cfg);
-      const res = avisos.enviar($app, empresaId, cfg, resumo, seg.ler);
       cfg.set('ultimo_envio', hoje);
+      if (resumo.fechado) {
+        // dia de folga: não incomoda ninguém
+        cfg.set('ultimo_resultado', 'Dia de folga: não enviado.');
+        $app.save(cfg);
+        continue;
+      }
+      const res = avisos.enviar($app, empresaId, cfg, resumo, seg.ler);
       cfg.set('ultimo_resultado', avisos.descrever(res).substring(0, 390));
       $app.save(cfg);
     } catch (err) {

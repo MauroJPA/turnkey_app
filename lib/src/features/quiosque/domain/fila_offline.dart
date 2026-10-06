@@ -233,6 +233,7 @@ String codificarEstados(List<StatusControlo> estados) => jsonEncode([
       'f': s.feitosHoje,
       'x': s.esperadosHoje,
       'a': s.diasAtraso,
+      'z': s.fechadoHoje,
     },
 ]);
 
@@ -256,6 +257,7 @@ List<StatusControlo> lerEstados(String? texto) {
           feitosHoje: e['f'] is int ? e['f'] as int : 0,
           esperadosHoje: e['x'] is int ? e['x'] as int : 1,
           diasAtraso: e['a'] is int ? e['a'] as int : 0,
+          fechadoHoje: e['z'] == true,
         ),
       );
     }

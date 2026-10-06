@@ -2,6 +2,15 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.96.0 — 2026-10-06 — Folgas e ausências nos avisos e no HACCP
+
+Folgas e ausências deixam de atrapalhar os avisos e o HACCP.
+
+- **HACCP respeita os dias de trabalho**: num dia de folga da empresa as tarefas diárias não pedem nada (o quiosque mostra "Dia de folga" em vez de "Em atraso") e o **Início não mostra "HACCP por fazer"**. Os dias de folga **não contam como atraso**: se o último registo foi no sábado e o domingo é folga, na segunda só falta "fazer hoje" (antes aparecia "Em atraso"). Uma falta a sério (dias de trabalho sem registo) continua a contar. Uma tarefa semanal/mensal que vence numa folga passa para o primeiro dia aberto.
+- **Resumo diário (Telegram/email)**: **não é enviado nos dias de folga** da empresa (o resultado diz "Dia de folga: não enviado"). Nos outros dias o HACCP "por fazer" usa as mesmas regras, e o resumo ganha **"Ausentes hoje"**: quem está de férias ("Ana (férias)"); baixas e faltas aparecem só como "ausente" (dados de saúde).
+- Sem nada a configurar: usa os **Dias de trabalho** das Configurações (por omissão, todos os dias).
+- Sem alterações na base de dados. Testes: dia de folga, folga que não é atraso, falta real, prazos semanais; 5 verificações no servidor (folga no resumo, férias, baixa só como "ausente").
+
 ## 1.95.0 — 2026-10-06 — Escala semanal da equipa
 
 Escala semanal da equipa (Pessoas → Escala): o mapa de horário de trabalho.

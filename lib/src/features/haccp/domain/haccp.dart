@@ -1,5 +1,6 @@
 import 'package:pocketbase/pocketbase.dart';
 
+import '../../pricing/domain/dias_trabalho.dart';
 
 /// O que um controlo de segurança alimentar vigia.
 enum TipoControlo {
@@ -246,6 +247,7 @@ class StatusControlo {
     this.feitosHoje = 0,
     this.esperadosHoje = 1,
     this.diasAtraso = 0,
+    this.fechadoHoje = false,
   });
 
   final ControloHaccp controlo;
@@ -258,6 +260,9 @@ class StatusControlo {
   final int esperadosHoje;
   final int diasAtraso;
 
+  /// Hoje a empresa não trabalha: não há nada a fazer.
+  final bool fechadoHoje;
+
   /// Pede atenção (atrasado ou nunca registado).
   bool get emAtraso =>
       estado == EstadoControlo.atrasado || estado == EstadoControlo.semRegisto;
@@ -269,12 +274,39 @@ DateTime _dia(DateTime d) => DateTime(d.year, d.month, d.day);
 
 /// O estado de um [controlo] face aos seus [registos] (de qualquer data) em
 /// [agora].
+///
+/// [diasTrabalho] são os dias da semana em que a empresa trabalha: num dia de
+/// folga não há nada por fazer, e os dias de folga não contam como atraso.
 StatusControlo estadoDoControlo(
   ControloHaccp controlo,
   List<RegistoHaccp> registos,
-  DateTime agora,
-) {
+  DateTime agora, {
+  Set<int> diasTrabalho = todosOsDias,
+}) {
   final hoje = _dia(agora);
+  final fechadoHoje = !diasTrabalho.contains(hoje.weekday);
+  // quantos dias de folga há entre duas datas (exclusivas)
+  int folgasEntre(DateTime de, DateTime ate) {
+    var n = 0;
+    for (
+      var d = DateTime(de.year, de.month, de.day + 1);
+      d.isBefore(ate);
+      d = DateTime(d.year, d.month, d.day + 1)
+    ) {
+      if (!diasTrabalho.contains(d.weekday)) n++;
+    }
+    return n;
+  }
+
+  // o prazo que cai numa folga passa para o primeiro dia aberto
+  DateTime prazoAberto(DateTime p) {
+    var d = p;
+    for (var i = 0; i < 7 && !diasTrabalho.contains(d.weekday); i++) {
+      d = DateTime(d.year, d.month, d.day + 1);
+    }
+    return d;
+  }
+
   final meus = [
     for (final r in registos)
       if (r.controloId == controlo.id) r,
@@ -295,6 +327,17 @@ StatusControlo estadoDoControlo(
 
   // diário: o prazo é hoje; atrasa se passou um dia inteiro sem registo
   if (controlo.periodicidadeDias == 1) {
+    if (fechadoHoje && feitosHoje < esperados) {
+      // folga: nada a fazer hoje (e não conta como atraso)
+      return StatusControlo(
+        controlo: controlo,
+        estado: EstadoControlo.emDia,
+        ultimo: ultimo,
+        feitosHoje: feitosHoje,
+        esperadosHoje: esperados,
+        fechadoHoje: true,
+      );
+    }
     if (feitosHoje >= esperados) {
       return StatusControlo(
         controlo: controlo,
@@ -305,7 +348,8 @@ StatusControlo estadoDoControlo(
         esperadosHoje: esperados,
       );
     }
-    final dias = hoje.difference(ultimo.dia).inDays - 1;
+    final dias =
+        hoje.difference(ultimo.dia).inDays - 1 - folgasEntre(ultimo.dia, hoje);
     return StatusControlo(
       controlo: controlo,
       estado: dias > 0 ? EstadoControlo.atrasado : EstadoControlo.pendenteHoje,
@@ -336,6 +380,7 @@ StatusControlo estadoDoControlo(
       esperadosHoje: esperados,
     );
   }
+  proximo = prazoAberto(proximo);
   final EstadoControlo estado;
   var atraso = 0;
   if (hoje.isBefore(proximo)) {
@@ -344,7 +389,8 @@ StatusControlo estadoDoControlo(
     estado = EstadoControlo.pendenteHoje;
   } else {
     estado = EstadoControlo.atrasado;
-    atraso = hoje.difference(proximo).inDays;
+    atraso = hoje.difference(proximo).inDays - folgasEntre(proximo, hoje);
+    if (atraso < 0) atraso = 0;
   }
   return StatusControlo(
     controlo: controlo,
@@ -354,6 +400,7 @@ StatusControlo estadoDoControlo(
     feitosHoje: feitosHoje,
     esperadosHoje: esperados,
     diasAtraso: atraso,
+    fechadoHoje: fechadoHoje && estado == EstadoControlo.pendenteHoje,
   );
 }
 
@@ -361,8 +408,9 @@ StatusControlo estadoDoControlo(
 List<StatusControlo> estadoDosControlos(
   List<ControloHaccp> controlos,
   List<RegistoHaccp> registos,
-  DateTime agora,
-) {
+  DateTime agora, {
+  Set<int> diasTrabalho = todosOsDias,
+}) {
   int peso(EstadoControlo e) => switch (e) {
     EstadoControlo.atrasado => 0,
     EstadoControlo.semRegisto => 1,
@@ -373,7 +421,8 @@ List<StatusControlo> estadoDosControlos(
   final out =
       [
         for (final c in controlos)
-          if (c.ativo) estadoDoControlo(c, registos, agora),
+          if (c.ativo)
+            estadoDoControlo(c, registos, agora, diasTrabalho: diasTrabalho),
       ]..sort((a, b) {
         final p = peso(a.estado).compareTo(peso(b.estado));
         return p != 0 ? p : a.controlo.ordem.compareTo(b.controlo.ordem);

@@ -18,11 +18,58 @@ function hojeISO(d) {
   return d.getFullYear() + '-' + dois(d.getMonth() + 1) + '-' + dois(d.getDate());
 }
 
+// ---- dias de trabalho da empresa (1 = segunda … 7 = domingo; vazio = todos)
+function diasDeTrabalho(app, empresaId) {
+  let txt = '';
+  try {
+    txt = app.findFirstRecordByFilter('configuracoes_custo', 'empresa = {:e}', { e: empresaId }).getString('dias_trabalho');
+  } catch (_) {}
+  const dias = String(txt || '')
+    .split(',')
+    .map((s) => parseInt(s.trim(), 10))
+    .filter((n) => n >= 1 && n <= 7);
+  return dias.length ? dias : [1, 2, 3, 4, 5, 6, 7];
+}
+
+function abertoNesse(dias, d) {
+  const w = d.getDay() === 0 ? 7 : d.getDay();
+  return dias.indexOf(w) >= 0;
+}
+
+// A data (AAAA-MM-DD) ou, se a empresa fecha nesse dia, o primeiro dia aberto a seguir.
+function proximoAberto(iso, dias) {
+  const d = new Date(iso + 'T12:00:00');
+  for (let i = 0; i < 7 && !abertoNesse(dias, d); i++) d.setDate(d.getDate() + 1);
+  return hojeISO(d);
+}
+
+// Quem está ausente hoje (férias, baixa, falta aprovadas).
+function ausentesHoje(app, empresaId) {
+  const hoje = hojeISO();
+  const regs = app.findRecordsByFilter(
+    'ferias',
+    "empresa = {:e} && estado = 'aprovado' && data_inicio <= {:fim} && data_fim >= {:ini}",
+    '',
+    50,
+    0,
+    { e: empresaId, fim: hoje + ' 23:59:59.999Z', ini: hoje + ' 00:00:00.000Z' },
+  );
+  const out = [];
+  for (const r of regs) {
+    const fim = String(r.getString('data_fim')).substring(0, 10);
+    if (fim < hoje) continue;
+    // só se diz "de férias"; baixas e faltas são dados pessoais: "ausente"
+    out.push(r.getString('nome') + (r.getString('tipo') === 'ferias' ? ' (férias)' : ' (ausente)'));
+  }
+  return out;
+}
+
 // ---- HACCP: o que falta hoje (versão resumida da lógica da app)
-function haccpPorFazer(app, empresaId) {
+function haccpPorFazer(app, empresaId, dias) {
   const out = [];
   const controlos = app.findRecordsByFilter('haccp_controlos', 'empresa = {:e} && arquivado != true', 'ordem', 0, 0, { e: empresaId });
   const hoje = hojeISO();
+  dias = dias || [1, 2, 3, 4, 5, 6, 7];
   for (const c of controlos) {
     const per = Math.round(c.getFloat('periodicidade_dias'));
     if (per === 0) continue; // ocasional
@@ -47,6 +94,8 @@ function haccpPorFazer(app, empresaId) {
         dt.setDate(dt.getDate() + per);
         prox = hojeISO(dt);
       }
+      // se o prazo cai num dia de folga, passa para o primeiro dia aberto
+      prox = proximoAberto(prox, dias);
       if (prox <= hoje) out.push(c.getString('nome') + (prox < hoje ? ' (atrasado)' : ' (vence hoje)'));
     }
   }
@@ -102,9 +151,12 @@ function precosSubiram(app, empresaId) {
   return out;
 }
 
-// Monta o resumo; devolve { vazio, texto, html, itens }.
+// Monta o resumo; devolve { vazio, texto, html, itens, fechado }.
+// `fechado`: hoje a empresa não trabalha (o envio automático salta esse dia).
 function montar(app, empresaId, cfg) {
   const itens = [];
+  const dias = diasDeTrabalho(app, empresaId);
+  const fechado = !abertoNesse(dias, new Date());
   const sec = (titulo, linhas) => {
     if (linhas && linhas.length) itens.push({ titulo: titulo, linhas: linhas });
   };
@@ -116,7 +168,7 @@ function montar(app, empresaId, cfg) {
       return null;
     }
   };
-  if (cfg.getBool('inc_haccp')) sec('HACCP por fazer', seguro(() => haccpPorFazer(app, empresaId)));
+  if (cfg.getBool('inc_haccp')) sec('HACCP por fazer', seguro(() => haccpPorFazer(app, empresaId, dias)));
   if (cfg.getBool('inc_stock')) sec('Stock baixo', seguro(() => stockBaixo(app, empresaId)));
   if (cfg.getBool('inc_pagamentos')) sec('Pagamentos próximos', seguro(() => pagamentos(app, empresaId)));
   if (cfg.getBool('inc_faturas')) {
@@ -124,6 +176,7 @@ function montar(app, empresaId, cfg) {
     if (n) sec('Faturas por rever', [n + ' fatura(s) à espera de confirmação']);
   }
   if (cfg.getBool('inc_precos')) sec('Preços que subiram (24 h)', seguro(() => precosSubiram(app, empresaId)));
+  sec('Ausentes hoje', seguro(() => ausentesHoje(app, empresaId)));
 
   let nome = '';
   try {
@@ -133,6 +186,10 @@ function montar(app, empresaId, cfg) {
   const cab = 'Resumo de ' + data + (nome ? ' — ' + nome : '');
   let texto = cab + '\n';
   let html = '<h3>' + escHtml(cab) + '</h3>';
+  if (fechado) {
+    texto += '\n(Hoje é dia de folga: o resumo automático não é enviado.)\n';
+    html += '<p><i>Hoje é dia de folga: o resumo automático não é enviado.</i></p>';
+  }
   if (itens.length === 0) {
     texto += '\nTudo em dia: nada a pedir atenção. ✅';
     html += '<p>Tudo em dia: nada a pedir atenção. ✅</p>';
@@ -146,7 +203,7 @@ function montar(app, empresaId, cfg) {
     }
     html += '</ul>';
   }
-  return { vazio: itens.length === 0, texto: texto.trim(), html: html, itens: itens, assunto: '[gc_turnkey] ' + cab };
+  return { vazio: itens.length === 0, texto: texto.trim(), html: html, itens: itens, fechado: fechado, assunto: '[gc_turnkey] ' + cab };
 }
 
 function escHtml(s) {
@@ -247,4 +304,4 @@ function configDaEmpresa(app, empresaId) {
   }
 }
 
-module.exports = { configDaEmpresa, montar, enviar, descrever, enviarTelegram, enviarWhatsApp, hojeISO };
+module.exports = { configDaEmpresa, montar, enviar, descrever, enviarTelegram, enviarWhatsApp, hojeISO, diasDeTrabalho, abertoNesse, proximoAberto };

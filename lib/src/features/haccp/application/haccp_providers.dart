@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../pricing/data/cost_config_repository.dart';
+import '../../pricing/domain/dias_trabalho.dart';
 import '../data/haccp_repository.dart';
 import '../domain/haccp.dart';
 
@@ -41,7 +43,14 @@ final haccpEstadoProvider = FutureProvider.autoDispose<List<StatusControlo>>((
         desde: agora.subtract(const Duration(days: diasHistoricoHaccp)),
         ate: agora,
       );
-  return estadoDosControlos(controlos, registos, agora);
+  // os dias de folga não contam (se a configuração não carregar, todos contam)
+  var dias = todosOsDias;
+  try {
+    dias = (await ref.watch(costConfigProvider.future)).diasDeTrabalho;
+  } on Object {
+    // sem configuração: trabalha-se todos os dias
+  }
+  return estadoDosControlos(controlos, registos, agora, diasTrabalho: dias);
 });
 
 /// Não conformidades por resolver (último ano).

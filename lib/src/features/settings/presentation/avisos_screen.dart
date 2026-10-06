@@ -192,7 +192,8 @@ class _FormularioState extends ConsumerState<_Formulario> {
         Text(
           'Recebe todos os dias, à hora que quiseres, o que pede atenção: '
           'HACCP por fazer, stock baixo, pagamentos, faturas e preços que '
-          'subiram.',
+          'subiram, e quem está ausente. Não envia nos dias de folga da empresa '
+          '(Configurações → Dias de trabalho).',
           style: tt.bodyMedium,
         ),
         const SizedBox(height: 8),

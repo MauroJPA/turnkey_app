@@ -462,7 +462,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
   HelpTopic.avisos: (
     titulo: 'Avisos e resumo diário',
     paragrafos: [
-      'Recebe todos os dias, à hora que escolheres (hora de Lisboa), um resumo do que pede atenção: HACCP por fazer, stock baixo, pagamentos próximos (7 dias), faturas por rever e preços que subiram nas últimas 24 h. Escolhe o que incluir. Se estiver tudo em dia, recebes "Tudo em dia".',
+      'Recebe todos os dias, à hora que escolheres (hora de Lisboa), um resumo do que pede atenção: HACCP por fazer, stock baixo, pagamentos próximos (7 dias), faturas por rever e preços que subiram nas últimas 24 h, mais quem está ausente hoje (férias; baixas e faltas aparecem só como "ausente"). Escolhe o que incluir. Se estiver tudo em dia, recebes "Tudo em dia". Nos dias em que a empresa não trabalha (Configurações → Dias de trabalho) o resumo não é enviado, e o HACCP não pede tarefas nem conta esses dias como atraso.',
       'Por Telegram (grátis, instantâneo): fala com @BotFather no Telegram → /newbot e copia o token; cola-o aqui e guarda (fica cifrado no servidor e nunca volta a aparecer); abre o teu bot e envia /start; toca em "Detetar o meu chat" e escolhe o teu. Podes pôr o chat de um grupo (adiciona o bot ao grupo).',
       'Por email: precisa de o servidor ter o email configurado (PocketBase → Definições → Mail). Podes pôr vários endereços separados por vírgula.',
       '"Enviar um teste" manda já o resumo para os canais ligados e mostra o resultado de cada um; sem canais ligados mostra só a pré-visualização.',

@@ -1,6 +1,6 @@
 # Pendentes (fila de trabalho)
 
-Última versão fechada: **1.95.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
+Última versão fechada: **1.96.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
 (editar → `bash scripts/verificar.sh` → pubspec + CHANGELOG + docs/CHECKLIST_TESTES.md → commit com caminhos
 explícitos → `git branch -f develop main` → `git tag vX.Y.Z`). No fim: `powershell -File scripts\empacotar-producao.ps1`
 e dar ao Mauro o SHA-256 + comando de publicação.
@@ -26,7 +26,7 @@ Fila atual (pedido do Mauro em 06/10/2026, **cada item = uma versão**, por esta
 
 ## Fila aprovada pelo Mauro em 06/10/2026 (cada item = uma versão; princípio: ágil, poupar tempo, nunca atrapalhar a rotina)
 - ~~**1.95.0**~~ (feito) Escala semanal da equipa (mapa de horário): horário habitual por pessoa + exceções por dia; horas previstas × marcadas no Ponto.
-- **1.96.0** Dias de trabalho e férias nos avisos: resumo diário e HACCP "por fazer" ignoram folgas; quem está de férias não atrasa.
+- ~~**1.96.0**~~ (feito) Dias de trabalho e férias nos avisos: resumo diário e HACCP "por fazer" ignoram folgas; quem está de férias não atrasa.
 - **1.97.0** Aviso de "saída por marcar" no resumo diário e no Início.
 - **1.98.0** Quantos assar → agendar a produção com um toque; comparar a previsão com o vendido real.
 - **1.99.0** Alertas de validade por lote (ingredientes e produtos), usando os lotes e o stock.

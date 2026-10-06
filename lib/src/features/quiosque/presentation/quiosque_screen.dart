@@ -696,7 +696,10 @@ class _Tarefa extends StatelessWidget {
             ? 'Hoje: ${status.feitosHoje} de ${status.esperadosHoje}'
             : 'Fazer hoje',
       ),
-      EstadoControlo.emDia => (cs.primaryContainer, 'Feito ✓'),
+      EstadoControlo.emDia => (
+        cs.primaryContainer,
+        status.fechadoHoje ? 'Dia de folga' : 'Feito ✓',
+      ),
       EstadoControlo.ocasional => (
         cs.surfaceContainerHighest,
         'Quando for preciso',
