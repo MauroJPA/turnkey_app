@@ -8,6 +8,7 @@ import '../../../core/widgets/help_actions.dart';
 import '../../consumables/presentation/consumiveis_screen.dart';
 import '../../ingredients/presentation/ingredients_screen.dart';
 import '../../packaging/presentation/embalagens_screen.dart';
+import '../application/comparar_precos_providers.dart';
 import '../application/inventory_providers.dart';
 import '../data/variacao_preco_repository.dart';
 import '../domain/stock_item.dart';
@@ -72,6 +73,7 @@ class InventarioScreen extends ConsumerWidget {
         stock.where((i) => i.tipo == s.tipoStock && i.stockBaixo).length;
 
     final subidas = ref.watch(subidasPorVerProvider).length;
+    final poupancas = ref.watch(poupancasPossiveisProvider);
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -97,6 +99,8 @@ class InventarioScreen extends ConsumerWidget {
                       label: Text(
                         s == SecaoInventario.precos && subidas > 0
                             ? '${s.label} · $subidas a subir'
+                            : s == SecaoInventario.precos && poupancas > 0
+                            ? '${s.label} · $poupancas a poupar'
                             : baixos(s) > 0
                             ? '${s.label} · ${baixos(s)} a acabar'
                             : s.label,

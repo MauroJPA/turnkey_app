@@ -499,6 +499,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Aviso: quando um preço sobe mais do que o limiar (por omissão 5 %; muda em Configurações → Percentuais de custo → "Avisar quando um preço sobe mais de"), aparece um cartão "Preços subiram" no Início e a secção Preços do Inventário mostra quantas subidas há por ver. "Marcar como vistas" limpa o aviso neste aparelho.',
       'Toca numa variação para ver as fichas afetadas. Usa isto para decidir se subes o preço de venda, trocas de fornecedor ou renegocias. As variações ficam guardadas cerca de 4 meses.',
       'As margens são sobre o preço sem IVA (o IVA soma-se no fim) e só aparecem nas fichas com preço de venda.',
+      '"Mais barato noutro": compara, para cada ingrediente que já compraste de duas marcas ou fornecedores, o preço ao kg (ou litro, ou unidade) de cada um e diz quanto poupas a comprar o mais barato em vez do que compras agora (o de preço mais recente). Só conta preços dos últimos 150 dias e diferenças a partir de 3 %. Os preços vêm das faturas que aplicas — quanto mais faturas, mais fiável. Não troca nada sozinho: serve para decidires a próxima compra.',
     ],
   ),
   HelpTopic.embalagens: (

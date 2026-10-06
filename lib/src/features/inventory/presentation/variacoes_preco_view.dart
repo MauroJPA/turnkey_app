@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../pricing/data/cost_config_repository.dart';
+import '../application/comparar_precos_providers.dart';
 import '../data/variacao_preco_repository.dart';
 import '../domain/variacao_preco.dart';
+import 'comparar_precos_lista.dart';
 
-enum _Filtro { subidas, descidas, todas }
+enum _Filtro { subidas, descidas, todas, maisBaratos }
 
 /// Variações de preço: o que subiu (ou desceu) numa fatura e que fichas
 /// técnicas — e margens — ficam afetadas.
@@ -41,10 +43,12 @@ class _VariacoesPrecoViewState extends ConsumerState<VariacoesPrecoView> {
               _Filtro.subidas => v.subidaAcima(limiar),
               _Filtro.descidas => v.pct <= -limiar,
               _Filtro.todas => true,
+              _Filtro.maisBaratos => false,
             })
               v,
         ];
         final porVer = ref.watch(subidasPorVerProvider).length;
+        final poupancas = ref.watch(poupancasPossiveisProvider);
         return RefreshIndicator(
           onRefresh: () async => ref.invalidate(variacoesPrecoProvider),
           child: ListView(
@@ -77,6 +81,10 @@ class _VariacoesPrecoViewState extends ConsumerState<VariacoesPrecoView> {
                             _Filtro.subidas => 'Subidas',
                             _Filtro.descidas => 'Descidas',
                             _Filtro.todas => 'Todas',
+                            _Filtro.maisBaratos =>
+                              poupancas > 0
+                                  ? 'Mais barato noutro · $poupancas'
+                                  : 'Mais barato noutro',
                           }),
                           selected: _filtro == f,
                           onSelected: (_) => setState(() => _filtro = f),
@@ -95,7 +103,9 @@ class _VariacoesPrecoViewState extends ConsumerState<VariacoesPrecoView> {
                   ],
                 ),
               ),
-              if (lista.isEmpty)
+              if (_filtro == _Filtro.maisBaratos)
+                const CompararPrecosLista()
+              else if (lista.isEmpty)
                 Padding(
                   padding: const EdgeInsets.all(32),
                   child: Center(
@@ -108,13 +118,14 @@ class _VariacoesPrecoViewState extends ConsumerState<VariacoesPrecoView> {
                     ),
                   ),
                 ),
-              for (final v in lista)
-                _CartaoVariacao(
-                  v: v,
-                  nova: visto == null || v.criada.isAfter(visto),
-                  iva: iva,
-                  fmt: fmt,
-                ),
+              if (_filtro != _Filtro.maisBaratos)
+                for (final v in lista)
+                  _CartaoVariacao(
+                    v: v,
+                    nova: visto == null || v.criada.isAfter(visto),
+                    iva: iva,
+                    fmt: fmt,
+                  ),
             ],
           ),
         );

@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.104.0 — 2026-10-06 — Comparador de preços entre fornecedores
+
+Comparador de preços: vê onde é mais barato comprar cada ingrediente.
+
+- **Inventário → Preços → "Mais barato noutro"**: para cada ingrediente que já compraste de duas ou mais marcas/fornecedores, mostra o **preço ao kg** (ou ao litro, ou à unidade) de cada um, ordenado do mais barato, e quanto **poupas** (ex.: "Moinho Velho (Recheio) é mais barato: €1,00/kg em vez de €1,20/kg · −17 %") face ao que compras agora (o de preço mais recente).
+- **Compara maçãs com maçãs**: embalagens de tamanhos diferentes (1 kg vs 5 kg) são postas todas ao kg/litro/unidade.
+- **Só o que é fiável**: preços com mais de 150 dias aparecem como "preço antigo" e não entram na recomendação; diferenças abaixo de 3 % não são sugeridas (não compensa trocar). "Mostrar todos" lista também os que já compras ao melhor preço.
+- **Sem trabalho extra**: usa os preços que já ficam guardados quando aplicas faturas; não pede nada a ninguém. O separador **Preços** do Inventário mostra "N a poupar" quando há poupanças possíveis (e continua a mostrar "a subir" quando há subidas por ver, que têm prioridade).
+- Não troca nada sozinho: serve para decidires a próxima compra.
+- Testes: ao kg com embalagens diferentes, "em uso" = preço mais recente, ruído < 3 %, preço antigo ignorado, litros e unidades, ordenação pela maior poupança.
+
 ## 1.103.0 — 2026-10-06 — Segurança: 2 passos, teste dos backups e espaço em disco
 
 Segurança reforçada: verificação em 2 passos, teste automático dos backups e aviso de pouco espaço.

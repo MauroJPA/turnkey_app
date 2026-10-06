@@ -1876,6 +1876,15 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Entrar com a conta da equipa/quiosque: continua a entrar só com a palavra-passe
 - [ ] Desligar o 2 passos nas Configurações e confirmar que o proprietário volta a entrar só com a palavra-passe
 
+## 132. Comparador de preços entre fornecedores
+
+- [ ] Inventário → Preços: aparece o separador "Mais barato noutro" (com o número quando há poupanças)
+- [ ] Num ingrediente que já compraste de duas marcas/fornecedores: abre o cartão e vê os preços ao kg de cada um, o mais barato a verde e "o que compras agora"
+- [ ] A poupança (%) bate certo com as contas (preço ÷ gramas da embalagem × 1000)
+- [ ] Ingredientes só com uma marca/fornecedor não aparecem
+- [ ] "Mostrar todos" lista também os que já compras ao melhor preço
+- [ ] O separador "Preços" do Inventário mostra "N a poupar" quando há poupanças e não há subidas por ver
+
 ---
 
 ## Notas / ajustes pedidos
