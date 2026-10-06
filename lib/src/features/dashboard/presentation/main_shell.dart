@@ -9,6 +9,7 @@ import '../../invoices/presentation/analise_faturas_widgets.dart';
 import '../../navigation/application/navigation_providers.dart';
 import '../../navigation/domain/nav_config.dart';
 import '../../navigation/domain/pagina_app.dart';
+import '../../navigation/presentation/mais_sheet.dart';
 import 'aviso_versao_nova.dart';
 
 /// Largura máxima do conteúdo em ecrãs largos (computador).
@@ -31,7 +32,9 @@ class MainShell extends ConsumerWidget {
 
     final abas = <({String rota, IconData icon, String label})>[
       (rota: Routes.home, icon: Icons.home_outlined, label: 'Início'),
-      for (final p in config.rodapePara(papel))
+      // configurações antigas podem ter 4 ou 5: as primeiras ficam no rodapé,
+      // as outras vão para o "Mais"
+      for (final p in config.rodapePara(papel).take(rodapeMaximo))
         (rota: p.rota, icon: p.icon, label: p.rotuloRodape),
     ];
 
@@ -45,6 +48,15 @@ class MainShell extends ConsumerWidget {
     }
 
     final pagina = paginaDaRota(location);
+    // uma página que só se abre pelo "Mais" deixa o "Mais" assinalado
+    if (pagina != null &&
+        selecionada == 0 &&
+        location != Routes.home &&
+        !abas.any(
+          (a) => a.rota != Routes.home && location.startsWith(a.rota),
+        )) {
+      selecionada = abas.length;
+    }
     final nivel = pagina == null
         ? NivelAcesso.editar
         : config.nivel(papel, pagina.chave);
@@ -77,7 +89,7 @@ class MainShell extends ConsumerWidget {
           // ficheiro de faturas a ser enviado/analisado (fora do ecrã das Faturas)
           if (!location.startsWith(Routes.invoices))
             const AnaliseFaturasFaixa(),
-          if (abas.length >= 2)
+          if (abas.isNotEmpty)
             ColoredBox(
               color: Theme.of(context).colorScheme.surfaceContainer,
               child: Center(
@@ -88,13 +100,19 @@ class MainShell extends ConsumerWidget {
                     selectedIndex: selecionada,
                     labelBehavior:
                         NavigationDestinationLabelBehavior.alwaysShow,
-                    onDestinationSelected: (i) => context.go(abas[i].rota),
+                    onDestinationSelected: (i) => i == abas.length
+                        ? showMaisSheet(context)
+                        : context.go(abas[i].rota),
                     destinations: [
                       for (final a in abas)
                         NavigationDestination(
                           icon: Icon(a.icon),
                           label: a.label,
                         ),
+                      const NavigationDestination(
+                        icon: Icon(Icons.apps),
+                        label: 'Mais',
+                      ),
                     ],
                   ),
                 ),

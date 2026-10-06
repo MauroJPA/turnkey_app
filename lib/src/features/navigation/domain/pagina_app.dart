@@ -149,15 +149,11 @@ const paginasApp = <PaginaApp>[
 ];
 
 /// Rodapé por omissão (o Início vem sempre à frente, não entra aqui).
-const rodapePorOmissao = <String>[
-  'producao',
-  'contagem',
-  'compras',
-  'inventario',
-];
+const rodapePorOmissao = <String>['producao', 'contagem', 'compras'];
 
-/// Máximo de páginas no rodapé, sem contar o Início.
-const rodapeMaximo = 5;
+/// Máximo de páginas no rodapé, sem contar o Início nem o "Mais" (que abre
+/// todas as outras). Com mais de 5 destinos a barra fica apertada.
+const rodapeMaximo = 3;
 
 PaginaApp? paginaPorChave(String chave) {
   for (final p in paginasApp) {

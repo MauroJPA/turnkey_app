@@ -1961,6 +1961,19 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] "Todas as páginas" abre a lista completa (a grelha de mosaicos já não aparece)
 - [ ] Telemóvel estreito: nada sai do ecrã nem fica cortado; botões sem esticar a linha
 
+## 141. Menu "Mais" com pesquisa: qualquer página a 2 toques
+
+- [ ] Rodapé com 5 botões: Início, 3 páginas e **Mais**; nada fica cortado em telemóvel estreito
+- [ ] **Mais** abre as páginas por grupos (Fazer hoje, Receitas e custos, Equipa, Dinheiro, Casa); tocar numa abre-a
+- [ ] Numa página que não está no rodapé (ex.: Pessoas), o botão "Mais" aparece assinalado
+- [ ] Pesquisa: "ferias" → Pessoas → Férias e ausências; "Enter" abre o primeiro resultado
+- [ ] Pesquisa por uma ficha técnica, uma receita e um ingrediente (2 letras ou mais): cada um abre o sítio certo; o ingrediente abre o Inventário já filtrado
+- [ ] Pesquisa sem resultados: "Nada encontrado para «…»"
+- [ ] Lupa no Início abre o "Mais" com o teclado já na pesquisa
+- [ ] Como "Leitura": não aparecem Pessoas nem as suas secções, nem nos grupos nem na pesquisa
+- [ ] Manter o dedo num ícone do "Mais": escolher a cor; "Cor padrão" repõe
+- [ ] Configurações → Navegação: o rodapé aceita no máximo 3 páginas e explica que as outras ficam no "Mais"
+
 ---
 
 ## Notas / ajustes pedidos

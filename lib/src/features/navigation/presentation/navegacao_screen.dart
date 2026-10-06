@@ -172,7 +172,7 @@ class _RodapeTabState extends ConsumerState<_RodapeTab> {
         const SizedBox(height: 16),
         Text(
           cheio
-              ? 'O rodapé está cheio (máximo $rodapeMaximo além do Início). '
+              ? 'O rodapé está cheio (máximo $rodapeMaximo além do Início; as outras páginas ficam no "Mais"). '
                   'Tire uma página para juntar outra.'
               : 'Juntar ao rodapé',
           style: tt.titleSmall,

@@ -163,8 +163,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           // insumos, material da loja, embalagens)
           GoRoute(
             path: Routes.inventory,
-            builder: (_, __) =>
-                const InventarioScreen(secao: SecaoInventario.ingredientes),
+            // ?q=… abre os ingredientes já filtrados (vem da pesquisa do "Mais")
+            builder: (_, state) => InventarioScreen(
+              secao: SecaoInventario.ingredientes,
+              busca: state.uri.queryParameters['q'] ?? '',
+            ),
             routes: [
               GoRoute(
                 path: 'limpeza',

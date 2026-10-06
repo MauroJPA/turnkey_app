@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.1.0 — 2026-10-06 — Menu "Mais" com pesquisa: qualquer página a 2 toques
+
+Qualquer página, ficha ou ingrediente a 2 toques: o rodapé fica limpo e passa a ter um botão **"Mais"**.
+
+- **Rodapé mais leve**: Início + 3 páginas à tua escolha + **Mais** (5 botões, como recomenda o Material Design; com 6 ou 7 a barra ficava apertada). Quem tinha 4 ou 5 páginas no rodapé mantém as 3 primeiras; as outras estão no "Mais". Em Configurações → Navegação, o máximo passou a 3.
+- **Mais** abre as páginas **agrupadas por tarefa** — Fazer hoje, Receitas e custos, Equipa, Dinheiro, Casa — em vez da grelha de mosaicos. Só aparece o que a pessoa pode abrir. Quando estás numa página que não está no rodapé, o "Mais" fica assinalado.
+- **Pesquisa no topo do "Mais"** (e a lupa no Início): escreve "férias" e aparece **Pessoas → Férias e ausências**; escreve "dre", "preços", "ponto", "formações"… Procura também **fichas técnicas, receitas e ingredientes** (a partir de 2 letras). **Enter** abre o primeiro resultado. Ignora acentos e maiúsculas, e encontra por sinónimos ("folga" → Férias).
+- Um ingrediente encontrado abre o **Inventário já filtrado** por esse nome.
+- O botão "Todas as páginas" do fundo do Início saiu (o "Mais" e a lupa substituem-no).
+- A cor de cada ícone muda-se mantendo o dedo no ícone, no "Mais" (substitui a lista "Todas as páginas").
+- Testes: pesquisa (acentos, várias palavras, permissões, empates), agrupamento (cada página num só grupo), rodapé por omissão.
+
 ## 2.0.0 — 2026-10-06 — Início "Hoje": o que precisa de ti, resolvido na própria linha
 
 Nova linha de versões **2.x**: a app mais ágil, com menos cliques e menos ecrã. A primeira mudança é o Início.

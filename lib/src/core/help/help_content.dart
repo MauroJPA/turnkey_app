@@ -65,7 +65,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Sem botão, tocar na linha abre a página certa (Inventário, Compras, HACCP, Encomendas…).',
       '"Para saber" guarda o que não pede nada agora (preços que subiram, produções agendadas, pagamentos daqui a mais de 2 dias). Está fechado para não ocupar espaço.',
       'Se não houver nada, vês "Tudo em dia".',
-      '"Todas as páginas" abre a lista completa: aí podes abrir qualquer página e mudar a cor do ícone de cada uma. As páginas do rodapé e o que cada pessoa pode ver ou editar definem-se em Configurações → Navegação e permissões.',
+      'O botão "Mais" (último do rodapé) e a lupa abrem todas as páginas, agrupadas por tarefa, com uma pesquisa em cima: escreve "férias", "preços", o nome de uma ficha, de uma receita ou de um ingrediente e toca no resultado (Enter abre o primeiro). Mantém o dedo num ícone para mudar a sua cor. As páginas do rodapé e o que cada pessoa pode ver ou editar definem-se em Configurações → Navegação e permissões.',
       'O botão "?" existe em todas as páginas e abre esta explicação; dentro dele também estão as "Notas desta página" (para deixares um aviso à equipa, ex. "falta o preço deste ingrediente") e "Sugestão ou reportar erro" (vai direto para o desenvolvimento).',
     ],
   ),
@@ -555,10 +555,10 @@ const Map<HelpTopic, HelpEntry> helpContent = {
   HelpTopic.navegacao: (
     titulo: 'Navegação e permissões',
     paragrafos: [
-      'Rodapé: escolha que páginas aparecem na barra de baixo (até 5, além do Início) e a ordem. Proprietário e Administrador podem mudar.',
+      'Rodapé: escolha que páginas aparecem na barra de baixo (até 3, além do Início e do "Mais") e a ordem. Todas as outras abrem pelo "Mais". Proprietário e Administrador podem mudar.',
       'Permissões: só o Proprietário. Para cada nível (Administrador, Editor, Leitura) e cada página, escolha Oculto (a página desaparece e não abre), Só ver (vê mas não altera) ou Editar.',
       'O Proprietário tem sempre acesso a tudo. As permissões escondem e bloqueiam na app; os dados continuam protegidos pelo papel de cada pessoa.',
-      'Cada pessoa pode ainda mudar a cor do ícone de cada página, em "Todas as páginas" — isso é só para si.',
+      'Cada pessoa pode ainda mudar a cor do ícone de cada página: no "Mais", mantém o dedo no ícone — isso é só para si.',
     ],
   ),
   HelpTopic.equipa: (

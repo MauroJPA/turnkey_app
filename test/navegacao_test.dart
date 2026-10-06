@@ -81,8 +81,8 @@ void main() {
         NivelAcesso.oculto,
       );
       final viewer = c.rodapePara(Papel.viewer).map((p) => p.chave).toList();
-      expect(viewer, ['producao', 'contagem', 'inventario']);
-      expect(c.rodapePara(Papel.admin).length, 4);
+      expect(viewer, ['producao', 'contagem']);
+      expect(c.rodapePara(Papel.admin).length, 3);
     });
 
     test('fromRecord ignora lixo e mantém o resto', () {
@@ -135,11 +135,13 @@ void main() {
     });
 
     test('fromRecord descarta cores inválidas', () {
-      final p = NavPrefs.fromRecord(RecordModel.fromJson({
-        'id': 'p1',
-        'oculto': ['vendas', 3],
-        'cores': {'vendas': '#00897B', 'faturas': 'azul'},
-      }));
+      final p = NavPrefs.fromRecord(
+        RecordModel.fromJson({
+          'id': 'p1',
+          'oculto': ['vendas', 3],
+          'cores': {'vendas': '#00897B', 'faturas': 'azul'},
+        }),
+      );
       expect(p.oculto, {'vendas'});
       expect(p.cores, {'vendas': '#00897B'});
     });

@@ -11,7 +11,7 @@ import '../../../core/storage/prefs_locais.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../daily_count/presentation/forno_widgets.dart';
 import '../../navigation/application/navigation_providers.dart';
-import '../../navigation/presentation/todas_paginas_sheet.dart';
+import '../../navigation/presentation/mais_sheet.dart';
 import '../../settings/application/empresa_providers.dart';
 import '../../settings/data/empresa_repository.dart';
 import '../../settings/domain/empresa.dart';
@@ -20,8 +20,8 @@ import '../domain/tarefa_hoje.dart';
 import 'tarefas_hoje_provider.dart';
 
 /// Ecrã inicial: o que precisa de ti hoje, com o botão que o resolve ali
-/// mesmo, e três atalhos para o que mais usas. O resto vive no rodapé e em
-/// "Todas as páginas".
+/// mesmo, e três atalhos para o que mais usas. O resto vive no rodapé e no
+/// "Mais" (que também pesquisa).
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
 
@@ -74,6 +74,12 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         titleSpacing: 12,
         title: marcaAppBar(context, empresa, logoUrl),
         actions: [
+          IconButton(
+            key: const ValueKey('pesquisar'),
+            tooltip: 'Procurar',
+            icon: const Icon(Icons.search),
+            onPressed: () => showMaisSheet(context, procurar: true),
+          ),
           IconButton(
             tooltip: 'Configurações',
             icon: const Icon(Icons.settings_outlined),
@@ -184,14 +190,6 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               ),
             ),
           ],
-          const SizedBox(height: 8),
-          Center(
-            child: TextButton.icon(
-              onPressed: () => showTodasPaginasSheet(context),
-              icon: const Icon(Icons.apps, size: 18),
-              label: const Text('Todas as páginas'),
-            ),
-          ),
         ],
       ),
     );

@@ -61,9 +61,12 @@ enum SecaoInventario {
 /// ingredientes (com preço e stock), a limpeza e insumos, o material da loja
 /// e as embalagens — em secções, com o stock à vista em cada linha.
 class InventarioScreen extends ConsumerWidget {
-  const InventarioScreen({super.key, required this.secao});
+  const InventarioScreen({super.key, required this.secao, this.busca = ''});
 
   final SecaoInventario secao;
+
+  /// Texto já escrito na pesquisa dos ingredientes (vem do menu "Mais").
+  final String busca;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -116,9 +119,10 @@ class InventarioScreen extends ConsumerWidget {
           ),
           Expanded(
             child: switch (secao) {
-              SecaoInventario.ingredientes => const IngredientsScreen(
-                key: ValueKey('inv-ingredientes'),
+              SecaoInventario.ingredientes => IngredientsScreen(
+                key: ValueKey('inv-ingredientes-$busca'),
                 embedded: true,
+                buscaInicial: busca,
               ),
               SecaoInventario.limpeza => const ConsumiveisScreen(
                 key: ValueKey('inv-limpeza'),

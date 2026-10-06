@@ -31,19 +31,26 @@ import 'juntar_marcas_fornecedores_sheet.dart';
 import 'nutricao_sheet.dart';
 
 class IngredientsScreen extends ConsumerStatefulWidget {
-  const IngredientsScreen({super.key, this.embedded = false});
+  const IngredientsScreen({
+    super.key,
+    this.embedded = false,
+    this.buscaInicial = '',
+  });
 
   /// Dentro da página Inventário: sem seta de voltar, título nem ajuda
   /// (a página já os tem); ficam só as ações.
   final bool embedded;
+
+  /// Texto com que a pesquisa já abre.
+  final String buscaInicial;
 
   @override
   ConsumerState<IngredientsScreen> createState() => _IngredientsScreenState();
 }
 
 class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
-  final _search = TextEditingController();
-  String _query = '';
+  late final _search = TextEditingController(text: widget.buscaInicial);
+  late String _query = widget.buscaInicial;
   String _fornecedor = 'Todos';
   bool _trash = false;
   bool _busy = false;
