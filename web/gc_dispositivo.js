@@ -74,3 +74,31 @@ window.gcNfcParar = function () {
   } catch (_) {}
   window.gcNfcLeitor = null;
 };
+
+// --- a app abre sem ligação (service worker) ----------------------------------
+// Só em HTTPS (ou localhost). O gc_sw.js guarda a app depois do primeiro
+// carregamento; com ligação a app é sempre a versão do servidor.
+(function () {
+  try {
+    if (!('serviceWorker' in navigator)) return;
+    var seguro = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    if (!seguro) return;
+    window.addEventListener('load', function () {
+      navigator.serviceWorker
+        .register('gc_sw.js')
+        .then(function () {
+          return navigator.serviceWorker.ready;
+        })
+        .then(function (reg) {
+          // passados uns segundos, diz ao service worker o que a app usou
+          setTimeout(function () {
+            try {
+              var urls = performance.getEntriesByType('resource').map(function (r) { return r.name; });
+              if (reg.active) reg.active.postMessage({ tipo: 'cachear', urls: urls });
+            } catch (_) {}
+          }, 6000);
+        })
+        .catch(function () {});
+    });
+  } catch (_) {}
+})();

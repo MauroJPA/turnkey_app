@@ -1,13 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pocketbase/pocketbase.dart';
 
+import '../errors/erro_ligacao.dart';
 import 'auth_repository.dart';
 import 'auth_state.dart';
 import 'permissions.dart';
 
-final authControllerProvider =
-    NotifierProvider<AuthController, AuthState>(AuthController.new);
+final authControllerProvider = NotifierProvider<AuthController, AuthState>(
+  AuthController.new,
+);
 
 class AuthController extends Notifier<AuthState> {
   StreamSubscription<void>? _sub;
@@ -38,24 +41,39 @@ class AuthController extends Notifier<AuthState> {
       return;
     }
     try {
-      final user = await _repo.reloadCurrentUser();
-      final empresaId = user.getStringValue('empresa');
-      if (empresaId.isEmpty && !user.getBoolValue('aprovado')) {
-        state = AuthPendingApproval(user);
-      } else if (empresaId.isEmpty) {
-        state = AuthNeedsOnboarding(user);
-      } else {
-        state = AuthSignedIn(
-          user: user,
-          empresaId: empresaId,
-          papel: Papel.fromName(user.getStringValue('papel')),
-        );
+      RecordModel user;
+      try {
+        user = await _repo.reloadCurrentUser();
+      } on Object catch (e) {
+        // Sem ligação ao servidor (Wi-Fi em baixo): continua com o registo
+        // guardado da última vez (empresa e papel) em vez de pôr a pessoa
+        // fora da app — assim o quiosque abre e regista sem rede.
+        final guardado = _repo.currentRecord;
+        if (guardado == null || !eErroDeLigacao(e)) rethrow;
+        user = guardado;
       }
+      state = _estadoDe(user);
     } on Object {
-      // Rede em baixo ou registo apagado: trata como sessão terminada.
+      // Registo apagado ou sessão recusada: trata como sessão terminada.
       _repo.signOut();
-      state = const AuthSignedOut(message: 'Não foi possível validar a sessão.');
+      state = const AuthSignedOut(
+        message: 'Não foi possível validar a sessão.',
+      );
     }
+  }
+
+  AuthState _estadoDe(RecordModel user) {
+    final empresaId = user.getStringValue('empresa');
+    if (empresaId.isEmpty && !user.getBoolValue('aprovado')) {
+      return AuthPendingApproval(user);
+    } else if (empresaId.isEmpty) {
+      return AuthNeedsOnboarding(user);
+    }
+    return AuthSignedIn(
+      user: user,
+      empresaId: empresaId,
+      papel: Papel.fromName(user.getStringValue('papel')),
+    );
   }
 
   Future<void> signIn({required String email, required String password}) async {

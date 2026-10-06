@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.102.0 — 2026-10-06 — A app abre sem Wi-Fi
+
+A app abre sem Wi-Fi: o quiosque já não fica em branco se a página for recarregada com a ligação em baixo.
+
+- **Abre sem ligação**: depois de abrires a app uma vez com rede, o telemóvel guarda-a. Se o Wi-Fi cair e a página recarregar (ou o navegador reiniciar), a app **abre na mesma**, continua **com a sessão iniciada** e o quiosque funciona com a última lista de tarefas e de pessoas, guardando os registos (tarefas e ponto) para enviar quando a ligação voltar (1.90.0).
+- **Com rede é sempre a versão do servidor**: a cópia só serve quando o servidor não responde (ou demora mais de 6 segundos). O botão "Atualizar" e o aviso de versão nova continuam a funcionar como antes.
+- **A sessão já não termina por falta de rede**: antes, abrir a app sem Wi-Fi (ou com o servidor a reiniciar) punha a pessoa fora e pedia de novo o email e a palavra-passe. Agora só termina se o servidor recusar mesmo a sessão.
+- **Sem depender da Google**: a app passa a incluir o motor gráfico (CanvasKit) e o tipo de letra de reserva no próprio servidor (`--no-web-resources-cdn`), em vez de os ir buscar à internet de cada vez. É o que torna o arranque sem rede possível.
+- Só funciona em HTTPS (o teu endereço Tailscale já é) ou no próprio computador. Nada de dados fica guardado por este mecanismo: só os ficheiros da app (os dados continuam a vir do servidor).
+- Testes: o arranque sem ligação (a sessão fica), com servidor em baixo (503), com sessão recusada (401) ou conta apagada (404). Verificado no Chrome: com o servidor desligado, a app abre, já com a sessão iniciada.
+- Importante: abre a app **uma vez com rede** depois de atualizares para esta versão, em cada telemóvel (sobretudo o do quiosque), para ela ficar guardada.
+
 ## 1.101.0 — 2026-10-06 — Vendus sempre atualizado
 
 Vendas do Vendus sempre atualizadas — e um aviso se deixarem de sincronizar.

@@ -93,6 +93,7 @@ class _AvisoVersaoNovaState extends State<AvisoVersaoNova> {
       'main.dart.js',
       'gc_dispositivo.js',
       'flutter_service_worker.js',
+      'gc_sw.js',
       'version.json',
       'manifest.json',
     ];

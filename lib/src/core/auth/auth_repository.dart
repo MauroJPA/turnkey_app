@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../errors/erro_ligacao.dart';
 import '../pocketbase/pb_client.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>(
@@ -34,23 +35,28 @@ class AuthRepository {
     required String password,
     required String nome,
   }) async {
-    await _pb.collection('users').create(
-      body: {
-        'email': email,
-        'password': password,
-        'passwordConfirm': password,
-        'nome': nome,
-      },
-    );
+    await _pb
+        .collection('users')
+        .create(
+          body: {
+            'email': email,
+            'password': password,
+            'passwordConfirm': password,
+            'nome': nome,
+          },
+        );
     await signIn(email: email, password: password);
   }
 
-  /// Revalida o token; se falhar, limpa a sessão.
+  /// Revalida o token; se o servidor o recusar, limpa a sessão. Sem ligação
+  /// ao servidor (Wi-Fi em baixo) **não** termina a sessão: a pessoa continua
+  /// entrada com o que a app guardou, e volta a validar quando houver rede.
   Future<void> refresh() async {
     if (!_pb.authStore.isValid) return;
     try {
       await _pb.collection('users').authRefresh();
-    } on ClientException {
+    } on ClientException catch (e) {
+      if (eErroDeLigacao(e)) return;
       _pb.authStore.clear();
     }
   }

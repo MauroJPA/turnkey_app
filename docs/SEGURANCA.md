@@ -153,6 +153,15 @@ empresa. O WhatsApp está no código mas **desligado** por omissão (precisa de 
   saúde e pessoais). Cada um apaga só os seus pedidos ainda por decidir.
 - `ferias_direito` (dias de férias por pessoa e ano): só a administração escreve; cada um lê o seu.
 
+## App sem ligação (1.102.0)
+
+- `web/gc_sw.js` (service worker) guarda só os **ficheiros da app** (código, CanvasKit, tipos de letra) neste aparelho; nunca guarda
+  pedidos à API nem respostas de dados, nem o `version.json`. Rede primeiro: com ligação a app é sempre a versão do servidor.
+- A sessão deixa de terminar por falta de rede (só quando o servidor a recusa: 400/401/403/404). O token continua no armazenamento
+  seguro do navegador; um telemóvel do quiosque deve ter bloqueio de ecrã.
+- A app já não pede o CanvasKit nem tipos de letra a `gstatic.com` (`--no-web-resources-cdn`): menos dependência externa; a CSP
+  continua a permitir só a própria origem para o essencial.
+
 ## Riscos aceites / notas
 
 - O administrador pode editar o perfil da empresa (desenho) e, tecnicamente, o campo `plano`

@@ -1,6 +1,6 @@
 # Pendentes (fila de trabalho)
 
-Última versão fechada: **1.101.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
+Última versão fechada: **1.102.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
 (editar → `bash scripts/verificar.sh` → pubspec + CHANGELOG + docs/CHECKLIST_TESTES.md → commit com caminhos
 explícitos → `git branch -f develop main` → `git tag vX.Y.Z`). No fim: `powershell -File scripts\empacotar-producao.ps1`
 e dar ao Mauro o SHA-256 + comando de publicação.
@@ -32,7 +32,7 @@ Fila atual (pedido do Mauro em 06/10/2026, **cada item = uma versão**, por esta
 - ~~**1.99.0**~~ (feito) Alertas de validade por lote (ingredientes e produtos), usando os lotes e o stock.
 - ~~**1.100.0**~~ (feito) Saúde dos dados: fichas sem preço/tempo/temperatura, ingredientes sem preço.
 - ~~**1.101.0**~~ (feito) Importação diária automática das vendas do Vendus.
-- **1.102.0** App que abre sem Wi-Fi (service worker).
+- ~~**1.102.0**~~ (feito) App que abre sem Wi-Fi (service worker).
 - **1.103.0** Segurança: 2 passos, teste de restauro dos backups, espaço em disco no cartão de backups.
 - **1.104.0** Comparador de preços entre fornecedores.
 - **1.105.0** Custo do desperdício por motivo e sabor.

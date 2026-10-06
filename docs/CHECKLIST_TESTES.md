@@ -1853,6 +1853,15 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] O resumo diário traz "Vendus sem sincronizar" nesse caso
 - [ ] Sem o Vendus ligado, nada disto aparece
 
+## 130. A app abre sem Wi-Fi
+
+- [ ] Atualizar para esta versão e abrir a app uma vez com rede em cada telemóvel (sobretudo o do quiosque), esperando uns segundos
+- [ ] Desligar o Wi-Fi/dados do telemóvel e recarregar a página: a app abre (não fica em branco) e continua com a sessão iniciada
+- [ ] No quiosque sem rede: aparece "Sem ligação…", os nomes e as tarefas da última vez, e marcar uma tarefa ou o ponto fica "por enviar"
+- [ ] Ligar a rede: os registos seguem sozinhos
+- [ ] Com rede, o "Atualizar" continua a trazer a versão nova (e o aviso "Há uma versão nova" aparece como antes)
+- [ ] Abrir a app sem ter aberto nunca com rede: não abre (é normal: precisa de uma primeira vez com rede)
+
 ---
 
 ## Notas / ajustes pedidos
