@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
+import '../../../core/auth/current_user.dart';
 import '../../../core/auth/permissions.dart';
 import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
+import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../application/settings_providers.dart';
+import '../data/team_repository.dart';
+import '../domain/acesso_equipa.dart';
 import '../domain/team_member.dart';
 
 class TeamScreen extends ConsumerStatefulWidget {
@@ -27,8 +32,9 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
       await action();
     } on Object catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -44,7 +50,9 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
     );
     if (result == null) return;
     await _run(
-      () => ref.read(settingsActionsProvider).addMember(
+      () => ref
+          .read(settingsActionsProvider)
+          .addMember(
             nome: result.nome,
             email: result.email,
             password: result.password,
@@ -66,10 +74,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 for (final p in Papel.values)
-                  RadioListTile<Papel>(
-                    value: p,
-                    title: Text(p.label),
-                  ),
+                  RadioListTile<Papel>(value: p, title: Text(p.label)),
               ],
             ),
           ),
@@ -77,14 +82,119 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
       ),
     );
     if (novo == null || novo == m.papel) return;
-    await _run(
-      () => ref.read(settingsActionsProvider).changeRole(m.id, novo),
+    await _run(() => ref.read(settingsActionsProvider).changeRole(m.id, novo));
+  }
+
+  String _nomeDe(TeamMember m) => m.nome.isEmpty ? m.email : m.nome;
+
+  /// Repõe a palavra-passe: o servidor gera uma provisória que se mostra uma
+  /// só vez, para dar à pessoa (copiar ou mandar a mensagem pronta).
+  Future<void> _reporSenha(TeamMember m) async {
+    final ok = await confirmDialog(
+      context,
+      titulo: 'Repor a palavra-passe de ${_nomeDe(m)}?',
+      mensagem:
+          'É gerada uma palavra-passe provisória, que vais ver uma só vez. A '
+          'sessão que ${_nomeDe(m)} tenha aberta fecha-se e, ao entrar com a '
+          'provisória, escolhe logo uma nova.',
+      confirmar: 'Repor',
     );
+    if (!ok || !mounted) return;
+    String? senha;
+    await _run(() async {
+      senha = await ref.read(settingsActionsProvider).resetPassword(m.id);
+    });
+    if (senha == null || senha!.isEmpty || !mounted) return;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Palavra-passe provisória'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Para ${_nomeDe(m)} — só aparece agora:'),
+            const SizedBox(height: 12),
+            Center(
+              child: SelectableText(
+                senha!,
+                key: const ValueKey('senha-provisoria'),
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Ao entrar com ela, a pessoa escolhe uma palavra-passe nova.',
+              style: Theme.of(ctx).textTheme.bodySmall,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: senha!));
+              if (ctx.mounted) {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  const SnackBar(content: Text('Palavra-passe copiada.')),
+                );
+              }
+            },
+            child: const Text('Copiar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              await Clipboard.setData(
+                ClipboardData(text: mensagemSenhaProvisoria(m.nome, senha!)),
+              );
+              if (ctx.mounted) {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  const SnackBar(content: Text('Mensagem copiada.')),
+                );
+              }
+            },
+            child: const Text('Copiar mensagem'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Feito'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _remover(TeamMember m) async {
+    final ok = await confirmDialog(
+      context,
+      titulo: 'Remover ${_nomeDe(m)} da equipa?',
+      mensagem:
+          '${_nomeDe(m)} deixa de poder entrar na app e o cartão do quiosque '
+          'desaparece. O que registou (ponto, férias, faturas…) mantém-se.',
+      confirmar: 'Remover',
+      destrutivo: true,
+    );
+    if (!ok) return;
+    await _run(() async {
+      await ref.read(settingsActionsProvider).removeMember(m.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${_nomeDe(m)} saiu da equipa.')),
+        );
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final membersAsync = ref.watch(teamMembersProvider);
+    final meuPapel = ref.watch(currentPapelProvider);
+    final meuId = ref.read(teamRepositoryProvider).utilizadorId;
 
     return Scaffold(
       appBar: AppBar(
@@ -115,15 +225,61 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                   return ListTile(
                     leading: CircleAvatar(
                       child: Text(
-                        (m.nome.isEmpty ? m.email : m.nome)
-                            .characters
-                            .first
+                        (m.nome.isEmpty ? m.email : m.nome).characters.first
                             .toUpperCase(),
                       ),
                     ),
                     title: Text(m.nome.isEmpty ? m.email : m.nome),
                     subtitle: Text(m.email),
-                    trailing: Chip(label: Text(m.papel.label)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Chip(label: Text(m.papel.label)),
+                        if (podeGerirAcesso(
+                          eu: meuPapel,
+                          alvo: m.papel,
+                          souEu: m.id == meuId,
+                        ))
+                          PopupMenuButton<String>(
+                            key: ValueKey('membro-menu-${m.id}'),
+                            tooltip: 'Mais ações',
+                            enabled: !_busy,
+                            onSelected: (v) {
+                              switch (v) {
+                                case 'papel':
+                                  _changeRole(m);
+                                case 'senha':
+                                  _reporSenha(m);
+                                case 'remover':
+                                  _remover(m);
+                              }
+                            },
+                            itemBuilder: (_) => const [
+                              PopupMenuItem(
+                                value: 'papel',
+                                child: ListTile(
+                                  leading: Icon(Icons.badge_outlined),
+                                  title: Text('Mudar o papel'),
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'senha',
+                                child: ListTile(
+                                  leading: Icon(Icons.lock_reset),
+                                  title: Text('Repor a palavra-passe'),
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'remover',
+                                child: ListTile(
+                                  leading: Icon(Icons.person_remove_outlined),
+                                  title: Text('Remover da equipa'),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
                     onTap: () => _changeRole(m),
                   );
                 },
@@ -170,12 +326,7 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
     if (!_formKey.currentState!.validate()) return;
     Navigator.pop(
       context,
-      _NewMember(
-        _nome.text.trim(),
-        _email.text.trim(),
-        _password.text,
-        _papel,
-      ),
+      _NewMember(_nome.text.trim(), _email.text.trim(), _password.text, _papel),
     );
   }
 
@@ -194,10 +345,7 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Novo membro',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            Text('Novo membro', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
             TextFormField(
               controller: _nome,

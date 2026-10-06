@@ -200,6 +200,18 @@ empresa. O WhatsApp está no código mas **desligado** por omissão (precisa de 
 - A CSP não mudou: `script-src 'self'`, `worker-src 'self' blob:`. O PDF.js corre com `isEvalSupported: false` (sem `eval`/`new Function`).
 - PDFs com scripts embebidos (JavaScript do PDF) não são executados: só se desenham as páginas.
 
+## Repor palavras-passe e remover membros (2.7.0)
+
+- `POST /team/members/{id}/senha` (só proprietário/administrador da mesma empresa): gera uma palavra-passe **provisória** aleatória
+  (`$security.randomStringWithAlphabet`, 10 caracteres sem ambíguos), devolve-a **uma só vez**, fecha as sessões da conta
+  (`refreshTokenKey`) e marca `users.senha_provisoria`. O proprietário repõe a de qualquer pessoa menos a própria; o administrador só a de
+  Editor/Leitura. Fica um registo no log do servidor (quem repôs, para quem) — nunca a palavra-passe.
+- `users.senha_provisoria` só muda pelos endpoints do servidor (`guards.pb.js` recusa alterações pela API normal). Com a marca, a app
+  só deixa a pessoa chegar ao ecrã "Escolhe a tua palavra-passe" (`POST /conta/senha`: mínimo 8, diferente da provisória, fecha as sessões).
+- `DELETE /team/members/{id}`: apaga a conta; não se apaga a própria nem o último proprietário; o administrador só remove Editor/Leitura.
+  Os registos que ela criou ficam (guardam o nome); desaparecem só as preferências do menu e o cartão do quiosque (relações em cascata).
+- Testado em `teste_equipa_acessos` (permissões, outra empresa, sessão antiga a fechar, provisória → nova, remoção) e nas rotas de `ROTAS`.
+
 ## Riscos aceites / notas
 
 - O administrador pode editar o perfil da empresa (desenho) e, tecnicamente, o campo `plano`

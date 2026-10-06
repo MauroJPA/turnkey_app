@@ -25,6 +25,12 @@ onRecordUpdateRequest((e) => {
     );
   }
 
+  if (e.record.getBool('senha_provisoria') !== original.getBool('senha_provisoria')) {
+    throw new ForbiddenError(
+      "O campo 'senha_provisoria' só muda pelos endpoints da equipa.",
+    );
+  }
+
   if (mudouEmpresa || mudouPapel) {
     throw new ForbiddenError(
       "Os campos 'empresa' e 'papel' não podem ser alterados por esta via.",

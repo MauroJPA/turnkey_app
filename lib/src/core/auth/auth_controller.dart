@@ -37,7 +37,9 @@ class AuthController extends Notifier<AuthState> {
   /// Deriva o [AuthState] a partir da sessão atual do PocketBase.
   Future<void> _reclassify() async {
     if (!_repo.isSignedIn) {
-      state = const AuthSignedOut();
+      // mantém o aviso deixado por quem terminou a sessão (ex.: "Palavra-passe
+      // alterada"), que a reclassificação automática apagaria
+      if (state is! AuthSignedOut) state = const AuthSignedOut();
       return;
     }
     try {
@@ -114,8 +116,10 @@ class AuthController extends Notifier<AuthState> {
   /// Chamado pelo ecrã de onboarding depois de criar a empresa.
   Future<void> reload() => _reclassify();
 
-  void signOut() {
+  /// Termina a sessão; [message] aparece no ecrã de entrada (ex.: depois de
+  /// trocar a palavra-passe provisória).
+  void signOut({String? message}) {
     _repo.signOut();
-    state = const AuthSignedOut();
+    state = AuthSignedOut(message: message);
   }
 }

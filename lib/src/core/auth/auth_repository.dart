@@ -99,6 +99,14 @@ class AuthRepository {
 
   void signOut() => _pb.authStore.clear();
 
+  /// Escolhe a palavra-passe nova depois de entrar com a provisória (o
+  /// servidor tira a marca e fecha as sessões).
+  Future<void> definirSenhaNova(String senha) => _pb.send(
+    '/api/gc_turnkey/conta/senha',
+    method: 'POST',
+    body: {'senha': senha},
+  );
+
   // --- OAuth (Google / Apple) via o fluxo OAuth2 do PocketBase ------------
 
   /// Nomes dos provedores OAuth2 que o servidor tem ativos

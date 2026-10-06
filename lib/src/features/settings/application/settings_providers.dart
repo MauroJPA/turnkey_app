@@ -129,6 +129,14 @@ class SettingsActions {
     _ref.invalidate(teamMembersProvider);
   }
 
+  Future<String> resetPassword(String memberId) =>
+      _ref.read(teamRepositoryProvider).resetPassword(memberId);
+
+  Future<void> removeMember(String memberId) async {
+    await _ref.read(teamRepositoryProvider).removeMember(memberId);
+    _ref.invalidate(teamMembersProvider);
+  }
+
   Future<void> changeRole(String memberId, Papel papel) async {
     await _ref.read(teamRepositoryProvider).changeRole(memberId, papel);
     _ref.invalidate(teamMembersProvider);

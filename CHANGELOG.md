@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.7.0 — 2026-10-06 — Repor palavras-passe e remover membros da equipa
+
+Quando alguém da equipa se esquece da palavra-passe, o proprietário (ou o administrador) **repõe-a para uma provisória** — e também pode **remover** quem saiu da equipa.
+
+- **Repor a palavra-passe**: em **Configurações → Equipa**, no ⋮ ao lado da pessoa, **"Repor a palavra-passe"**. A app gera uma palavra-passe provisória (ex.: `k7m2p-q9xab`, sem letras que se confundem), que **vês uma só vez**, com **"Copiar"** e **"Copiar mensagem"** (texto pronto para mandar por WhatsApp ou SMS).
+- **A pessoa é obrigada a escolher uma nova**: ao entrar com a provisória, só chega a um ecrã "Escolhe a tua palavra-passe" (mínimo 8 caracteres, diferente da provisória). Depois volta ao início de sessão ("Palavra-passe alterada. Entra com a nova.").
+- **Segurança**: a palavra-passe antiga deixa de servir e as sessões que a pessoa tivesse abertas **fecham-se** logo. O proprietário repõe a de qualquer pessoa (menos a própria); o administrador só a de Editores e Leitores.
+- **Remover da equipa**: no mesmo ⋮, **"Remover da equipa"** (com confirmação). A conta é apagada e a pessoa deixa de poder entrar. **O que registou fica** (ponto, férias, faturas, notas guardam o nome); desaparecem só as preferências do menu e o cartão do quiosque. Não se remove a própria conta nem o último proprietário; o administrador só remove Editores e Leitores.
+- O ecrã de início de sessão passa a mostrar avisos (como "Palavra-passe alterada").
+- Servidor: migration `1791120000_senha_provisoria` e hook novo `team_acesso.pb.js` (3 endpoints); detalhes em `docs/SEGURANCA.md`.
+- Testes: permissões por papel, outra empresa, sessão antiga a fechar, provisória → nova, remoção e protecção do último proprietário (servidor), e as regras de quem pode gerir quem (app).
+
 ## 2.6.0 — 2026-10-06 — Faturas em PDF vistas dentro da app
 
 As faturas em **PDF** passam a ver-se **dentro da app**, ao rever, como as fotos: fixas em cima, com zoom, e as linhas por baixo.

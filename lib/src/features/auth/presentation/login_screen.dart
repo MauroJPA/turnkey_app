@@ -5,6 +5,7 @@ import 'package:pocketbase/pocketbase.dart';
 
 import '../../../core/auth/auth_controller.dart';
 import '../../../core/auth/auth_repository.dart';
+import '../../../core/auth/auth_state.dart';
 import '../../../core/errors/mensagem_amigavel.dart';
 
 /// Provedores OAuth2 ativos no servidor (ex.: `['google']`).
@@ -33,6 +34,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _registing = false;
   bool _busy = false;
   String? _error;
+
+  /// Aviso deixado ao terminar a sessão (ex.: "Palavra-passe alterada").
+  late final String? _aviso = switch (ref.read(authControllerProvider)) {
+    AuthSignedOut(:final message) => message,
+    _ => null,
+  };
 
   @override
   void dispose() {
@@ -217,6 +224,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   const SizedBox(height: 4),
+                  if (_aviso != null && _mfaId == null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8, bottom: 4),
+                      child: Text(
+                        _aviso,
+                        key: const ValueKey('login-aviso'),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
                   if (_mfaId != null) ...[
                     const SizedBox(height: 16),
                     ..._passoCodigo(context),

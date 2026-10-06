@@ -567,7 +567,9 @@ const Map<HelpTopic, HelpEntry> helpContent = {
     paragrafos: [
       'As pessoas que podem entrar na app desta empresa.',
       'Cada uma tem um papel: Proprietário e Administrador podem mudar tudo; Editor cria e edita; Leitura só vê.',
-      'Use "+" para convidar alguém. Toque num membro para mudar o papel.',
+      'Use "Adicionar" para convidar alguém. Toque num membro para mudar o papel.',
+      'Esqueceu-se da palavra-passe? No ⋮ ao lado do membro, "Repor a palavra-passe": a app gera uma palavra-passe PROVISÓRIA (algo como k7m2p-q9xab), que vê uma só vez — use "Copiar" ou "Copiar mensagem" para a enviar à pessoa. As sessões que ela tinha abertas fecham-se e, ao entrar com a provisória, é obrigada a escolher uma palavra-passe nova antes de continuar. O proprietário repõe a de qualquer pessoa (menos a sua); o administrador só a de Editores e Leitores.',
+      'No mesmo ⋮, "Remover da equipa" apaga a conta (a pessoa deixa de poder entrar e o cartão do quiosque desaparece). O que ela registou — ponto, férias, faturas, notas — mantém-se. Não se pode remover a própria conta nem o último proprietário; o administrador só remove Editores e Leitores.',
     ],
   ),
 };

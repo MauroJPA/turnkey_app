@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/auth/auth_controller.dart';
 import '../core/auth/auth_state.dart';
 import '../features/auth/presentation/login_screen.dart';
+import '../features/auth/presentation/nova_senha_screen.dart';
 import '../features/auth/presentation/onboarding_screen.dart';
 import '../features/auth/presentation/pending_approval_screen.dart';
 import '../features/daily_count/presentation/contagem_relatorios_screen.dart';
@@ -70,11 +71,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         case AuthNeedsOnboarding():
           return loc == Routes.onboarding ? null : Routes.onboarding;
         case AuthSignedIn():
+          // entrou com uma palavra-passe provisória: só pode escolher a nova
+          if (auth.user.getBoolValue('senha_provisoria')) {
+            return loc == Routes.novaSenha ? null : Routes.novaSenha;
+          }
           const gates = {
             Routes.splash,
             Routes.login,
             Routes.onboarding,
             Routes.pendente,
+            Routes.novaSenha,
           };
           return gates.contains(loc) ? Routes.home : null;
       }
@@ -89,6 +95,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.pendente,
         builder: (_, __) => const PendingApprovalScreen(),
+      ),
+      GoRoute(
+        path: Routes.novaSenha,
+        builder: (_, __) => const NovaSenhaScreen(),
       ),
       // Quiosque de tarefas: ecrã inteiro, sem rodapé, para o telemóvel que
       // fica na loja/fábrica com os cartões NFC dos colaboradores.

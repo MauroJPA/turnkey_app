@@ -2057,6 +2057,19 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Telemóvel mais antigo: o PDF abre na mesma (build "legacy" do leitor)
 - [ ] Faturas em foto continuam como antes
 
+## 149. Repor palavras-passe e remover membros da equipa
+
+- [ ] Equipa: cada membro (menos tu) tem o ⋮ com "Mudar o papel", "Repor a palavra-passe" e "Remover da equipa"; tu não tens ⋮
+- [ ] Como Administrador: o ⋮ só aparece em Editores e Leitores (não em Proprietário nem Administrador); como Editor/Leitura não há ⋮
+- [ ] "Repor a palavra-passe": confirma, mostra a provisória (ex.: k7m2p-q9xab) uma só vez; "Copiar" e "Copiar mensagem" funcionam
+- [ ] A pessoa tenta entrar com a palavra-passe antiga: recusado; a sessão que tinha aberta noutro aparelho fecha-se
+- [ ] Entrar com a provisória: vai direto ao ecrã "Escolhe a tua palavra-passe" e não consegue abrir mais nada
+- [ ] Nova palavra-passe curta (menos de 8) ou diferente da repetição: avisa; igual à provisória: recusa
+- [ ] Guardar: volta ao início de sessão com "Palavra-passe alterada. Entra com a nova."; entra com a nova
+- [ ] Se for Proprietário/Administrador com verificação em 2 passos ligada: continua a pedir o código por email
+- [ ] "Remover da equipa": confirma; a pessoa desaparece da lista e já não entra; o ponto/férias/faturas dela continuam visíveis com o nome
+- [ ] Não deixa remover a própria conta nem o último proprietário; o administrador não remove outro administrador
+
 ---
 
 ## Notas / ajustes pedidos

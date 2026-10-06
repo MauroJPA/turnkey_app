@@ -490,6 +490,97 @@ def teste_papeis():
     check(s == 400, 'equipa: não se remove o último proprietário', f'status {s}')
 
 
+def teste_equipa_acessos():
+    """2b. Repor a palavra-passe e remover membros da equipa."""
+    sec('2b. Equipa: palavra-passe provisória e remoção')
+    import re as _re
+
+    def criar(email, papel='editor'):
+        s_, r_, _ = call('POST', '/api/gc_turnkey/team/members',
+                         {'email': email, 'password': 'Teste12345!', 'papel': papel}, tok['ownerA'])
+        assert s_ == 200, (s_, r_)
+        return r_['id']
+
+    def entrar(email, senha):
+        s_, r_, _ = call('POST', '/api/collections/users/auth-with-password',
+                         {'identity': email, 'password': senha}, repetir=False)
+        return s_, r_
+
+    alvo = criar('esqueceu@seg.local')
+    s_, t0 = entrar('esqueceu@seg.local', 'Teste12345!')
+    check(s_ == 200, 'o membro entra com a palavra-passe inicial', f'status {s_}')
+    t_antigo = t0.get('token')
+
+    # quem pode repor
+    for quem in ('viewerA', 'editorA'):
+        s_, _, _ = call('POST', f'/api/gc_turnkey/team/members/{alvo}/senha', {}, tok[quem])
+        check(s_ == 403, f'repor senha: {quem} recusado', f'status {s_}')
+    s_, _, _ = call('POST', f'/api/gc_turnkey/team/members/{alvo}/senha', {}, tok['ownerB'])
+    check(s_ in (403, 404), 'repor senha: o proprietário de B não mexe em utilizadores de A', f'status {s_}')
+    s_, _, _ = call('POST', f'/api/gc_turnkey/team/members/{users["ownerA"]}/senha', {}, tok['ownerA'])
+    check(s_ == 400, 'repor senha: ninguém repõe a própria por aqui', f'status {s_}')
+    s_, _, _ = call('POST', f'/api/gc_turnkey/team/members/{users["ownerA"]}/senha', {}, tok['adminA'])
+    check(s_ == 403, 'repor senha: o administrador não repõe a do proprietário', f'status {s_}')
+
+    # repor (administrador pode: o alvo é Editor)
+    s_, r_, _ = call('POST', f'/api/gc_turnkey/team/members/{alvo}/senha', {}, tok['adminA'])
+    provisoria = r_.get('senha', '') if s_ == 200 else ''
+    check(s_ == 200 and _re.fullmatch(r'[a-z2-9]{5}-[a-z2-9]{5}', provisoria or ''),
+          'repor senha: gera uma palavra-passe provisória legível', f'{s_} {str(r_)[:80]}')
+    s_, _ = entrar('esqueceu@seg.local', 'Teste12345!')
+    check(s_ in (400, 401), 'a palavra-passe antiga deixa de servir', f'status {s_}')
+    s_, rr, _ = call('POST', '/api/collections/users/auth-refresh', {}, t_antigo)
+    check(s_ in (400, 401, 403), 'a sessão aberta antes da reposição fica fechada', f'status {s_}')
+    s_, rp = entrar('esqueceu@seg.local', provisoria)
+    check(s_ == 200 and rp.get('record', {}).get('senha_provisoria') is True,
+          'entra com a provisória e a conta fica marcada para a trocar', f'{s_} {str(rp)[:100]}')
+    tp = rp.get('token')
+
+    # a marca não se tira pela API normal
+    s_, _, _ = call('PATCH', f'/api/collections/users/records/{alvo}', {'senha_provisoria': False}, tp)
+    check(s_ == 403, 'a marca de senha provisória não se altera pela API normal', f'status {s_}')
+
+    # escolher a nova
+    s_, _, _ = call('POST', '/api/gc_turnkey/conta/senha', {'senha': 'curta'}, tp)
+    check(s_ == 400, 'senha nova curta recusada', f'status {s_}')
+    s_, _, _ = call('POST', '/api/gc_turnkey/conta/senha', {'senha': provisoria}, tp)
+    check(s_ == 400, 'a nova tem de ser diferente da provisória', f'status {s_}')
+    s_, _, _ = call('POST', '/api/gc_turnkey/conta/senha', {'senha': 'NovaSenha2026!'}, tp)
+    check(s_ == 200, 'escolher a palavra-passe nova', f'status {s_}')
+    s_, _ = entrar('esqueceu@seg.local', provisoria)
+    check(s_ in (400, 401), 'a provisória deixa de servir depois de trocada', f'status {s_}')
+    s_, rn = entrar('esqueceu@seg.local', 'NovaSenha2026!')
+    check(s_ == 200 and not rn.get('record', {}).get('senha_provisoria'), 'entra com a nova e a marca desapareceu', f'{s_}')
+    s_, _, _ = call('POST', '/api/gc_turnkey/conta/senha', {'senha': 'OutraSenha2026!'}, rn.get('token'))
+    check(s_ == 400, 'quem não tem senha provisória não usa este endpoint', f'status {s_}')
+
+    # remover da equipa
+    alvo2 = criar('sair@seg.local')
+    for quem in ('viewerA', 'editorA'):
+        s_, _, _ = call('DELETE', f'/api/gc_turnkey/team/members/{alvo2}', tok=tok[quem])
+        check(s_ == 403, f'remover: {quem} recusado', f'status {s_}')
+    s_, _, _ = call('DELETE', f'/api/gc_turnkey/team/members/{alvo2}', tok=tok['ownerB'])
+    check(s_ in (403, 404), 'remover: o proprietário de B não remove utilizadores de A', f'status {s_}')
+    s_, _, _ = call('DELETE', f'/api/gc_turnkey/team/members/{users["ownerA"]}', tok=tok['ownerA'])
+    check(s_ == 400, 'remover: ninguém apaga a própria conta', f'status {s_}')
+    s_, _, _ = call('DELETE', f'/api/gc_turnkey/team/members/{users["ownerA"]}', tok=tok['adminA'])
+    check(s_ == 403, 'remover: o administrador não remove o proprietário', f'status {s_}')
+    s_, _, _ = call('DELETE', f'/api/gc_turnkey/team/members/{alvo2}', tok=tok['adminA'])
+    check(s_ == 200, 'remover: o administrador remove um Editor', f'status {s_}')
+    s_, _ = entrar('sair@seg.local', 'Teste12345!')
+    check(s_ in (400, 401), 'quem foi removido já não entra', f'status {s_}')
+    s_, _, _ = call('GET', f'/api/collections/users/records/{alvo2}', tok=su)
+    check(s_ == 404, 'a conta removida deixou de existir', f'status {s_}')
+    # o proprietário remove um administrador; o último proprietário protege-se
+    adm = criar('admremover@seg.local', 'admin')
+    s_, _, _ = call('DELETE', f'/api/gc_turnkey/team/members/{adm}', tok=tok['ownerA'])
+    check(s_ == 200, 'remover: o proprietário remove um administrador', f'status {s_}')
+    # sem sessão
+    s_, _, _ = call('DELETE', f'/api/gc_turnkey/team/members/{alvo}')
+    check(s_ in (401, 403), 'remover: sem sessão recusado', f'status {s_}')
+    call('DELETE', f'/api/gc_turnkey/team/members/{alvo}', tok=tok['ownerA'])
+
+
 # ---------------------------------------------------------------------------
 # 3. endpoints próprios
 # ---------------------------------------------------------------------------
@@ -512,6 +603,9 @@ ROTAS = [
     ('POST', '/api/gc_turnkey/onboarding'),
     ('POST', '/api/gc_turnkey/team/members'),
     ('PATCH', '/api/gc_turnkey/team/members/{users}'),
+    ('POST', '/api/gc_turnkey/team/members/{users}/senha'),
+    ('DELETE', '/api/gc_turnkey/team/members/{users}'),
+    ('POST', '/api/gc_turnkey/conta/senha'),
     ('POST', '/api/gc_turnkey/vendus/sincronizar'),
     ('POST', '/api/gc_turnkey/ingredientes/juntar'),
     ('POST', '/api/gc_turnkey/financeiro/classificar-custos'),
@@ -3146,6 +3240,7 @@ def main():
         preparar()
         teste_isolamento()
         teste_papeis()
+        teste_equipa_acessos()
         teste_endpoints()
         teste_uploads()
         teste_aprovacao()
