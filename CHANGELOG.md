@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.5.2 — 2026-10-06 — Fatura fixa com zoom ao rever no telemóvel
+
+Rever uma fatura no telemóvel ficou muito mais prático: **a foto fica fixa em cima, com zoom, e as linhas rolam por baixo**.
+
+- **Corrigido: não dava para fechar a foto ampliada no telemóvel.** O botão de fechar usava o ecrã errado e não fechava o diálogo. Agora o ✕ fecha sempre e a página de revisão mantém-se.
+- **Foto fixa em cima (≈ metade do ecrã)** e só as linhas a preencher rolam por baixo — sem perder a fatura de vista enquanto confirmas cada linha. Em ecrã largo continua ao lado.
+- **Zoom a sério**: pinça com dois dedos, arrasta para ver pormenores, duplo toque para ampliar/repor (até 8×) e botões **+ / −**. Botão de **ecrã inteiro** com o mesmo zoom.
+- **Tamanho à tua medida**: arrasta a barra "Ocultar fatura" para dar mais espaço à foto ou às linhas; o tamanho fica guardado no aparelho. Tocar na barra oculta/mostra a foto.
+- Com o **teclado aberto** a foto encolhe sozinha para dar lugar às linhas.
+- **PDF**: continua a abrir à parte, no leitor do telemóvel (mostrar o PDF dentro da app pede um leitor próprio — fica como possível melhoria).
+- Testes: zoom por botões e duplo toque, limite de 8× e botão de ecrã inteiro.
+
 ## 2.5.1 — 2026-10-06 — Equipamentos passam para o Inventário
 
 A lista de **Equipamentos** passou da Contabilidade para o **Inventário**, onde faz mais sentido (é o que a empresa tem e guarda).

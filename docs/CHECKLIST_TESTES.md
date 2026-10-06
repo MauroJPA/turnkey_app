@@ -2034,6 +2034,17 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Pesquisa do "Mais": "equipamentos" encontra Inventário → Equipamentos
 - [ ] Como Editor: vê a lista mas não cria/edita; como Leitura: só vê
 
+## 147. Fatura fixa com zoom ao rever no telemóvel
+
+- [ ] No telemóvel, abrir uma fatura com foto: a foto fica em cima (≈ metade do ecrã) e fixa quando se rolam as linhas
+- [ ] Zoom com dois dedos, arrastar a foto ampliada, duplo toque (amplia e volta a repor), botões + e −
+- [ ] Botão de ecrã inteiro: abre a foto grande; o ✕ fecha e volta à revisão (sem sair da página)
+- [ ] Arrastar a barra "Ocultar fatura" para cima/baixo muda o tamanho da foto; ao reabrir a fatura mantém-se
+- [ ] Tocar na barra oculta e volta a mostrar a foto
+- [ ] Ao escrever num campo (teclado aberto) a foto encolhe e as linhas ficam visíveis
+- [ ] Fatura em PDF: mostra o cartão pequeno com "Abrir PDF" (abre à parte)
+- [ ] Computador (ecrã largo): a foto continua ao lado das linhas, com zoom e botões
+
 ---
 
 ## Notas / ajustes pedidos

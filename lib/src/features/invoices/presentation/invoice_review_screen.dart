@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,6 +11,7 @@ import '../../../core/formatting/dates.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/formatting/quantities.dart';
 import '../../../core/help/help_content.dart';
+import '../../../core/storage/prefs_locais.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/autocomplete_text_field.dart';
 import '../../../core/widgets/confirm_dialog.dart';
@@ -40,6 +39,7 @@ import '../data/invoice_repository.dart';
 import '../domain/fatura.dart';
 import '../domain/invoice_erros.dart';
 import '../domain/match_ingrediente.dart';
+import 'fatura_zoom_view.dart';
 import 'invoice_owner_widgets.dart';
 
 class InvoiceReviewScreen extends ConsumerWidget {
@@ -747,6 +747,9 @@ class _LinhaState {
     produtoNome: ia.descricao,
   );
 }
+
+/// Preferência (neste aparelho) com o tamanho da fatura no telemóvel.
+const _chaveFracFatura = 'fatura_fixa_fracao';
 
 class _Revisao extends ConsumerStatefulWidget {
   const _Revisao({
@@ -1529,23 +1532,32 @@ class _RevisaoState extends ConsumerState<_Revisao> {
     }
   }
 
-  void _abrirZoom(String url) {
+  /// A fatura em ecrã inteiro. O botão de fechar usa o contexto do próprio
+  /// diálogo (com o do ecrã fechava a página errada e a foto não saía).
+  void _abrirTelaCheia(String url) {
     showDialog<void>(
       context: context,
-      builder: (_) => Dialog(
-        insetPadding: const EdgeInsets.all(8),
+      useSafeArea: false,
+      builder: (ctx) => Dialog.fullscreen(
         child: Stack(
           children: [
-            InteractiveViewer(
-              maxScale: 6,
-              child: Center(child: Image.network(url)),
-            ),
-            Positioned(
-              right: 0,
-              top: 0,
-              child: IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.of(context).pop(),
+            Positioned.fill(child: FaturaZoomView(url: url)),
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Material(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      key: const ValueKey('fatura-fechar'),
+                      tooltip: 'Fechar',
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
@@ -1590,7 +1602,6 @@ class _RevisaoState extends ConsumerState<_Revisao> {
     if (f.ficheiroEhPdf) {
       return Container(
         width: double.infinity,
-        height: wide ? null : 150,
         color: cs.surfaceContainerHighest,
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -1619,81 +1630,60 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       );
     }
 
-    final img = Image.network(
-      url,
-      fit: BoxFit.contain,
-      loadingBuilder: (ctx, child, prog) => prog == null
-          ? child
-          : const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: CircularProgressIndicator(),
-              ),
-            ),
-      errorBuilder: (ctx, e, s) => const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text('Não foi possível carregar a imagem da fatura.'),
-        ),
-      ),
-    );
-
-    return Container(
-      width: double.infinity,
-      height: wide
-          ? null
-          : math.min(MediaQuery.of(context).size.height * 0.36, 380),
-      color: cs.surfaceContainerHighest,
-      child: wide
-          ? InteractiveViewer(maxScale: 6, child: img)
-          : Stack(
-              children: [
-                Positioned.fill(
-                  child: GestureDetector(
-                    onTap: () => _abrirZoom(url),
-                    child: img,
-                  ),
-                ),
-                Positioned(
-                  right: 6,
-                  bottom: 6,
-                  child: Material(
-                    color: Colors.black.withValues(alpha: 0.45),
-                    shape: const CircleBorder(),
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.zoom_out_map,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      tooltip: 'Ampliar',
-                      onPressed: () => _abrirZoom(url),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-    );
+    return FaturaZoomView(url: url, aoTelaCheia: () => _abrirTelaCheia(url));
   }
 
-  Widget _toggleBar(Fatura f) => Material(
+  /// Fração do ecrã (sem a barra de cima) ocupada pela fatura no telemóvel.
+  double _fracFatura = (double.tryParse(lerPref(_chaveFracFatura) ?? '') ?? 0.5)
+      .clamp(0.25, 0.75);
+
+  /// Barra entre a fatura (fixa em cima) e as linhas: arrasta para dar mais
+  /// espaço a uma ou às outras; toca para ocultar/mostrar a fatura.
+  Widget _barraFatura(Fatura f, double alturaTotal) => Material(
     color: Theme.of(context).colorScheme.surfaceContainerHighest,
-    child: InkWell(
-      onTap: () => setState(() => _verFatura = !_verFatura),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: Row(
-          children: [
-            Icon(_verFatura ? Icons.expand_less : Icons.expand_more, size: 20),
-            const SizedBox(width: 6),
-            Text(_verFatura ? 'Ocultar fatura' : 'Ver fatura'),
-            const Spacer(),
-            if (!f.ficheiroEhPdf && _verFatura)
-              Text(
-                'toca para ampliar',
-                style: Theme.of(context).textTheme.bodySmall,
+    child: GestureDetector(
+      key: const ValueKey('fatura-barra'),
+      behavior: HitTestBehavior.opaque,
+      onVerticalDragUpdate: alturaTotal <= 0
+          ? null
+          : (d) => setState(() {
+              _verFatura = true;
+              _fracFatura = (_fracFatura + d.delta.dy / alturaTotal).clamp(
+                0.25,
+                0.75,
+              );
+            }),
+      onVerticalDragEnd: (_) =>
+          guardarPref(_chaveFracFatura, _fracFatura.toStringAsFixed(2)),
+      child: InkWell(
+        onTap: () => setState(() => _verFatura = !_verFatura),
+        child: SizedBox(
+          height: 40,
+          child: Row(
+            children: [
+              const SizedBox(width: 12),
+              Icon(
+                _verFatura ? Icons.expand_less : Icons.expand_more,
+                size: 20,
               ),
-          ],
+              const SizedBox(width: 6),
+              Text(_verFatura ? 'Ocultar fatura' : 'Ver fatura'),
+              const Spacer(),
+              if (_verFatura && !f.ficheiroEhPdf) ...[
+                Icon(
+                  Icons.drag_handle,
+                  size: 22,
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'arrasta · 2 dedos para ampliar',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+              const SizedBox(width: 12),
+            ],
+          ),
         ),
       ),
     ),
@@ -2521,12 +2511,26 @@ class _RevisaoState extends ConsumerState<_Revisao> {
         ],
       );
     }
-    return Column(
-      children: [
-        if (_verFatura) _previewFatura(f, wide: false),
-        _toggleBar(f),
-        Expanded(child: lista),
-      ],
+    // telemóvel: a fatura fica FIXA em cima (≈ metade do ecrã, ajustável) e só
+    // as linhas rolam por baixo; com o teclado aberto encolhe para dar lugar
+    return LayoutBuilder(
+      builder: (context, c) {
+        final tecladoAberto = MediaQuery.of(context).viewInsets.bottom > 0;
+        final frac = tecladoAberto ? _fracFatura * 0.6 : _fracFatura;
+        final altura = f.ficheiroEhPdf ? 150.0 : c.maxHeight * frac;
+        return Column(
+          children: [
+            if (_verFatura)
+              SizedBox(
+                key: const ValueKey('fatura-fixa'),
+                height: altura,
+                child: _previewFatura(f, wide: false),
+              ),
+            _barraFatura(f, c.maxHeight),
+            Expanded(child: lista),
+          ],
+        );
+      },
     );
   }
 }
