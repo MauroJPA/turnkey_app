@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.0.0 — 2026-10-06 — Início "Hoje": o que precisa de ti, resolvido na própria linha
+
+Nova linha de versões **2.x**: a app mais ágil, com menos cliques e menos ecrã. A primeira mudança é o Início.
+
+- **O Início passou a ser "Hoje"**: uma saudação, os teus **3 atalhos** e uma lista curta **"Precisa de ti"**, em vez de 16 cartões do mesmo tamanho. O vermelho só aparece no que é mesmo urgente (backup com problema, HACCP, validade ou formação caducada, encomenda daqui a pouco, pagamento nos próximos 2 dias); o que é para fazer hoje vem a laranja.
+- **Resolve-se na própria linha**: **Aprovar** férias (com **Desfazer**) e contas novas, **Renovar** um certificado, **Saída às 16:30** para a saída esquecida, **Rever** uma fatura. Aprovar férias passa de 3 toques para 1. Quando há vários itens, a linha abre e cada um tem o seu botão.
+- **"Para saber"** guarda o que não pede nada agora (preços que subiram, produções agendadas, pagamentos daqui a mais de 2 dias) e fica fechado.
+- **Os 3 atalhos escolhem-se** (botão dos cursores, ao lado da saudação): Produzir agora, Quantos assar, Contagem, Marcar ponto, Foto da fatura, Compras, Encomendas, HACCP, Vendas. Ficam guardados só no aparelho e só aparecem os que a pessoa pode abrir.
+- Sem avisos, aparece "Tudo em dia". O que está no forno continua a aparecer em cima.
+- A grelha de mosaicos "Tudo" saiu do Início: fica o botão **"Todas as páginas"** (a seguir vem o menu "Mais" com pesquisa). Nessa lista deixou de haver o "olho" de esconder da grelha (já não há grelha); a cor do ícone mantém-se.
+- Testes: ordem por urgência, botão direto vs. grupo que abre, atalhos por acesso/ordem/limite, saudação e data.
+
 ## 1.110.0 — 2026-10-06 — Renovação de certificados em dois toques
 
 Renovar um certificado a caducar em dois toques.

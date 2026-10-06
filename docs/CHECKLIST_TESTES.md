@@ -1943,6 +1943,24 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Como membro da equipa: só vê "Renovar" nos seus próprios certificados
 - [ ] Um certificado válido (a mais de 30 dias) não mostra "Renovar"
 
+## 140. Início "Hoje": o que precisa de ti, resolvido na própria linha
+
+- [ ] Início: aparece "Bom dia/Boa tarde/Boa noite, <nome>" e a data por extenso
+- [ ] Três atalhos em cima, todos da mesma altura; tocar leva à tarefa certa
+- [ ] Botão dos cursores: escolher até 3 atalhos (o 4.º fica desativado); ao fechar, o Início mostra os escolhidos e, ao recarregar, mantém-nos
+- [ ] Como "Leitura" (ou sem acesso a uma página): os atalhos dessa página não aparecem
+- [ ] "Precisa de ti · N": vermelho primeiro (backup, HACCP, validade/formação caducada…), depois laranja
+- [ ] Férias por aprovar: botão "Aprovar" na linha → some da lista e aparece "Desfazer" (que repõe o pedido)
+- [ ] Vários itens (ex.: 2 certificados): tocar abre a lista com um botão por item e "Abrir página"
+- [ ] Formações: "Renovar" abre o formulário já preenchido; membro da equipa só o vê nos seus
+- [ ] Saída por marcar com turno na escala: botão "Saída às HH:MM" regista a saída; sem turno, só abre o Ponto
+- [ ] Contas por aprovar (operador): "Aprovar" ali mesmo
+- [ ] Faturas por rever: "Rever" abre a fatura
+- [ ] Sem avisos: cartão "Tudo em dia"
+- [ ] "Para saber" fechado por omissão; abre e mostra preços que subiram / produções agendadas
+- [ ] "Todas as páginas" abre a lista completa (a grelha de mosaicos já não aparece)
+- [ ] Telemóvel estreito: nada sai do ecrã nem fica cortado; botões sem esticar a linha
+
 ---
 
 ## Notas / ajustes pedidos

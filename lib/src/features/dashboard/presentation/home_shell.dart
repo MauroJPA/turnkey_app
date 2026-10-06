@@ -6,163 +6,68 @@ import '../../../app/router.dart';
 import '../../../core/auth/auth_controller.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/env/app_version.dart';
-import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
+import '../../../core/storage/prefs_locais.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../daily_count/presentation/forno_widgets.dart';
-import '../../finance/application/custos_fixos_providers.dart';
-import '../../haccp/application/haccp_providers.dart';
-import '../../inventory/application/inventory_providers.dart';
-import '../../inventory/data/variacao_preco_repository.dart';
-import '../../inventory/domain/variacao_preco.dart';
-import '../../invoices/application/invoice_providers.dart';
-import '../../invoices/domain/fatura.dart';
 import '../../navigation/application/navigation_providers.dart';
-import '../../navigation/domain/pagina_app.dart';
 import '../../navigation/presentation/todas_paginas_sheet.dart';
-import '../../orders/application/encomendas_providers.dart';
-import '../../orders/data/configuracoes_encomendas_repository.dart';
-import '../../people/application/ferias_providers.dart';
-import '../../people/application/formacoes_providers.dart';
-import '../../people/application/notas_providers.dart';
-import '../../people/application/saidas_providers.dart';
-import '../../people/domain/ferias.dart';
-import '../../people/domain/formacao.dart';
-import '../../people/domain/nota.dart';
-import '../../people/domain/ponto.dart';
-import '../../sales/data/sales_repository.dart';
-import '../../schedule/application/schedule_providers.dart';
-import '../../schedule/domain/production_plan.dart';
 import '../../settings/application/empresa_providers.dart';
-import '../../settings/data/aprovacoes_repository.dart';
-import '../../settings/data/backups_repository.dart';
 import '../../settings/data/empresa_repository.dart';
 import '../../settings/domain/empresa.dart';
-import '../../shopping/application/shopping_providers.dart';
-import '../../traceability/data/lotes_repository.dart';
-import '../../traceability/domain/validades.dart';
+import '../domain/atalhos_inicio.dart';
+import '../domain/tarefa_hoje.dart';
+import 'tarefas_hoje_provider.dart';
 
-/// Ecrã inicial: painel com os números que precisam de atenção + atalhos.
-class HomeShell extends ConsumerWidget {
+/// Ecrã inicial: o que precisa de ti hoje, com o botão que o resolve ali
+/// mesmo, e três atalhos para o que mais usas. O resto vive no rodapé e em
+/// "Todas as páginas".
+class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeShell> createState() => _HomeShellState();
+}
+
+class _HomeShellState extends ConsumerState<HomeShell> {
+  late String? _atalhos = lerPref(chaveAtalhosInicio);
+
+  Future<void> _escolherAtalhos(bool Function(String) acessivel) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      constraints: const BoxConstraints(maxWidth: 640),
+      builder: (_) => _EscolherAtalhos(
+        inicial: [
+          for (final a in atalhosEscolhidos(_atalhos, acessivel)) a.chave,
+        ],
+        acessivel: acessivel,
+        aoMudar: (chaves) {
+          final v = chaves.join(',');
+          guardarPref(chaveAtalhosInicio, v);
+          setState(() => _atalhos = v);
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final empresa = ref.watch(currentEmpresaProvider).valueOrNull;
     final userName = ref.watch(currentUserNameProvider);
     final papel = ref.watch(currentPapelProvider);
-    final fmt = ref.watch(moneyFormatProvider);
-
     final navConfig = ref.watch(navConfigAtualProvider);
-    final navPrefs = ref.watch(navPrefsAtualProvider);
     bool acessivel(String chave) => navConfig.acessivel(papel, chave);
-    final noRodape = navConfig.rodapePara(papel).map((p) => p.chave).toSet();
-    // Grelha: o que a pessoa pode abrir, não está no rodapé e não escondeu.
-    final grelha = [
-      for (final p in paginasApp)
-        if (acessivel(p.chave) &&
-            !noRodape.contains(p.chave) &&
-            !navPrefs.escondida(p.chave))
-          p,
-    ];
 
     final logoUrl = empresa == null
         ? ''
         : ref.read(empresaRepositoryProvider).logoUrl(empresa);
 
-    final stock = ref.watch(stockListProvider).valueOrNull;
-    final planos = ref.watch(plansListProvider).valueOrNull;
-    final compras = ref.watch(shoppingListProvider).valueOrNull;
-    final faturas = ref.watch(faturasListProvider).valueOrNull;
-    final faturasPorRever = faturas
-        ?.where(
-          (f) =>
-              f.estado == FaturaEstado.nova ||
-              f.estado == FaturaEstado.analisada,
-        )
-        .length;
-
-    final stockBaixo = stock?.where((s) => s.stockBaixo).length;
-    final hoje = DateTime.now();
-    final proximas = planos
-        ?.where(
-          (p) =>
-              p.estado != EstadoProducao.concluida &&
-              p.estado != EstadoProducao.cancelada &&
-              !p.data.isBefore(DateTime(hoje.year, hoje.month, hoje.day)),
-        )
-        .length;
-    final porComprar = compras?.where((c) => !c.comprado).toList();
-    final valorFalta = porComprar?.fold<double>(
-      0,
-      (s, c) => s + c.custoEstimado,
-    );
-
-    final backups = ref.watch(estadoBackupsProvider).valueOrNull;
-    final podeVerPessoas = acessivel('pessoas');
-    final notasHoje = podeVerPessoas
-        ? ref.watch(notasParaHojeProvider)
-        : const <Nota>[];
-    final vendus = acessivel('vendas')
-        ? ref.watch(estadoVendusProvider).valueOrNull
-        : null;
-    final validades = acessivel('producao')
-        ? (ref.watch(alertasValidadeProvider).valueOrNull ??
-              const <AlertaValidade>[])
-        : const <AlertaValidade>[];
-    final saidasEmFalta = podeVerPessoas
-        ? ref.watch(saidasPorMarcarProvider)
-        : const <SaidaPorMarcar>[];
-    final formacoesAlerta = podeVerPessoas
-        ? ref.watch(formacoesEmAlertaProvider)
-        : const <Formacao>[];
-    final feriasPorAprovar =
-        podeVerPessoas && ref.watch(currentPapelProvider).canEditConfig
-        ? (ref
-                  .watch(feriasAnoProvider(hoje.year))
-                  .valueOrNull
-                  ?.where((a) => a.estado == EstadoAusencia.pedido)
-                  .toList() ??
-              const <Ausencia>[])
-        : const <Ausencia>[];
-    final contasPorAprovar =
-        ref.watch(aprovacoesProvider).valueOrNull?.pendentes ??
-        const <ContaPendente>[];
-    final subidas = acessivel('inventario')
-        ? ref.watch(subidasPorVerProvider)
-        : const <VariacaoPreco>[];
-    final custosFixos = ref.watch(custosFixosListProvider(false)).valueOrNull;
-    final pagamentosProximos =
-        custosFixos
-            ?.where((c) => c.diaPagamento != null)
-            .map(
-              (c) => (custo: c, dias: _diasAtePagamento(c.diaPagamento!, hoje)),
-            )
-            .where((p) => p.dias <= 7)
-            .toList()
-          ?..sort((a, b) => a.dias.compareTo(b.dias));
-
-    // só consulta o HACCP a quem tem a página
-    final haccpPorFazer = acessivel('haccp')
-        ? ref
-              .watch(haccpEstadoProvider)
-              .valueOrNull
-              ?.where((s) => s.precisaAcaoHoje)
-              .toList()
-        : null;
-    final haccpNc = acessivel('haccp')
-        ? ref.watch(haccpNaoConformidadesProvider).valueOrNull?.length
-        : null;
-
-    final encomendas = ref.watch(encomendasListProvider(false)).valueOrNull;
-    final lembreteHoras =
-        ref.watch(configuracaoEncomendasProvider).valueOrNull?.lembreteHoras ??
-        4;
-    final encomendasPorVir =
-        encomendas
-            ?.where((e) => e.estado.ativa && e.horasAte(hoje) <= lembreteHoras)
-            .toList()
-          ?..sort((a, b) => a.dataHora.compareTo(b.dataHora));
+    final tarefas = separarTarefas(ref.watch(tarefasHojeProvider));
+    final atalhos = atalhosEscolhidos(_atalhos, acessivel);
+    final agora = DateTime.now();
+    final nome = primeiroNome(userName);
 
     return Scaffold(
       appBar: AppBar(
@@ -206,285 +111,86 @@ class HomeShell extends ConsumerWidget {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
         children: [
-          if (acessivel('producao'))
+          _Cabecalho(
+            titulo: nome.isEmpty
+                ? saudacao(agora)
+                : '${saudacao(agora)}, $nome',
+            subtitulo: dataPorExtenso(agora),
+            aEscolher: () => _escolherAtalhos(acessivel),
+          ),
+          if (atalhos.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(56),
+              padding: const EdgeInsets.only(bottom: 4),
+              // todos da mesma altura, mesmo que um nome ocupe duas linhas
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var i = 0; i < atalhos.length; i++) ...[
+                      if (i > 0) const SizedBox(width: 8),
+                      Expanded(child: _AtalhoBotao(atalho: atalhos[i])),
+                    ],
+                  ],
                 ),
-                onPressed: () => context.go(Routes.production),
-                icon: const Icon(Icons.checklist_rtl),
-                label: const Text('Produzir agora'),
               ),
-            ),
-          const SizedBox(height: 4),
-          if (acessivel('inventario'))
-            _StatCard(
-              icon: Icons.warning_amber_rounded,
-              titulo: 'Stock baixo',
-              valor: stockBaixo == null ? '—' : '$stockBaixo',
-              subtitulo: stockBaixo == null
-                  ? 'a carregar…'
-                  : (stockBaixo == 0
-                        ? 'tudo acima do mínimo'
-                        : '${stockBaixo == 1 ? 'item' : 'itens'} abaixo do mínimo'),
-              destaque: (stockBaixo ?? 0) > 0,
-              onTap: () => context.go(Routes.inventory),
-            ),
-          if (acessivel('producao'))
-            _StatCard(
-              icon: Icons.event_note_outlined,
-              titulo: 'Produções por fazer',
-              valor: proximas == null ? '—' : '$proximas',
-              subtitulo: proximas == null
-                  ? 'a carregar…'
-                  : (proximas == 0 ? 'nada agendado' : 'de hoje em diante'),
-              onTap: () => context.go(Routes.schedule),
-            ),
-          if (acessivel('compras'))
-            _StatCard(
-              icon: Icons.shopping_cart_outlined,
-              titulo: 'A comprar',
-              valor: porComprar == null ? '—' : '${porComprar.length}',
-              subtitulo: porComprar == null
-                  ? 'a carregar…'
-                  : (porComprar.isEmpty
-                        ? 'nada em falta'
-                        : 'estimativa ${fmt(valorFalta ?? 0)}'),
-              destaque: (porComprar?.isNotEmpty ?? false),
-              onTap: () => context.go(Routes.shopping),
-            ),
-          if (acessivel('faturas') && (faturasPorRever ?? 0) > 0)
-            _StatCard(
-              icon: Icons.rule_folder_outlined,
-              titulo: 'Faturas por rever',
-              valor: '$faturasPorRever',
-              subtitulo: 'confirma os dados lidos pela IA',
-              destaque: true,
-              onTap: () => context.go(Routes.invoices),
-            ),
-          if (backups != null && backups.problema())
-            _StatCard(
-              icon: Icons.backup_outlined,
-              titulo: 'Backup com problema',
-              valor: '!',
-              subtitulo: backups.avisos().take(2).join(' '),
-              destaque: true,
-              onTap: () => context.go(Routes.settings),
-            ),
-          if (contasPorAprovar.isNotEmpty)
-            _StatCard(
-              icon: Icons.how_to_reg_outlined,
-              titulo: 'Contas por aprovar',
-              valor: '${contasPorAprovar.length}',
-              subtitulo: contasPorAprovar
-                  .take(3)
-                  .map((c) => c.email)
-                  .join(', '),
-              destaque: true,
-              onTap: () => context.go(Routes.aprovacoes),
-            ),
-          if (vendus != null && vendus.desatualizado(DateTime.now()))
-            _StatCard(
-              icon: Icons.sync_problem,
-              titulo: 'Vendus sem sincronizar',
-              valor: '!',
-              subtitulo: vendus.okEm == null
-                  ? 'ainda não sincronizou${vendus.resultado.isEmpty ? '' : ': ${vendus.resultado}'}'
-                  : 'última vez: ${vendus.quando(DateTime.now())}${vendus.resultado.isEmpty ? '' : ' — ${vendus.resultado}'}',
-              destaque: true,
-              onTap: () => context.go(Routes.sales),
-            ),
-          if (validades.isNotEmpty)
-            _StatCard(
-              icon: Icons.event_busy_outlined,
-              titulo: 'Validades a acabar',
-              valor: '${validades.length}',
-              subtitulo: validades
-                  .take(3)
-                  .map((a) => '${a.nome} (${a.quando})')
-                  .join(', '),
-              destaque: validades.any((a) => a.dias <= 0),
-              onTap: () => context.go(Routes.productionLotes),
-            ),
-          if (saidasEmFalta.isNotEmpty)
-            _StatCard(
-              icon: Icons.logout,
-              titulo: 'Saída por marcar',
-              valor: '${saidasEmFalta.length}',
-              subtitulo: saidasEmFalta.take(3).map((s) => s.nome).join(', '),
-              destaque: true,
-              onTap: () => context.go(Routes.pessoasPonto),
-            ),
-          if (formacoesAlerta.isNotEmpty)
-            _StatCard(
-              icon: Icons.workspace_premium_outlined,
-              titulo: 'Formações a caducar',
-              valor: '${formacoesAlerta.length}',
-              subtitulo: formacoesAlerta
-                  .take(3)
-                  .map((f) => '${f.nome}: ${f.titulo} (${f.quando(hoje)})')
-                  .join(' · '),
-              destaque: formacoesAlerta.any(
-                (f) => f.estado(hoje) == EstadoValidade.caducada,
-              ),
-              onTap: () => context.go(Routes.pessoasFormacoes),
-            ),
-          if (feriasPorAprovar.isNotEmpty)
-            _StatCard(
-              icon: Icons.beach_access_outlined,
-              titulo: 'Férias por aprovar',
-              valor: '${feriasPorAprovar.length}',
-              subtitulo: feriasPorAprovar.take(3).map((a) => a.nome).join(', '),
-              destaque: true,
-              onTap: () => context.go(Routes.pessoasFerias),
-            ),
-          if (notasHoje.isNotEmpty)
-            _StatCard(
-              icon: Icons.sticky_note_2_outlined,
-              titulo: 'Notas para hoje',
-              valor: '${notasHoje.length}',
-              subtitulo: notasHoje
-                  .take(3)
-                  .map((n) => n.titulo.isNotEmpty ? n.titulo : n.texto)
-                  .join(' · '),
-              destaque: true,
-              onTap: () => context.go(Routes.pessoasNotas),
-            ),
-          if (subidas.isNotEmpty)
-            _StatCard(
-              icon: Icons.trending_up,
-              titulo: 'Preços subiram',
-              valor: '${subidas.length}',
-              subtitulo: subidas
-                  .take(3)
-                  .map(
-                    (v) => '${v.ingredienteNome} +${v.pct.toStringAsFixed(0)}%',
-                  )
-                  .join(', '),
-              destaque: true,
-              onTap: () => context.go(Routes.inventoryPrecos),
-            ),
-          if (acessivel('financeiro') && (pagamentosProximos?.length ?? 0) > 0)
-            _StatCard(
-              icon: Icons.event_available_outlined,
-              titulo: 'Pagamentos por vir',
-              valor: '${pagamentosProximos!.length}',
-              subtitulo: pagamentosProximos
-                  .take(3)
-                  .map(
-                    (p) =>
-                        '${p.custo.nome} (${p.dias == 0 ? 'hoje' : 'em ${p.dias}d'})',
-                  )
-                  .join(', '),
-              destaque: pagamentosProximos.any((p) => p.dias <= 2),
-              onTap: () => context.go(Routes.custosFixos),
             ),
           // o que está no forno (some sozinho quando está vazio)
           if (acessivel('contagem')) const ResumoFornoCard(),
-          if (acessivel('haccp') &&
-              ((haccpPorFazer?.length ?? 0) > 0 || (haccpNc ?? 0) > 0))
-            _StatCard(
-              icon: Icons.health_and_safety_outlined,
-              titulo: 'HACCP por fazer',
-              valor: '${haccpPorFazer?.length ?? 0}',
-              subtitulo: [
-                if (haccpPorFazer?.isNotEmpty ?? false)
-                  haccpPorFazer!.take(3).map((s) => s.controlo.nome).join(', '),
-                if ((haccpNc ?? 0) > 0)
-                  '$haccpNc não conformidade${haccpNc == 1 ? '' : 's'}',
-              ].join(' · '),
-              destaque:
-                  (haccpNc ?? 0) > 0 ||
-                  (haccpPorFazer?.any((s) => s.emAtraso) ?? false),
-              onTap: () => context.go(Routes.haccp),
-            ),
-          if (acessivel('encomendas') && (encomendasPorVir?.length ?? 0) > 0)
-            _StatCard(
-              icon: Icons.event_note_outlined,
-              titulo: 'Encomendas por vir',
-              valor: '${encomendasPorVir!.length}',
-              subtitulo: encomendasPorVir
-                  .take(3)
-                  .map((e) => e.clienteNome)
-                  .join(', '),
-              destaque: encomendasPorVir.any((e) => e.horasAte(hoje) <= 1),
-              onTap: () => context.go(Routes.encomendas),
-            ),
           const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(4, 0, 0, 0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Tudo',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: () => showTodasPaginasSheet(context),
-                  icon: const Icon(Icons.tune, size: 18),
-                  label: const Text('Todas as páginas'),
-                ),
-              ],
-            ),
+          _TituloSecao(
+            tarefas.precisa.isEmpty
+                ? 'Precisa de ti'
+                : 'Precisa de ti · ${tarefas.precisa.length}',
           ),
-          LayoutBuilder(
-            builder: (context, c) {
-              final cols = (c.maxWidth ~/ 200).clamp(2, 4);
-              return GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: cols,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: 1.35,
+          if (tarefas.precisa.isEmpty)
+            const _TudoEmDia()
+          else
+            Card(
+              margin: EdgeInsets.zero,
+              clipBehavior: Clip.antiAlias,
+              child: Column(
                 children: [
-                  for (final s in grelha)
-                    Card(
-                      key: ValueKey('grelha-${s.chave}'),
-                      color: navPrefs.cor(s.chave)?.withValues(alpha: 0.16),
-                      child: InkWell(
-                        onTap: () => context.go(s.rota),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                s.icon,
-                                size: 28,
-                                color: navPrefs.cor(s.chave),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                s.label,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                s.descricao,
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                  for (var i = 0; i < tarefas.precisa.length; i++) ...[
+                    if (i > 0) const Divider(height: 1),
+                    _LinhaTarefa(
+                      key: ValueKey('tarefa-${tarefas.precisa[i].chave}'),
+                      tarefa: tarefas.precisa[i],
                     ),
+                  ],
                 ],
-              );
-            },
+              ),
+            ),
+          if (tarefas.saber.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Card(
+              margin: EdgeInsets.zero,
+              clipBehavior: Clip.antiAlias,
+              child: ExpansionTile(
+                key: const ValueKey('para-saber'),
+                shape: const Border(),
+                collapsedShape: const Border(),
+                title: Text(
+                  'Para saber · ${tarefas.saber.length}',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                children: [
+                  for (final t in tarefas.saber) ...[
+                    const Divider(height: 1),
+                    _LinhaTarefa(key: ValueKey('tarefa-${t.chave}'), tarefa: t),
+                  ],
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
+          Center(
+            child: TextButton.icon(
+              onPressed: () => showTodasPaginasSheet(context),
+              icon: const Icon(Icons.apps, size: 18),
+              label: const Text('Todas as páginas'),
+            ),
           ),
         ],
       ),
@@ -492,70 +198,364 @@ class HomeShell extends ConsumerWidget {
   }
 }
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.icon,
+class _Cabecalho extends StatelessWidget {
+  const _Cabecalho({
     required this.titulo,
-    required this.valor,
     required this.subtitulo,
-    required this.onTap,
-    this.destaque = false,
+    required this.aEscolher,
   });
 
-  final IconData icon;
   final String titulo;
-  final String valor;
   final String subtitulo;
-  final VoidCallback onTap;
-  final bool destaque;
+  final VoidCallback aEscolher;
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 4, 0, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  titulo,
+                  style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                Text(subtitulo, style: tt.bodySmall),
+              ],
+            ),
+          ),
+          IconButton(
+            key: const ValueKey('escolher-atalhos'),
+            tooltip: 'Escolher os 3 atalhos',
+            icon: const Icon(Icons.tune),
+            onPressed: aEscolher,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TituloSecao extends StatelessWidget {
+  const _TituloSecao(this.texto);
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(4, 0, 0, 6),
+    child: Text(texto, style: Theme.of(context).textTheme.titleSmall),
+  );
+}
+
+class _AtalhoBotao extends StatelessWidget {
+  const _AtalhoBotao({required this.atalho});
+  final AtalhoInicio atalho;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      color: destaque ? cs.errorContainer : null,
+      margin: EdgeInsets.zero,
+      color: cs.primaryContainer,
       child: InkWell(
-        onTap: onTap,
+        key: ValueKey('atalho-${atalho.chave}'),
         borderRadius: BorderRadius.circular(12),
+        onTap: () => context.go(atalho.rota),
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                size: 32,
-                color: destaque ? cs.onErrorContainer : cs.primary,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      titulo,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    Text(
-                      subtitulo,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              ),
+              Icon(atalho.icon, size: 28, color: cs.onPrimaryContainer),
+              const SizedBox(height: 6),
               Text(
-                valor,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                atalho.label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: cs.onPrimaryContainer,
                 ),
               ),
-              const SizedBox(width: 4),
-              const Icon(Icons.chevron_right),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _TudoEmDia extends StatelessWidget {
+  const _TudoEmDia();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: cs.primary, size: 28),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text('Tudo em dia. Nada precisa de ti agora.'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+Color _corUrgencia(Urgencia u, ColorScheme cs) => switch (u) {
+  Urgencia.urgente => cs.error,
+  Urgencia.atencao => const Color(0xFFE08A00),
+  Urgencia.info => cs.outline,
+};
+
+/// Uma tarefa: título, o que há, e o botão que a resolve (um só item) ou a
+/// lista de itens com um botão cada (vários). Sem botões, abre a página.
+class _LinhaTarefa extends ConsumerStatefulWidget {
+  const _LinhaTarefa({super.key, required this.tarefa});
+  final TarefaHoje tarefa;
+
+  @override
+  ConsumerState<_LinhaTarefa> createState() => _LinhaTarefaState();
+}
+
+class _LinhaTarefaState extends ConsumerState<_LinhaTarefa> {
+  bool _aberta = false;
+  bool _ocupada = false;
+
+  Future<void> _correr(ItemTarefa item) async {
+    if (_ocupada || item.acao == null) return;
+    setState(() => _ocupada = true);
+    try {
+      await item.acao!(context, ref);
+    } finally {
+      if (mounted) setState(() => _ocupada = false);
+    }
+  }
+
+  ButtonStyle get _estiloBotao => FilledButton.styleFrom(
+    minimumSize: const Size(0, 36),
+    padding: const EdgeInsets.symmetric(horizontal: 12),
+    visualDensity: VisualDensity.compact,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final t = widget.tarefa;
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final cor = _corUrgencia(t.urgencia, cs);
+    final direta = t.acaoDireta;
+
+    return Column(
+      children: [
+        InkWell(
+          onTap: () {
+            if (t.expansivel) {
+              setState(() => _aberta = !_aberta);
+            } else {
+              context.go(t.rota);
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(color: cor, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 10),
+                Icon(t.icon, size: 22, color: cs.onSurfaceVariant),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              t.titulo,
+                              style: tt.titleSmall,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (t.total > 1) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: cor.withValues(alpha: 0.16),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '${t.total}',
+                                style: tt.labelSmall?.copyWith(
+                                  color: cor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      if (t.subtitulo.isNotEmpty && !_aberta)
+                        Text(
+                          t.subtitulo,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: tt.bodySmall,
+                        ),
+                    ],
+                  ),
+                ),
+                if (direta != null) ...[
+                  const SizedBox(width: 8),
+                  FilledButton.tonal(
+                    key: ValueKey('acao-${t.chave}'),
+                    style: _estiloBotao,
+                    onPressed: _ocupada ? null : () => _correr(direta),
+                    child: Text(direta.rotuloAcao!),
+                  ),
+                ] else
+                  Icon(
+                    t.expansivel
+                        ? (_aberta ? Icons.expand_less : Icons.expand_more)
+                        : Icons.chevron_right,
+                    color: cs.onSurfaceVariant,
+                  ),
+              ],
+            ),
+          ),
+        ),
+        if (_aberta)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(42, 0, 12, 8),
+            child: Column(
+              children: [
+                for (final item in t.itens)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Row(
+                      children: [
+                        Expanded(child: Text(item.texto, style: tt.bodyMedium)),
+                        if (item.temAcao) ...[
+                          const SizedBox(width: 8),
+                          FilledButton.tonal(
+                            style: _estiloBotao,
+                            onPressed: _ocupada ? null : () => _correr(item),
+                            child: Text(item.rotuloAcao!),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(0, 32),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    onPressed: () => context.go(t.rota),
+                    child: const Text('Abrir página'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Folha para escolher (e ordenar pela ordem de escolha) até 3 atalhos.
+class _EscolherAtalhos extends StatefulWidget {
+  const _EscolherAtalhos({
+    required this.inicial,
+    required this.acessivel,
+    required this.aoMudar,
+  });
+
+  final List<String> inicial;
+  final bool Function(String pagina) acessivel;
+  final void Function(List<String> chaves) aoMudar;
+
+  @override
+  State<_EscolherAtalhos> createState() => _EscolherAtalhosState();
+}
+
+class _EscolherAtalhosState extends State<_EscolherAtalhos> {
+  late final List<String> _escolhidos = [...widget.inicial];
+
+  void _alternar(String chave, bool ligado) {
+    setState(() {
+      if (ligado) {
+        if (_escolhidos.length < atalhosMaximo) _escolhidos.add(chave);
+      } else {
+        _escolhidos.remove(chave);
+      }
+    });
+    widget.aoMudar(_escolhidos);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cheio = _escolhidos.length >= atalhosMaximo;
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+            child: Text(
+              'Os teus 3 atalhos',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Text(
+              'Escolhe o que mais usas. Fica guardado só neste aparelho.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          Flexible(
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                for (final a in atalhosInicio)
+                  if (widget.acessivel(a.pagina))
+                    CheckboxListTile(
+                      key: ValueKey('escolher-${a.chave}'),
+                      secondary: Icon(a.icon),
+                      title: Text(a.label),
+                      value: _escolhidos.contains(a.chave),
+                      onChanged: (!_escolhidos.contains(a.chave) && cheio)
+                          ? null
+                          : (v) => _alternar(a.chave, v ?? false),
+                    ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -635,17 +635,6 @@ Widget marcaAppBar(BuildContext context, Empresa? empresa, String logoUrl) {
       ],
     ),
   );
-}
-
-/// Dias até ao próximo dia [diaPagamento] deste mês (ou do mês seguinte, se
-/// já tiver passado neste). `0` = hoje.
-int _diasAtePagamento(int diaPagamento, DateTime hoje) {
-  final hojeSoData = DateTime(hoje.year, hoje.month, hoje.day);
-  var proximo = DateTime(hoje.year, hoje.month, diaPagamento);
-  if (proximo.isBefore(hojeSoData)) {
-    proximo = DateTime(hoje.year, hoje.month + 1, diaPagamento);
-  }
-  return proximo.difference(hojeSoData).inDays;
 }
 
 Alignment _alignFor(Alinhamento a) => switch (a) {

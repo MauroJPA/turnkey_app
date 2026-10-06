@@ -7,9 +7,8 @@ import '../application/navigation_providers.dart';
 import '../domain/nav_prefs.dart';
 import '../domain/pagina_app.dart';
 
-/// Lista de TODAS as páginas a que a pessoa tem acesso — inclusive as que
-/// escondeu da grelha do Início. Daqui abre-se qualquer página, mostra/esconde
-/// na grelha e escolhe a cor do botão (preferências pessoais).
+/// Lista de TODAS as páginas a que a pessoa tem acesso. Daqui abre-se
+/// qualquer página e escolhe-se a cor do ícone (preferência pessoal).
 Future<void> showTodasPaginasSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
@@ -116,8 +115,7 @@ class _TodasPaginasSheetState extends ConsumerState<_TodasPaginasSheet> {
                   Text('Todas as páginas', style: tt.titleLarge),
                   const SizedBox(height: 4),
                   Text(
-                    'Toca para abrir. O olho mostra/esconde o botão na grelha '
-                    'do Início (só para ti) e a paleta muda a cor dele.',
+                    'Toca para abrir. A paleta muda a cor do ícone (só para ti).',
                     style: tt.bodySmall,
                   ),
                 ],
@@ -128,57 +126,38 @@ class _TodasPaginasSheetState extends ConsumerState<_TodasPaginasSheet> {
                 shrinkWrap: true,
                 children: [
                   for (final p in paginas)
-                    Builder(builder: (_) {
-                      final escondida = prefs.escondida(p.chave);
-                      final cor = prefs.cor(p.chave) ?? cs.primary;
-                      return ListTile(
-                        key: ValueKey('pagina-${p.chave}'),
-                        leading: CircleAvatar(
-                          backgroundColor: cor.withValues(alpha: 0.18),
-                          child: Icon(p.icon, color: cor),
-                        ),
-                        title: Text(p.label),
-                        subtitle: Text(
-                          [
-                            p.descricao,
-                            if (noRodape.contains(p.chave)) 'no rodapé',
-                            if (escondida) 'escondida da grelha',
-                          ].join(' · '),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        onTap: () {
-                          Navigator.pop(context);
-                          context.go(p.rota);
-                        },
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              tooltip: escondida
-                                  ? 'Mostrar na grelha'
-                                  : 'Esconder da grelha',
-                              icon: Icon(
-                                escondida
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
-                              ),
-                              onPressed: _busy
-                                  ? null
-                                  : () => _guardar(
-                                        prefs.comOculto(p.chave, !escondida),
-                                      ),
-                            ),
-                            IconButton(
-                              tooltip: 'Cor do botão',
-                              icon: const Icon(Icons.palette_outlined),
-                              onPressed:
-                                  _busy ? null : () => _escolherCor(p, prefs),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
+                    Builder(
+                      builder: (_) {
+                        final cor = prefs.cor(p.chave) ?? cs.primary;
+                        return ListTile(
+                          key: ValueKey('pagina-${p.chave}'),
+                          leading: CircleAvatar(
+                            backgroundColor: cor.withValues(alpha: 0.18),
+                            child: Icon(p.icon, color: cor),
+                          ),
+                          title: Text(p.label),
+                          subtitle: Text(
+                            [
+                              p.descricao,
+                              if (noRodape.contains(p.chave)) 'no rodapé',
+                            ].join(' · '),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          onTap: () {
+                            Navigator.pop(context);
+                            context.go(p.rota);
+                          },
+                          trailing: IconButton(
+                            tooltip: 'Cor do ícone',
+                            icon: const Icon(Icons.palette_outlined),
+                            onPressed: _busy
+                                ? null
+                                : () => _escolherCor(p, prefs),
+                          ),
+                        );
+                      },
+                    ),
                 ],
               ),
             ),
