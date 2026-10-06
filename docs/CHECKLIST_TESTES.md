@@ -2000,6 +2000,16 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Produção abre sempre em "Produzir", mesmo depois de ver a Agenda
 - [ ] Em ecrã largo (computador) os separadores não ficam esticados de forma estranha
 
+## 144. Plano pronto: agendar e compras num só ecrã
+
+- [ ] Quantos assar → "Agendar produção para …": abre o ecrã "Plano de <dia> pronto" (não só uma mensagem)
+- [ ] Passo 1: "N produtos para <dia>" e, se algum não tem receita ligada, "· N sem receita ligada ficou de fora"; "Ver produção" abre a produção criada
+- [ ] Passo 2 com ingredientes em falta: "Faltam N ingredientes (≈ €…)", os nomes e "Abrir compras" leva à lista
+- [ ] Passo 2 com stock suficiente: "O stock chega: não falta comprar nada" com visto verde
+- [ ] Com "Preparar também a lista de compras" desligado: "A lista de compras não foi preparada" e botão "Preparar agora" que a faz sem fechar o ecrã
+- [ ] Se já havia uma produção da previsão nesse dia, continua a perguntar "Já está agendado" antes
+- [ ] "Fechar" volta ao Quantos assar
+
 ---
 
 ## Notas / ajustes pedidos

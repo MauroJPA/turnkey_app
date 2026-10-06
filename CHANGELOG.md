@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.4.0 — 2026-10-06 — Plano pronto: agendar e compras num só ecrã
+
+Do "Quantos assar" à lista de compras num só caminho: depois de agendar, vês **tudo num só ecrã**.
+
+- Ao carregar em **"Agendar produção para …"**, em vez de uma mensagem que desaparecia ao fim de 8 segundos, abre-se o ecrã **"Plano de amanhã pronto"** com dois passos:
+  1. **Produção agendada** — "3 produtos para amanhã" (e quantos ficaram de fora por não terem receita ligada) → botão **Ver produção**.
+  2. **Compras** — "Faltam 4 ingredientes (≈ €23,40)" com os **nomes** (Manteiga · Farinha · Açúcar…) → botão **Abrir compras**; ou "O stock chega: não falta comprar nada" a verde.
+- Se a lista de compras estava **desligada** ou **falhou**, aparece **"Preparar agora"** ali mesmo (sem voltar atrás nem agendar de novo).
+- O caminho continua a ser um toque para agendar (a lista de compras sai logo, contra o stock de hoje); só o resultado ficou claro e à mão.
+- Testes: texto dos dois passos (plural/singular, custo, nomes, "e mais N"), estados das compras e o ecrã (incluindo "Preparar agora").
+
 ## 2.3.0 — 2026-10-06 — Separadores dos hubs sempre à vista e última secção lembrada
 
 Acabaram-se as barras de separadores que deslizam: cada página com várias secções mostra **poucas secções, todas à vista**, e a app **lembra onde estiveste**.

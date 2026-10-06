@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../../../app/routes.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/errors/mensagem_amigavel.dart';
-import '../../../core/formatting/money_provider.dart';
 import '../../../core/storage/prefs_locais.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../finance/data/capacidade_forno_repository.dart';
@@ -21,7 +20,9 @@ import '../../schedule/domain/production_plan.dart';
 import '../../shopping/application/shopping_providers.dart';
 import '../../tech_sheets/application/tech_sheets_providers.dart';
 import '../application/previsao_providers.dart';
+import '../domain/plano_pronto.dart';
 import '../domain/previsao_assar.dart';
+import 'plano_pronto_sheet.dart';
 
 String _rotuloDia(DateTime d, int offset) => offset == 0
     ? 'Hoje'
@@ -224,47 +225,55 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
         );
       }
       ref.invalidate(plansListProvider);
-      final falharam = itens.length - validos.length;
       // a lista de compras sai logo daqui (o que falta, contra o stock de hoje)
-      String compras = '';
-      var paraCompras = false;
-      if (_gerarCompras) {
-        try {
-          final r = await repo.gerarListaComprasResumo(plano.id);
-          ref.invalidate(shoppingListProvider);
-          if (r.aComprar > 0) {
-            paraCompras = true;
-            final fmt = ref.read(moneyFormatProvider);
-            compras =
-                ' Faltam ${r.aComprar} ingrediente(s) para comprar'
-                '${r.custo > 0 ? ' (≈ ${fmt(r.custo)})' : ''}.';
-          } else if (r.linhas > 0) {
-            compras = ' O stock chega: não falta comprar nada.';
-          }
-        } on Object {
-          compras = ' (Não consegui preparar a lista de compras.)';
-        }
-      }
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            'Produção agendada: ${validos.length} produto(s) para $rotulo'
-            '${falharam > 0 ? ' ($falharam sem receita ligada ficaram de fora)' : ''}.'
-            '$compras',
-          ),
-          duration: const Duration(seconds: 8),
-          action: SnackBarAction(
-            label: paraCompras ? 'Ver compras' : 'Ver',
-            onPressed: () => router.go(
-              paraCompras ? Routes.shopping : '${Routes.schedule}/${plano.id}',
-            ),
-          ),
-        ),
+      var resumo = ResumoPlanoPronto(
+        rotulo: rotulo.toLowerCase(),
+        produtos: validos.length,
+        semReceita: itens.length - validos.length,
+      );
+      if (_gerarCompras) resumo = await _prepararCompras(plano.id, resumo);
+      if (!mounted) return;
+      await mostrarPlanoPronto(
+        context,
+        planoId: plano.id,
+        resumo: resumo,
+        preparar: () => _prepararCompras(plano.id, resumo),
       );
     } on Object catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
     } finally {
       if (mounted) setState(() => _agendando = false);
+    }
+  }
+
+  /// Faz a lista de compras da produção [planoId] e diz o que falta comprar.
+  Future<ResumoPlanoPronto> _prepararCompras(
+    String planoId,
+    ResumoPlanoPronto base,
+  ) async {
+    try {
+      final r = await ref
+          .read(scheduleRepositoryProvider)
+          .gerarListaComprasResumo(planoId);
+      ref.invalidate(shoppingListProvider);
+      if (r.aComprar <= 0) {
+        return base.comCompras(
+          compras: r.linhas > 0 ? EstadoCompras.chega : EstadoCompras.vazia,
+        );
+      }
+      final lista = await ref.read(shoppingListProvider.future);
+      return base.comCompras(
+        compras: EstadoCompras.faltam,
+        aComprar: r.aComprar,
+        custo: r.custo,
+        nomes: [
+          for (final i in lista)
+            if (!i.comprado && i.producaoId == planoId && i.comprarG > 0)
+              i.descricao,
+        ],
+      );
+    } on Object {
+      return base.comCompras(compras: EstadoCompras.erro);
     }
   }
 
