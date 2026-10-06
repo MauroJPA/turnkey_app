@@ -815,6 +815,101 @@ class _TelegramFalso(BaseHTTPRequestHandler):
 TOKEN_TG = '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11'
 
 
+def teste_resumo_semanal():
+    """Resumo semanal (vendas, margem, desperdício, horas) — pré-visualização."""
+    if 'PB_URL' in os.environ:
+        return
+    sec('7a4b. Resumo semanal')
+    import datetime as _dt
+    for quem in ('editorA', 'viewerA'):
+        s, _, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': False, 'semanal': True}, tok[quem])
+        check(s == 403, f'{quem}: não vê o resumo semanal', f'status {s}')
+    s, _, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': False, 'semanal': True})
+    check(s in (401, 403), 'sem sessão não vê o resumo semanal', f'status {s}')
+
+    # o dia da semana do envio tem de ser 1..7
+    s, r, _ = call('GET', f'/api/collections/avisos_config/records?filter=empresa%3D%22{empresas["A"]}%22', tok=su)
+    cfg = (r.get('items') or [None])[0] if s == 200 else None
+    if cfg:
+        s, _, _ = call('PATCH', f'/api/collections/avisos_config/records/{cfg["id"]}', {'semanal_dia': 8}, su)
+        check(s == 400, 'dia da semana inválido é recusado', f'status {s}')
+        s, _, _ = call('PATCH', f'/api/collections/avisos_config/records/{cfg["id"]}', {'semanal_ativo': True, 'semanal_dia': 3}, tok['adminA'])
+        check(s == 200, 'o administrador liga o resumo semanal', f'status {s}')
+        s, _, _ = call('PATCH', f'/api/collections/avisos_config/records/{cfg["id"]}', {'semanal_dia': 4}, tok['editorA'])
+        check(s in (400, 403, 404), 'o editor não muda o dia do resumo semanal', f'status {s}')
+        call('PATCH', f'/api/collections/avisos_config/records/{cfg["id"]}', {'semanal_ativo': False}, su)
+
+    # a semana passada (segunda a domingo), como o servidor a calcula
+    hoje = _dt.date.today()
+    dow = hoje.isoweekday()
+    dom = hoje - _dt.timedelta(days=dow)
+    seg = dom - _dt.timedelta(days=6)
+    ant_seg = seg - _dt.timedelta(days=7)
+    quarta = seg + _dt.timedelta(days=2)
+    criados = []
+
+    def novo(col, corpo):
+        st, rr, _ = call('POST', f'/api/collections/{col}/records', corpo, su)
+        if st == 200 and rr.get('id'):
+            criados.append((col, rr['id']))
+        return st, rr
+
+    # IVA a 0 para as contas serem redondas
+    s, r, _ = call('GET', f'/api/collections/configuracoes_custo/records?filter=empresa%3D%22{empresas["A"]}%22', tok=su)
+    cc = (r.get('items') or [None])[0] if s == 200 else None
+    iva_antes = cc.get('iva_vendas') if cc else None
+    if cc:
+        call('PATCH', f'/api/collections/configuracoes_custo/records/{cc["id"]}', {'iva_vendas': 0}, su)
+
+    ficha = (semear('fichas_tecnicas', 'A') or [None])[0]
+    local = (semear('locais', 'A') or [None])[0]
+    custo_antes = None
+    if ficha:
+        s, r, _ = call('GET', f'/api/collections/fichas_tecnicas/records/{ficha}', tok=su)
+        custo_antes = r.get('custo_produto')
+        call('PATCH', f'/api/collections/fichas_tecnicas/records/{ficha}', {'custo_produto': 2.5}, su)
+        s, r, _ = call('GET', f'/api/collections/fichas_tecnicas/records/{ficha}', tok=su)
+        if r.get('custo_produto') != 2.5:
+            aviso('resumo semanal: o custo da ficha de teste não ficou a 2,5 — desperdício não testado')
+            ficha = None
+    s, v1 = novo('vendas', {'empresa': empresas['A'], 'data': seg.isoformat() + ' 00:00:00.000Z', 'origem': 'manual', 'total': 120})
+    check(s == 200, 'venda de teste da semana passada criada', f'status {s} {str(v1)[:80]}')
+    if v1.get('id'):
+        novo('vendas_itens', {'empresa': empresas['A'], 'venda': v1['id'], 'descricao': 'Cookie', 'quantidade': 12,
+                              'preco_unitario': 10, 'total_linha': 120, 'custo_unitario_snapshot': 4})
+    novo('vendas', {'empresa': empresas['A'], 'data': ant_seg.isoformat() + ' 00:00:00.000Z', 'origem': 'manual', 'total': 100})
+    if ficha and local:
+        novo('movimentos_produto', {'empresa': empresas['A'], 'data': quarta.isoformat() + ' 00:00:00.000Z', 'local': local,
+                                    'ficha': ficha, 'tipo': 'desperdicio', 'quantidade': 4, 'motivo': 'queimado'})
+        novo('movimentos_produto', {'empresa': empresas['A'], 'data': quarta.isoformat() + ' 00:00:00.000Z', 'local': local,
+                                    'ficha': ficha, 'tipo': 'desperdicio', 'quantidade': 2, 'motivo': 'degustacao'})
+    for tipo, hora in (('entrada', '10:00'), ('pausa_inicio', '13:00'), ('pausa_fim', '13:30'), ('saida', '18:00')):
+        novo('ponto_registos', {'empresa': empresas['A'], 'pessoa': 'c:semanal-teste', 'nome': 'Sara Semanal', 'tipo': tipo,
+                                'data_hora': f'{quarta.isoformat()} {hora}:00.000Z', 'origem': 'manual'})
+
+    s, r, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': False, 'semanal': True}, tok['adminA'])
+    texto = r.get('texto', '')
+    check(s == 200 and texto.startswith('Resumo da semana'), 'o administrador vê o resumo semanal', f'status {s} {texto[:80]}')
+    check('Vendas: €120,00 em 1 venda (+20 % face à semana anterior, €100,00)' in texto,
+          'vendas da semana e comparação com a anterior', texto[:300])
+    check('Margem sobre a matéria-prima: €72,00 (60 % das vendas sem IVA)' in texto, 'margem sobre a matéria-prima', texto[:400])
+    if ficha and local:
+        check('Desperdício: 6 un · €15,00 (evitável: €10,00)' in texto, 'desperdício em euros com o evitável à parte', texto[:500])
+        check('A perda evitável que mais custou: queimado (€10,00)' in texto, 'a maior perda evitável')
+    check('Horas da equipa: 7,5 h (1 pessoa)' in texto and 'Sara Semanal 7,5 h' in texto, 'horas da equipa (pausa descontada)', texto[:600])
+    # uma semana sem nada devolve a mensagem de vazio, sem rebentar
+    s, r, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': False, 'semanal': True}, tok['ownerB'])
+    check(s == 200 and 'Vendas:' not in r.get('texto', '') and 'Sara Semanal' not in r.get('texto', ''),
+          'a empresa B não vê dados da A no resumo semanal', f'status {s}')
+
+    for col, i in reversed(criados):
+        call('DELETE', f'/api/collections/{col}/records/{i}', tok=su)
+    if cc and iva_antes is not None:
+        call('PATCH', f'/api/collections/configuracoes_custo/records/{cc["id"]}', {'iva_vendas': iva_antes}, su)
+    if ficha and custo_antes is not None:
+        call('PATCH', f'/api/collections/fichas_tecnicas/records/{ficha}', {'custo_produto': custo_antes}, su)
+
+
 def teste_avisos():
     """Avisos e resumo diário (email / Telegram falso)."""
     if 'PB_URL' in os.environ:
@@ -2978,6 +3073,7 @@ def main():
         teste_estado_backups()
         teste_2fa()
         teste_avisos()
+        teste_resumo_semanal()
         teste_lotes()
         teste_quiosque_offline()
         teste_ponto()

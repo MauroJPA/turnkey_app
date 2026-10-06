@@ -1,6 +1,6 @@
 # Pendentes (fila de trabalho)
 
-Última versão fechada: **1.106.1** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
+Última versão fechada: **1.107.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
 (editar → `bash scripts/verificar.sh` → pubspec + CHANGELOG + docs/CHECKLIST_TESTES.md → commit com caminhos
 explícitos → `git branch -f develop main` → `git tag vX.Y.Z`). No fim: `powershell -File scripts\empacotar-producao.ps1`
 e dar ao Mauro o SHA-256 + comando de publicação.
@@ -37,6 +37,12 @@ Fila atual (pedido do Mauro em 06/10/2026, **cada item = uma versão**, por esta
 - ~~**1.104.0**~~ (feito) Comparador de preços entre fornecedores.
 - ~~**1.105.0**~~ (feito) Custo do desperdício por motivo e sabor.
 - ~~**1.106.0**~~ (feito) Formações e certificados das pessoas, com validade e aviso.
+
+## Fila aprovada pelo Mauro em 06/10/2026 (2.ª ronda, depois da 1.106)
+- ~~**1.107.0**~~ (feito) Resumo semanal para o proprietário (vendas, margem, desperdício, horas, o que caduca).
+- **1.108.0** Sugestão de preço quando um ingrediente sobe (margem alvo, aplicar com um toque).
+- **1.109.0** Lista de compras automática a partir do "Quantos assar" e do stock (com o fornecedor mais barato).
+- **1.110.0** Renovação de certificados: do aviso ao "Nova formação" já preenchido.
 
 ## Notas para quem retomar
 - Pacote publicado no servidor ainda é o **1.48.2**; tudo depois está só empacotado/commitado. Antes do deploy:

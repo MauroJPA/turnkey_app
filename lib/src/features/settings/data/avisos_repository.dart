@@ -19,6 +19,8 @@ class AvisosConfig {
     this.incPagamentos = true,
     this.incFaturas = true,
     this.incPrecos = true,
+    this.semanalAtivo = false,
+    this.semanalDia = 1,
     this.ultimoEnvio = '',
     this.ultimoResultado = '',
   });
@@ -37,6 +39,10 @@ class AvisosConfig {
   final bool incPagamentos;
   final bool incFaturas;
   final bool incPrecos;
+
+  /// Resumo da semana (segunda a domingo) no dia [semanalDia] (1 = segunda).
+  final bool semanalAtivo;
+  final int semanalDia;
   final String ultimoEnvio;
   final String ultimoResultado;
 
@@ -52,6 +58,8 @@ class AvisosConfig {
     bool? incPagamentos,
     bool? incFaturas,
     bool? incPrecos,
+    bool? semanalAtivo,
+    int? semanalDia,
   }) => AvisosConfig(
     id: id,
     ativo: ativo ?? this.ativo,
@@ -65,6 +73,8 @@ class AvisosConfig {
     incPagamentos: incPagamentos ?? this.incPagamentos,
     incFaturas: incFaturas ?? this.incFaturas,
     incPrecos: incPrecos ?? this.incPrecos,
+    semanalAtivo: semanalAtivo ?? this.semanalAtivo,
+    semanalDia: semanalDia ?? this.semanalDia,
     ultimoEnvio: ultimoEnvio,
     ultimoResultado: ultimoResultado,
   );
@@ -84,6 +94,12 @@ class AvisosConfig {
       incPagamentos: r.getBoolValue('inc_pagamentos'),
       incFaturas: r.getBoolValue('inc_faturas'),
       incPrecos: r.getBoolValue('inc_precos'),
+      semanalAtivo: r.getBoolValue('semanal_ativo'),
+      semanalDia:
+          (r.getIntValue('semanal_dia') >= 1 &&
+              r.getIntValue('semanal_dia') <= 7)
+          ? r.getIntValue('semanal_dia')
+          : 1,
       ultimoEnvio: r.getStringValue('ultimo_envio'),
       ultimoResultado: r.getStringValue('ultimo_resultado'),
     );
@@ -101,6 +117,8 @@ class AvisosConfig {
     'inc_pagamentos': incPagamentos,
     'inc_faturas': incFaturas,
     'inc_precos': incPrecos,
+    'semanal_ativo': semanalAtivo,
+    'semanal_dia': semanalDia,
   };
 }
 
@@ -185,11 +203,14 @@ class AvisosRepository {
     ];
   }
 
-  Future<ResultadoTeste> testar({required bool enviar}) async {
+  Future<ResultadoTeste> testar({
+    required bool enviar,
+    bool semanal = false,
+  }) async {
     final r = await _pb.send(
       '/api/gc_turnkey/avisos/testar',
       method: 'POST',
-      body: {'enviar': enviar},
+      body: {'enviar': enviar, if (semanal) 'semanal': true},
     );
     final m = r is Map ? r : const <String, dynamic>{};
     return ResultadoTeste(

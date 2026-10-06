@@ -493,4 +493,4 @@ function configDaEmpresa(app, empresaId) {
   }
 }
 
-module.exports = { configDaEmpresa, montar, enviar, descrever, enviarTelegram, enviarWhatsApp, hojeISO, diasDeTrabalho, abertoNesse, proximoAberto };
+module.exports = { formacoesACaducar, configDaEmpresa, montar, enviar, descrever, enviarTelegram, enviarWhatsApp, hojeISO, diasDeTrabalho, abertoNesse, proximoAberto };

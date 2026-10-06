@@ -2,6 +2,22 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.107.0 — 2026-10-06 — Resumo semanal para o proprietário
+
+Resumo semanal para o proprietário: como correu a semana, numa só mensagem.
+
+- **Configurações → Avisos → "Resumo da semana"**: liga o interruptor e escolhe o dia (Seg a Dom; por omissão segunda). Na hora do resumo diário recebes, por email e/ou Telegram, a semana anterior (segunda a domingo):
+  - **Vendas** e a variação face à semana anterior ("€1.240,00 em 86 vendas, +12 % face à semana anterior");
+  - **Margem sobre a matéria-prima** (vendas sem IVA menos o custo do que se vendeu);
+  - **Desperdício em euros**, com o evitável (queimado, fora do prazo, quebrado, erro) à parte e a perda que mais custou;
+  - **Horas da equipa** (pausas descontadas), no total e por pessoa;
+  - **Preços que subiram** nos últimos 7 dias;
+  - **Na próxima semana**: quem vai estar ausente (férias, ou "ausente" nas baixas) e as **formações a caducar**.
+- Só aparecem as secções com dados. É enviado mesmo que o dia escolhido seja de folga (foi o dono que o escolheu).
+- **"Ver o resumo da semana passada"** mostra-o já, sem esperar pelo dia.
+- Testes: vendas e comparação, margem, desperdício e maior perda evitável, horas com pausa, isolamento entre empresas, permissões e dia da semana inválido.
+- Para o servidor: nova migration `1791100000_avisos_semanal.js` (corre sozinha ao reiniciar).
+
 ## 1.106.1 — 2026-10-06 — Erros sempre em português, sem texto técnico
 
 Correção: os erros já não mostram texto técnico nem o endereço do servidor.

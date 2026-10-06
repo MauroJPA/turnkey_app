@@ -87,7 +87,7 @@ class _FormularioState extends ConsumerState<_Formulario> {
     if (mounted) setState(() => _c = novo);
   }, ok: 'Avisos guardados.');
 
-  Future<void> _testar() async {
+  Future<void> _testar({bool semanal = false}) async {
     await _guardar();
     if (_erro != null || !mounted) return;
     setState(() {
@@ -97,7 +97,10 @@ class _FormularioState extends ConsumerState<_Formulario> {
     try {
       final r = await ref
           .read(avisosRepositoryProvider)
-          .testar(enviar: _atual.emailAtivo || _atual.telegramAtivo);
+          .testar(
+            enviar: _atual.emailAtivo || _atual.telegramAtivo,
+            semanal: semanal,
+          );
       if (!mounted) return;
       await showDialog<void>(
         context: context,
@@ -211,6 +214,49 @@ class _FormularioState extends ConsumerState<_Formulario> {
           trailing: Text(_c.hora, style: tt.titleLarge),
           onTap: _escolherHora,
         ),
+        const Divider(),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Resumo da semana'),
+          subtitle: const Text(
+            'Vendas, margem, desperdício, horas da equipa e o que vem aí',
+          ),
+          value: _c.semanalAtivo,
+          onChanged: (v) => setState(() => _c = _c.copyWith(semanalAtivo: v)),
+        ),
+        if (_c.semanalAtivo) ...[
+          Wrap(
+            spacing: 6,
+            children: [
+              for (final (i, nome) in const [
+                'Seg',
+                'Ter',
+                'Qua',
+                'Qui',
+                'Sex',
+                'Sáb',
+                'Dom',
+              ].indexed)
+                ChoiceChip(
+                  label: Text(nome),
+                  selected: _c.semanalDia == i + 1,
+                  onSelected: (_) =>
+                      setState(() => _c = _c.copyWith(semanalDia: i + 1)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Enviado à mesma hora do resumo diário, mesmo que seja dia de '
+            'folga, com a semana de segunda a domingo anterior.',
+            style: tt.bodySmall,
+          ),
+          TextButton.icon(
+            onPressed: _busy ? null : () => _testar(semanal: true),
+            icon: const Icon(Icons.preview_outlined),
+            label: const Text('Ver o resumo da semana passada'),
+          ),
+        ],
         const Divider(),
         Text('O que incluir', style: tt.titleSmall),
         CheckboxListTile(

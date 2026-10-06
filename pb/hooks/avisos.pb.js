@@ -3,7 +3,8 @@
 // Avisos e resumo diário por email e Telegram (ver avisos.js).
 //
 //   cron (todos os minutos)                      -> envia o resumo à hora de cada empresa
-//   POST /api/gc_turnkey/avisos/testar           { enviar: bool } -> { texto, resultados }
+//   cron (todos os minutos)                      -> envia o resumo semanal no dia escolhido
+//   POST /api/gc_turnkey/avisos/testar           { enviar: bool, semanal?: bool } -> { texto, resultados }
 //   POST /api/gc_turnkey/avisos/telegram/detetar -> { chats: [{ id, nome }] }
 //
 // Só owner/admin. NOTA: cada handler corre isolado — usa require() para o resto.
@@ -45,6 +46,42 @@ cronAdd('avisos_diarios', '* * * * *', () => {
   }
 });
 
+// Resumo semanal: no dia da semana escolhido (1 = segunda ... 7 = domingo), à
+// mesma hora do diário. Envia mesmo que seja dia de folga (foi o dono que
+// escolheu o dia).
+cronAdd('avisos_semanais', '* * * * *', () => {
+  const avisos = require(`${__hooks}/avisos.js`);
+  const semanal = require(`${__hooks}/resumo_semanal.js`);
+  const seg = require(`${__hooks}/segredos.js`);
+  let cfgs = [];
+  try {
+    cfgs = $app.findRecordsByFilter('avisos_config', 'ativo = true && semanal_ativo = true', '', 0, 0);
+  } catch (_) {
+    return;
+  }
+  const agora = new Date();
+  const hoje = avisos.hojeISO(agora);
+  const dow = agora.getDay() === 0 ? 7 : agora.getDay();
+  const minAgora = agora.getHours() * 60 + agora.getMinutes();
+  for (const cfg of cfgs) {
+    try {
+      if (cfg.getString('ultimo_semanal') === hoje) continue;
+      if ((cfg.getInt('semanal_dia') || 1) !== dow) continue;
+      const m = /^(\d{1,2}):(\d{2})$/.exec(cfg.getString('hora') || '08:00');
+      const alvo = m ? parseInt(m[1], 10) * 60 + parseInt(m[2], 10) : 8 * 60;
+      if (minAgora < alvo || minAgora > alvo + 180) continue;
+      const empresaId = cfg.getString('empresa');
+      const resumo = semanal.montar($app, empresaId, agora);
+      cfg.set('ultimo_semanal', hoje);
+      const res = avisos.enviar($app, empresaId, cfg, resumo, seg.ler);
+      cfg.set('ultimo_resultado', ('Semanal: ' + avisos.descrever(res)).substring(0, 390));
+      $app.save(cfg);
+    } catch (err) {
+      console.log('[avisos] erro no envio semanal: ' + String(err && err.message ? err.message : 'desconhecido'));
+    }
+  }
+});
+
 routerAdd(
   'POST',
   '/api/gc_turnkey/avisos/testar',
@@ -60,7 +97,10 @@ routerAdd(
     const seg = require(`${__hooks}/segredos.js`);
     try {
       const cfg = avisos.configDaEmpresa(e.app, empresaId);
-      const resumo = avisos.montar(e.app, empresaId, cfg);
+      const semanal = ((e.requestInfo().body || {}).semanal) === true;
+      const resumo = semanal
+        ? require(`${__hooks}/resumo_semanal.js`).montar(e.app, empresaId)
+        : avisos.montar(e.app, empresaId, cfg);
       const enviar = ((e.requestInfo().body || {}).enviar) === true;
       const resultados = enviar ? avisos.enviar(e.app, empresaId, cfg, resumo, seg.ler) : {};
       return e.json(200, { texto: resumo.texto, resultados: resultados, descricao: enviar ? avisos.descrever(resultados) : '' });

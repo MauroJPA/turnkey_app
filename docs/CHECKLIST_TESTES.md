@@ -1910,6 +1910,14 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Com o servidor desligado, abrir Configurações (sem sessão em cache): aparece "Sem ligação ao servidor…" e não um texto técnico com endereço
 - [ ] Login com a palavra-passe errada continua a dizer "Email ou palavra-passe incorretos."
 
+## 136. Resumo semanal para o proprietário
+
+- [ ] Configurações → Avisos: aparece "Resumo da semana" com os dias Seg…Dom
+- [ ] "Ver o resumo da semana passada" mostra vendas, margem, desperdício, horas da equipa… com valores plausíveis (confere um com o Vendus/Ponto)
+- [ ] Ligar o resumo semanal e escolher o dia de hoje (com hora daqui a 2 minutos): chega por Telegram/email e só uma vez nesse dia
+- [ ] Se na semana passada não houve vendas/desperdício/ponto, essas secções não aparecem
+- [ ] Os números de horas batem com o mês no Pessoas → Ponto
+
 ---
 
 ## Notas / ajustes pedidos
