@@ -12,6 +12,8 @@ import '../../finance/data/capacidade_forno_repository.dart';
 import '../../mise_en_place/data/mep_repository.dart';
 import '../../pricing/data/cost_config_repository.dart';
 import '../../pricing/domain/dias_trabalho.dart';
+import '../../sales/data/sales_repository.dart';
+import '../../sales/domain/estado_vendus.dart';
 import '../../schedule/application/schedule_providers.dart';
 import '../../schedule/data/schedule_repository.dart';
 import '../../schedule/domain/production_plan.dart';
@@ -45,6 +47,59 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
   double _ajuste = 0;
   bool _descontarStock = true;
   bool _agendando = false;
+  bool _sincronizando = false;
+
+  /// Quando se sincronizou o Vendus automaticamente nesta sessão (para não
+  /// repetir de cada vez que se abre a página).
+  static DateTime? _ultimaSincAuto;
+
+  @override
+  void initState() {
+    super.initState();
+    // ao abrir, se as vendas têm mais de 3 horas, atualiza-as em segundo plano
+    ref.listenManual(estadoVendusProvider, (_, next) {
+      final e = next.valueOrNull;
+      if (e == null || _sincronizando) return;
+      final agora = DateTime.now();
+      final recente =
+          _ultimaSincAuto != null &&
+          agora.difference(_ultimaSincAuto!) < const Duration(minutes: 15);
+      if (e.pedeSincronizar(agora) &&
+          !recente &&
+          ref.read(currentPapelProvider).canEditBusiness) {
+        _ultimaSincAuto = agora;
+        _sincronizar(silencioso: true);
+      }
+    }, fireImmediately: true);
+  }
+
+  Future<void> _sincronizar({bool silencioso = false}) async {
+    if (_sincronizando) return;
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _sincronizando = true);
+    try {
+      final r = await ref.read(salesRepositoryProvider).sincronizarVendus();
+      ref.invalidate(consumoRecenteProvider);
+      ref.invalidate(estadoVendusProvider);
+      if (!silencioso) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              r.vendasCriadas > 0
+                  ? '${r.vendasCriadas} venda(s) nova(s) do Vendus.'
+                  : 'As vendas já estavam em dia.',
+            ),
+          ),
+        );
+      }
+    } on Object catch (e) {
+      if (!silencioso) {
+        messenger.showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
+      }
+    } finally {
+      if (mounted) setState(() => _sincronizando = false);
+    }
+  }
 
   // a avaliação dos últimos dias só se refaz quando os dados mudam
   List<ConsumoDia>? _avalDados;
@@ -306,6 +361,11 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
                 style: tt.bodySmall,
               ),
             ),
+            _VendasAtualizadas(
+              estado: ref.watch(estadoVendusProvider).valueOrNull,
+              sincronizando: _sincronizando,
+              onAtualizar: () => _sincronizar(),
+            ),
             SizedBox(
               height: 52,
               child: ListView(
@@ -504,6 +564,58 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
           ],
         );
       },
+    );
+  }
+}
+
+/// "Vendas atualizadas às 14:05 ↻": a hora da última sincronização com o
+/// Vendus e um botão para atualizar já (só se o Vendus está ligado).
+class _VendasAtualizadas extends StatelessWidget {
+  const _VendasAtualizadas({
+    required this.estado,
+    required this.sincronizando,
+    required this.onAtualizar,
+  });
+
+  final EstadoVendus? estado;
+  final bool sincronizando;
+  final VoidCallback onAtualizar;
+
+  @override
+  Widget build(BuildContext context) {
+    final e = estado;
+    if (e == null || !e.configurado) return const SizedBox.shrink();
+    final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final velho = e.desatualizado(DateTime.now());
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 2, 8, 0),
+      child: Row(
+        children: [
+          Icon(
+            velho ? Icons.sync_problem : Icons.sync,
+            size: 16,
+            color: velho ? cs.error : cs.outline,
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              sincronizando
+                  ? 'A atualizar as vendas do Vendus…'
+                  : 'Vendas do Vendus atualizadas: ${e.quando(DateTime.now())}'
+                        '${velho ? ' — há problemas a sincronizar' : ''}',
+              style: tt.bodySmall?.copyWith(
+                color: velho ? cs.error : cs.outline,
+              ),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Atualizar as vendas agora',
+            onPressed: sincronizando ? null : onAtualizar,
+            icon: const Icon(Icons.refresh, size: 20),
+          ),
+        ],
+      ),
     );
   }
 }

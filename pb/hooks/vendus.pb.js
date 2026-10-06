@@ -66,6 +66,37 @@ routerAdd(
   $apis.requireAuth('users'),
 );
 
+// Estado da sincronização, para a app mostrar "vendas atualizadas às 14:05" e
+// avisar se deixar de sincronizar. Não devolve o token.
+//   GET /api/gc_turnkey/vendus/estado
+//     -> { configurado, tentativaEm, okEm, resultado, ultimaVenda }
+routerAdd(
+  'GET',
+  '/api/gc_turnkey/vendus/estado',
+  (e) => {
+    const auth = e.auth;
+    if (!auth || auth.collection().name !== 'users' || !auth.getString('empresa')) {
+      throw new ForbiddenError('Autenticação necessária.');
+    }
+    if (auth.getString('papel') === 'viewer') throw new ForbiddenError('Sem permissão.');
+    const empresaId = auth.getString('empresa');
+    let configurado = false;
+    try {
+      configurado = !!require(`${__hooks}/segredos.js`).ler(e.app, empresaId, 'vendus');
+    } catch (_) {}
+    if (!configurado && $os.getenv('VENDUS_SYNC_EMPRESA') === empresaId && $os.getenv('VENDUS_API_KEY')) configurado = true;
+    const emp = e.app.findRecordById('empresas', empresaId);
+    return e.json(200, {
+      configurado: configurado,
+      tentativaEm: emp.getString('vendus_tentativa_em'),
+      okEm: emp.getString('vendus_ok_em'),
+      resultado: emp.getString('vendus_resultado'),
+      ultimaVenda: emp.getString('vendus_ultima_sincronizacao'),
+    });
+  },
+  $apis.requireAuth('users'),
+);
+
 // De hora a hora, para cada empresa com token do Vendus guardado (e ainda a
 // empresa VENDUS_SYNC_EMPRESA, se usar o token do ambiente).
 // (O handler é autocontido: não vê funções de topo do ficheiro.)

@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.101.0 — 2026-10-06 — Vendus sempre atualizado
+
+Vendas do Vendus sempre atualizadas — e um aviso se deixarem de sincronizar.
+
+- O servidor já sincronizava as vendas do Vendus **de hora a hora**; agora a app **mostra o estado**: em *Quantos assar*, por baixo do título, aparece **"Vendas do Vendus atualizadas: 14:05"** com um botão **↻** para atualizar já.
+- **Atualiza sozinho quando faz falta**: ao abrir o *Quantos assar*, se a última sincronização boa tem mais de **3 horas**, a app sincroniza em segundo plano e refaz a previsão (no máximo de 15 em 15 minutos). Sem botões a carregar.
+- **Aviso se falhar**: se o Vendus está ligado mas **não sincroniza há mais de 26 horas**, aparece o cartão **"Vendus sem sincronizar"** no Início (com o motivo, ex.: "O Vendus respondeu com o erro HTTP 401") e uma secção no **resumo diário** — antes a falha só ficava no registo do servidor e ninguém via.
+- Só aparece se tiveres o token do Vendus em Configurações → Integrações. O token nunca sai do servidor.
+- Servidor: migration `1791080000_vendus_estado` (3 campos de estado na empresa) e `GET /api/gc_turnkey/vendus/estado` (não devolve o token; Leitura não vê). Cada sincronização (automática ou manual) regista a hora e o resultado.
+- Testes: leitura do estado, "desatualizado" (26 h), "pede sincronizar" (3 h), texto da hora; no servidor: sem sessão/Leitura recusados, estado sem token, a tentativa fica registada, empresa B não vê a da A.
+- Nota: não consegui testar a sincronização real com o Vendus (precisa do token e da conta); testei o estado e os avisos.
+
 ## 1.100.0 — 2026-10-06 — Saúde dos dados
 
 Saúde dos dados: o que falta preencher para tudo ficar certo.

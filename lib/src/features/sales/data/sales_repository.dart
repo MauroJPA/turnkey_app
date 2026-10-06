@@ -3,6 +3,7 @@ import 'package:pocketbase/pocketbase.dart';
 
 import '../../../core/auth/current_user.dart';
 import '../../../core/pocketbase/pb_client.dart';
+import '../domain/estado_vendus.dart';
 import '../domain/venda.dart';
 
 final salesRepositoryProvider = Provider<SalesRepository>((ref) {
@@ -128,6 +129,14 @@ class SalesRepository {
     body: {'canal': canal.trim(), 'metodo_pagamento': metodoPagamento.trim()},
   );
 
+  /// Quando foi a última sincronização automática com o Vendus.
+  Future<EstadoVendus> estadoVendus() async {
+    final res = await _pb.send('/api/gc_turnkey/vendus/estado');
+    return EstadoVendus.fromJson(
+      res is Map ? Map<String, dynamic>.from(res) : const {},
+    );
+  }
+
   /// Todas as linhas de venda da empresa (qualquer período) ainda sem ficha
   /// técnica associada — base do ecrã "Produtos não identificados".
   Future<List<VendaItem>> itensSemFicha() async {
@@ -191,3 +200,14 @@ class SalesRepository {
     );
   }
 }
+
+/// O estado da sincronização com o Vendus (`null` se a pessoa não pode vê-lo).
+final estadoVendusProvider = FutureProvider.autoDispose<EstadoVendus?>((
+  ref,
+) async {
+  try {
+    return await ref.watch(salesRepositoryProvider).estadoVendus();
+  } on Object {
+    return null;
+  }
+});

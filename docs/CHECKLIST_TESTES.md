@@ -1845,6 +1845,14 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Os ingredientes de fabrico próprio não aparecem em "sem preço"
 - [ ] Rentabilidade → "Ver o que falta preencher" abre esta página
 
+## 129. Vendus sempre atualizado
+
+- [ ] Quantos assar (com o Vendus ligado): aparece "Vendas do Vendus atualizadas: HH:MM"; o botão ↻ atualiza e diz quantas vendas novas veio
+- [ ] Se a última sincronização boa tem mais de 3 horas, ao abrir o Quantos assar a hora passa a ser a atual (sem carregar em nada)
+- [ ] Com o token do Vendus errado/removido durante mais de um dia: o Início mostra "Vendus sem sincronizar" com o motivo
+- [ ] O resumo diário traz "Vendus sem sincronizar" nesse caso
+- [ ] Sem o Vendus ligado, nada disto aparece
+
 ---
 
 ## Notas / ajustes pedidos

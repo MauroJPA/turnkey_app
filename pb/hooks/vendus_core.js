@@ -333,7 +333,38 @@ function importarDocumento(app, empresaId, doc, itens, fichas, detalhe) {
 
 // --- sincronização --------------------------------------------------------
 
+// Guarda quando se tentou sincronizar e como correu (a app mostra "vendas
+// atualizadas às 14:05" e avisa se deixar de sincronizar). Não guarda nada
+// se o Vendus nem está configurado.
+function registarEstado(app, empresaId, r) {
+  try {
+    if (!r || r.code === 503 || r.code === 404) return;
+    var empresa = app.findRecordById('empresas', empresaId);
+    var agora = new Date().toISOString();
+    empresa.set('vendus_tentativa_em', agora);
+    if (r.ok) {
+      empresa.set('vendus_ok_em', agora);
+      empresa.set(
+        'vendus_resultado',
+        r.vendasCriadas > 0 ? r.vendasCriadas + ' venda(s) nova(s)' : 'Tudo em dia',
+      );
+    } else {
+      empresa.set(
+        'vendus_resultado',
+        String(r.message || 'Falhou').replace(/api_key=[^&\s]+/g, 'api_key=***').substring(0, 280),
+      );
+    }
+    app.save(empresa);
+  } catch (_) {}
+}
+
 function sincronizarEmpresa(app, empresaId, opts) {
+  var r = sincronizarEmpresaBase(app, empresaId, opts);
+  registarEstado(app, empresaId, r);
+  return r;
+}
+
+function sincronizarEmpresaBase(app, empresaId, opts) {
   // Token da própria empresa (cifrado na base de dados). A variável de
   // ambiente VENDUS_API_KEY é só um recurso para a empresa indicada em
   // VENDUS_SYNC_EMPRESA (uma só empresa, antes de guardar o token na app): nunca

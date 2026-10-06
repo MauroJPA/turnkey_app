@@ -28,6 +28,7 @@ import '../../people/application/saidas_providers.dart';
 import '../../people/domain/ferias.dart';
 import '../../people/domain/nota.dart';
 import '../../people/domain/ponto.dart';
+import '../../sales/data/sales_repository.dart';
 import '../../schedule/application/schedule_providers.dart';
 import '../../schedule/domain/production_plan.dart';
 import '../../settings/application/empresa_providers.dart';
@@ -100,6 +101,9 @@ class HomeShell extends ConsumerWidget {
     final notasHoje = podeVerPessoas
         ? ref.watch(notasParaHojeProvider)
         : const <Nota>[];
+    final vendus = acessivel('vendas')
+        ? ref.watch(estadoVendusProvider).valueOrNull
+        : null;
     final validades = acessivel('producao')
         ? (ref.watch(alertasValidadeProvider).valueOrNull ??
               const <AlertaValidade>[])
@@ -277,6 +281,17 @@ class HomeShell extends ConsumerWidget {
                   .join(', '),
               destaque: true,
               onTap: () => context.go(Routes.aprovacoes),
+            ),
+          if (vendus != null && vendus.desatualizado(DateTime.now()))
+            _StatCard(
+              icon: Icons.sync_problem,
+              titulo: 'Vendus sem sincronizar',
+              valor: '!',
+              subtitulo: vendus.okEm == null
+                  ? 'ainda não sincronizou${vendus.resultado.isEmpty ? '' : ': ${vendus.resultado}'}'
+                  : 'última vez: ${vendus.quando(DateTime.now())}${vendus.resultado.isEmpty ? '' : ' — ${vendus.resultado}'}',
+              destaque: true,
+              onTap: () => context.go(Routes.sales),
             ),
           if (validades.isNotEmpty)
             _StatCard(

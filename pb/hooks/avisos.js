@@ -64,6 +64,23 @@ function ausentesHoje(app, empresaId) {
   return out;
 }
 
+// O Vendus está ligado mas deixou de sincronizar (a última sincronização que
+// correu bem foi há mais de 26 horas).
+function vendusAtrasado(app, empresaId) {
+  let configurado = false;
+  try {
+    configurado = !!require(__hooks + '/segredos.js').ler(app, empresaId, 'vendus');
+  } catch (_) {}
+  if (!configurado) return [];
+  const emp = app.findRecordById('empresas', empresaId);
+  const ok = emp.getString('vendus_ok_em');
+  const horas = ok ? (Date.now() - new Date(ok).getTime()) / 3600000 : 9999;
+  if (horas <= 26) return [];
+  const quando = ok ? 'a última sincronização que correu bem foi há ' + Math.round(horas) + ' h' : 'ainda não sincronizou';
+  const motivo = emp.getString('vendus_resultado');
+  return ['Vendus: ' + quando + (motivo ? ' (' + motivo + ')' : '') + ' — a previsão e as vendas podem estar desatualizadas.'];
+}
+
 // Lotes com a validade a acabar: ingredientes (5 dias) e produtos (hoje/amanhã).
 function validadesAAcabar(app, empresaId) {
   const out = [];
@@ -284,6 +301,7 @@ function montar(app, empresaId, cfg) {
   sec('Ausentes hoje', seguro(() => ausentesHoje(app, empresaId)));
   sec('Saída por marcar', seguro(() => saidasPorMarcar(app, empresaId)));
   sec('Validades a acabar', seguro(() => validadesAAcabar(app, empresaId)));
+  sec('Vendus sem sincronizar', seguro(() => vendusAtrasado(app, empresaId)));
 
   let nome = '';
   try {
