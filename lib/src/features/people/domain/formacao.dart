@@ -103,6 +103,35 @@ class Formacao {
   }
 }
 
+/// Soma [anos] a [d] (29 de fevereiro + 1 ano → 28 de fevereiro).
+DateTime somarAnos(DateTime d, int anos) {
+  final ultimo = DateTime(d.year + anos, d.month + 1, 0).day;
+  return DateTime(d.year + anos, d.month, d.day > ultimo ? ultimo : d.day);
+}
+
+/// A validade sugerida para a renovação de [antiga] feita em [hoje]: o mesmo
+/// período que o certificado anterior durava (3 anos → mais 3 anos). Sem
+/// validade antes, não caduca; sem data de realização, assume 1 ano.
+DateTime? validadeRenovada(Formacao antiga, DateTime hoje) {
+  final v = antiga.validade;
+  if (v == null) return null;
+  final r = antiga.realizada;
+  // em UTC, para a mudança de hora não tirar um dia à conta
+  var dias = r == null
+      ? 365
+      : DateTime.utc(
+          v.year,
+          v.month,
+          v.day,
+        ).difference(DateTime.utc(r.year, r.month, r.day)).inDays;
+  if (dias < 30) dias = 365;
+  final anos = (dias / 365).round();
+  if (anos >= 1 && (dias - anos * 365).abs() <= 40) {
+    return somarAnos(hoje, anos);
+  }
+  return DateTime(hoje.year, hoje.month, hoje.day + dias);
+}
+
 String _norm(String s) => s.trim().toLowerCase();
 
 /// Só vale a versão mais recente de cada título por pessoa: se renovaste o

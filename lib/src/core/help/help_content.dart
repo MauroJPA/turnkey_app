@@ -415,6 +415,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
     paragrafos: [
       'Guarda aqui os certificados e formações de cada pessoa — manipulador de alimentos, HACCP, primeiros socorros, ficha de aptidão… — com a data, a validade e o ficheiro (PDF ou foto). Em "Nova formação" escolhes a pessoa, tocas numa sugestão de título e na validade (+1, +2, +3 ou +5 anos) e anexas o certificado: tudo em poucos toques.',
       'A app avisa 30 dias antes de caducar: aparece o cartão "Formações a caducar" no Início e uma secção no resumo diário (email/Telegram). Se renovares, regista o novo certificado: só o mais recente de cada título conta e o antigo deixa de avisar.',
+      'Renovar: os certificados a caducar ou caducados aparecem primeiro, cada um com o botão "Renovar". Abre o formulário já preenchido (mesma pessoa, título e entidade, feito hoje e com o mesmo prazo de validade que o anterior): só tens de anexar o certificado novo e guardar.',
       'Toca numa linha para editar (ou apagar) e no clipe para abrir o ficheiro. É um dado pessoal: cada pessoa só vê os seus; a administração vê os de toda a equipa e regista para qualquer pessoa.',
     ],
   ),

@@ -1935,6 +1935,14 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Com stock suficiente: "O stock chega: não falta comprar nada"
 - [ ] Desmarcar "Preparar também a lista de compras": agenda sem mexer na lista, e fica desmarcado da vez seguinte
 
+## 139. Renovação de certificados em dois toques
+
+- [ ] Pessoas → Formações: os caducados e a caducar aparecem em cima, cada um com "Renovar"
+- [ ] "Renovar" abre o formulário já preenchido (pessoa, título, entidade), feito hoje e com o mesmo prazo do anterior
+- [ ] Anexar o certificado novo e guardar: o antigo fica "substituída por uma mais recente" e o aviso desaparece do Início
+- [ ] Como membro da equipa: só vê "Renovar" nos seus próprios certificados
+- [ ] Um certificado válido (a mais de 30 dias) não mostra "Renovar"
+
 ---
 
 ## Notas / ajustes pedidos

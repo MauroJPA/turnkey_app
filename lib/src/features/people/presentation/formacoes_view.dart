@@ -17,12 +17,6 @@ import '../domain/ponto.dart';
 String _data(DateTime d) =>
     '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 
-DateTime _maisAnos(DateTime d, int anos) {
-  // 29 de fevereiro + 1 ano → 28 de fevereiro
-  final ultimo = DateTime(d.year + anos, d.month + 1, 0).day;
-  return DateTime(d.year + anos, d.month, d.day > ultimo ? ultimo : d.day);
-}
-
 Color _cor(EstadoValidade e, ColorScheme cs) => switch (e) {
   EstadoValidade.caducada => cs.error,
   EstadoValidade.aCaducar => Colors.orange,
@@ -83,6 +77,11 @@ class _FormacoesViewState extends ConsumerState<FormacoesView> {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final hoje = DateTime.now();
+    final uid = ref.read(formacoesRepositoryProvider).utilizadorId;
+    // a administração renova qualquer uma; cada pessoa só as suas
+    bool podeRenovar(Formacao f) =>
+        ref.watch(currentPapelProvider).canEditBusiness &&
+        (admin || (uid != null && f.userId == uid));
     return AsyncValueView<List<Formacao>>(
       value: ref.watch(formacoesProvider),
       onRetry: () => ref.invalidate(formacoesProvider),
@@ -97,8 +96,14 @@ class _FormacoesViewState extends ConsumerState<FormacoesView> {
                   if (idsAlerta.contains(f.id)) f,
               ]
             : [...todas];
-        // por pessoa e, dentro dela, o que caduca primeiro
+        // o que caduca primeiro; depois, por pessoa
         lista.sort((a, b) {
+          final aa = idsAlerta.contains(a.id);
+          final bb = idsAlerta.contains(b.id);
+          if (aa != bb) return aa ? -1 : 1;
+          if (aa) {
+            return a.diasParaCaducar(hoje)!.compareTo(b.diasParaCaducar(hoje)!);
+          }
           final c = a.nome.toLowerCase().compareTo(b.nome.toLowerCase());
           if (c != 0) return c;
           final da = a.diasParaCaducar(hoje) ?? 100000;
@@ -163,14 +168,32 @@ class _FormacoesViewState extends ConsumerState<FormacoesView> {
                             Icons.health_and_safety_outlined,
                         }, color: cor),
                         title: Text(f.titulo),
-                        subtitle: Text(
-                          [
-                            if (admin) f.nome,
-                            f.tipo.label,
-                            if (f.entidade.isNotEmpty) f.entidade,
-                            if (f.realizada != null) _data(f.realizada!),
-                            if (substituida) 'substituída por uma mais recente',
-                          ].join(' · '),
+                        isThreeLine: idsAlerta.contains(f.id) && podeRenovar(f),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              [
+                                if (admin) f.nome,
+                                f.tipo.label,
+                                if (f.entidade.isNotEmpty) f.entidade,
+                                if (f.realizada != null) _data(f.realizada!),
+                                if (substituida)
+                                  'substituída por uma mais recente',
+                              ].join(' · '),
+                            ),
+                            if (idsAlerta.contains(f.id) && podeRenovar(f))
+                              TextButton.icon(
+                                style: TextButton.styleFrom(
+                                  minimumSize: const Size(0, 36),
+                                  padding: EdgeInsets.zero,
+                                ),
+                                onPressed: () =>
+                                    mostrarFormacao(context, ref, renovar: f),
+                                icon: const Icon(Icons.autorenew, size: 18),
+                                label: const Text('Renovar'),
+                              ),
+                          ],
                         ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -222,9 +245,10 @@ Future<void> mostrarFormacao(
   BuildContext context,
   WidgetRef ref, {
   Formacao? editar,
+  Formacao? renovar,
 }) async {
   final admin = ref.read(currentPapelProvider).canEditConfig;
-  final pessoas = admin && editar == null
+  final pessoas = admin && editar == null && renovar == null
       ? (await ref.read(
           todosColaboradoresProvider.future,
         )).where((p) => p.ativo).toList()
@@ -232,15 +256,19 @@ Future<void> mostrarFormacao(
   if (!context.mounted) return;
   await showDialog<void>(
     context: context,
-    builder: (_) => _FormacaoDialog(pessoas: pessoas, editar: editar),
+    builder: (_) =>
+        _FormacaoDialog(pessoas: pessoas, editar: editar, renovar: renovar),
   );
 }
 
 class _FormacaoDialog extends ConsumerStatefulWidget {
-  const _FormacaoDialog({required this.pessoas, this.editar});
+  const _FormacaoDialog({required this.pessoas, this.editar, this.renovar});
 
   final List<Colaborador> pessoas;
   final Formacao? editar;
+
+  /// Renovar um certificado: mesma pessoa e título, datas novas.
+  final Formacao? renovar;
 
   @override
   ConsumerState<_FormacaoDialog> createState() => _FormacaoDialogState();
@@ -271,6 +299,14 @@ class _FormacaoDialogState extends ConsumerState<_FormacaoDialog> {
       _tipo = f.tipo;
       _realizada = f.realizada;
       _validade = f.validade;
+    } else if (widget.renovar != null) {
+      final r = widget.renovar!;
+      final hoje = DateTime.now();
+      _titulo.text = r.titulo;
+      _entidade.text = r.entidade;
+      _tipo = r.tipo;
+      _realizada = DateTime(hoje.year, hoje.month, hoje.day);
+      _validade = validadeRenovada(r, hoje);
     } else {
       _realizada = DateTime.now();
     }
@@ -347,7 +383,11 @@ class _FormacaoDialogState extends ConsumerState<_FormacaoDialog> {
         final String pessoa;
         final String nome;
         final String userId;
-        if (_admin && _pessoa != null) {
+        if (widget.renovar != null) {
+          pessoa = widget.renovar!.pessoa;
+          nome = widget.renovar!.nome;
+          userId = widget.renovar!.userId;
+        } else if (_admin && _pessoa != null) {
           pessoa = chavePessoa(_pessoa!);
           nome = _pessoa!.nome;
           userId = _pessoa!.userId;
@@ -389,13 +429,28 @@ class _FormacaoDialogState extends ConsumerState<_FormacaoDialog> {
     final tt = Theme.of(context).textTheme;
     final base = _realizada ?? DateTime.now();
     return AlertDialog(
-      title: Text(editar == null ? 'Nova formação' : 'Editar formação'),
+      title: Text(
+        widget.renovar != null
+            ? 'Renovar: ${widget.renovar!.titulo}'
+            : editar == null
+            ? 'Nova formação'
+            : 'Editar formação',
+      ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (_admin && editar == null) ...[
+            if (widget.renovar != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  '${widget.renovar!.nome}: já vem tudo preenchido; só falta '
+                  'anexar o certificado novo e guardar.',
+                  style: tt.bodySmall,
+                ),
+              ),
+            if (_admin && editar == null && widget.renovar == null) ...[
               DropdownButtonFormField<Colaborador>(
                 initialValue: _pessoa,
                 isExpanded: true,
@@ -472,9 +527,9 @@ class _FormacaoDialogState extends ConsumerState<_FormacaoDialog> {
                   ChoiceChip(
                     label: Text('+$a ${a == 1 ? 'ano' : 'anos'}'),
                     selected:
-                        _validade != null && _validade == _maisAnos(base, a),
+                        _validade != null && _validade == somarAnos(base, a),
                     onSelected: (_) =>
-                        setState(() => _validade = _maisAnos(base, a)),
+                        setState(() => _validade = somarAnos(base, a)),
                   ),
               ],
             ),

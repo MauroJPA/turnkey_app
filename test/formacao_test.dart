@@ -114,4 +114,57 @@ void main() {
     ], hoje);
     expect(r.map((x) => x.id), ['caducada', 'em3', 'em10']);
   });
+
+  group('validade da renovação', () {
+    final hoje2 = DateTime(2026, 10, 6);
+
+    test('repete o período anterior (3 anos → mais 3 anos)', () {
+      final r = validadeRenovada(
+        f(
+          'a',
+          realizada: DateTime(2023, 10, 20),
+          validade: DateTime(2026, 10, 20),
+        ),
+        hoje2,
+      );
+      expect(r, DateTime(2029, 10, 6));
+    });
+
+    test('1 ano → mais 1 ano', () {
+      final r = validadeRenovada(
+        f(
+          'a',
+          realizada: DateTime(2025, 10, 1),
+          validade: DateTime(2026, 10, 1),
+        ),
+        hoje2,
+      );
+      expect(r, DateTime(2027, 10, 6));
+    });
+
+    test('não caducava → continua a não caducar', () {
+      expect(validadeRenovada(f('a'), hoje2), isNull);
+    });
+
+    test('sem data de realização assume 1 ano', () {
+      final r = validadeRenovada(f('a', validade: DateTime(2026, 9, 1)), hoje2);
+      expect(r, DateTime(2027, 10, 6));
+    });
+
+    test('período fora do normal mantém os dias (ex.: 6 meses)', () {
+      final r = validadeRenovada(
+        f(
+          'a',
+          realizada: DateTime(2026, 1, 1),
+          validade: DateTime(2026, 7, 1), // 181 dias
+        ),
+        hoje2,
+      );
+      expect(r, DateTime(2026, 10, 6 + 181));
+    });
+
+    test('29 de fevereiro + 1 ano = 28 de fevereiro', () {
+      expect(somarAnos(DateTime(2028, 2, 29), 1), DateTime(2029, 2, 28));
+    });
+  });
 }

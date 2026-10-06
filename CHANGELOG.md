@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.110.0 — 2026-10-06 — Renovação de certificados em dois toques
+
+Renovar um certificado a caducar em dois toques.
+
+- **Pessoas → Formações**: o que está **caducado ou a caducar** aparece sempre em cima, e cada um tem o botão **"Renovar"**.
+- **Já vem tudo preenchido**: a mesma pessoa, título, tipo e entidade; "feita hoje" e a **validade com o mesmo prazo do anterior** (se durava 3 anos, propõe mais 3 anos; sem validade antes, continua sem validade). Só tens de **anexar o certificado novo** e guardar — o antigo passa a "substituída por uma mais recente" e deixa de avisar.
+- A administração renova o de qualquer pessoa; cada pessoa renova os seus.
+- O cartão "Formações a caducar" do Início leva a esta lista, com os que pedem ação logo no topo.
+- Corrigido: a conta do prazo já não perde um dia na mudança de hora.
+- Testes: prazo repetido (1 e 3 anos), sem validade, sem data de realização, período fora do normal e 29 de fevereiro.
+
 ## 1.109.0 — 2026-10-06 — Compras automáticas ao agendar o Quantos assar
 
 Ao agendar o "Quantos assar", a lista de compras fica logo pronta.
