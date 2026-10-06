@@ -7,6 +7,7 @@ import '../../../core/help/help_content.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../../../core/widgets/hub_segmentos.dart';
 import '../../consumables/presentation/consumiveis_screen.dart';
+import '../../finance/presentation/equipamentos_screen.dart';
 import '../../ingredients/presentation/ingredients_screen.dart';
 import '../../packaging/presentation/embalagens_screen.dart';
 import '../application/comparar_precos_providers.dart';
@@ -34,7 +35,8 @@ enum SecaoInventario {
     Icons.inventory_2_outlined,
     Routes.inventoryEmbalagens,
   ),
-  precos('Preços', Icons.trending_up, Routes.inventoryPrecos);
+  precos('Preços', Icons.trending_up, Routes.inventoryPrecos),
+  equipamentos('Equipamentos', Icons.kitchen_outlined, Routes.equipamentos);
 
   const SecaoInventario(this.label, this.icon, this.rota);
   final String label;
@@ -47,6 +49,7 @@ enum SecaoInventario {
     SecaoInventario.material => HelpTopic.inventario,
     SecaoInventario.embalagens => HelpTopic.embalagens,
     SecaoInventario.precos => HelpTopic.variacoesPreco,
+    SecaoInventario.equipamentos => HelpTopic.equipamentos,
   };
 
   StockTipo? get tipoStock => switch (this) {
@@ -55,6 +58,7 @@ enum SecaoInventario {
     SecaoInventario.material => StockTipo.livre,
     SecaoInventario.embalagens => null,
     SecaoInventario.precos => null,
+    SecaoInventario.equipamentos => null,
   };
 }
 
@@ -98,6 +102,7 @@ class InventarioScreen extends ConsumerWidget {
             extras: const [
               SecaoInventario.material,
               SecaoInventario.embalagens,
+              SecaoInventario.equipamentos,
             ],
             atual: secao,
             rotulo: (s) => switch (s) {
@@ -139,6 +144,10 @@ class InventarioScreen extends ConsumerWidget {
               ),
               SecaoInventario.precos => const VariacoesPrecoView(
                 key: ValueKey('inv-precos'),
+              ),
+              SecaoInventario.equipamentos => const EquipamentosScreen(
+                key: ValueKey('inv-equipamentos'),
+                embedded: true,
               ),
             },
           ),

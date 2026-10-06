@@ -2024,6 +2024,16 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Como Editor: o chip "Equipamento" não aparece e uma linha sugerida pela IA fica como ingrediente/por rever
 - [ ] Numa lista de preços não há o tipo "Equipamento"
 
+## 146. Equipamentos passam para o Inventário
+
+- [ ] Inventário: "Ingredientes · Limpeza · Preços · Mais ▾" — o "Mais ▾" inclui Material da loja, Embalagens e **Equipamentos**
+- [ ] Inventário → Equipamentos: mostra os equipamentos, o investido e a depreciação mensal; "Novo equipamento", importar CSV e arquivados funcionam
+- [ ] Contabilidade já não tem "Equipamentos" no "Mais ▾"; a depreciação continua a somar no painel financeiro e na DRE
+- [ ] Abrir o endereço antigo `…/#/financeiro/equipamentos`: reencaminha para o Inventário → Equipamentos
+- [ ] Rever uma fatura e registar um equipamento: aparece em Inventário → Equipamentos (notas com a fatura)
+- [ ] Pesquisa do "Mais": "equipamentos" encontra Inventário → Equipamentos
+- [ ] Como Editor: vê a lista mas não cria/edita; como Leitura: só vê
+
 ---
 
 ## Notas / ajustes pedidos

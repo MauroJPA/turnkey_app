@@ -123,7 +123,6 @@ void main() {
         Routes.painelFinanceiro,
         Routes.dre,
         Routes.custosFixos,
-        Routes.equipamentos,
         Routes.numerosMagicos,
         Routes.rentabilidade,
         Routes.tabelaRevendedores,
@@ -146,6 +145,7 @@ void main() {
         Routes.inventoryMaterial,
         Routes.inventoryEmbalagens,
         Routes.inventoryPrecos,
+        Routes.equipamentos,
       ]) {
         expect(rotasDaPagina('inventario'), contains(r));
       }

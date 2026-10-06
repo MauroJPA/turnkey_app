@@ -18,7 +18,7 @@ import 'equipamentos_import_sheet.dart';
 class EquipamentosScreen extends ConsumerStatefulWidget {
   const EquipamentosScreen({super.key, this.embedded = false});
 
-  /// Dentro da página Contabilidade: sem seta de voltar, título nem ajuda.
+  /// Dentro da página Inventário: sem seta de voltar, título nem ajuda.
   final bool embedded;
 
   @override

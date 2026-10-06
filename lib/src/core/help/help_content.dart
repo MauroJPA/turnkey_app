@@ -198,7 +198,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
   HelpTopic.inventario: (
     titulo: 'Inventário — material da loja',
     paragrafos: [
-      'O Inventário junta numa só página tudo o que a empresa compra e guarda, em quatro secções: Ingredientes, Limpeza e insumos, Material da loja e Embalagens. Troca de secção nos botões do topo; uma secção com itens abaixo do mínimo mostra "a acabar".',
+      'O Inventário junta numa só página tudo o que a empresa compra e guarda, em várias secções: Ingredientes, Limpeza e insumos, Preços, Material da loja, Embalagens e Equipamentos (os bens duradouros, com a depreciação mensal). Troca de secção nos botões do topo; uma secção com itens abaixo do mínimo mostra "a acabar".',
       'Material da loja: o inventário geral — equipamentos, mobiliário, ferramentas… agrupado por categoria. O material que marcas como comprado na lista de compras aparece aqui automaticamente.',
       'Botão "Material": adicionar qualquer coisa da empresa que não seja ingrediente nem produto — uma tesoura, uma mesa…',
       'Chips de vista: "Tudo", "Favoritos" (a estrela em cada linha fixa os itens que queres ver primeiro) e "Mais usados".',
@@ -228,7 +228,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
     titulo: 'Rever fatura',
     paragrafos: [
       'Confere cada linha que a IA leu. A imagem da fatura fica visível (ao lado, em ecrã grande; por cima, no telemóvel — toca para ampliar; "Ocultar fatura" dá mais espaço às linhas). PDF abre à parte.',
-      'Equipamentos: se a linha é um bem duradouro (forno, batedeira, balcão, frigorífico, computador…), escolhe o tipo "Equipamento" (a IA já o sugere quando o reconhece; só o proprietário e o administrador o veem). Confirma o nome, o custo total pago e a vida útil em anos: a app mostra logo a depreciação mensal. Ao aplicar, o equipamento entra na lista de Contabilidade → Equipamentos e passa a somar na depreciação e nos custos da empresa. Fica ligado à fatura (nas notas). Uma linha já aplicada não cria o equipamento outra vez.',
+      'Equipamentos: se a linha é um bem duradouro (forno, batedeira, balcão, frigorífico, computador…), escolhe o tipo "Equipamento" (a IA já o sugere quando o reconhece; só o proprietário e o administrador o veem). Confirma o nome, o custo total pago e a vida útil em anos: a app mostra logo a depreciação mensal. Ao aplicar, o equipamento entra na lista de Inventário → Equipamentos e passa a somar na depreciação e nos custos da empresa. Fica ligado à fatura (nas notas). Uma linha já aplicada não cria o equipamento outra vez.',
       'Cada linha tem 5 tipos: Ingrediente, Embalagem, Limpeza / insumo, Bebida e Revenda (estes três últimos ficam todos em "Limpeza e insumos" — só muda a categoria sugerida). Escolhe o que a linha é antes de a ligar.',
       'Toca em "Ingrediente" para ligar a linha ao ingrediente certo (já vem pré-escolhido pelo nome mais parecido) ou escolhe "Criar ingrediente novo".',
       'Numa linha de Embalagem: o "Tipo" e, numa linha de Bebida/Revenda, a "Categoria" são texto livre — escreve um novo se o que precisas não estiver nas sugestões. "Peças compradas" (só embalagens) já vem preenchido pela quantidade que a IA leu (ex. rolo de 500 adesivos) — antes tinhas de corrigir isto depois em Embalagens. Em "Formatos de cookie" da embalagem, "+ Novo formato" cria um formato só com o nome (completa o peso depois em Configurações → Formatos de cookie).',
@@ -334,7 +334,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Ícone das faíscas (✨, canto superior): a IA lê os teus custos e sugere, para cada um, se é fixo ou variável e porquê — e, nos variáveis, o que fazer se apertar (reduzir, pausar ou cortar). Tu escolhes quais sugestões aplicar; nada muda sem confirmares.',
       '"Dia de pagamento" (opcional): o dia do mês em que pagas este custo. Se estiver preenchido, aparece um aviso "Pagamentos por vir" no Início quando faltar uma semana ou menos.',
       'Ícone de nuvem/upload (canto superior): importa vários custos de uma vez a partir de um ficheiro .csv com as colunas nome, valor mensal e (opcional) dia de pagamento.',
-      'Equipamentos (forno, balcão, computadores…) têm a sua secção ao lado: a depreciação mensal deles entra automaticamente como despesa, sem precisar de criar um custo fixo à parte.',
+      'Os Equipamentos (forno, balcão, computadores…) vivem no Inventário: a depreciação mensal deles entra automaticamente como despesa, sem precisar de criar um custo fixo à parte.',
       'Arquivar mantém o histórico sem contar no total atual; só apagar remove por completo.',
     ],
   ),

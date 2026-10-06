@@ -1945,7 +1945,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
             ? 'Depreciação: ${fmt(l.depreciacaoMensal)} por mês — entra na '
                   'lista de equipamentos e nos custos da empresa.'
             : 'Indica o custo e a vida útil para calcular a depreciação '
-                  'mensal (Contabilidade → Equipamentos).',
+                  'mensal (Inventário → Equipamentos).',
         style: Theme.of(context).textTheme.bodySmall,
       ),
     ];

@@ -11,7 +11,6 @@ import '../../invoices/presentation/contabilidade_sheet.dart';
 import '../domain/periodo.dart';
 import 'custos_fixos_screen.dart';
 import 'dre_screen.dart';
-import 'equipamentos_screen.dart';
 import 'iva_card.dart';
 import 'numeros_magicos_screen.dart';
 import 'painel_financeiro_screen.dart';
@@ -25,7 +24,6 @@ enum SecaoContabilidade {
   resumo('Resumo', Icons.insights_outlined, Routes.painelFinanceiro),
   dre('DRE', Icons.description_outlined, Routes.dre),
   custos('Custos fixos', Icons.request_quote_outlined, Routes.custosFixos),
-  equipamentos('Equipamentos', Icons.kitchen_outlined, Routes.equipamentos),
   numeros('Números mágicos', Icons.calculate_outlined, Routes.numerosMagicos),
   rentabilidade(
     'Rentabilidade',
@@ -48,7 +46,6 @@ enum SecaoContabilidade {
     SecaoContabilidade.resumo => HelpTopic.painelFinanceiro,
     SecaoContabilidade.dre => HelpTopic.dre,
     SecaoContabilidade.custos => HelpTopic.custosFixos,
-    SecaoContabilidade.equipamentos => HelpTopic.equipamentos,
     SecaoContabilidade.numeros => HelpTopic.numerosMagicos,
     SecaoContabilidade.rentabilidade => HelpTopic.rentabilidade,
     SecaoContabilidade.revendedores => HelpTopic.tabelaRevendedores,
@@ -86,7 +83,6 @@ class ContabilidadeScreen extends ConsumerWidget {
             ],
             extras: const [
               SecaoContabilidade.dre,
-              SecaoContabilidade.equipamentos,
               SecaoContabilidade.numeros,
               SecaoContabilidade.rentabilidade,
               SecaoContabilidade.revendedores,
@@ -108,10 +104,6 @@ class ContabilidadeScreen extends ConsumerWidget {
               ),
               SecaoContabilidade.custos => const CustosFixosScreen(
                 key: ValueKey('cont-custos'),
-                embedded: true,
-              ),
-              SecaoContabilidade.equipamentos => const EquipamentosScreen(
-                key: ValueKey('cont-equip'),
                 embedded: true,
               ),
               SecaoContabilidade.numeros => const NumerosMagicosScreen(

@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.5.1 — 2026-10-06 — Equipamentos passam para o Inventário
+
+A lista de **Equipamentos** passou da Contabilidade para o **Inventário**, onde faz mais sentido (é o que a empresa tem e guarda).
+
+- **Inventário** tem agora a secção **Equipamentos** (no "Mais ▾", ao lado de Material da loja e Embalagens): lista, custo, vida útil, depreciação mensal, importar CSV e arquivados — tudo como antes.
+- **Contabilidade** deixou de ter "Equipamentos". A depreciação mensal continua a somar nos custos, no painel financeiro, na DRE e nos números mágicos (só mudou onde se gere a lista).
+- Ao rever uma fatura, o tipo "Equipamento" cria o registo aqui: **Inventário → Equipamentos**. Os textos de ajuda foram atualizados.
+- O endereço antigo (`/financeiro/equipamentos`) reencaminha para o novo, por isso favoritos e links antigos continuam a funcionar.
+- A pesquisa do "Mais" encontra "Equipamentos" dentro de Inventário.
+- Atenção a quem gere permissões: a lista passa a estar sujeita ao acesso à página **Inventário** (e não ao da Contabilidade). Criar/editar continua só para proprietário e administrador.
+
 ## 2.5.0 — 2026-10-06 — Faturas: linhas que são equipamentos
 
 Uma linha de fatura pode ser um **equipamento**: vai para a lista de equipamentos e soma na depreciação e nos custos da empresa.

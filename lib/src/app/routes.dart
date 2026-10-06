@@ -44,7 +44,10 @@ abstract class Routes {
   static const painelFinanceiro = '/financeiro';
   static const dre = '/financeiro/dre';
   static const custosFixos = '/financeiro/custos-fixos';
-  static const equipamentos = '/financeiro/equipamentos';
+  static const equipamentos = '/inventario/equipamentos';
+
+  /// Endereço antigo (era uma secção da Contabilidade): reencaminha.
+  static const equipamentosAntigo = '/financeiro/equipamentos';
   static const numerosMagicos = '/financeiro/numeros-magicos';
   static const relatorios = '/financeiro/relatorios';
   static const rentabilidade = '/financeiro/rentabilidade';

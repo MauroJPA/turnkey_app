@@ -170,8 +170,8 @@ const seccoesApp = <DestinoApp>[
     rota: Routes.equipamentos,
     label: 'Equipamentos',
     icon: Icons.blender_outlined,
-    pagina: 'financeiro',
-    dentroDe: 'Contabilidade',
+    pagina: 'inventario',
+    dentroDe: 'Inventário',
     palavras: 'amortizacao maquinas',
   ),
   DestinoApp(

@@ -191,6 +191,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, __) =>
                     const InventarioScreen(secao: SecaoInventario.precos),
               ),
+              GoRoute(
+                path: 'equipamentos',
+                builder: (_, __) =>
+                    const InventarioScreen(secao: SecaoInventario.equipamentos),
+              ),
             ],
           ),
           GoRoute(
@@ -264,6 +269,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                 child: PessoasScreen(secao: s),
               ),
             ),
+          // os equipamentos passaram da Contabilidade para o Inventário
+          GoRoute(
+            path: Routes.equipamentosAntigo,
+            redirect: (_, __) => Routes.equipamentos,
+          ),
           // Contabilidade: uma página, várias secções (cada uma com o seu endereço)
           for (final s in SecaoContabilidade.values)
             GoRoute(
