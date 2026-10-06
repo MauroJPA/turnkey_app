@@ -1744,6 +1744,12 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Fichas técnicas → Editar (lápis): consigo rolar os campos até ao fim (Conservação) e o botão Guardar está sempre visível por baixo
 - [ ] O mesmo numa "Nova ficha técnica" e com o teclado aberto no telemóvel
 
+## 118. Capacidade do forno mais clara
+
+- [ ] Produção → Quantos assar: o lápis ao lado do total abre "Unidades por fornada"; escrever 12 muda o "≈ N fornadas de 12 un"; vazio volta à média
+- [ ] Contabilidade → Rentabilidade: o campo "Por fornada" mostra o mesmo valor; aparece o aviso se a média for muito baixa
+- [ ] Rentabilidade mostra "N produto(s) sem tempo de assadura na ficha"
+
 ---
 
 ## Notas / ajustes pedidos

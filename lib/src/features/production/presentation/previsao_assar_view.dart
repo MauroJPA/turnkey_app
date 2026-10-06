@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/storage/prefs_locais.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../finance/data/capacidade_forno_repository.dart';
 import '../../tech_sheets/application/tech_sheets_providers.dart';
@@ -34,12 +35,49 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
   double _ajuste = 0;
   bool _descontarStock = true;
 
+  Future<void> _editarCapacidade(double auto) async {
+    final c = TextEditingController(text: lerPref(chaveCapacidadeForno) ?? '');
+    final v = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Unidades por fornada'),
+        content: TextField(
+          controller: c,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: 'Quantas cabem no forno',
+            helperText: auto > 0
+                ? 'Deixa vazio para usar a média das tuas fornadas (${auto.toStringAsFixed(0)} un).'
+                : 'Ainda sem fornadas registadas.',
+            helperMaxLines: 3,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, c.text.trim()),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+    c.dispose();
+    if (v == null) return;
+    guardarPref(chaveCapacidadeForno, v);
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     final consumo = ref.watch(consumoRecenteProvider);
     final fichas = ref.watch(fichasListProvider(false));
     final stock = ref.watch(stockAgoraProvider).valueOrNull ?? const {};
-    final porFornada = ref.watch(capacidadeFornoProvider).valueOrNull ?? 0;
+    final auto = ref.watch(capacidadeFornoProvider).valueOrNull ?? 0;
+    final porFornada = capacidadeFornoEscolhida(auto);
     final tt = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
     final agora = DateTime.now();
@@ -175,11 +213,17 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
                             fornadas == null
                                 ? 'Ainda sem fornadas registadas para estimar as fornadas.'
                                 : '≈ ${fornadas.toStringAsFixed(1).replaceAll('.', ',')} fornadas '
-                                      'de ${porFornada.toStringAsFixed(0)} un',
+                                      'de ${porFornada.toStringAsFixed(0)} un'
+                                      '${lerPref(chaveCapacidadeForno) == null && auto < capacidadeAutoSuspeita ? ' (média baixa: toca no lápis e escreve a capacidade do forno)' : ''}',
                             style: tt.bodySmall,
                           ),
                         ],
                       ),
+                    ),
+                    IconButton(
+                      tooltip: 'Unidades por fornada',
+                      onPressed: () => _editarCapacidade(auto),
+                      icon: const Icon(Icons.edit_outlined),
                     ),
                     IconButton(
                       tooltip: 'Copiar a lista',

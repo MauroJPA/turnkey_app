@@ -2,6 +2,16 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.90.2 — 2026-10-06 — Capacidade do forno mais clara
+
+Capacidade do forno mais clara (Rentabilidade e Quantos assar).
+
+- Na revisão com os dados reais, a média das fornadas era só de 2 unidades (fornadas de teste/parciais), o que dava "≈ 11 fornadas" e lucros por hora de forno enganadores.
+- **Quantos assar** ganhou o **lápis** ao lado do total: escreves quantas unidades cabem no forno (fica guardado neste aparelho) e o número de fornadas passa a usar esse valor. Se a média das fornadas for muito baixa (menos de 6), a app avisa.
+- **Rentabilidade** usa o mesmo valor (um só sítio para o definir); o campo passou a chamar-se "Por fornada" (o nome antigo aparecia cortado) e avisa quando a média é muito baixa.
+- **Rentabilidade** diz agora quantos produtos não têm tempo de assadura na ficha (aparecem com "— /h").
+- Sem alterações no servidor.
+
 ## 1.90.1 — 2026-10-06 — Ficha técnica: janela de edição com rolagem
 
 Correção: a janela "Editar ficha" / "Nova ficha técnica" passa a rolar e o botão Guardar fica sempre visível.

@@ -4,7 +4,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/current_user.dart';
 import '../../../core/pocketbase/pb_client.dart';
+import '../../../core/storage/prefs_locais.dart';
 import '../domain/rentabilidade.dart';
+
+/// Onde se guarda (neste aparelho) a capacidade do forno escrita à mão.
+const chaveCapacidadeForno = 'forno_capacidade';
+
+/// A média das fornadas só serve se for credível: abaixo disto avisa-se que
+/// provavelmente são fornadas de teste ou parciais.
+const capacidadeAutoSuspeita = 6;
+
+/// A capacidade do forno a usar: a escrita à mão (se houver) ou a média [auto].
+double capacidadeFornoEscolhida(double auto) {
+  final manual = double.tryParse(
+    (lerPref(chaveCapacidadeForno) ?? '').replaceAll(',', '.').trim(),
+  );
+  return (manual != null && manual > 0) ? manual : auto;
+}
 
 /// Quantas unidades cabem numa fornada, estimado pelas fornadas dos últimos
 /// 60 dias (a média do total de cada uma). 0 se ainda não há fornadas.

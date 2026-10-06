@@ -12,8 +12,6 @@ import '../../tech_sheets/domain/tech_sheet.dart';
 import '../data/capacidade_forno_repository.dart';
 import '../domain/rentabilidade.dart';
 
-const _chaveCapacidade = 'forno_capacidade';
-
 /// Rentabilidade: que produtos dão mais lucro — por unidade, por hora de forno
 /// e em margem — vendidos na loja ou em cada canal (com as suas taxas).
 class RentabilidadeView extends ConsumerStatefulWidget {
@@ -27,7 +25,7 @@ class _RentabilidadeViewState extends ConsumerState<RentabilidadeView> {
   String? _canalId; // null = loja física
   OrdemRentabilidade _ordem = OrdemRentabilidade.lucroUnidade;
   late final _capacidade = TextEditingController(
-    text: lerPref(_chaveCapacidade) ?? '',
+    text: lerPref(chaveCapacidadeForno) ?? '',
   );
 
   @override
@@ -162,11 +160,11 @@ class _RentabilidadeViewState extends ConsumerState<RentabilidadeView> {
                         decimal: true,
                       ),
                       onChanged: (v) {
-                        guardarPref(_chaveCapacidade, v.trim());
+                        guardarPref(chaveCapacidadeForno, v.trim());
                         setState(() {});
                       },
                       decoration: InputDecoration(
-                        labelText: 'Un. por fornada',
+                        labelText: 'Por fornada',
                         hintText: auto > 0 ? auto.toStringAsFixed(0) : '12',
                         isDense: true,
                       ),
@@ -178,6 +176,7 @@ class _RentabilidadeViewState extends ConsumerState<RentabilidadeView> {
                       auto > 0
                           ? 'Média das tuas fornadas: ${auto.toStringAsFixed(0)} un '
                                 '(deixa vazio para usar). Serve para o lucro por hora de forno.'
+                                '${auto < capacidadeAutoSuspeita && _capacidade.text.trim().isEmpty ? ' É muito baixa: se o forno leva mais, escreve aqui quantas unidades cabem.' : ''}'
                           : 'Ainda sem fornadas registadas: escreve quantas unidades '
                                 'cabem numa fornada para ver o lucro por hora de forno.',
                       style: tt.bodySmall,
@@ -206,6 +205,16 @@ class _RentabilidadeViewState extends ConsumerState<RentabilidadeView> {
                 fmt: fmt,
                 destaqueHora: _ordem == OrdemRentabilidade.lucroHoraForno,
                 destaqueMargem: _ordem == OrdemRentabilidade.margem,
+              ),
+            if (linhas.any((l) => l.ficha.tempoAssaduraMin <= 0))
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Text(
+                  '${linhas.where((l) => l.ficha.tempoAssaduraMin <= 0).length} '
+                  'produto(s) sem tempo de assadura na ficha: não têm lucro por '
+                  'hora de forno (aparece "— /h").',
+                  style: tt.bodySmall?.copyWith(color: cs.outline),
+                ),
               ),
             if (semPreco > 0)
               Padding(
