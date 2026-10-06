@@ -882,6 +882,23 @@ def teste_avisos():
         for x in (ra, rb):
             if x.get('id'):
                 call('DELETE', f'/api/collections/ferias/records/{x["id"]}', tok=su)
+        # saída por marcar: entrada há 20 horas sem saída
+        agora_utc = _dt.datetime.utcnow() - _dt.timedelta(hours=20)
+        pr = {'empresa': empresas['A'], 'pessoa': 'c:esqueceu-teste', 'nome': 'Ze Teste', 'tipo': 'entrada', 'origem': 'manual',
+              'data_hora': agora_utc.strftime('%Y-%m-%d %H:%M:%S.000Z')}
+        s, rp, _ = call('POST', '/api/collections/ponto_registos/records', pr, su)
+        s, r, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': False}, tok['adminA'])
+        texto = r.get('texto', '')
+        check('Saída por marcar' in texto and 'Ze Teste' in texto, 'o resumo avisa de uma saída por marcar', texto[-200:])
+        if rp.get('id'):
+            call('POST', '/api/collections/ponto_registos/records',
+                 {**pr, 'tipo': 'saida', 'data_hora': (_dt.datetime.utcnow() - _dt.timedelta(hours=12)).strftime('%Y-%m-%d %H:%M:%S.000Z')}, su)
+            s, r, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': False}, tok['adminA'])
+            check('Ze Teste' not in r.get('texto', ''), 'depois de marcada a saída, o aviso desaparece', r.get('texto', '')[-200:])
+        s, rl, _ = call('GET', '/api/collections/ponto_registos/records?perPage=200', tok=su)
+        for it in rl.get('items', []):
+            if it.get('pessoa') == 'c:esqueceu-teste':
+                call('DELETE', f'/api/collections/ponto_registos/records/{it["id"]}', tok=su)
         # sem SMTP: mensagem clara
         call('PATCH', f'/api/collections/avisos_config/records/{cfg_id}', {'email_ativo': True, 'email_para': 'x@exemplo.pt', 'telegram_ativo': False}, tok['adminA'])
         s, r, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': True}, tok['adminA'])

@@ -1810,6 +1810,15 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Com alguém de férias aprovadas hoje: o resumo mostra "Ausentes hoje: Ana (férias)"; uma baixa aparece só como "(ausente)"
 - [ ] Uma tarefa HACCP realmente esquecida em dias de trabalho continua a aparecer "Em atraso"
 
+## 125. Saída por marcar
+
+- [ ] Alguém entra no quiosque e não sai: depois de uma hora do fim do turno aparece o cartão "Saída por marcar" no Início (administração)
+- [ ] Pessoas → Ponto: o aviso vermelho mostra "Saída às 16:30"; um toque regista a saída com essa hora e o aviso desaparece
+- [ ] "Outra hora…" pede a hora e regista a saída nesse dia
+- [ ] Sem escala definida: o aviso só aparece passadas 16 horas; a administração escolhe a hora
+- [ ] O resumo diário traz a secção "Saída por marcar" com a entrada de ontem esquecida
+- [ ] Um turno da noite (22:00–06:00) não aparece como esquecido às 05:00
+
 ---
 
 ## Notas / ajustes pedidos

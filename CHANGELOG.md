@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.97.0 — 2026-10-06 — Saída por marcar
+
+"Saída por marcar": a app avisa quando alguém se esquece da saída — e deixa resolver num toque.
+
+- **Início**: novo cartão **"Saída por marcar"** para a administração, com os nomes. Aparece quando alguém entrou e ainda não saiu: mais de 16 horas depois, ou **uma hora depois do fim do turno** previsto na escala (1.95.0). Desaparece sozinho quando a saída é marcada.
+- **Pessoas → Ponto**: um aviso vermelho no topo com a pessoa, a hora de entrada e o fim do turno. **"Saída às 16:30"** regista a saída à hora do turno com **um só toque**; **"Outra hora…"** deixa escolher a hora. Fica registada como marcação manual ("Saída esquecida, registada pela administração").
+- **Resumo diário (Telegram/email)**: nova secção **"Saída por marcar"** (apanha o que ficou esquecido do dia anterior), calculada no servidor com a mesma regra.
+- A janela do Ponto passa a olhar três dias para trás, para apanhar uma saída esquecida há dois dias. Turnos da noite (ex.: 22:00–06:00) não são tratados como esquecimento enquanto estiverem dentro do turno.
+- O saldo "previsto × marcado" no Ponto conta só **desde o primeiro dia em que a pessoa marcou** no mês (antes não aparecia um "−32 h" a quem ainda não usava o ponto).
+- Sem alterações na base de dados. Testes: avisos dentro e fora do turno, ontem sem saída, turno da noite, uma linha por pessoa, fim do turno; verificação no servidor (aviso e desaparecimento depois de marcar a saída).
+
 ## 1.96.0 — 2026-10-06 — Folgas e ausências nos avisos e no HACCP
 
 Folgas e ausências deixam de atrapalhar os avisos e o HACCP.

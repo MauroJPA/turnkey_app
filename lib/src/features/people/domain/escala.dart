@@ -204,6 +204,21 @@ Duration horasPrevistas({
   return total;
 }
 
+/// Quando acaba o turno de [d] (no dia seguinte se passa da meia-noite);
+/// `null` se não há turno.
+DateTime? fimDoTurno(DiaEscala d) {
+  if (d.estado != EstadoDia.turno) return null;
+  var fim = DateTime(
+    d.dia.year,
+    d.dia.month,
+    d.dia.day,
+    d.fim ~/ 60,
+    d.fim % 60,
+  );
+  if (d.fim <= d.inicio) fim = fim.add(const Duration(days: 1));
+  return fim;
+}
+
 /// A segunda-feira da semana de [d].
 DateTime segundaDaSemana(DateTime d) {
   final x = _d(d);

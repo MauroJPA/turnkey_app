@@ -24,8 +24,10 @@ import '../../orders/application/encomendas_providers.dart';
 import '../../orders/data/configuracoes_encomendas_repository.dart';
 import '../../people/application/ferias_providers.dart';
 import '../../people/application/notas_providers.dart';
+import '../../people/application/saidas_providers.dart';
 import '../../people/domain/ferias.dart';
 import '../../people/domain/nota.dart';
+import '../../people/domain/ponto.dart';
 import '../../schedule/application/schedule_providers.dart';
 import '../../schedule/domain/production_plan.dart';
 import '../../settings/application/empresa_providers.dart';
@@ -96,6 +98,9 @@ class HomeShell extends ConsumerWidget {
     final notasHoje = podeVerPessoas
         ? ref.watch(notasParaHojeProvider)
         : const <Nota>[];
+    final saidasEmFalta = podeVerPessoas
+        ? ref.watch(saidasPorMarcarProvider)
+        : const <SaidaPorMarcar>[];
     final feriasPorAprovar =
         podeVerPessoas && ref.watch(currentPapelProvider).canEditConfig
         ? (ref
@@ -266,6 +271,15 @@ class HomeShell extends ConsumerWidget {
                   .join(', '),
               destaque: true,
               onTap: () => context.go(Routes.aprovacoes),
+            ),
+          if (saidasEmFalta.isNotEmpty)
+            _StatCard(
+              icon: Icons.logout,
+              titulo: 'Saída por marcar',
+              valor: '${saidasEmFalta.length}',
+              subtitulo: saidasEmFalta.take(3).map((s) => s.nome).join(', '),
+              destaque: true,
+              onTap: () => context.go(Routes.pessoasPonto),
             ),
           if (feriasPorAprovar.isNotEmpty)
             _StatCard(

@@ -13,6 +13,7 @@ import '../../quiosque/domain/colaborador.dart';
 import '../application/escala_providers.dart';
 import '../application/ferias_providers.dart';
 import '../application/ponto_providers.dart';
+import '../application/saidas_providers.dart';
 import '../data/ponto_repository.dart';
 import '../domain/escala.dart';
 import '../domain/ferias.dart';
@@ -90,9 +91,65 @@ class _PontoViewState extends ConsumerState<PontoView> {
     }
   }
 
+  /// Regista a saída esquecida de [s]: à hora do fim do turno (um toque) ou
+  /// à hora que a administração escolher.
+  Future<void> _registarSaida(SaidaPorMarcar s, {bool escolher = false}) async {
+    var quando = s.fimPrevisto;
+    if (quando == null || escolher) {
+      final base = quando ?? DateTime.now();
+      final h = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(base),
+        helpText: 'Hora da saída de ${s.nome}',
+        builder: (ctx, child) => MediaQuery(
+          data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
+          child: child!,
+        ),
+      );
+      if (h == null) return;
+      // no dia da entrada; se a hora fica antes da entrada, é no dia seguinte
+      var d = DateTime(
+        s.entrada.year,
+        s.entrada.month,
+        s.entrada.day,
+        h.hour,
+        h.minute,
+      );
+      if (!d.isAfter(s.entrada)) d = d.add(const Duration(days: 1));
+      quando = d;
+    }
+    final repo = ref.read(pontoRepositoryProvider);
+    try {
+      await repo.registar(
+        pessoa: s.pessoa,
+        nome: s.nome,
+        userId: s.pessoa.startsWith('u:') ? s.pessoa.substring(2) : '',
+        tipo: TipoPonto.saida,
+        dataHora: quando,
+        origem: OrigemPonto.manual,
+        notas: 'Saída esquecida, registada pela administração',
+      );
+      _atualizar(ref);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Saída de ${s.nome} registada às ${_hora(quando)}.'),
+          ),
+        );
+      }
+    } on Object catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final agora = DateTime.now();
+    final saidas = ref.watch(saidasPorMarcarProvider);
     final admin = ref.watch(currentPapelProvider).canEditConfig;
     final podeMarcar = ref.watch(currentPapelProvider).canEditBusiness;
     final uid = ref.watch(pontoRepositoryProvider).utilizadorId;
@@ -189,6 +246,48 @@ class _PontoViewState extends ConsumerState<PontoView> {
                   ),
                 ),
               ),
+            if (saidas.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Card(
+                color: cs.errorContainer,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text('Saída por marcar', style: tt.titleSmall),
+                      const SizedBox(height: 4),
+                      for (final s in saidas) ...[
+                        Text(s.texto(agora), style: tt.bodyMedium),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            if (s.fimPrevisto != null)
+                              Expanded(
+                                child: FilledButton(
+                                  onPressed: () => _registarSaida(s),
+                                  child: Text(
+                                    'Saída às ${_hora(s.fimPrevisto!)}',
+                                  ),
+                                ),
+                              ),
+                            if (s.fimPrevisto != null) const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () =>
+                                    _registarSaida(s, escolher: true),
+                                child: const Text('Outra hora…'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
             if (admin && aTrabalhar.isNotEmpty) ...[
               const SizedBox(height: 12),
               Text('A trabalhar agora', style: tt.titleSmall),
@@ -248,9 +347,15 @@ class _PontoViewState extends ConsumerState<PontoView> {
                   title: Text(t.nome.isEmpty ? 'Sem nome' : t.nome),
                   subtitle: Builder(
                     builder: (_) {
+                      // conta-se desde o primeiro dia em que a pessoa marcou ponto
+                      // neste mês (antes disso ainda não usava o ponto)
+                      final dias = [
+                        for (final j in jornadas)
+                          if (j.pessoa == t.pessoa) j.dia,
+                      ]..sort();
                       final previsto = horasPrevistas(
                         pessoa: t.pessoa,
-                        de: mesInicio,
+                        de: dias.isEmpty ? mesInicio : dias.first,
                         ate: corte,
                         modelo: modeloEscala,
                         excecoes: excecoesMes,

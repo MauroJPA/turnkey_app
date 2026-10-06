@@ -18,12 +18,14 @@ final pontoEstadoProvider =
       (ref) => ref.watch(pontoRepositoryProvider).estado(),
     );
 
-/// Marcações de hoje e de ontem (para "quem está a trabalhar").
+/// Marcações de hoje e dos dois dias anteriores ("quem está a trabalhar" e
+/// saídas por marcar).
 final pontoRecenteProvider = FutureProvider.autoDispose<List<RegistoPonto>>((
   ref,
 ) {
   final agora = DateTime.now();
-  final desde = DateTime(agora.year, agora.month, agora.day - 1);
+  // três dias para trás: apanha uma saída esquecida há dois dias
+  final desde = DateTime(agora.year, agora.month, agora.day - 2);
   final ate = DateTime(agora.year, agora.month, agora.day + 1);
   return ref.watch(pontoRepositoryProvider).listar(desde: desde, ate: ate);
 });

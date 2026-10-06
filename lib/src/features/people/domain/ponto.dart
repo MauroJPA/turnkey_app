@@ -142,8 +142,6 @@ List<Jornada> calcularJornadas(List<RegistoPonto> registos, DateTime agora) {
     porPessoa.putIfAbsent(r.pessoa, () => []).add(r);
   }
   final out = <Jornada>[];
-  bool mesmoDia(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
 
   for (final lista in porPessoa.values) {
     lista.sort((a, b) => a.dataHora.compareTo(b.dataHora));
@@ -160,7 +158,6 @@ List<Jornada> calcularJornadas(List<RegistoPonto> registos, DateTime agora) {
       final emCurso =
           saida == null &&
           !semSaida &&
-          mesmoDia(e.dataHora, agora) &&
           agora.difference(e.dataHora) <= jornadaMaxima;
       out.add(
         Jornada(
@@ -323,4 +320,65 @@ String jornadasCsv(List<Jornada> jornadas, DateTime agora) {
     );
   }
   return b.toString();
+}
+
+/// Alguém que entrou e ainda não marcou a saída, passado o que era normal.
+class SaidaPorMarcar {
+  const SaidaPorMarcar({
+    required this.pessoa,
+    required this.nome,
+    required this.entrada,
+    this.fimPrevisto,
+  });
+
+  final String pessoa;
+  final String nome;
+  final DateTime entrada;
+
+  /// Quando devia acabar o turno (pela escala), se se sabe.
+  final DateTime? fimPrevisto;
+
+  /// "Ana — entrada às 08:03 (turno até 16:30)".
+  String texto(DateTime agora) {
+    String hm(DateTime d) =>
+        '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+    final hojeMesmo =
+        entrada.year == agora.year &&
+        entrada.month == agora.month &&
+        entrada.day == agora.day;
+    final quando = hojeMesmo
+        ? 'entrada às ${hm(entrada)}'
+        : 'entrada a ${entrada.day}/${entrada.month} às ${hm(entrada)}';
+    final turno = fimPrevisto == null ? '' : ' (turno até ${hm(fimPrevisto!)})';
+    return '$nome — $quando$turno';
+  }
+}
+
+/// As jornadas abertas que já deviam ter acabado: sem saída há mais de 16
+/// horas (ou entrada repetida) ou, se a escala diz quando o turno acaba, mais
+/// de [tolerancia] depois do fim. Uma por pessoa (a mais recente).
+List<SaidaPorMarcar> saidasPorMarcar(
+  Iterable<Jornada> jornadas,
+  DateTime agora, {
+  DateTime? Function(String pessoa, DateTime entrada)? fimPrevisto,
+  Duration tolerancia = const Duration(minutes: 60),
+}) {
+  final porPessoa = <String, SaidaPorMarcar>{};
+  final ordenadas = [...jornadas]
+    ..sort((a, b) => a.entrada.compareTo(b.entrada));
+  for (final j in ordenadas) {
+    if (!(j.aTrabalhar || j.semSaida) || j.saida != null) continue;
+    final fim = fimPrevisto?.call(j.pessoa, j.entrada);
+    final passou =
+        j.semSaida || (fim != null && agora.isAfter(fim.add(tolerancia)));
+    if (!passou) continue;
+    porPessoa[j.pessoa] = SaidaPorMarcar(
+      pessoa: j.pessoa,
+      nome: j.nome,
+      entrada: j.entrada,
+      fimPrevisto: fim,
+    );
+  }
+  return porPessoa.values.toList()
+    ..sort((a, b) => a.entrada.compareTo(b.entrada));
 }

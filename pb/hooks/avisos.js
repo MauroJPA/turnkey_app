@@ -64,6 +64,61 @@ function ausentesHoje(app, empresaId) {
   return out;
 }
 
+// Quem entrou e ainda não marcou a saída: sem saída há mais de 16 h ou, se a
+// escala diz quando o turno acaba, mais de 60 min depois do fim.
+function saidasPorMarcar(app, empresaId) {
+  const agora = new Date();
+  const desde = new Date(agora.getTime() - 72 * 3600 * 1000).toISOString().replace('T', ' ');
+  const regs = app.findRecordsByFilter('ponto_registos', 'empresa = {:e} && data_hora >= {:d}', '-data_hora', 2000, 0, { e: empresaId, d: desde });
+  const vistos = {};
+  const out = [];
+  const hm = (d) => dois(d.getHours()) + ':' + dois(d.getMinutes());
+  for (const r of regs) {
+    const p = r.getString('pessoa');
+    if (vistos[p]) continue;
+    vistos[p] = true;
+    if (r.getString('tipo') === 'saida') continue;
+    const quando = new Date(String(r.getString('data_hora')).replace(' ', 'T'));
+    const horas = (agora.getTime() - quando.getTime()) / 3600000;
+    // o fim previsto do turno desse dia
+    let fim = null;
+    try {
+      const iso = hojeISO(quando);
+      let ini = '';
+      let f = '';
+      let folga = false;
+      try {
+        const ex = app.findFirstRecordByFilter('escala_excecoes', 'empresa = {:e} && pessoa = {:p} && data = {:d}', { e: empresaId, p: p, d: iso + ' 00:00:00.000Z' });
+        folga = ex.getBool('folga');
+        ini = ex.getString('inicio');
+        f = ex.getString('fim');
+      } catch (_) {
+        const dow = quando.getDay() === 0 ? 7 : quando.getDay();
+        try {
+          const m = app.findFirstRecordByFilter('escala_modelo', 'empresa = {:e} && pessoa = {:p} && dia_semana = {:w}', { e: empresaId, p: p, w: dow });
+          ini = m.getString('inicio');
+          f = m.getString('fim');
+        } catch (_) {}
+      }
+      const mi = /^(\d{2}):(\d{2})$/.exec(ini);
+      const mf = /^(\d{2}):(\d{2})$/.exec(f);
+      if (!folga && mi && mf) {
+        fim = new Date(quando.getFullYear(), quando.getMonth(), quando.getDate(), parseInt(mf[1], 10), parseInt(mf[2], 10));
+        if (parseInt(mf[1], 10) * 60 + parseInt(mf[2], 10) <= parseInt(mi[1], 10) * 60 + parseInt(mi[2], 10)) fim.setDate(fim.getDate() + 1);
+      }
+    } catch (_) {}
+    const passou = horas > 16 || (fim && agora.getTime() > fim.getTime() + 3600000);
+    if (!passou) continue;
+    const mesmoDia = hojeISO(quando) === hojeISO(agora);
+    out.push(
+      (r.getString('nome') || 'Sem nome') +
+        ' — entrada ' + (mesmoDia ? '' : quando.getDate() + '/' + (quando.getMonth() + 1) + ' ') + 'às ' + hm(quando) +
+        (fim ? ' (turno até ' + hm(fim) + ')' : ''),
+    );
+  }
+  return out;
+}
+
 // ---- HACCP: o que falta hoje (versão resumida da lógica da app)
 function haccpPorFazer(app, empresaId, dias) {
   const out = [];
@@ -177,6 +232,7 @@ function montar(app, empresaId, cfg) {
   }
   if (cfg.getBool('inc_precos')) sec('Preços que subiram (24 h)', seguro(() => precosSubiram(app, empresaId)));
   sec('Ausentes hoje', seguro(() => ausentesHoje(app, empresaId)));
+  sec('Saída por marcar', seguro(() => saidasPorMarcar(app, empresaId)));
 
   let nome = '';
   try {
