@@ -109,6 +109,39 @@ class BackupsCard extends ConsumerWidget {
                 ok: s.externoEstado == 'ok' && !s.externoAtrasado(agora),
                 neutro: s.externoEstado == 'desconhecido',
               ),
+              if (s.discoDados != null)
+                _Linha(
+                  s.discoBackups == null
+                      ? 'Espaço livre no servidor'
+                      : 'Espaço livre (dados)',
+                  '${s.discoDados!.livreTexto} (${s.discoDados!.livrePct.toStringAsFixed(0)}%)',
+                  ok: !s.discoDados!.baixo,
+                ),
+              if (s.discoBackups != null)
+                _Linha(
+                  'Espaço livre (backups)',
+                  '${s.discoBackups!.livreTexto} (${s.discoBackups!.livrePct.toStringAsFixed(0)}%)',
+                  ok: !s.discoBackups!.baixo,
+                ),
+              _Linha(
+                'Teste ao backup (semanal)',
+                s.integridade == null
+                    ? 'ainda não correu'
+                    : '${s.integridade!.ok == true ? 'íntegro' : 'FALHOU'}'
+                          ' · ${_idade(s.integridade!.quando == null ? null : agora.difference(s.integridade!.quando!))}',
+                ok: s.integridade?.ok == true,
+                neutro: s.integridade == null,
+              ),
+              _Linha(
+                'Teste de restauro (mensal)',
+                s.restauro == null
+                    ? 'sem informação (script do servidor)'
+                    : '${s.restauro!.ok == true ? 'ok' : 'FALHOU'}'
+                          ' · ${_idade(s.restauro!.quando == null ? null : agora.difference(s.restauro!.quando!))}',
+                ok: s.restauro?.ok == true,
+                neutro: s.restauro == null,
+              ),
+              const _BotaoTestar(),
               if (problema)
                 for (final a in s.avisos(agora))
                   Padding(
@@ -130,6 +163,61 @@ class BackupsCard extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// "Testar o backup agora": confere já o último .zip (não espera pelo domingo).
+class _BotaoTestar extends ConsumerStatefulWidget {
+  const _BotaoTestar();
+
+  @override
+  ConsumerState<_BotaoTestar> createState() => _BotaoTestarState();
+}
+
+class _BotaoTestarState extends ConsumerState<_BotaoTestar> {
+  bool _a = false;
+
+  Future<void> _testar() async {
+    setState(() => _a = true);
+    final msg = ScaffoldMessenger.of(context);
+    try {
+      final r = await ref.read(backupsRepositoryProvider).testarAgora();
+      ref.invalidate(estadoBackupsProvider);
+      msg.showSnackBar(
+        SnackBar(
+          content: Text(
+            r?.mensagem.isNotEmpty == true
+                ? r!.mensagem
+                : (r?.ok == true ? 'Backup íntegro.' : 'O teste falhou.'),
+          ),
+        ),
+      );
+    } catch (e) {
+      msg.showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
+    } finally {
+      if (mounted) setState(() => _a = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton.icon(
+          onPressed: _a ? null : _testar,
+          icon: _a
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.fact_check_outlined),
+          label: const Text('Testar o último backup agora'),
+        ),
+      ),
     );
   }
 }

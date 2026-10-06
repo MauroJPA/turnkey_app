@@ -15,6 +15,7 @@ OK. Código de saída 1 se houver FALHA.
 import base64
 import io
 import json
+import socketserver
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import os
@@ -1268,9 +1269,218 @@ def teste_estado_backups():
               'o proprietário vê o último backup local (nome e tamanho)', str(r)[:140])
         check(r.get('externo', {}).get('estado') == 'falha' and r['externo'].get('mensagem') == 'rclone falhou',
               'a falha da cópia externa chega à app')
+        check('disco' in r and 'integridade' in r and 'restauro' in r and r['integridade'] is None and r['restauro'] is None,
+              'o estado traz disco, integridade e restauro (ainda sem testes feitos)', str(r)[:160])
+        # teste de integridade: só administradores
+        s, _, _ = call('POST', '/api/gc_turnkey/backups/testar', {})
+        check(s in (401, 403), 'sem sessão não testa os backups', f'status {s}')
+        for quem in ('editorA', 'viewerA'):
+            s, _, _ = call('POST', '/api/gc_turnkey/backups/testar', {}, tok[quem])
+            check(s == 403, f'{quem}: não testa os backups', f'status {s}')
+        # um .zip que não é zip (cortado/estragado) tem de ser apanhado
+        s, r, _ = call('POST', '/api/gc_turnkey/backups/testar', {}, tok['adminA'])
+        check(s == 200 and r.get('ok') is False and r.get('ficheiro') == 'backup_teste.zip',
+              'um backup estragado falha o teste de integridade', f'status {s} {str(r)[:120]}')
+        s, r, _ = call('GET', '/api/gc_turnkey/backups/estado', tok=tok['ownerA'])
+        check((r.get('integridade') or {}).get('ok') is False, 'a falha do teste chega à app', str(r)[:120])
+        # um backup bom (zip com data.db) passa -- precisa do "unzip" (existe no servidor Linux)
+        if shutil.which('unzip'):
+            import zipfile
+            with zipfile.ZipFile(os.path.join(dados, 'backups', 'backup_novo.zip'), 'w') as z:
+                z.writestr('data.db', 'x' * 100)
+                z.writestr('storage/a.txt', 'olá')
+            os.utime(os.path.join(dados, 'backups', 'backup_novo.zip'), (time.time() + 5, time.time() + 5))
+            s, r, _ = call('POST', '/api/gc_turnkey/backups/testar', {}, tok['ownerA'])
+            check(s == 200 and r.get('ok') is True and r.get('ficheiro') == 'backup_novo.zip',
+                  'um backup íntegro passa o teste', f'status {s} {str(r)[:120]}')
+            with zipfile.ZipFile(os.path.join(dados, 'backups', 'backup_sem_bd.zip'), 'w') as z:
+                z.writestr('storage/a.txt', 'olá')
+            os.utime(os.path.join(dados, 'backups', 'backup_sem_bd.zip'), (time.time() + 9, time.time() + 9))
+            s, r, _ = call('POST', '/api/gc_turnkey/backups/testar', {}, tok['ownerA'])
+            check(s == 200 and r.get('ok') is False and 'data.db' in (r.get('mensagem') or ''),
+                  'um backup sem base de dados falha o teste', f'status {s} {str(r)[:120]}')
+        else:
+            aviso('sem "unzip" neste computador: o teste de integridade positivo só corre no servidor/Linux')
+        # estado escrito pelo script de restauro
+        with open(os.path.join(dados, 'backup_restauro.json'), 'w', encoding='utf-8') as f:
+            f.write('{"ok":true,"quando":"2026-10-01T05:00:00Z","ficheiro":"b.zip","segundos":14,"mensagem":"Restauro ok em 14 s."}')
+        s, r, _ = call('GET', '/api/gc_turnkey/backups/estado', tok=tok['ownerA'])
+        check((r.get('restauro') or {}).get('ok') is True and r['restauro'].get('segundos') == 14,
+              'o resultado do teste de restauro chega à app', str(r)[:120])
+        check(dados.replace('\\', '/') not in json.dumps(r).replace('\\', '/'), 'o estado dos backups não revela caminhos')
         txt = json.dumps(r)
         check(dados.replace('\\', '/') not in txt.replace('\\', '/') and 'pbsec_' not in txt,
               'a resposta não revela caminhos do servidor')
+        # limpar: os testes seguintes (resumo diário) partem de "tudo em dia"
+        for f in ('backup_integridade.json', 'backup_restauro.json', 'backup_externo.json'):
+            try:
+                os.remove(os.path.join(dados, f))
+            except OSError:
+                pass
+        for f in ('backup_teste.zip', 'backup_novo.zip', 'backup_sem_bd.zip'):
+            try:
+                os.remove(os.path.join(dados, 'backups', f))
+            except OSError:
+                pass
+
+PORTA_SMTP = 8190
+smtp_caixa = []  # mensagens recebidas pelo SMTP falso
+
+
+class _SmtpFalso(socketserver.StreamRequestHandler):
+    """Servidor SMTP mínimo (sem TLS nem autenticação): guarda as mensagens."""
+
+    def _r(self, txt):
+        self.wfile.write((txt + '\r\n').encode())
+
+    def handle(self):
+        self._r('220 smtp.falso ESMTP')
+        dest, dados = [], None
+        while True:
+            linha = self.rfile.readline()
+            if not linha:
+                return
+            cmd = linha.decode('utf-8', 'replace').strip()
+            up = cmd.upper()
+            if up.startswith('EHLO'):
+                self._r('250-smtp.falso')
+                self._r('250 8BITMIME')
+            elif up.startswith('HELO'):
+                self._r('250 smtp.falso')
+            elif up.startswith('MAIL'):
+                dest = []
+                self._r('250 OK')
+            elif up.startswith('RCPT'):
+                dest.append(cmd.split(':', 1)[1].strip().strip('<>'))
+                self._r('250 OK')
+            elif up == 'DATA':
+                self._r('354 Fim com .')
+                corpo = []
+                while True:
+                    l = self.rfile.readline()
+                    if l in (b'.\r\n', b'.\n', b''):
+                        break
+                    corpo.append(l)
+                smtp_caixa.append({'para': list(dest), 'bruto': b''.join(corpo)})
+                self._r('250 OK')
+            elif up == 'QUIT':
+                self._r('221 Adeus')
+                return
+            else:
+                self._r('250 OK')
+
+
+def _codigo_do_email(msg):
+    import email
+    import email.policy
+    m = email.message_from_bytes(msg['bruto'], policy=email.policy.default)
+    corpo = m.get_body(preferencelist=('html', 'plain'))
+    txt = corpo.get_content() if corpo else ''
+    achados = re.findall(r'(?<!\d)(\d{6})(?!\d)', re.sub(r'<[^>]+>', ' ', txt))
+    return achados[0] if achados else None
+
+
+def teste_2fa():
+    """Verificação em 2 passos (palavra-passe + código por email) para owner/admin."""
+    if 'PB_URL' in os.environ:
+        return
+    sec('7a3b. Verificação em 2 passos (SMTP falso)')
+    s, _, _ = call('GET', '/api/gc_turnkey/seguranca/2fa')
+    check(s in (401, 403), 'sem sessão não vê o estado do 2FA', f'status {s}')
+    for quem in ('editorA', 'viewerA'):
+        s, _, _ = call('GET', '/api/gc_turnkey/seguranca/2fa', tok=tok[quem])
+        check(s == 403, f'{quem}: não vê o estado do 2FA', f'status {s}')
+        s, _, _ = call('POST', '/api/gc_turnkey/seguranca/2fa', {'ativo': True}, tok[quem])
+        check(s == 403, f'{quem}: não liga o 2FA', f'status {s}')
+    s, r, _ = call('GET', '/api/gc_turnkey/seguranca/2fa', tok=tok['adminA'])
+    check(s == 200 and r.get('ativo') is False and r.get('podeAlterar') is False,
+          'admin vê o estado (desligado) mas não o pode alterar', f'status {s} {r}')
+    s, _, _ = call('POST', '/api/gc_turnkey/seguranca/2fa', {'ativo': True}, tok['adminA'])
+    check(s == 403, 'admin não liga o 2FA (só o proprietário)', f'status {s}')
+    s, _, _ = call('POST', '/api/gc_turnkey/seguranca/2fa', {'ativo': True}, tok['ownerB'])
+    check(s == 400, 'sem SMTP o 2FA não liga (ficaria toda a gente de fora)', f'status {s}')
+    s, _, _ = call('POST', '/api/gc_turnkey/seguranca/2fa', {'ativo': 'sim'}, tok['ownerA'])
+    check(s == 400, 'pedido sem booleano é recusado', f'status {s}')
+
+    srv = socketserver.ThreadingTCPServer(('127.0.0.1', PORTA_SMTP), _SmtpFalso)
+    srv.daemon_threads = True
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    s, r, _ = call('GET', '/api/settings', tok=su)
+    meta_antes = (r or {}).get('meta') or {}
+    ligado = False
+    try:
+        s, r, _ = call('PATCH', '/api/settings', {
+            'meta': {**meta_antes, 'senderAddress': 'no-reply@seg.local', 'senderName': 'Teste'},
+            'smtp': {'enabled': True, 'host': '127.0.0.1', 'port': PORTA_SMTP, 'tls': False, 'username': '', 'password': ''}}, su)
+        check(s == 200, 'SMTP falso configurado', f'status {s} {str(r)[:120]}')
+        s, r, _ = call('POST', '/api/gc_turnkey/seguranca/2fa', {'ativo': True}, tok['ownerA'])
+        ligado = s == 200
+        check(s == 200 and r.get('ativo') is True, 'o proprietário liga o 2FA', f'status {s} {str(r)[:100]}')
+        # owner e admin passam a precisar do segundo passo
+        for quem in ('ownerA', 'adminA'):
+            s, r, _ = call('POST', '/api/collections/users/auth-with-password',
+                           {'identity': f'{quem.lower()}@seg.local', 'password': 'Teste12345!'})
+            check(s == 401 and bool((r or {}).get('mfaId')), f'{quem}: só com a palavra-passe não entra (pede o código)',
+                  f'status {s} {str(r)[:100]}')
+            check(not (r or {}).get('token'), f'{quem}: nenhum token sai antes do segundo passo')
+        # equipa e quiosque entram como antes
+        for quem in ('editorA', 'viewerA'):
+            s, r, _ = call('POST', '/api/collections/users/auth-with-password',
+                           {'identity': f'{quem.lower()}@seg.local', 'password': 'Teste12345!'})
+            check(s == 200 and r.get('token'), f'{quem}: continua a entrar só com a palavra-passe', f'status {s}')
+        # fluxo completo do owner: palavra-passe -> código por email -> entra
+        s, r, _ = call('POST', '/api/collections/users/auth-with-password',
+                       {'identity': 'ownera@seg.local', 'password': 'Teste12345!'})
+        mfa_id = (r or {}).get('mfaId')
+        smtp_caixa.clear()
+        s, r, _ = call('POST', '/api/collections/users/request-otp', {'email': 'ownera@seg.local'})
+        otp_id = (r or {}).get('otpId')
+        check(s == 200 and bool(otp_id), 'pede o código por email', f'status {s} {str(r)[:100]}')
+        for _ in range(20):
+            if smtp_caixa:
+                break
+            time.sleep(0.25)
+        check(len(smtp_caixa) == 1 and smtp_caixa[0]['para'] == ['ownera@seg.local'], 'o código chega ao email do utilizador',
+              f'{len(smtp_caixa)} mensagens')
+        codigo = _codigo_do_email(smtp_caixa[0]) if smtp_caixa else None
+        check(bool(codigo), 'o email tem um código de 6 dígitos')
+        s, r, _ = call('POST', '/api/collections/users/auth-with-otp',
+                       {'otpId': otp_id, 'password': '000000' if codigo != '000000' else '111111', 'mfaId': mfa_id})
+        check(s == 400 and not (r or {}).get('token'), 'código errado não entra', f'status {s}')
+        s, r, _ = call('POST', '/api/collections/users/auth-with-otp',
+                       {'otpId': otp_id, 'password': codigo, 'mfaId': mfa_id})
+        check(s == 200 and bool((r or {}).get('token')), 'palavra-passe + código certo = entra', f'status {s} {str(r)[:100]}')
+        novo = (r or {}).get('token')
+        # sem o primeiro passo, só o código não chega (também pede o segundo)
+        s, r, _ = call('POST', '/api/collections/users/request-otp', {'email': 'ownera@seg.local'})
+        otp2 = (r or {}).get('otpId')
+        time.sleep(0.6)
+        cod2 = _codigo_do_email(smtp_caixa[-1]) if smtp_caixa else None
+        s, r, _ = call('POST', '/api/collections/users/auth-with-otp', {'otpId': otp2, 'password': cod2})
+        check(not (r or {}).get('token'), 'só o código (sem a palavra-passe) não entra para owner/admin', f'status {s}')
+        # quem tem sessão não perde a sessão e o estado reflete "ativo"
+        s, r, _ = call('GET', '/api/gc_turnkey/seguranca/2fa', tok=novo)
+        check(s == 200 and r.get('ativo') is True and r.get('smtp') is True, 'o estado mostra o 2FA ativo', f'status {s} {r}')
+        # desligar
+        s, r, _ = call('POST', '/api/gc_turnkey/seguranca/2fa', {'ativo': False}, novo)
+        ligado = s != 200
+        check(s == 200 and r.get('ativo') is False, 'o proprietário desliga o 2FA', f'status {s} {r}')
+        s, r, _ = call('POST', '/api/collections/users/auth-with-password',
+                       {'identity': 'ownera@seg.local', 'password': 'Teste12345!'})
+        check(s == 200 and r.get('token'), 'depois de desligar volta a entrar só com a palavra-passe', f'status {s}')
+        tok['ownerA'] = r['token']
+    finally:
+        if ligado:
+            call('POST', '/api/gc_turnkey/seguranca/2fa', {'ativo': False}, tok['ownerA'])
+        # o 2FA nunca fica ligado para os testes seguintes; reponho o SMTP
+        call('PATCH', '/api/settings', {'smtp': {'enabled': False}}, su)
+        srv.shutdown()
+        srv.server_close()
+        for quem in ('adminA', 'editorA', 'viewerA'):
+            s, r, _ = call('POST', '/api/collections/users/auth-with-password',
+                           {'identity': f'{quem.lower()}@seg.local', 'password': 'Teste12345!'})
+            if s == 200:
+                tok[quem] = r['token']
 
 
 def teste_segredos():
@@ -2651,6 +2861,7 @@ def main():
         teste_aprovacao()
         teste_aprovacoes_na_app()
         teste_estado_backups()
+        teste_2fa()
         teste_avisos()
         teste_lotes()
         teste_quiosque_offline()

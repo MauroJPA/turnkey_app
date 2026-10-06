@@ -1862,6 +1862,20 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Com rede, o "Atualizar" continua a trazer a versão nova (e o aviso "Há uma versão nova" aparece como antes)
 - [ ] Abrir a app sem ter aberto nunca com rede: não abre (é normal: precisa de uma primeira vez com rede)
 
+## 131. Segurança: 2 passos, teste dos backups e espaço em disco
+
+- [ ] Configurações → "Estado dos backups": aparecem as linhas "Espaço livre no servidor", "Teste ao backup (semanal)" e "Teste de restauro (mensal)"
+- [ ] Carregar em "Testar o último backup agora": mostra o resultado (íntegro / estragado) e a linha do teste atualiza
+- [ ] No servidor: `sudo bash backup/instalar-agendamento.sh` e `systemctl list-timers gc_turnkey-*` mostra o timer do restauro; `sudo systemctl start gc_turnkey-restauro.service` e, passado um minuto, o cartão mostra "Teste de restauro: ok"
+- [ ] Domingo seguinte (ou já, com o botão): "Teste ao backup (semanal)" fica "íntegro"
+- [ ] Com o disco quase cheio (ou simulado) o cartão pede atenção e o Início mostra "Backup com problema"
+- [ ] Configurações → "Verificação em 2 passos": sem SMTP configurado o interruptor está desligado e explica porquê
+- [ ] Com o SMTP configurado (painel /_/ → Settings → Mail → enviar email de teste): ligar o interruptor (como proprietário) e confirmar o aviso
+- [ ] Sair e entrar como proprietário: pede o código; o email chega em poucos segundos; escrever os 6 dígitos entra sozinho
+- [ ] Código errado: mensagem "Código errado ou expirado…"; "Enviar outro código" manda um novo
+- [ ] Entrar com a conta da equipa/quiosque: continua a entrar só com a palavra-passe
+- [ ] Desligar o 2 passos nas Configurações e confirmar que o proprietário volta a entrar só com a palavra-passe
+
 ---
 
 ## Notas / ajustes pedidos

@@ -17,7 +17,8 @@ systemctl disable --now gookie-backup.timer 2>/dev/null || true
 rm -f /etc/systemd/system/gookie-backup.service /etc/systemd/system/gookie-backup.timer
 
 if [ "${1:-}" = "remover" ]; then
-  systemctl disable --now gc_turnkey-backup.timer 2>/dev/null || true
+  systemctl disable --now gc_turnkey-backup.timer gc_turnkey-restauro.timer 2>/dev/null || true
+  rm -f /etc/systemd/system/gc_turnkey-restauro.service /etc/systemd/system/gc_turnkey-restauro.timer
   rm -f /etc/systemd/system/gc_turnkey-backup.service /etc/systemd/system/gc_turnkey-backup.timer
   systemctl daemon-reload
   echo "Removido."; exit 0
@@ -48,6 +49,33 @@ RandomizedDelaySec=120
 WantedBy=timers.target
 EOF
 
+# teste de restauro automático: dia 1 de cada mês às 05:00 (arranca o backup num
+# contentor descartável; não toca na produção) e regista o resultado para a app
+cat > /etc/systemd/system/gc_turnkey-restauro.service <<EOF
+[Unit]
+Description=gc_turnkey - teste de restauro do ultimo backup
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=$UTIL
+ExecStart=/usr/bin/env bash $AQUI/teste-restauro.sh
+EOF
+
+cat > /etc/systemd/system/gc_turnkey-restauro.timer <<EOF
+[Unit]
+Description=gc_turnkey - teste de restauro mensal (dia 1, 05:00)
+
+[Timer]
+OnCalendar=*-*-01 05:00:00
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target
+EOF
+
 systemctl daemon-reload
-systemctl enable --now gc_turnkey-backup.timer
+systemctl enable --now gc_turnkey-backup.timer gc_turnkey-restauro.timer
 echo "Instalado (utilizador: $UTIL). Testar já: sudo systemctl start gc_turnkey-backup.service ; journalctl -u gc_turnkey-backup -n 20"

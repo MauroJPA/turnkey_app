@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.103.0 — 2026-10-06 — Segurança: 2 passos, teste dos backups e espaço em disco
+
+Segurança reforçada: verificação em 2 passos, teste automático dos backups e aviso de pouco espaço.
+
+- **Verificação em 2 passos** (Configurações → "Verificação em 2 passos", só o proprietário liga): quem entra como proprietário ou administrador passa a precisar da palavra-passe **e** de um código de 6 dígitos enviado por email. O código aparece no ecrã seguinte ao login e **entra sozinho ao escrever o 6.º dígito** (sem carregar em nada). A equipa e o quiosque entram como antes, sem código, para não atrasar o dia a dia. Só liga se o servidor já enviar emails (SMTP); sem isso a app avisa em vez de te deixar de fora. Se alguma vez ficares trancado: `/_/` como superutilizador → coleção *users* → desligar "Multi-factor authentication" (docs/SEGURANCA.md).
+- **Teste automático dos backups**: todos os domingos o servidor abre o último backup e confere que não está cortado nem estragado e que tem a base de dados. O resultado aparece no cartão "Estado dos backups", com o botão **"Testar o último backup agora"** para não esperar. Se falhar, aparece no Início ("Backup com problema") e no resumo diário.
+- **Teste de restauro mensal**: o script do servidor (`teste-restauro.sh`) arranca o backup num contentor descartável e regista o resultado, que também aparece no cartão. `instalar-agendamento.sh` passa a agendá-lo sozinho (dia 1, 05:00) — volta a correr `sudo bash backup/instalar-agendamento.sh`.
+- **Espaço em disco**: o cartão mostra quanto sobra no servidor e avisa abaixo de 15 % ou de 2 GB, antes de os backups deixarem de caber.
+- Testes: 2 passos completo (palavra-passe sem código não entra, código errado não entra, código certo entra, só o código não chega, desligar), só o proprietário liga, sem SMTP recusa, backup estragado / sem base de dados / íntegro, e os resultados chegam à app.
+- Para o servidor: copiar os scripts novos de `deploy/backup/` e, para o 2 passos, configurar o SMTP no painel `/_/` (Settings → Mail) se ainda não estiver.
+
 ## 1.102.0 — 2026-10-06 — A app abre sem Wi-Fi
 
 A app abre sem Wi-Fi: o quiosque já não fica em branco se a página for recarregada com a ligação em baixo.

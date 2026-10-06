@@ -90,12 +90,27 @@ no navegador) e o contentor tinha capacidades a mais (`cap_drop: ALL`, `no-new-p
    do Tailscale (só o teu PC/telemóvel) ou mudar a porta; superutilizador com palavra-passe forte e única e **MFA** ligado.
 2. **Proxy fiável**: em *Definições → Application → Trusted proxy headers* pôr `X-Forwarded-For` — sem isso o limite de pedidos trata
    toda a gente como um só IP (e um abuso bloqueia o login a todos).
-3. **MFA/OTP** nas contas dos proprietários (o PocketBase suporta; precisa de email/SMTP) e palavras-passe com mínimo de 12.
+3. ~~**MFA/OTP** nas contas dos proprietários~~ — feito na 1.103.0 (ver abaixo): configurar o SMTP e ligar em Configurações → "Verificação em 2 passos". Palavras-passe com mínimo de 12 continua por decidir.
 4. **Quiosque**: usar uma conta própria de papel *Editor* (nunca a do proprietário) no aparelho da loja; o cartão NFC identifica a
    pessoa, mas a sessão do aparelho é a da conta.
 5. **Backups**: confirmar cópia **fora do servidor e cifrada** (ver `docs/BACKUPS.md`) e testar uma restauração por trimestre.
 6. Manter o PocketBase e o Debian atualizados; `flutter pub outdated` antes de cada ciclo.
 7. Dados pessoais (nomes e cartões da equipa): são dados pessoais (RGPD) — só o necessário, apagar quando a pessoa sai.
+
+## Verificação em 2 passos e testes dos backups (1.103.0)
+
+- **2 passos para quem administra**: usa o MFA do PocketBase com **palavra-passe + código de 6 dígitos por email** (OTP, 5 minutos).
+  A regra `papel = 'owner' || papel = 'admin'` aplica-se só a estas contas; equipa e **quiosque não pedem código** (o tablet da loja
+  tem de continuar a abrir sozinho). Só o proprietário liga/desliga (`POST /api/gc_turnkey/seguranca/2fa`) e **só liga se o SMTP estiver
+  ativo**, para não deixar ninguém de fora. Quem tem sessão aberta não é afetado até a sessão terminar (5 dias).
+- **Contas sem 2 passos podem entrar só com um código por email** (o PocketBase trata o OTP como um método de entrada); é o mesmo risco que
+  a recuperação de palavra-passe por email, por isso o email da conta é o ponto a proteger.
+- **Trancado fora?** Entrar em `/_/` como superutilizador → Collections → *users* → Options → desligar *Multi-factor authentication* (e *One-time password*).
+  Ou, no servidor, repor a regra com o superutilizador e `pocketbase superuser upsert`.
+- **Backups**: o servidor testa todos os domingos o último `.zip` (`unzip -t` + existência de `data.db`), o script `teste-restauro.sh`
+  arranca-o num contentor descartável todos os meses e o espaço livre é medido com `df` (aviso abaixo de 15 % ou 2 GB). Os resultados
+  são escritos em `pb_data/backup_integridade.json` e `backup_restauro.json` (sem caminhos nem segredos) e chegam à app e ao resumo diário.
+- Testes automáticos: `7a3` (backups) e `7a3b` (2 passos, com um servidor SMTP falso) em `test/security/seguranca.py`.
 
 ## Avisos por Telegram/email (1.85.0)
 

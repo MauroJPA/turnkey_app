@@ -13,6 +13,7 @@
 // Só owner/admin (ou superutilizador). Não devolve caminhos nem segredos.
 
 routerAdd('GET', '/api/gc_turnkey/backups/estado', (e) => {
+  const core = require(`${__hooks}/backups_core.js`);
   const auth = e.auth;
   if (!auth) throw new UnauthorizedError('Autenticação necessária.');
   const isSuper = auth.collection().name === '_superusers';
@@ -65,5 +66,35 @@ routerAdd('GET', '/api/gc_turnkey/backups/estado', (e) => {
     // sem ficheiro: o script externo nunca correu
   }
 
+  // --- espaço em disco (onde estão os dados e, se for outro disco, os backups)
+  out.disco = { dados: core.espacoLivre(dados), backups: null };
+  try {
+    const d2 = core.espacoLivre(dados + '/backups');
+    if (d2 && out.disco.dados && d2.totalKb !== out.disco.dados.totalKb) out.disco.backups = d2;
+  } catch (_) {}
+
+  // --- teste de integridade (feito aqui, todos os domingos) e teste de restauro
+  //     (feito no servidor Linux pelo script teste-restauro.sh)
+  out.integridade = core.lerEstadoJson(dados + '/backup_integridade.json');
+  out.restauro = core.lerEstadoJson(dados + '/backup_restauro.json');
+
   return e.json(200, out);
+});
+
+// Testa já a integridade do backup mais recente (owner/admin).
+//   POST /api/gc_turnkey/backups/testar -> { ok, quando, ficheiro, segundos, mensagem }
+routerAdd('POST', '/api/gc_turnkey/backups/testar', (e) => {
+  const core = require(`${__hooks}/backups_core.js`);
+  const auth = e.auth;
+  if (!auth) throw new UnauthorizedError('Autenticação necessária.');
+  if (auth.collection().name !== '_superusers') {
+    const papel = auth.getString('papel');
+    if (papel !== 'owner' && papel !== 'admin') throw new ForbiddenError('Só administradores testam os backups.');
+  }
+  return e.json(200, core.testarIntegridade(e.app));
+});
+
+// Todos os domingos às 04:10.
+cronAdd('backups_integridade', '10 4 * * 0', () => {
+  require(`${__hooks}/backups_core.js`).testarIntegridade($app);
 });

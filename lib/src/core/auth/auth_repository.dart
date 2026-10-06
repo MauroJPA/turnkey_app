@@ -25,8 +25,38 @@ class AuthRepository {
   /// Emite sempre que o token/registo de sessão muda.
   Stream<void> authChanges() => _pb.authStore.onChange.map((_) {});
 
-  Future<void> signIn({required String email, required String password}) {
-    return _pb.collection('users').authWithPassword(email, password);
+  /// Entra com email e palavra-passe. Devolve `null` se ficou com a sessão
+  /// iniciada, ou o `mfaId` se o servidor exige ainda o código enviado por
+  /// email (verificação em 2 passos dos administradores).
+  Future<String?> signIn({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      await _pb.collection('users').authWithPassword(email, password);
+      return null;
+    } on ClientException catch (e) {
+      final mfa = e.response['mfaId'];
+      if (e.statusCode == 401 && mfa is String && mfa.isNotEmpty) return mfa;
+      rethrow;
+    }
+  }
+
+  /// Pede o código de 6 dígitos por email; devolve o `otpId` do pedido.
+  Future<String> pedirCodigo(String email) async {
+    final r = await _pb.collection('users').requestOTP(email);
+    return r.otpId;
+  }
+
+  /// Segundo passo: o código recebido por email, mais o `mfaId` do primeiro.
+  Future<void> entrarComCodigo({
+    required String otpId,
+    required String codigo,
+    required String mfaId,
+  }) async {
+    await _pb
+        .collection('users')
+        .authWithOTP(otpId, codigo, body: {'mfaId': mfaId});
   }
 
   /// Cria a conta e deixa a sessão iniciada.

@@ -19,6 +19,7 @@ import '../data/aprovacoes_repository.dart';
 import '../data/empresa_repository.dart';
 import '../domain/empresa.dart';
 import 'backups_card.dart';
+import 'dois_passos_card.dart';
 import 'integracoes_sheet.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -593,6 +594,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const BackupsCard(),
+              const Divider(height: 28),
+              const DoisPassosCard(),
               const Divider(height: 28),
             ],
 

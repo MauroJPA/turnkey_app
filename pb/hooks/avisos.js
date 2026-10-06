@@ -81,6 +81,28 @@ function vendusAtrasado(app, empresaId) {
   return ['Vendus: ' + quando + (motivo ? ' (' + motivo + ')' : '') + ' — a previsão e as vendas podem estar desatualizadas.'];
 }
 
+// Backups: pouco espaço no disco ou um teste (integridade/restauro) que falhou.
+// São dados do servidor, não da empresa.
+function backupsComProblema(app) {
+  const core = require(__hooks + '/backups_core.js');
+  const dados = String(app.dataDir());
+  const out = [];
+  const d = core.espacoLivre(dados);
+  const d2 = core.espacoLivre(dados + '/backups');
+  for (const x of [d, d2]) {
+    if (!x) continue;
+    if (x.livreKb * 100 / x.totalKb < 15 || x.livreKb < 2 * 1024 * 1024) {
+      out.push('O servidor está com pouco espaço livre (' + (x.livreKb / 1048576).toFixed(1) + ' GB): os backups podem deixar de caber.');
+      break;
+    }
+  }
+  const integ = core.lerEstadoJson(dados + '/backup_integridade.json');
+  if (integ && integ.ok === false) out.push('O teste ao último backup falhou: ' + integ.mensagem);
+  const rest = core.lerEstadoJson(dados + '/backup_restauro.json');
+  if (rest && rest.ok === false) out.push('O teste de restauro do backup falhou: ' + rest.mensagem);
+  return out;
+}
+
 // Lotes com a validade a acabar: ingredientes (5 dias) e produtos (hoje/amanhã).
 function validadesAAcabar(app, empresaId) {
   const out = [];
@@ -302,6 +324,7 @@ function montar(app, empresaId, cfg) {
   sec('Saída por marcar', seguro(() => saidasPorMarcar(app, empresaId)));
   sec('Validades a acabar', seguro(() => validadesAAcabar(app, empresaId)));
   sec('Vendus sem sincronizar', seguro(() => vendusAtrasado(app, empresaId)));
+  sec('Backups', seguro(() => backupsComProblema(app)));
 
   let nome = '';
   try {

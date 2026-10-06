@@ -76,8 +76,24 @@ class AuthController extends Notifier<AuthState> {
     );
   }
 
-  Future<void> signIn({required String email, required String password}) async {
-    await _repo.signIn(email: email, password: password);
+  /// Devolve `null` se entrou; ou o `mfaId` se falta o código por email.
+  Future<String?> signIn({
+    required String email,
+    required String password,
+  }) async {
+    final mfaId = await _repo.signIn(email: email, password: password);
+    if (mfaId == null) await _reclassify();
+    return mfaId;
+  }
+
+  Future<String> pedirCodigo(String email) => _repo.pedirCodigo(email);
+
+  Future<void> entrarComCodigo({
+    required String otpId,
+    required String codigo,
+    required String mfaId,
+  }) async {
+    await _repo.entrarComCodigo(otpId: otpId, codigo: codigo, mfaId: mfaId);
     await _reclassify();
   }
 

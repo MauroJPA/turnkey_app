@@ -95,7 +95,7 @@ o que faltou. Um backup que nunca foi restaurado não é um backup.
 | `deploy/backup/copia-externa.sh` | Envia o último backup cifrado para o Drive, confirma, faz a retenção e avisa por email se falhar |
 | `deploy/backup/instalar-agendamento.sh` | Cria o timer do systemd (03:30) |
 | `deploy/backup/copia-usb.sh` | Cópia semanal para o USB cifrado com LUKS (mantém 12) |
-| `deploy/backup/teste-restauro.sh` | Teste mensal de restauro (nuvem ou USB) num contentor descartável |
+| `deploy/backup/teste-restauro.sh` | Teste mensal de restauro (nuvem ou USB) num contentor descartável; desde a 1.103.0 corre sozinho (timer `gc_turnkey-restauro`) e escreve `data/backup_restauro.json` para a app |
 | `deploy/backup/LEIA-ME.md` | Instalação passo a passo |
 
 Testado aqui com um rclone simulado: envio, confirmação, falha por backup antigo /
