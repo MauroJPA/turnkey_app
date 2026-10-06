@@ -1750,6 +1750,14 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Contabilidade → Rentabilidade: o campo "Por fornada" mostra o mesmo valor; aparece o aviso se a média for muito baixa
 - [ ] Rentabilidade mostra "N produto(s) sem tempo de assadura na ficha"
 
+## 119. Quantos assar: hoje e dias de trabalho
+
+- [ ] Configurações → "Dias de trabalho": desmarcar domingo, "Guardar percentuais e dias"; recarregar e confirmar que ficou guardado
+- [ ] Não deixa desmarcar todos os dias (fica sempre pelo menos um)
+- [ ] Produção → Quantos assar: a primeira opção é "Hoje"; os dias de folga não aparecem e a página diz "Trabalham segunda a sábado"
+- [ ] Em "Hoje": os sabores já vendidos hoje mostram "já vendeu N hoje" e o a assar baixa em conformidade
+- [ ] Se hoje for dia de folga, a página abre no próximo dia de trabalho
+
 ---
 
 ## Notas / ajustes pedidos

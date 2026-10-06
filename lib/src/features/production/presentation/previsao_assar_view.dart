@@ -5,15 +5,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/storage/prefs_locais.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../finance/data/capacidade_forno_repository.dart';
+import '../../pricing/data/cost_config_repository.dart';
+import '../../pricing/domain/dias_trabalho.dart';
 import '../../tech_sheets/application/tech_sheets_providers.dart';
 import '../application/previsao_providers.dart';
 import '../domain/previsao_assar.dart';
 
-const _diasSemana = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
-
-String _rotuloDia(DateTime d, int offset) => offset == 1
+String _rotuloDia(DateTime d, int offset) => offset == 0
+    ? 'Hoje'
+    : offset == 1
     ? 'Amanhã'
-    : '${_diasSemana[d.weekday - 1]} ${d.day}/${d.month}';
+    : '${nomesDiasCurtos[d.weekday - 1]} ${d.day}/${d.month}';
 
 String _n(double v) => v == v.roundToDouble()
     ? v.toStringAsFixed(0)
@@ -31,7 +33,7 @@ class PrevisaoAssarView extends ConsumerStatefulWidget {
 }
 
 class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
-  int _offset = 1; // dias a partir de hoje
+  int? _escolhido; // dias a partir de hoje (null = o primeiro dia de trabalho)
   double _ajuste = 0;
   bool _descontarStock = true;
 
@@ -82,7 +84,16 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
     final cs = Theme.of(context).colorScheme;
     final agora = DateTime.now();
     final hoje = DateTime(agora.year, agora.month, agora.day);
-    final alvo = hoje.add(Duration(days: _offset));
+    final diasTrab =
+        ref.watch(costConfigProvider).valueOrNull?.diasDeTrabalho ??
+        todosOsDias;
+    // hoje e os 7 dias seguintes, só os de trabalho
+    final opcoes = [
+      for (var o = 0; o <= 7; o++)
+        if (diasTrab.contains(hoje.add(Duration(days: o)).weekday)) o,
+    ];
+    final offset = opcoes.contains(_escolhido) ? _escolhido! : opcoes.first;
+    final alvo = hoje.add(Duration(days: offset));
 
     return AsyncValueView<List<ConsumoDia>>(
       value: consumo,
@@ -98,12 +109,26 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
             alvo: alvo,
             consumo: dados,
             ajustePct: _ajuste,
+            diasTrabalho: diasTrab,
           ))
             if (nomes.containsKey(p.fichaId)) p,
         ];
+        // hoje: o que já se vendeu hoje já saiu do stock, por isso só falta
+        // o resto do dia
+        final vendidoHoje = <String, double>{};
+        if (offset == 0) {
+          for (final c in dados) {
+            if (c.dia.year == hoje.year &&
+                c.dia.month == hoje.month &&
+                c.dia.day == hoje.day) {
+              vendidoHoje[c.fichaId] =
+                  (vendidoHoje[c.fichaId] ?? 0) + c.vendido;
+            }
+          }
+        }
         int aAssar(PrevisaoFicha p) {
           final s = _descontarStock ? (stock[p.fichaId] ?? 0) : 0.0;
-          final v = (p.sugerido - s).ceil();
+          final v = (p.sugerido - (vendidoHoje[p.fichaId] ?? 0) - s).ceil();
           return v < 0 ? 0 : v;
         }
 
@@ -114,8 +139,8 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
 
         String texto() {
           final b = StringBuffer(
-            'Assar ${_rotuloDia(alvo, _offset).toLowerCase()} '
-            '(${_diasSemana[alvo.weekday - 1]} ${alvo.day}/${alvo.month}):',
+            'Assar ${_rotuloDia(alvo, offset).toLowerCase()} '
+            '(${nomesDiasCurtos[alvo.weekday - 1]} ${alvo.day}/${alvo.month}):',
           );
           for (final p in lista) {
             final q = aAssar(p);
@@ -145,18 +170,35 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
                   vertical: 8,
                 ),
                 children: [
-                  for (var o = 1; o <= 7; o++)
+                  for (final o in opcoes)
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
                         label: Text(_rotuloDia(hoje.add(Duration(days: o)), o)),
-                        selected: _offset == o,
-                        onSelected: (_) => setState(() => _offset = o),
+                        selected: offset == o,
+                        onSelected: (_) => setState(() => _escolhido = o),
                       ),
                     ),
                 ],
               ),
             ),
+            if (diasTrab.length < 7)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                child: Text(
+                  'Trabalham ${resumoDiasTrabalho(diasTrab)} (muda em '
+                  'Configurações → Dias de trabalho); as folgas não aparecem.',
+                  style: tt.bodySmall?.copyWith(color: cs.outline),
+                ),
+              ),
+            if (offset == 0)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                child: Text(
+                  'Hoje: conta o que já se vendeu hoje e o stock que ainda há.',
+                  style: tt.bodySmall?.copyWith(color: cs.outline),
+                ),
+              ),
             SizedBox(
               height: 44,
               child: ListView(
@@ -263,6 +305,7 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
                 stock: stock[p.fichaId] ?? 0,
                 descontar: _descontarStock,
                 aAssar: aAssar(p),
+                vendidoHoje: vendidoHoje[p.fichaId] ?? 0,
               ),
             if (lista.isNotEmpty)
               Padding(
@@ -292,6 +335,7 @@ class _Linha extends StatelessWidget {
     required this.stock,
     required this.descontar,
     required this.aAssar,
+    this.vendidoHoje = 0,
   });
 
   final String nome;
@@ -299,6 +343,7 @@ class _Linha extends StatelessWidget {
   final double stock;
   final bool descontar;
   final int aAssar;
+  final double vendidoHoje;
 
   @override
   Widget build(BuildContext context) {
@@ -312,6 +357,7 @@ class _Linha extends StatelessWidget {
     final detalhe = [
       'prevê vender ${_n(p.previsto)}',
       if (p.margem >= 0.5) '+${_n(p.margem)} de margem',
+      if (vendidoHoje > 0) 'já vendeu ${_n(vendidoHoje)} hoje',
       if (descontar && stock > 0) 'há ${_n(stock)} em stock',
     ].join(' · ');
     final tecnico = [

@@ -2,6 +2,16 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.91.0 — 2026-10-06 — Quantos assar: hoje e dias de trabalho
+
+"Quantos assar" começa em **hoje** e respeita os dias de trabalho.
+
+- **Hoje** é agora a primeira opção (antes só havia amanhã e os dias seguintes). Para hoje a app conta o que **já se vendeu hoje** e o stock que ainda há: só mostra o que falta assar para o resto do dia.
+- **Dias de trabalho** (novo): em **Configurações → Dias de trabalho** escolhes os dias da semana em que trabalham (seg a dom; tem de haver pelo menos um) e guardas. Os dias de folga **deixam de aparecer** no "Quantos assar" e nunca recebem previsão; a página diz quais são os dias de trabalho.
+- Se hoje for dia de folga, a página abre no próximo dia de trabalho. O histórico continua a ignorar os dias em que a loja não vendeu nada.
+- Servidor: migration `1791020000_dias_trabalho` (campo `dias_trabalho` nas configurações da empresa; vazio = todos os dias). Sem endpoints novos.
+- Testes: leitura/escrita e resumo dos dias, próximo dia de trabalho, configuração, previsão de folga/hoje.
+
 ## 1.90.2 — 2026-10-06 — Capacidade do forno mais clara
 
 Capacidade do forno mais clara (Rentabilidade e Quantos assar).

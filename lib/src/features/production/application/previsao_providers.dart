@@ -14,13 +14,12 @@ final consumoRecenteProvider = FutureProvider.autoDispose<List<ConsumoDia>>((
   final agora = DateTime.now();
   final hoje = DateTime(agora.year, agora.month, agora.day);
   final desde = hoje.subtract(const Duration(days: diasDeHistoricoPrevisao));
-  final ontem = hoje.subtract(const Duration(days: 1));
   final vendas = await ref
       .watch(salesRepositoryProvider)
-      .periodo(desde: desde, ate: ontem);
+      .periodo(desde: desde, ate: hoje);
   final movs = await ref
       .watch(contagemRepositoryProvider)
-      .movimentos(desde: desde, ate: ontem);
+      .movimentos(desde: desde, ate: hoje);
 
   final porVenda = {for (final v in vendas.vendas) v.id: v};
   final out = <ConsumoDia>[];

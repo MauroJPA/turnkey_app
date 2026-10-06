@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 
+import '../../pricing/domain/dias_trabalho.dart';
+
 /// Quanto de um sabor se vendeu e se deitou fora num dia.
 class ConsumoDia {
   const ConsumoDia({
@@ -179,9 +181,12 @@ List<PrevisaoFicha> preverDia({
   required DateTime alvo,
   required List<ConsumoDia> consumo,
   double ajustePct = 0,
+  Set<int> diasTrabalho = todosOsDias,
 }) {
   final hoje0 = _d(hoje);
   final alvo0 = _d(alvo);
+  // dia de folga: não há nada a prever
+  if (!diasTrabalho.contains(alvo0.weekday)) return const [];
   final inicio = hoje0.subtract(const Duration(days: diasDeHistoricoPrevisao));
 
   // dias em que a loja vendeu (só nesses se conta "zero" de um sabor)

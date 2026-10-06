@@ -12,6 +12,7 @@ import '../../../core/widgets/help_actions.dart';
 import '../../dashboard/presentation/home_shell.dart' show marcaAppBar;
 import '../../pricing/data/cost_config_repository.dart';
 import '../../pricing/domain/cost_config.dart';
+import '../../pricing/domain/dias_trabalho.dart';
 import '../application/empresa_providers.dart';
 import '../application/settings_providers.dart';
 import '../data/aprovacoes_repository.dart';
@@ -51,6 +52,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   String _fonteFamilia = '';
   bool _prefilled = false;
   bool _busy = false;
+  Set<int> _dias = {...todosOsDias};
 
   // custos em % do preço sem IVA; o CMV é à parte e a margem é o que sobra
   static const _rubricas = {
@@ -102,6 +104,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _custos['taxasFinanceiras']!.text = _n(c.taxasFinanceiras);
     _custos['cmv']!.text = _n(c.cmv);
     _custos['alertaPreco']!.text = _n(c.alertaPrecoPct);
+    _dias = {...c.diasDeTrabalho};
     _ivaVendas.text = c.ivaVendas > 0 ? _n(c.ivaVendas) : '';
   }
 
@@ -126,6 +129,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     taxasFinanceiras: _v('taxasFinanceiras'),
     cmv: _v('cmv'),
     alertaPrecoPct: _v('alertaPreco') < 1 ? 5 : _v('alertaPreco'),
+    diasTrabalho: escreverDiasTrabalho(_dias),
     ivaVendas:
         double.tryParse(_ivaVendas.text.replaceAll(',', '.').trim()) ?? 0,
   );
@@ -485,6 +489,38 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 helperMaxLines: 3,
               ),
             ),
+            const SizedBox(height: 16),
+            Text(
+              'Dias de trabalho',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Os dias da semana em que trabalham. O "Quantos assar" só prevê '
+              'estes dias e ignora as folgas.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                for (var d = 1; d <= 7; d++)
+                  FilterChip(
+                    label: Text(nomesDiasCurtos[d - 1]),
+                    selected: _dias.contains(d),
+                    onSelected: (v) => setState(() {
+                      final novo = {..._dias};
+                      if (v) {
+                        novo.add(d);
+                      } else if (novo.length > 1) {
+                        novo.remove(d); // tem de haver pelo menos um dia
+                      }
+                      _dias = novo;
+                    }),
+                  ),
+              ],
+            ),
             const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerLeft,
@@ -496,7 +532,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             .read(settingsActionsProvider)
                             .saveCustos(_configFromForm);
                       }),
-                child: const Text('Guardar percentuais'),
+                child: const Text('Guardar percentuais e dias'),
               ),
             ),
 
@@ -519,7 +555,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.notifications_active_outlined),
                 title: const Text('Avisos e resumo diário'),
-                subtitle: const Text('Email ou Telegram, à hora que escolheres'),
+                subtitle: const Text(
+                  'Email ou Telegram, à hora que escolheres',
+                ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.go(Routes.avisos),
               ),

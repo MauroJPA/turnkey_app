@@ -393,7 +393,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
   HelpTopic.previsaoAssar: (
     titulo: 'Quantos assar',
     paragrafos: [
-      'Diz-te, sabor a sabor, quantas unidades convém ter prontas amanhã (ou num dos próximos 6 dias). Serve para assar o que se vende e não deitar fora o que sobra.',
+      'Diz-te, sabor a sabor, quantas unidades convém ter prontas hoje, amanhã ou num dos próximos dias de trabalho. Serve para assar o que se vende e não deitar fora o que sobra. Os dias de folga (Configurações → Dias de trabalho) não aparecem. Em "Hoje" desconta-se o que já se vendeu hoje e o stock que ainda há.',
       'Como calcula: olha para as últimas 12 semanas, só os dias iguais ao que escolheste (as quintas-feiras, por exemplo) em que a loja vendeu. Para cada sabor testa quatro modelos — mais peso às últimas semanas, média, mediana e "igual à semana passada" — nos dias já passados, e usa o que errou menos. O ponto colorido mostra a confiança: vermelho = pouco histórico, laranja = razoável, verde = bom.',
       'A margem de segurança (um pouco acima do previsto, para não faltar) vem do erro desse modelo. Nos sabores que costumam ir para o lixo (5 % ou mais do que se faz, medido pelo Desperdício da Contagem) a margem encolhe e a partir de 15 % desaparece.',
       '"Descontar o que já há em stock" tira o que ainda tens nos locais (contagem de fecho de hoje, ou a estimativa pelas contas). O total mostra também as fornadas, pela média das tuas fornadas dos últimos 60 dias.',

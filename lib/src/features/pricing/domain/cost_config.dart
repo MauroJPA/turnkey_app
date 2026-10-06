@@ -1,5 +1,7 @@
 import 'package:pocketbase/pocketbase.dart';
 
+import 'dias_trabalho.dart';
+
 /// Uma linha da quebra do preço: o que cabe a cada rubrica no preço
 /// **esperado** (sugerido pelos percentuais) e no preço **real** (o de venda
 /// praticado). `real*` é `null` enquanto não há preço de venda.
@@ -63,6 +65,7 @@ class CostConfig {
     this.cmv = 100,
     this.ivaVendas = 0,
     this.alertaPrecoPct = 5,
+    this.diasTrabalho = '',
   });
 
   final String? id;
@@ -83,6 +86,11 @@ class CostConfig {
   /// Avisar quando o preço de um ingrediente sobe mais do que isto (%).
   final double alertaPrecoPct;
 
+  /// Dias da semana em que se trabalha ("1,2,3,4,5,6"; vazio = todos).
+  final String diasTrabalho;
+
+  Set<int> get diasDeTrabalho => lerDiasTrabalho(diasTrabalho);
+
   CostConfig copyWith({
     double? salario,
     double? aluguel,
@@ -92,6 +100,7 @@ class CostConfig {
     double? cmv,
     double? ivaVendas,
     double? alertaPrecoPct,
+    String? diasTrabalho,
   }) => CostConfig(
     id: id,
     salario: salario ?? this.salario,
@@ -102,6 +111,7 @@ class CostConfig {
     cmv: cmv ?? this.cmv,
     ivaVendas: ivaVendas ?? this.ivaVendas,
     alertaPrecoPct: alertaPrecoPct ?? this.alertaPrecoPct,
+    diasTrabalho: diasTrabalho ?? this.diasTrabalho,
   );
 
   factory CostConfig.fromRecord(RecordModel r) {
@@ -137,6 +147,7 @@ class CostConfig {
       alertaPrecoPct: r.getDoubleValue('alerta_preco_pct') > 0
           ? r.getDoubleValue('alerta_preco_pct')
           : 5,
+      diasTrabalho: r.getStringValue('dias_trabalho'),
     );
   }
 
@@ -149,6 +160,7 @@ class CostConfig {
     'cmv': cmv,
     'iva_vendas': ivaVendas,
     'alerta_preco_pct': alertaPrecoPct < 1 ? 5 : alertaPrecoPct,
+    'dias_trabalho': diasTrabalho,
   };
 
   /// Soma das rubricas de custo (sem matéria-prima nem margem).
