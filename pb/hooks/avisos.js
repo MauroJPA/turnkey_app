@@ -81,6 +81,46 @@ function vendusAtrasado(app, empresaId) {
   return ['Vendus: ' + quando + (motivo ? ' (' + motivo + ')' : '') + ' — a previsão e as vendas podem estar desatualizadas.'];
 }
 
+// Formações e certificados caducados ou a caducar nos próximos 30 dias. Só conta
+// a versão mais recente de cada título por pessoa (uma renovação substitui a
+// antiga) — a mesma regra da app (`vigentes` em formacao.dart).
+function formacoesACaducar(app, empresaId) {
+  const regs = app.findRecordsByFilter('formacoes', 'empresa = {:e}', '', 0, 0, { e: empresaId });
+  const dia = (r, campo) => {
+    const s = r.getString(campo);
+    return s && s.length >= 10 ? s.substring(0, 10) : '';
+  };
+  const melhor = {};
+  for (const r of regs) {
+    const k = r.getString('pessoa') + '|' + r.getString('titulo').trim().toLowerCase();
+    const a = melhor[k];
+    if (!a) {
+      melhor[k] = r;
+      continue;
+    }
+    const va = dia(r, 'validade');
+    const vb = dia(a, 'validade');
+    // sem validade (não caduca) ganha; senão a validade mais tardia
+    if (!va ? !!vb || dia(r, 'data_realizada') > dia(a, 'data_realizada') : !!vb && va > vb) melhor[k] = r;
+  }
+  const hoje = new Date();
+  const h0 = Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  const itens = [];
+  for (const k in melhor) {
+    const r = melhor[k];
+    const v = dia(r, 'validade');
+    if (!v) continue;
+    const p = v.split('-');
+    const dias = Math.round((Date.UTC(+p[0], +p[1] - 1, +p[2]) - h0) / 86400000);
+    if (dias > 30) continue;
+    const quando =
+      dias === 0 ? 'caduca hoje' : dias === 1 ? 'caduca amanhã' : dias > 1 ? 'caduca em ' + dias + ' dias' : dias === -1 ? 'caducou ontem' : 'caducou há ' + -dias + ' dias';
+    itens.push({ dias: dias, linha: r.getString('nome') + ': ' + r.getString('titulo') + ' — ' + quando });
+  }
+  itens.sort((a, b) => a.dias - b.dias);
+  return itens.slice(0, 15).map((i) => i.linha);
+}
+
 // Backups: pouco espaço no disco ou um teste (integridade/restauro) que falhou.
 // São dados do servidor, não da empresa.
 function backupsComProblema(app) {
@@ -324,6 +364,7 @@ function montar(app, empresaId, cfg) {
   sec('Saída por marcar', seguro(() => saidasPorMarcar(app, empresaId)));
   sec('Validades a acabar', seguro(() => validadesAAcabar(app, empresaId)));
   sec('Vendus sem sincronizar', seguro(() => vendusAtrasado(app, empresaId)));
+  sec('Formações a caducar', seguro(() => formacoesACaducar(app, empresaId)));
   sec('Backups', seguro(() => backupsComProblema(app)));
 
   let nome = '';

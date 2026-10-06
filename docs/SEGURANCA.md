@@ -112,6 +112,13 @@ no navegador) e o contentor tinha capacidades a mais (`cap_drop: ALL`, `no-new-p
   são escritos em `pb_data/backup_integridade.json` e `backup_restauro.json` (sem caminhos nem segredos) e chegam à app e ao resumo diário.
 - Testes automáticos: `7a3` (backups) e `7a3b` (2 passos, com um servidor SMTP falso) em `test/security/seguranca.py`.
 
+## Formações e certificados (1.106.0)
+
+- `formacoes` guarda dados pessoais (certificados, ficha de aptidão): cada pessoa só vê/edita os seus registos (`user = @request.auth.id`); a administração
+  vê e regista os de toda a equipa; a Leitura não vê nada. Quem não é administração não consegue passar um registo para outra pessoa.
+- O ficheiro é `protected` (precisa de token de ficheiro curto), só PDF/imagem e até 10 MB. O resumo diário só diz "Nome: título — caduca em N dias" (nada de conteúdo do documento).
+- Testes: `7a10. Formações e certificados das pessoas` em `test/security/seguranca.py`.
+
 ## Avisos por Telegram/email (1.85.0)
 
 O token do bot do Telegram guarda-se **cifrado** como o do Vendus (`segredos_empresa`, serviço `telegram`) e nunca sai do servidor;

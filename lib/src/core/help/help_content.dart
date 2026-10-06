@@ -41,6 +41,7 @@ enum HelpTopic {
   pessoasEscala,
   pessoasFerias,
   pessoasNotas,
+  pessoasFormacoes,
   previsaoAssar,
   tabelaRevendedores,
   consumiveis,
@@ -406,6 +407,14 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'As vendas vêm do Vendus automaticamente (o servidor sincroniza de hora a hora). Por baixo do título vês quando foram atualizadas; se tiverem mais de 3 horas, a app atualiza-as sozinha ao abrir esta página, e o botão ↻ atualiza já. Se o Vendus deixar de sincronizar durante mais de um dia, aparece um aviso no Início e no resumo diário.',
       '"Agendar produção para …" cria na Agenda a produção desse dia com as quantidades da lista (os produtos sem receita de massa ligada ficam de fora). "Como a previsão tem acertado" refaz a previsão dos últimos 7 dias de venda e compara com o que se vendeu, para saberes quanto podes confiar nela.',
       'O ajuste do dia (−20 %, +20 %, +50 % evento) sobe ou desce tudo de uma vez: a app não sabe de feriados, chuva ou encomendas especiais. Com mais semanas de vendas a previsão acerta melhor — no início, com pouco histórico, trata-a como uma sugestão. Precisa de vendas ligadas a fichas técnicas (Vendus ou importação).',
+    ],
+  ),
+  HelpTopic.pessoasFormacoes: (
+    titulo: 'Formações e certificados',
+    paragrafos: [
+      'Guarda aqui os certificados e formações de cada pessoa — manipulador de alimentos, HACCP, primeiros socorros, ficha de aptidão… — com a data, a validade e o ficheiro (PDF ou foto). Em "Nova formação" escolhes a pessoa, tocas numa sugestão de título e na validade (+1, +2, +3 ou +5 anos) e anexas o certificado: tudo em poucos toques.',
+      'A app avisa 30 dias antes de caducar: aparece o cartão "Formações a caducar" no Início e uma secção no resumo diário (email/Telegram). Se renovares, regista o novo certificado: só o mais recente de cada título conta e o antigo deixa de avisar.',
+      'Toca numa linha para editar (ou apagar) e no clipe para abrir o ficheiro. É um dado pessoal: cada pessoa só vê os seus; a administração vê os de toda a equipa e regista para qualquer pessoa.',
     ],
   ),
   HelpTopic.pessoasNotas: (

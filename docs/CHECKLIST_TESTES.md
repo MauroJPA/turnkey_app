@@ -1894,6 +1894,17 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Desperdício só de degustação/consumo próprio: sem dica e sem "Evitável"
 - [ ] Sem registos no período anterior: aparece "Sem desperdício registado no período anterior para comparar."
 
+## 134. Formações e certificados das pessoas
+
+- [ ] Pessoas → separador "Formações" aparece com o botão "Nova formação"
+- [ ] Registar um certificado (ex.: Manipulador de alimentos, +3 anos) para uma pessoa e anexar um PDF/foto: aparece na lista com "Válida" e "caduca em N dias"
+- [ ] O clipe abre o ficheiro anexado; só abre com sessão iniciada
+- [ ] Um certificado que caduca daqui a menos de 30 dias aparece a laranja e no Início ("Formações a caducar")
+- [ ] Um certificado já caducado aparece a vermelho; o cartão do Início fica destacado
+- [ ] Registar a renovação do mesmo título: o antigo fica cinzento ("substituída por uma mais recente") e o Início deixa de avisar
+- [ ] Como membro da equipa (sem ser admin): vê e regista só os seus; não vê os dos colegas
+- [ ] O resumo diário (Configurações → Avisos → testar) traz a secção "Formações a caducar"
+
 ---
 
 ## Notas / ajustes pedidos

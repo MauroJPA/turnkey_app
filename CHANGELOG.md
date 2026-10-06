@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.106.0 — 2026-10-06 — Formações e certificados das pessoas
+
+Formações e certificados das pessoas, com validade e aviso antes de caducar.
+
+- **Pessoas → Formações**: regista o certificado de manipulador de alimentos, o HACCP, os primeiros socorros, a ficha de aptidão… de cada pessoa, com a data, a **validade** e o **ficheiro** (PDF ou foto). Em "Nova formação": escolhes a pessoa, tocas numa **sugestão de título** (Manipulador de alimentos, HACCP, Higiene e segurança alimentar, Alergénios, Primeiros socorros…) e na validade (**+1, +2, +3 ou +5 anos** ou "Não caduca"), anexas o ficheiro e guardas — poucos toques.
+- **Aviso 30 dias antes**: o Início mostra o cartão **"Formações a caducar"** (a vermelho se já caducou), e o **resumo diário** (email/Telegram) ganha a secção "Formações a caducar" com "Ana: Manipulador de alimentos — caduca em 12 dias".
+- **Renovar sem confusão**: ao registar o certificado novo, só o mais recente de cada título conta — o antigo fica cinzento ("substituída por uma mais recente") e deixa de avisar. Um certificado "Não caduca" nunca avisa.
+- **Privacidade**: é um dado pessoal. Cada pessoa vê e edita só os seus; a administração vê e regista os de toda a equipa (incluindo quem não tem conta). O ficheiro fica protegido (só abre com sessão e a quem pode ver o registo) e só aceita PDF ou imagem até 10 MB.
+- Toca numa linha para editar ou apagar, e no clipe para abrir o ficheiro.
+- Testes: contas de validade e renovações; permissões (cada um só os seus, empresa B nada, ninguém passa registos a outra pessoa); ficheiros protegidos e só PDF/imagem; o resumo diário avisa só do que caduca e ignora o que já foi renovado.
+- Para o servidor: nova migration `1791090000_formacoes.js` (corre sozinha ao reiniciar).
+
 ## 1.105.0 — 2026-10-06 — Custo do desperdício por motivo e sabor
 
 Custo do desperdício por motivo e por sabor — vês em euros onde se perde dinheiro e o que fazer.

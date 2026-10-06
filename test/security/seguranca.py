@@ -1483,6 +1483,121 @@ def teste_2fa():
                 tok[quem] = r['token']
 
 
+def teste_formacoes():
+    sec('7a10. Formações e certificados das pessoas')
+    import datetime as _dt
+    hoje = _dt.date.today()
+
+    def d(n):
+        return (hoje + _dt.timedelta(days=n)).isoformat() + ' 00:00:00.000Z'
+
+    base = {'empresa': empresas['A'], 'pessoa': f'u:{users["editorA"]}', 'nome': 'Editor A', 'user': users['editorA'],
+            'titulo': 'Primeiros socorros', 'tipo': 'formacao', 'validade': d(400)}
+    criados = []
+
+    def criar(corpo, quem):
+        s, r, _ = call('POST', '/api/collections/formacoes/records', corpo, tok[quem])
+        if s == 200 and r.get('id'):
+            criados.append(r['id'])
+        return s, r
+
+    s, _ = criar(base, 'viewerA')
+    check(s in (400, 403), 'Leitura não regista formações', f'status {s}')
+    s, r = criar(base, 'editorA')
+    check(s == 200, 'cada pessoa regista as suas formações', f'status {s} {str(r)[:100]}')
+    minha = r.get('id')
+    s, _ = criar({**base, 'user': users['adminA'], 'pessoa': f'u:{users["adminA"]}'}, 'editorA')
+    check(s in (400, 403), 'ninguém regista formações em nome de outro (sem ser administração)', f'status {s}')
+    s, _ = criar({**base, 'empresa': empresas['B']}, 'editorA')
+    check(s in (400, 403), 'não se regista numa empresa alheia', f'status {s}')
+    s, _ = criar({**base, 'tipo': 'magia'}, 'editorA')
+    check(s == 400, 'tipo inválido é recusado', f'status {s}')
+    s, _ = criar({**base, 'titulo': ''}, 'editorA')
+    check(s == 400, 'sem título é recusado', f'status {s}')
+    s, _ = criar({**base, 'titulo': 'x' * 121}, 'editorA')
+    check(s == 400, 'título demasiado longo é recusado', f'status {s}')
+
+    # a administração regista para quem quiser (pessoas sem conta incluídas)
+    s, r = criar({'empresa': empresas['A'], 'pessoa': 'c:ana-teste', 'nome': 'Ana Teste', 'titulo': 'Manipulador de alimentos',
+                  'tipo': 'certificado', 'validade': d(10)}, 'adminA')
+    check(s == 200, 'a administração regista para uma pessoa sem conta', f'status {s} {str(r)[:100]}')
+    da_ana = r.get('id')
+    s, _ = criar({'empresa': empresas['A'], 'pessoa': 'c:rui-teste', 'nome': 'Rui Teste', 'titulo': 'HACCP',
+                  'tipo': 'certificado', 'validade': d(-100)}, 'adminA')
+    s2, _ = criar({'empresa': empresas['A'], 'pessoa': 'c:rui-teste', 'nome': 'Rui Teste', 'titulo': 'haccp',
+                   'tipo': 'certificado', 'validade': d(400)}, 'adminA')
+    check(s == 200 and s2 == 200, 'o certificado renovado regista-se ao lado do antigo')
+
+    # quem vê o quê
+    s, r = call('GET', '/api/collections/formacoes/records?perPage=100', tok=tok['editorA'])[:2]
+    ids = {i['id'] for i in r.get('items', [])}
+    check(s == 200 and minha in ids and da_ana not in ids, 'cada pessoa só vê as suas formações', f'status {s}')
+    s, r, _ = call('GET', '/api/collections/formacoes/records?perPage=100', tok=tok['adminA'])
+    ids = {i['id'] for i in r.get('items', [])}
+    check(s == 200 and minha in ids and da_ana in ids, 'a administração vê as da equipa toda')
+    s, r, _ = call('GET', '/api/collections/formacoes/records?perPage=100', tok=tok['viewerA'])
+    check(s == 200 and not r.get('items'), 'Leitura não vê formações de ninguém', f'status {s}')
+    s, r, _ = call('GET', '/api/collections/formacoes/records?perPage=100', tok=tok['ownerB'])
+    check(s == 200 and all(i.get('empresa') == empresas['B'] for i in r.get('items', [])), 'empresa B não vê as formações da A', f'status {s}')
+    s, _, _ = call('GET', f'/api/collections/formacoes/records/{da_ana}', tok=tok['editorA'])
+    check(s == 404, 'um colega não abre a formação de outro', f'status {s}')
+    s, _, _ = call('GET', f'/api/collections/formacoes/records/{minha}', tok=tok['ownerB'])
+    check(s == 404, 'a empresa B não abre formações da A', f'status {s}')
+
+    # alterar e apagar
+    s, _, _ = call('PATCH', f'/api/collections/formacoes/records/{minha}', {'titulo': 'Primeiros socorros (SBV)'}, tok['editorA'])
+    check(s == 200, 'cada pessoa edita a sua formação', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/formacoes/records/{minha}', {'user': users['adminA']}, tok['editorA'])
+    check(s in (400, 403, 404), 'não se passa a formação para outra pessoa', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/formacoes/records/{da_ana}', {'titulo': 'adulterado'}, tok['editorA'])
+    check(s in (403, 404), 'um colega não altera a formação de outro', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/formacoes/records/{minha}', {'titulo': 'x'}, tok['ownerB'])
+    check(s in (403, 404), 'a empresa B não altera formações da A', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/formacoes/records/{minha}', {'validade': d(500)}, tok['adminA'])
+    check(s == 200, 'a administração altera a de qualquer pessoa', f'status {s}')
+    s, _, _ = call('DELETE', f'/api/collections/formacoes/records/{da_ana}', tok=tok['editorA'])
+    check(s in (403, 404), 'um colega não apaga a formação de outro', f'status {s}')
+
+    # ficheiro: só PDF/imagem, protegido
+    pdf = b'%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF'
+    corpo, ct = multipart({'empresa': empresas['A'], 'pessoa': 'c:ana-teste', 'nome': 'Ana Teste', 'titulo': 'Alergénios',
+                           'tipo': 'certificado'}, {'ficheiro': ('cert.pdf', pdf, 'application/pdf')})
+    s, r, _ = call('POST', '/api/collections/formacoes/records', raw=corpo, ctype=ct, tok=tok['adminA'])
+    check(s == 200 and r.get('ficheiro'), 'o certificado em PDF fica guardado', f'status {s} {str(r)[:100]}')
+    comfich = r.get('id')
+    if comfich:
+        criados.append(comfich)
+    nome_fich = r.get('ficheiro') or 'x'
+    corpo, ct = multipart({'empresa': empresas['A'], 'pessoa': 'c:ana-teste', 'nome': 'Ana Teste', 'titulo': 'Mau',
+                           'tipo': 'certificado'}, {'ficheiro': ('mau.html', b'<script>alert(1)</script>', 'text/html')})
+    s, _, _ = call('POST', '/api/collections/formacoes/records', raw=corpo, ctype=ct, tok=tok['adminA'])
+    check(s == 400, 'ficheiros que não sejam PDF/imagem são recusados', f'status {s}')
+    url = f'/api/files/formacoes/{comfich}/{nome_fich}'
+    s, _, _ = call('GET', url)
+    check(s in (401, 403, 404), 'o ficheiro não se abre sem sessão/token', f'status {s}')
+    s, tk, _ = call('POST', '/api/files/token', {}, tok['ownerB'])
+    s, _, _ = call('GET', f'{url}?token={tk.get("token", "")}')
+    check(s in (401, 403, 404), 'a empresa B não abre o ficheiro com o seu token', f'status {s}')
+    s, tk, _ = call('POST', '/api/files/token', {}, tok['editorA'])
+    s, _, _ = call('GET', f'{url}?token={tk.get("token", "")}')
+    check(s in (401, 403, 404), 'um colega não abre o ficheiro de outra pessoa', f'status {s}')
+    s, tk, _ = call('POST', '/api/files/token', {}, tok['adminA'])
+    s, _, _ = call('GET', f'{url}?token={tk.get("token", "")}')
+    check(s == 200, 'a administração abre o ficheiro com um token', f'status {s}')
+
+    # resumo diário: só o que caduca (a versão renovada do HACCP não conta)
+    s, r, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': False}, tok['adminA'])
+    texto = r.get('texto', '')
+    check('Ana Teste: Manipulador de alimentos' in texto and 'caduca em 10 dias' in texto,
+          'o resumo avisa do certificado que caduca em 10 dias', texto[-250:])
+    check('Rui Teste: HACCP' not in texto and 'Rui Teste: haccp' not in texto,
+          'o certificado já renovado não avisa', texto[-250:])
+    check('Primeiros socorros' not in texto, 'o que caduca daqui a mais de 30 dias não avisa')
+
+    for i in criados:
+        call('DELETE', f'/api/collections/formacoes/records/{i}', tok=su)
+
+
 def teste_segredos():
     sec('7b. Segredos cifrados (token do Vendus)')
     url = '/api/gc_turnkey/integracoes/vendus'
@@ -2869,6 +2984,7 @@ def main():
         teste_ferias()
         teste_anotacoes()
         teste_escala()
+        teste_formacoes()
         teste_segredos()
         teste_sem_chave()
         teste_faturas_ia()

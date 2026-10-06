@@ -23,9 +23,11 @@ import '../../navigation/presentation/todas_paginas_sheet.dart';
 import '../../orders/application/encomendas_providers.dart';
 import '../../orders/data/configuracoes_encomendas_repository.dart';
 import '../../people/application/ferias_providers.dart';
+import '../../people/application/formacoes_providers.dart';
 import '../../people/application/notas_providers.dart';
 import '../../people/application/saidas_providers.dart';
 import '../../people/domain/ferias.dart';
+import '../../people/domain/formacao.dart';
 import '../../people/domain/nota.dart';
 import '../../people/domain/ponto.dart';
 import '../../sales/data/sales_repository.dart';
@@ -111,6 +113,9 @@ class HomeShell extends ConsumerWidget {
     final saidasEmFalta = podeVerPessoas
         ? ref.watch(saidasPorMarcarProvider)
         : const <SaidaPorMarcar>[];
+    final formacoesAlerta = podeVerPessoas
+        ? ref.watch(formacoesEmAlertaProvider)
+        : const <Formacao>[];
     final feriasPorAprovar =
         podeVerPessoas && ref.watch(currentPapelProvider).canEditConfig
         ? (ref
@@ -313,6 +318,20 @@ class HomeShell extends ConsumerWidget {
               subtitulo: saidasEmFalta.take(3).map((s) => s.nome).join(', '),
               destaque: true,
               onTap: () => context.go(Routes.pessoasPonto),
+            ),
+          if (formacoesAlerta.isNotEmpty)
+            _StatCard(
+              icon: Icons.workspace_premium_outlined,
+              titulo: 'Formações a caducar',
+              valor: '${formacoesAlerta.length}',
+              subtitulo: formacoesAlerta
+                  .take(3)
+                  .map((f) => '${f.nome}: ${f.titulo} (${f.quando(hoje)})')
+                  .join(' · '),
+              destaque: formacoesAlerta.any(
+                (f) => f.estado(hoje) == EstadoValidade.caducada,
+              ),
+              onTap: () => context.go(Routes.pessoasFormacoes),
             ),
           if (feriasPorAprovar.isNotEmpty)
             _StatCard(

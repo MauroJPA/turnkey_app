@@ -8,6 +8,7 @@ import '../../../core/help/help_content.dart';
 import '../../../core/widgets/help_actions.dart';
 import 'escala_view.dart';
 import 'ferias_view.dart';
+import 'formacoes_view.dart';
 import 'notas_view.dart';
 import 'ponto_view.dart';
 
@@ -16,7 +17,12 @@ enum SecaoPessoas {
   escala('Escala', Icons.calendar_view_week_outlined, Routes.pessoasEscala),
   ponto('Ponto', Icons.access_time, Routes.pessoasPonto),
   ferias('Férias', Icons.beach_access_outlined, Routes.pessoasFerias),
-  notas('Notas', Icons.sticky_note_2_outlined, Routes.pessoasNotas);
+  notas('Notas', Icons.sticky_note_2_outlined, Routes.pessoasNotas),
+  formacoes(
+    'Formações',
+    Icons.workspace_premium_outlined,
+    Routes.pessoasFormacoes,
+  );
 
   const SecaoPessoas(this.label, this.icon, this.rota);
   final String label;
@@ -28,6 +34,7 @@ enum SecaoPessoas {
     SecaoPessoas.ponto => HelpTopic.pessoasPonto,
     SecaoPessoas.ferias => HelpTopic.pessoasFerias,
     SecaoPessoas.notas => HelpTopic.pessoasNotas,
+    SecaoPessoas.formacoes => HelpTopic.pessoasFormacoes,
   };
 }
 
@@ -61,6 +68,13 @@ class PessoasScreen extends ConsumerWidget {
           icon: const Icon(Icons.add),
           label: const Text('Nova nota'),
         ),
+        SecaoPessoas.formacoes
+            when ref.watch(currentPapelProvider).canEditBusiness =>
+          FloatingActionButton.extended(
+            onPressed: () => mostrarFormacao(context, ref),
+            icon: const Icon(Icons.add),
+            label: const Text('Nova formação'),
+          ),
         _ => null,
       },
       body: Column(
@@ -99,6 +113,9 @@ class PessoasScreen extends ConsumerWidget {
               ),
               SecaoPessoas.notas => const NotasView(
                 key: ValueKey('pessoas-notas'),
+              ),
+              SecaoPessoas.formacoes => const FormacoesView(
+                key: ValueKey('pessoas-formacoes'),
               ),
             },
           ),
