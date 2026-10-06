@@ -57,6 +57,9 @@ abstract class Routes {
   static const avisos = '/opcoes/avisos';
   static const saudeDados = '/opcoes/dados';
   static const navegacao = '/opcoes/navegacao';
+  static const opcoesEmpresa = '/opcoes/empresa';
+  static const opcoesCustos = '/opcoes/custos';
+  static const opcoesSeguranca = '/opcoes/seguranca';
 
   /// Antiga página "Produtos" (hoje: a informação do produto dentro da ficha).
   static const produtos = '/produtos';

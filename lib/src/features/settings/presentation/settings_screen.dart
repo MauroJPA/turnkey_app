@@ -15,15 +15,22 @@ import '../../pricing/domain/cost_config.dart';
 import '../../pricing/domain/dias_trabalho.dart';
 import '../application/empresa_providers.dart';
 import '../application/settings_providers.dart';
-import '../data/aprovacoes_repository.dart';
 import '../data/empresa_repository.dart';
 import '../domain/empresa.dart';
-import 'backups_card.dart';
-import 'dois_passos_card.dart';
-import 'integracoes_sheet.dart';
+
+/// As páginas de definições que usam este formulário.
+enum GrupoOpcoes {
+  empresa('Empresa e aparência'),
+  custos('Custos e IVA');
+
+  const GrupoOpcoes(this.titulo);
+  final String titulo;
+}
 
 class SettingsScreen extends ConsumerStatefulWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({super.key, this.grupo = GrupoOpcoes.empresa});
+
+  final GrupoOpcoes grupo;
 
   @override
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
@@ -162,9 +169,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(Routes.home),
+          onPressed: () => context.go(Routes.settings),
         ),
-        title: const Text('Configurações'),
+        title: Text(widget.grupo.titulo),
         actions: const [HelpActions(topic: HelpTopic.configuracoes)],
       ),
       body: (empresaAsync.isLoading || configAsync.isLoading)
@@ -172,9 +179,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           : (empresaAsync.hasError || configAsync.hasError)
           ? Center(
               child: Text(
-                mensagemAmigavel(
-                  (empresaAsync.error ?? configAsync.error)!,
-                ),
+                mensagemAmigavel((empresaAsync.error ?? configAsync.error)!),
                 textAlign: TextAlign.center,
               ),
             )
@@ -203,440 +208,350 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ),
 
-            // ---- Empresa ----
-            Text('Empresa', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _nome,
-              decoration: const InputDecoration(labelText: 'Nome'),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<Moeda>(
-                    initialValue: _moeda,
-                    decoration: const InputDecoration(labelText: 'Moeda'),
-                    items: [
-                      for (final m in Moeda.values)
-                        DropdownMenuItem(
-                          value: m,
-                          child: Text('${m.code} (${m.symbol})'),
-                        ),
-                    ],
-                    onChanged: (v) => setState(() => _moeda = v ?? Moeda.eur),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: DropdownButtonFormField<RegraArredondamento>(
-                    initialValue: _regra,
-                    decoration: const InputDecoration(
-                      labelText: 'Arredondamento',
-                    ),
-                    items: const [
-                      DropdownMenuItem(
-                        value: RegraArredondamento.cima,
-                        child: Text('Para cima'),
-                      ),
-                      DropdownMenuItem(
-                        value: RegraArredondamento.normal,
-                        child: Text('Normal'),
-                      ),
-                    ],
-                    onChanged: (v) =>
-                        setState(() => _regra = v ?? RegraArredondamento.cima),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: FilledButton(
-                onPressed: _busy
-                    ? null
-                    : () => _run('Empresa guardada.', () async {
-                        await ref
-                            .read(settingsActionsProvider)
-                            .saveEmpresa(
-                              nome: _nome.text,
-                              moeda: _moeda,
-                              regra: _regra,
-                              corMarca: _cor.text,
-                              tema: _tema,
-                            );
-                      }),
-                child: const Text('Guardar empresa'),
+            if (widget.grupo == GrupoOpcoes.empresa) ...[
+              Text('Empresa', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _nome,
+                decoration: const InputDecoration(labelText: 'Nome'),
               ),
-            ),
-
-            const Divider(height: 40),
-
-            // ---- Aparência ----
-            Text('Aparência', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 4),
-            Text(
-              'Aplica-se a toda a equipa desta empresa.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
-            _AparenciaControls(
-              empresaBase: empresa,
-              tema: _tema,
-              corHex: _cor.text,
-              corController: _cor,
-              corSecController: _corSec,
-              corFundoController: _corFundo,
-              corTextoController: _corTexto,
-              logoUrl: ref.read(empresaRepositoryProvider).logoUrl(empresa),
-              logoVisivel: _logoVisivel,
-              logoAlinhamento: _logoAlinhamento,
-              logoTamanho: _logoTamanho,
-              nomeVisivel: _nomeVisivel,
-              nomeAlinhamento: _nomeAlinhamento,
-              nomeTamanho: _nomeTamanho,
-              fonteFamilia: _fonteFamilia,
-              temFontePersonalizada: empresa.temFontePersonalizada,
-              onTema: (t) => setState(() => _tema = t),
-              onCor: (hex) => setState(() => _cor.text = hex),
-              onLogoVisivel: (v) => setState(() => _logoVisivel = v),
-              onLogoAlinhamento: (a) => setState(() => _logoAlinhamento = a),
-              onLogoTamanho: (v) => setState(() => _logoTamanho = v),
-              onNomeVisivel: (v) => setState(() => _nomeVisivel = v),
-              onNomeAlinhamento: (a) => setState(() => _nomeAlinhamento = a),
-              onNomeTamanho: (v) => setState(() => _nomeTamanho = v),
-              onGuardar: _busy
-                  ? null
-                  : () => _run('Aparência guardada.', () async {
-                      await ref
-                          .read(settingsActionsProvider)
-                          .saveAparencia(
-                            corMarca: _cor.text,
-                            tema: _tema,
-                            corSecundaria: _corSec.text,
-                            corFundo: _corFundo.text,
-                            corTexto: _corTexto.text,
-                            logoVisivel: _logoVisivel,
-                            logoAlinhamento: _logoAlinhamento,
-                            logoTamanho: _logoTamanho,
-                            nomeVisivel: _nomeVisivel,
-                            nomeAlinhamento: _nomeAlinhamento,
-                            nomeTamanho: _nomeTamanho,
-                            fonteFamilia: _fonteFamilia,
-                          );
-                    }),
-              onEscolherLogo: _busy
-                  ? null
-                  : () => _run('Logótipo atualizado.', () async {
-                      final picked = await FilePicker.platform.pickFiles(
-                        type: FileType.image,
-                        withData: true,
-                      );
-                      final f = picked?.files.single;
-                      if (f?.bytes == null) return;
-                      await ref
-                          .read(settingsActionsProvider)
-                          .definirLogo(nome: f!.name, bytes: f.bytes!.toList());
-                    }),
-              onRemoverLogo: _busy || !empresa.temLogo
-                  ? null
-                  : () => _run('Logótipo removido.', () async {
-                      await ref.read(settingsActionsProvider).removerLogo();
-                    }),
-              onEscolherFonte: _busy
-                  ? null
-                  : () => _run('Tipo de letra atualizado.', () async {
-                      final picked = await FilePicker.platform.pickFiles(
-                        type: FileType.custom,
-                        allowedExtensions: const ['ttf', 'otf'],
-                        withData: true,
-                      );
-                      final f = picked?.files.single;
-                      if (f?.bytes == null) return;
-                      await ref
-                          .read(settingsActionsProvider)
-                          .definirFonte(
-                            nome: f!.name,
-                            bytes: f.bytes!.toList(),
-                          );
-                      if (mounted) {
-                        setState(
-                          () =>
-                              _fonteFamilia = _familiaFromNomeFicheiro(f.name),
-                        );
-                      }
-                    }),
-              onRemoverFonte: _busy || !empresa.temFontePersonalizada
-                  ? null
-                  : () => _run('Tipo de letra removido.', () async {
-                      await ref.read(settingsActionsProvider).removerFonte();
-                      if (mounted) setState(() => _fonteFamilia = '');
-                    }),
-            ),
-
-            const Divider(height: 40),
-
-            // ---- Custos ----
-            Text(
-              'Percentuais de custo',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            Text(
-              'Tudo sobre o preço sem IVA. Defines o CMV e os custos; a margem '
-              'de lucro é o que sobra.',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: TextField(
-                controller: _custos['cmv'],
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: const InputDecoration(
-                  labelText: 'CMV — custo da matéria-prima',
-                  suffixText: '%',
-                  helperText:
-                      'Quanto do preço (sem IVA) pode ir para a matéria-prima '
-                      'e embalagem. Define o preço sugerido: custo ÷ CMV.',
-                  helperMaxLines: 3,
-                ),
-                onChanged: (_) => setState(() {}),
-              ),
-            ),
-            for (final e in _rubricas.entries)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: TextField(
-                  controller: _custos[e.key],
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: e.value,
-                    suffixText: '%',
-                  ),
-                  onChanged: (_) => setState(() {}),
-                ),
-              ),
-            Container(
-              margin: const EdgeInsets.only(top: 8),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
+              const SizedBox(height: 12),
+              Row(
                 children: [
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Margem de lucro (o que sobra)',
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        Text(
-                          margem < 0
-                              ? 'Os custos e o CMV passam de 100%: não sobra '
-                                    'nada. Baixa o CMV ou os custos.'
-                              : 'Sobe se reduzires custos; desce se os '
-                                    'aumentares. O CMV não muda.',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
+                    child: DropdownButtonFormField<Moeda>(
+                      initialValue: _moeda,
+                      decoration: const InputDecoration(labelText: 'Moeda'),
+                      items: [
+                        for (final m in Moeda.values)
+                          DropdownMenuItem(
+                            value: m,
+                            child: Text('${m.code} (${m.symbol})'),
+                          ),
                       ],
+                      onChanged: (v) => setState(() => _moeda = v ?? Moeda.eur),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Text(
-                    '${margem.toStringAsFixed(1)}%',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: margem < 0
-                          ? Theme.of(context).colorScheme.error
-                          : Theme.of(context).colorScheme.primary,
+                  Expanded(
+                    child: DropdownButtonFormField<RegraArredondamento>(
+                      initialValue: _regra,
+                      decoration: const InputDecoration(
+                        labelText: 'Arredondamento',
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: RegraArredondamento.cima,
+                          child: Text('Para cima'),
+                        ),
+                        DropdownMenuItem(
+                          value: RegraArredondamento.normal,
+                          child: Text('Normal'),
+                        ),
+                      ],
+                      onChanged: (v) => setState(
+                        () => _regra = v ?? RegraArredondamento.cima,
+                      ),
                     ),
                   ),
                 ],
               ),
-            ),
-            const Divider(height: 28),
-            TextField(
-              controller: _ivaVendas,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: FilledButton(
+                  onPressed: _busy
+                      ? null
+                      : () => _run('Empresa guardada.', () async {
+                          await ref
+                              .read(settingsActionsProvider)
+                              .saveEmpresa(
+                                nome: _nome.text,
+                                moeda: _moeda,
+                                regra: _regra,
+                                corMarca: _cor.text,
+                                tema: _tema,
+                              );
+                        }),
+                  child: const Text('Guardar empresa'),
+                ),
               ),
-              decoration: const InputDecoration(
-                labelText: 'IVA das vendas',
-                suffixText: '%',
-                helperText:
-                    'Não entra nos percentuais acima: o IVA soma-se no fim, em '
-                    'cima do preço sem IVA (Fichas técnicas → Quebra do preço). '
-                    'Também estima o IVA a entregar quando uma venda não traz o '
-                    'valor sem IVA (Contabilidade → IVA a separar).',
-                helperMaxLines: 6,
+
+              const Divider(height: 40),
+
+              // ---- Aparência ----
+              Text('Aparência', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 4),
+              Text(
+                'Aplica-se a toda a equipa desta empresa.',
+                style: Theme.of(context).textTheme.bodySmall,
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _custos['alertaPreco'],
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              decoration: const InputDecoration(
-                labelText: 'Avisar quando um preço sobe mais de',
-                suffixText: '%',
-                helperText:
-                    'Ao aplicar uma fatura, a app avisa se um ingrediente '
-                    'ficou mais caro do que isto e mostra as fichas e '
-                    'margens afetadas (Inventário → Preços).',
-                helperMaxLines: 3,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Dias de trabalho',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Os dias da semana em que trabalham. O "Quantos assar" só prevê '
-              'estes dias e ignora as folgas.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                for (var d = 1; d <= 7; d++)
-                  FilterChip(
-                    label: Text(nomesDiasCurtos[d - 1]),
-                    selected: _dias.contains(d),
-                    onSelected: (v) => setState(() {
-                      final novo = {..._dias};
-                      if (v) {
-                        novo.add(d);
-                      } else if (novo.length > 1) {
-                        novo.remove(d); // tem de haver pelo menos um dia
-                      }
-                      _dias = novo;
-                    }),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: FilledButton(
-                onPressed: _busy
+              const SizedBox(height: 12),
+              _AparenciaControls(
+                empresaBase: empresa,
+                tema: _tema,
+                corHex: _cor.text,
+                corController: _cor,
+                corSecController: _corSec,
+                corFundoController: _corFundo,
+                corTextoController: _corTexto,
+                logoUrl: ref.read(empresaRepositoryProvider).logoUrl(empresa),
+                logoVisivel: _logoVisivel,
+                logoAlinhamento: _logoAlinhamento,
+                logoTamanho: _logoTamanho,
+                nomeVisivel: _nomeVisivel,
+                nomeAlinhamento: _nomeAlinhamento,
+                nomeTamanho: _nomeTamanho,
+                fonteFamilia: _fonteFamilia,
+                temFontePersonalizada: empresa.temFontePersonalizada,
+                onTema: (t) => setState(() => _tema = t),
+                onCor: (hex) => setState(() => _cor.text = hex),
+                onLogoVisivel: (v) => setState(() => _logoVisivel = v),
+                onLogoAlinhamento: (a) => setState(() => _logoAlinhamento = a),
+                onLogoTamanho: (v) => setState(() => _logoTamanho = v),
+                onNomeVisivel: (v) => setState(() => _nomeVisivel = v),
+                onNomeAlinhamento: (a) => setState(() => _nomeAlinhamento = a),
+                onNomeTamanho: (v) => setState(() => _nomeTamanho = v),
+                onGuardar: _busy
                     ? null
-                    : () => _run('Percentuais guardados.', () async {
+                    : () => _run('Aparência guardada.', () async {
                         await ref
                             .read(settingsActionsProvider)
-                            .saveCustos(_configFromForm);
+                            .saveAparencia(
+                              corMarca: _cor.text,
+                              tema: _tema,
+                              corSecundaria: _corSec.text,
+                              corFundo: _corFundo.text,
+                              corTexto: _corTexto.text,
+                              logoVisivel: _logoVisivel,
+                              logoAlinhamento: _logoAlinhamento,
+                              logoTamanho: _logoTamanho,
+                              nomeVisivel: _nomeVisivel,
+                              nomeAlinhamento: _nomeAlinhamento,
+                              nomeTamanho: _nomeTamanho,
+                              fonteFamilia: _fonteFamilia,
+                            );
                       }),
-                child: const Text('Guardar percentuais e dias'),
+                onEscolherLogo: _busy
+                    ? null
+                    : () => _run('Logótipo atualizado.', () async {
+                        final picked = await FilePicker.platform.pickFiles(
+                          type: FileType.image,
+                          withData: true,
+                        );
+                        final f = picked?.files.single;
+                        if (f?.bytes == null) return;
+                        await ref
+                            .read(settingsActionsProvider)
+                            .definirLogo(
+                              nome: f!.name,
+                              bytes: f.bytes!.toList(),
+                            );
+                      }),
+                onRemoverLogo: _busy || !empresa.temLogo
+                    ? null
+                    : () => _run('Logótipo removido.', () async {
+                        await ref.read(settingsActionsProvider).removerLogo();
+                      }),
+                onEscolherFonte: _busy
+                    ? null
+                    : () => _run('Tipo de letra atualizado.', () async {
+                        final picked = await FilePicker.platform.pickFiles(
+                          type: FileType.custom,
+                          allowedExtensions: const ['ttf', 'otf'],
+                          withData: true,
+                        );
+                        final f = picked?.files.single;
+                        if (f?.bytes == null) return;
+                        await ref
+                            .read(settingsActionsProvider)
+                            .definirFonte(
+                              nome: f!.name,
+                              bytes: f.bytes!.toList(),
+                            );
+                        if (mounted) {
+                          setState(
+                            () => _fonteFamilia = _familiaFromNomeFicheiro(
+                              f.name,
+                            ),
+                          );
+                        }
+                      }),
+                onRemoverFonte: _busy || !empresa.temFontePersonalizada
+                    ? null
+                    : () => _run('Tipo de letra removido.', () async {
+                        await ref.read(settingsActionsProvider).removerFonte();
+                        if (mounted) setState(() => _fonteFamilia = '');
+                      }),
               ),
-            ),
-
-            const Divider(height: 40),
-
-            // ---- Navegação e permissões ----
-            if (ref.read(currentPapelProvider).canEditConfig)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.view_carousel_outlined),
-                title: const Text('Navegação e permissões'),
-                subtitle: const Text('Rodapé e o que cada nível pode fazer'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.go(Routes.navegacao),
-              ),
-
-            // ---- Saúde dos dados ----
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.health_and_safety_outlined),
-              title: const Text('Saúde dos dados'),
-              subtitle: const Text(
-                'O que falta preencher nas fichas e nos ingredientes',
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.go(Routes.saudeDados),
-            ),
-
-            // ---- Avisos e resumo diário ----
-            if (ref.read(currentPapelProvider).canEditConfig)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.notifications_active_outlined),
-                title: const Text('Avisos e resumo diário'),
-                subtitle: const Text(
-                  'Email ou Telegram, à hora que escolheres',
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.go(Routes.avisos),
-              ),
-
-            // ---- Integrações ----
-            if (ref.read(currentPapelProvider).canEditConfig)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.link_outlined),
-                title: const Text('Integrações'),
-                subtitle: const Text('Token do Vendus (guardado cifrado)'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => showIntegracoesSheet(context),
-              ),
-
-            // ---- Estado dos backups (administradores) ----
-            if (ref.read(currentPapelProvider).canEditConfig) ...[
-              const Divider(height: 28),
+            ],
+            if (widget.grupo == GrupoOpcoes.custos) ...[
               Text(
-                'Estado dos backups',
+                'Percentuais de custo',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
-              const BackupsCard(),
-              const Divider(height: 28),
-              const DoisPassosCard(),
-              const Divider(height: 28),
-            ],
-
-            // ---- Aprovações (só o operador da plataforma) ----
-            if (ref.watch(aprovacoesProvider).valueOrNull?.operador ?? false)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.how_to_reg_outlined),
-                title: const Text('Aprovações de contas'),
-                subtitle: Text(
-                  (ref
-                                  .watch(aprovacoesProvider)
-                                  .valueOrNull
-                                  ?.pendentes
-                                  .length ??
-                              0) >
-                          0
-                      ? '${ref.watch(aprovacoesProvider).valueOrNull!.pendentes.length} por aprovar'
-                      : 'Ninguém à espera',
+              Text(
+                'Tudo sobre o preço sem IVA. Defines o CMV e os custos; a margem '
+                'de lucro é o que sobra.',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.go(Routes.aprovacoes),
               ),
-
-            // ---- Equipa ----
-            if (ref.read(currentPapelProvider).canManageTeam)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.group_outlined),
-                title: const Text('Equipa'),
-                subtitle: const Text('Utilizadores e permissões'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.go(Routes.team),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: TextField(
+                  controller: _custos['cmv'],
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'CMV — custo da matéria-prima',
+                    suffixText: '%',
+                    helperText:
+                        'Quanto do preço (sem IVA) pode ir para a matéria-prima '
+                        'e embalagem. Define o preço sugerido: custo ÷ CMV.',
+                    helperMaxLines: 3,
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
               ),
+              for (final e in _rubricas.entries)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: TextField(
+                    controller: _custos[e.key],
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: e.value,
+                      suffixText: '%',
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Margem de lucro (o que sobra)',
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          Text(
+                            margem < 0
+                                ? 'Os custos e o CMV passam de 100%: não sobra '
+                                      'nada. Baixa o CMV ou os custos.'
+                                : 'Sobe se reduzires custos; desce se os '
+                                      'aumentares. O CMV não muda.',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      '${margem.toStringAsFixed(1)}%',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: margem < 0
+                            ? Theme.of(context).colorScheme.error
+                            : Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 28),
+              TextField(
+                controller: _ivaVendas,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'IVA das vendas',
+                  suffixText: '%',
+                  helperText:
+                      'Não entra nos percentuais acima: o IVA soma-se no fim, em '
+                      'cima do preço sem IVA (Fichas técnicas → Quebra do preço). '
+                      'Também estima o IVA a entregar quando uma venda não traz o '
+                      'valor sem IVA (Contabilidade → IVA a separar).',
+                  helperMaxLines: 6,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _custos['alertaPreco'],
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'Avisar quando um preço sobe mais de',
+                  suffixText: '%',
+                  helperText:
+                      'Ao aplicar uma fatura, a app avisa se um ingrediente '
+                      'ficou mais caro do que isto e mostra as fichas e '
+                      'margens afetadas (Inventário → Preços).',
+                  helperMaxLines: 3,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Dias de trabalho',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Os dias da semana em que trabalham. O "Quantos assar" só prevê '
+                'estes dias e ignora as folgas.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  for (var d = 1; d <= 7; d++)
+                    FilterChip(
+                      label: Text(nomesDiasCurtos[d - 1]),
+                      selected: _dias.contains(d),
+                      onSelected: (v) => setState(() {
+                        final novo = {..._dias};
+                        if (v) {
+                          novo.add(d);
+                        } else if (novo.length > 1) {
+                          novo.remove(d); // tem de haver pelo menos um dia
+                        }
+                        _dias = novo;
+                      }),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: FilledButton(
+                  onPressed: _busy
+                      ? null
+                      : () => _run('Percentuais guardados.', () async {
+                          await ref
+                              .read(settingsActionsProvider)
+                              .saveCustos(_configFromForm);
+                        }),
+                  child: const Text('Guardar percentuais e dias'),
+                ),
+              ),
+            ],
           ],
         ),
       ),

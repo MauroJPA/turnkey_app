@@ -2,6 +2,19 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.2.0 — 2026-10-06 — Configurações em grupos, com o estado à vista
+
+As Configurações deixam de ser uma página de 1000 linhas: passam a ser uma **lista de grupos com o estado à vista**.
+
+- **Configurações** abre uma lista curta, agrupada: **A tua empresa** (Empresa e aparência, Custos e IVA), **Equipa** (Equipa, Navegação e permissões, Avisos e resumos), **Ligações e segurança** (Ligações, Segurança e backups) e **Manutenção** (Saúde dos dados, Aprovações de contas).
+- **O estado vê-se sem abrir nada**: "CMV 40% · margem 25% · IVA 6%", "Resumo diário às 08:00 — por email e Telegram", "Vendus sincronizado há 2 h", "Backups ok · 2 passos ligado". O que pede atenção (Vendus sem sincronizar, Backup com problema, contas por aprovar) aparece **a vermelho**.
+- **Cada grupo abre uma página curta**: Empresa e aparência (nome, moeda, cores, logótipo, letra), Custos e IVA (percentuais, IVA, alerta de preços, dias de trabalho) e **Segurança e backups** (estado dos backups + 2 passos). Chegar aos backups deixa de exigir deslizar quase tudo.
+- O cartão **"Backup com problema"** do Início leva direto a "Segurança e backups".
+- "Ligações" abre logo a janela do token do Vendus.
+- As novas páginas também se encontram na pesquisa do "Mais" ("backup", "iva", "logótipo"…).
+- Nada foi removido: os mesmos campos e botões, só reorganizados.
+- Testes: os textos de estado (custos, avisos, segurança).
+
 ## 2.1.0 — 2026-10-06 — Menu "Mais" com pesquisa: qualquer página a 2 toques
 
 Qualquer página, ficha ou ingrediente a 2 toques: o rodapé fica limpo e passa a ter um botão **"Mais"**.

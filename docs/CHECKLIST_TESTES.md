@@ -1974,6 +1974,20 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Manter o dedo num ícone do "Mais": escolher a cor; "Cor padrão" repõe
 - [ ] Configurações → Navegação: o rodapé aceita no máximo 3 páginas e explica que as outras ficam no "Mais"
 
+## 142. Configurações em grupos, com o estado à vista
+
+- [ ] Configurações mostra grupos: A tua empresa, Equipa, Ligações e segurança, Manutenção — cada linha com o estado por baixo
+- [ ] "Empresa e aparência": mostra o nome e a moeda; abre a página com Empresa + Aparência; guardar funciona
+- [ ] "Custos e IVA": mostra CMV, margem e IVA; abre a página com percentuais, IVA, alerta e dias de trabalho; "Guardar percentuais e dias" funciona e o estado da lista atualiza
+- [ ] "Segurança e backups": estado dos backups e verificação em 2 passos na mesma página; sem deslizar mais de um ecrã para os ver
+- [ ] Backup com problema: a linha fica a vermelho e o cartão do Início leva a esta página
+- [ ] "Ligações": abre a janela do Vendus; mostra "Vendus por configurar", "sincronizado há…" ou "sem sincronizar" (vermelho)
+- [ ] "Avisos e resumos": mostra "Desligados" ou o resumo (hora e canais)
+- [ ] Equipa e "Navegação e permissões" continuam a abrir
+- [ ] Como Editor/Leitura: só vê o que lhe cabe (Equipa se puder gerir, Saúde dos dados) e a nota de que só administradores alteram
+- [ ] Operador da plataforma: "Aprovações de contas" aparece em Manutenção, com "N por aprovar" a vermelho quando há
+- [ ] A seta ← das sub-páginas volta à lista de Configurações
+
 ---
 
 ## Notas / ajustes pedidos

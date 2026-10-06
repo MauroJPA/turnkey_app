@@ -35,6 +35,8 @@ import '../features/sales/presentation/venda_detail_screen.dart';
 import '../features/schedule/presentation/plan_detail_screen.dart';
 import '../features/settings/presentation/aprovacoes_screen.dart';
 import '../features/settings/presentation/avisos_screen.dart';
+import '../features/settings/presentation/opcoes_screen.dart';
+import '../features/settings/presentation/seguranca_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/settings/presentation/team_screen.dart';
 import '../features/shopping/presentation/compras_relatorio_screen.dart';
@@ -328,8 +330,22 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: Routes.settings,
-            builder: (_, __) => const SettingsScreen(),
+            builder: (_, __) => const OpcoesScreen(),
             routes: [
+              GoRoute(
+                path: 'empresa',
+                builder: (_, __) =>
+                    const SettingsScreen(grupo: GrupoOpcoes.empresa),
+              ),
+              GoRoute(
+                path: 'custos',
+                builder: (_, __) =>
+                    const SettingsScreen(grupo: GrupoOpcoes.custos),
+              ),
+              GoRoute(
+                path: 'seguranca',
+                builder: (_, __) => const SegurancaScreen(),
+              ),
               GoRoute(path: 'equipa', builder: (_, __) => const TeamScreen()),
               GoRoute(
                 path: 'dados',

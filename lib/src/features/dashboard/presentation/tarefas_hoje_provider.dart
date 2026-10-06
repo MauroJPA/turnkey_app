@@ -88,7 +88,7 @@ final tarefasHojeProvider = Provider.autoDispose<List<TarefaHoje>>((ref) {
         icon: Icons.backup_outlined,
         titulo: 'Backup com problema',
         urgencia: Urgencia.urgente,
-        rota: Routes.settings,
+        rota: Routes.opcoesSeguranca,
         resumo: backups.avisos().take(2).join(' '),
         quantidade: 1,
       ),
