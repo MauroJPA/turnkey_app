@@ -4,6 +4,7 @@ import 'package:pocketbase/pocketbase.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/pocketbase/pb_client.dart';
 import '../domain/lote.dart';
+import '../domain/validades.dart';
 
 class LotesRepository {
   LotesRepository(this._pb, this._empresaId);
@@ -168,6 +169,68 @@ class LotesRepository {
   }
 
   Future<void> apagar(String id) => _pb.collection('lotes_producao').delete(id);
+
+  static String _fim(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')} 23:59:59.999Z';
+
+  /// Os lotes (de ingredientes e de produtos) cuja validade está a acabar.
+  Future<List<AlertaValidade>> validadesAAcabar() async {
+    final hoje = DateTime.now();
+    DateTime mais(int dias) => DateTime(hoje.year, hoje.month, hoje.day + dias);
+    final ings = await _pb
+        .collection('lotes_ingrediente')
+        .getFullList(
+          filter:
+              'empresa = "$_empresaId" && esgotado != true && validade != "" '
+              '&& validade <= "${_fim(mais(diasAvisoIngrediente))}"',
+          expand: 'ingrediente',
+        );
+    final prods = await _pb
+        .collection('lotes_producao')
+        .getFullList(
+          filter:
+              'empresa = "$_empresaId" && esgotado != true && validade != "" '
+              '&& validade <= "${_fim(mais(diasAvisoProduto))}"',
+        );
+    return alertasDeValidade(
+      hoje: hoje,
+      ingredientes: [
+        for (final r in ings)
+          (
+            id: r.id,
+            nome:
+                r
+                    .get<List<RecordModel>>('expand.ingrediente', const [])
+                    .map((e) => e.getStringValue('nome'))
+                    .firstOrNull ??
+                'Ingrediente',
+            lote: r.getStringValue('lote'),
+            validade: LoteIngrediente.fromRecord(r).validade,
+            esgotado: r.getBoolValue('esgotado'),
+          ),
+      ],
+      produtos: [
+        for (final r in prods)
+          (
+            id: r.id,
+            nome: r.getStringValue('ficha_nome'),
+            lote: r.getStringValue('codigo'),
+            validade: LoteProducao.fromRecord(r).validade,
+            quantidade: r.getDoubleValue('quantidade'),
+            esgotado: r.getBoolValue('esgotado'),
+          ),
+      ],
+    );
+  }
+
+  /// O lote já foi todo usado, vendido ou deitado fora: deixa de avisar.
+  Future<void> marcarEsgotado(AlertaValidade a) => _pb
+      .collection(
+        a.tipo == TipoValidade.ingrediente
+            ? 'lotes_ingrediente'
+            : 'lotes_producao',
+      )
+      .update(a.id, body: {'esgotado': true});
 }
 
 final lotesRepositoryProvider = Provider<LotesRepository>(
@@ -177,6 +240,12 @@ final lotesRepositoryProvider = Provider<LotesRepository>(
 final lotesRecentesProvider = FutureProvider.autoDispose<List<LoteProducao>>(
   (ref) => ref.watch(lotesRepositoryProvider).recentes(),
 );
+
+/// Os lotes com a validade a acabar (cartão no Início e aviso nos Lotes).
+final alertasValidadeProvider =
+    FutureProvider.autoDispose<List<AlertaValidade>>(
+      (ref) => ref.watch(lotesRepositoryProvider).validadesAAcabar(),
+    );
 
 final loteProvider = FutureProvider.autoDispose.family<LoteProducao?, String>(
   (ref, codigo) => ref.watch(lotesRepositoryProvider).porCodigo(codigo),

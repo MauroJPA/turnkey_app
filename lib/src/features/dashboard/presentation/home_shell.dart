@@ -36,6 +36,8 @@ import '../../settings/data/backups_repository.dart';
 import '../../settings/data/empresa_repository.dart';
 import '../../settings/domain/empresa.dart';
 import '../../shopping/application/shopping_providers.dart';
+import '../../traceability/data/lotes_repository.dart';
+import '../../traceability/domain/validades.dart';
 
 /// Ecrã inicial: painel com os números que precisam de atenção + atalhos.
 class HomeShell extends ConsumerWidget {
@@ -98,6 +100,10 @@ class HomeShell extends ConsumerWidget {
     final notasHoje = podeVerPessoas
         ? ref.watch(notasParaHojeProvider)
         : const <Nota>[];
+    final validades = acessivel('producao')
+        ? (ref.watch(alertasValidadeProvider).valueOrNull ??
+              const <AlertaValidade>[])
+        : const <AlertaValidade>[];
     final saidasEmFalta = podeVerPessoas
         ? ref.watch(saidasPorMarcarProvider)
         : const <SaidaPorMarcar>[];
@@ -271,6 +277,18 @@ class HomeShell extends ConsumerWidget {
                   .join(', '),
               destaque: true,
               onTap: () => context.go(Routes.aprovacoes),
+            ),
+          if (validades.isNotEmpty)
+            _StatCard(
+              icon: Icons.event_busy_outlined,
+              titulo: 'Validades a acabar',
+              valor: '${validades.length}',
+              subtitulo: validades
+                  .take(3)
+                  .map((a) => '${a.nome} (${a.quando})')
+                  .join(', '),
+              destaque: validades.any((a) => a.dias <= 0),
+              onTap: () => context.go(Routes.productionLotes),
             ),
           if (saidasEmFalta.isNotEmpty)
             _StatCard(

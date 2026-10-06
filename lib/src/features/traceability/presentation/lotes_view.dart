@@ -9,6 +9,7 @@ import '../../../core/widgets/async_value_view.dart';
 import '../data/lotes_repository.dart';
 import '../domain/lote.dart';
 import 'novo_lote_sheet.dart';
+import 'validades_card.dart';
 
 /// Lotes de produção (rastreabilidade): a lista dos que já registaste e o
 /// botão para criar um novo. Cada lote tem uma etiqueta com QR e a sua página.
@@ -55,6 +56,7 @@ class _LotesViewState extends ConsumerState<LotesView> {
               child: ListView(
                 padding: const EdgeInsets.only(bottom: 96),
                 children: [
+                  const ValidadesCard(),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
                     child: Text(

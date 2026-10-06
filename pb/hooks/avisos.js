@@ -64,6 +64,56 @@ function ausentesHoje(app, empresaId) {
   return out;
 }
 
+// Lotes com a validade a acabar: ingredientes (5 dias) e produtos (hoje/amanhã).
+function validadesAAcabar(app, empresaId) {
+  const out = [];
+  const dia = (d) => hojeISO(d);
+  const mais = (n) => {
+    const d = new Date();
+    d.setDate(d.getDate() + n);
+    return dia(d);
+  };
+  const hoje = hojeISO();
+  const limiteMax = (iso) => iso + ' 23:59:59.999Z';
+  const quando = (iso) => {
+    const dias = Math.round((new Date(iso + 'T12:00:00').getTime() - new Date(hoje + 'T12:00:00').getTime()) / 86400000);
+    if (dias === 0) return 'vence hoje';
+    if (dias === 1) return 'vence amanhã';
+    if (dias < 0) return 'vencido há ' + -dias + (dias === -1 ? ' dia' : ' dias');
+    return 'vence em ' + dias + ' dias';
+  };
+  const antigo = mais(-14);
+  const ings = app.findRecordsByFilter(
+    'lotes_ingrediente',
+    "empresa = {:e} && esgotado != true && validade != '' && validade <= {:l} && validade >= {:a}",
+    'validade',
+    30,
+    0,
+    { e: empresaId, l: limiteMax(mais(5)), a: antigo + ' 00:00:00.000Z' },
+  );
+  for (const r of ings) {
+    let nome = 'Ingrediente';
+    try {
+      nome = app.findRecordById('ingredientes', r.getString('ingrediente')).getString('nome');
+    } catch (_) {}
+    const v = String(r.getString('validade')).substring(0, 10);
+    out.push(nome + ' · lote ' + r.getString('lote') + ' — ' + quando(v));
+  }
+  const prods = app.findRecordsByFilter(
+    'lotes_producao',
+    "empresa = {:e} && esgotado != true && quantidade > 0 && validade != '' && validade <= {:l} && validade >= {:a}",
+    'validade',
+    30,
+    0,
+    { e: empresaId, l: limiteMax(mais(1)), a: antigo + ' 00:00:00.000Z' },
+  );
+  for (const r of prods) {
+    const v = String(r.getString('validade')).substring(0, 10);
+    out.push(r.getString('ficha_nome') + ' · lote ' + r.getString('codigo') + ' (' + Math.round(r.getFloat('quantidade')) + ' un) — ' + quando(v));
+  }
+  return out;
+}
+
 // Quem entrou e ainda não marcou a saída: sem saída há mais de 16 h ou, se a
 // escala diz quando o turno acaba, mais de 60 min depois do fim.
 function saidasPorMarcar(app, empresaId) {
@@ -233,6 +283,7 @@ function montar(app, empresaId, cfg) {
   if (cfg.getBool('inc_precos')) sec('Preços que subiram (24 h)', seguro(() => precosSubiram(app, empresaId)));
   sec('Ausentes hoje', seguro(() => ausentesHoje(app, empresaId)));
   sec('Saída por marcar', seguro(() => saidasPorMarcar(app, empresaId)));
+  sec('Validades a acabar', seguro(() => validadesAAcabar(app, empresaId)));
 
   let nome = '';
   try {

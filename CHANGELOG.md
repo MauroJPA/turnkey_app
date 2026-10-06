@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.99.0 — 2026-10-06 — Alertas de validade por lote
+
+Alertas de validade por lote.
+
+- **Produção → Lotes**: no topo, um cartão **"Validades a acabar"** com os lotes que vencem em breve — **ingredientes** a 5 dias ou menos da validade e **produtos** que vencem hoje ou amanhã (e os que acabaram de vencer) — com o nome, o lote, as unidades e "vence amanhã" / "vencido há 2 dias". Vermelho se já há vencidos.
+- **Um toque e some**: **"Já usado"** (ingrediente) ou **"Vendido/retirado"** (produto) marca o lote como esgotado e deixa de avisar. Os lotes vencidos há mais de 14 dias deixam de avisar sozinhos.
+- **Início**: novo cartão **"Validades a acabar"** (destacado se há algo a vencer hoje ou vencido).
+- **Resumo diário (Telegram/email)**: nova secção "Validades a acabar", com a mesma regra, calculada no servidor.
+- Usa os lotes que já registas ao receber ingredientes e ao produzir; só avisa de lotes com validade registada.
+- Servidor: migration `1791070000_lotes_esgotado` (campo `esgotado` nos lotes). Sem endpoints novos.
+- Testes: janelas de aviso, esgotados, vencidos antigos, ordem; verificações no servidor (resumo avisa, só a equipa marca como esgotado, depois desaparece). Verificado no browser.
+
 ## 1.98.0 — 2026-10-06 — Quantos assar: agendar e avaliar
 
 Quantos assar → agendar a produção num toque, e ver como a previsão tem acertado.

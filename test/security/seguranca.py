@@ -978,6 +978,33 @@ def teste_lotes():
     check(s in (401, 403), 'sem sessão não há sugestão', f'status {s}')
     s, _, _ = call('DELETE', f'/api/collections/lotes_producao/records/{lpid}', tok=tok['adminA'])
     check(s in (200, 204), 'administrador apaga o lote de produção', f'status {s}')
+    # validades a acabar
+    import datetime as _dt2
+    hj = _dt2.date.today()
+    amanha = hj + _dt2.timedelta(days=1)
+    s, r1, _ = call('POST', '/api/collections/lotes_ingrediente/records',
+                    {'empresa': empresas['A'], 'ingrediente': ingA, 'lote': 'L-VAL-1', 'validade': amanha.isoformat() + ' 00:00:00.000Z'}, su)
+    s, r2, _ = call('POST', '/api/collections/lotes_producao/records',
+                    {'empresa': empresas['A'], 'codigo': 'VAL-TEST-1', 'ficha': fichaA, 'ficha_nome': 'Produto Val',
+                     'data_producao': hj.isoformat() + ' 00:00:00.000Z', 'quantidade': 12, 'validade': hj.isoformat() + ' 00:00:00.000Z'}, su)
+    s, r, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': False}, tok['adminA'])
+    texto = r.get('texto', '')
+    check('Validades a acabar' in texto and 'L-VAL-1' in texto and 'vence amanhã' in texto, 'o resumo avisa de um ingrediente que vence amanhã', texto[-250:])
+    check('VAL-TEST-1' in texto and '12 un' in texto and 'vence hoje' in texto, 'o resumo avisa de um produto que vence hoje', texto[-250:])
+    s, _, _ = call('PATCH', f'/api/collections/lotes_ingrediente/records/{r1.get("id")}', {'esgotado': True}, tok['viewerA'])
+    check(s in (400, 403, 404), 'Leitura não marca lotes como esgotados', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/lotes_ingrediente/records/{r1.get("id")}', {'esgotado': True}, tok['editorA'])
+    check(s == 200, 'o editor marca um lote de ingrediente como esgotado', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/lotes_producao/records/{r2.get("id")}', {'esgotado': True}, tok['editorA'])
+    check(s == 200, 'o editor marca um lote de produto como esgotado', f'status {s}')
+    s, r, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': False}, tok['adminA'])
+    check('L-VAL-1' not in r.get('texto', '') and 'VAL-TEST-1' not in r.get('texto', ''), 'depois de esgotados, deixam de avisar')
+    for x in (r1, r2):
+        pass
+    if r1.get('id'):
+        call('DELETE', f'/api/collections/lotes_ingrediente/records/{r1["id"]}', tok=su)
+    if r2.get('id'):
+        call('DELETE', f'/api/collections/lotes_producao/records/{r2["id"]}', tok=su)
 
 
 def teste_quiosque_offline():

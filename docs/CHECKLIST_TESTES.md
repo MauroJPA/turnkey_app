@@ -1828,6 +1828,15 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] "Como a previsão tem acertado": mostra a % de acerto e, aberto, os últimos 7 dias com "faltou/sobrou" e os sabores que mais falharam
 - [ ] Um utilizador de Leitura não vê o botão "Agendar produção"
 
+## 127. Alertas de validade por lote
+
+- [ ] Registar um lote de ingrediente com validade daqui a 2 dias: aparece em Produção → Lotes ("vence em 2 dias") e no cartão "Validades a acabar" do Início
+- [ ] Um lote de produto (ex.: validade 5 dias) aparece quando vence amanhã/hoje, com as unidades
+- [ ] "Já usado" / "Vendido/retirado" tira o aviso do lote
+- [ ] Um lote vencido aparece a vermelho; vencido há mais de 14 dias já não aparece
+- [ ] O resumo diário traz a secção "Validades a acabar"
+- [ ] Lotes sem validade registada nunca dão aviso
+
 ---
 
 ## Notas / ajustes pedidos

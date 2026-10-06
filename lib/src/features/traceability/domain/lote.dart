@@ -10,6 +10,7 @@ class LoteIngrediente {
     required this.lote,
     this.validade,
     this.fornecedor = '',
+    this.esgotado = false,
   });
 
   final String id;
@@ -17,6 +18,9 @@ class LoteIngrediente {
   final String lote;
   final DateTime? validade;
   final String fornecedor;
+
+  /// Já foi todo usado ou deitado fora: deixa de dar aviso de validade.
+  final bool esgotado;
 
   bool passouValidade(DateTime hoje) =>
       validade != null &&
@@ -28,6 +32,7 @@ class LoteIngrediente {
     lote: r.getStringValue('lote'),
     validade: _data(r.getStringValue('validade')),
     fornecedor: r.getStringValue('fornecedor'),
+    esgotado: r.getBoolValue('esgotado'),
   );
 }
 
