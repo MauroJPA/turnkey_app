@@ -1918,6 +1918,14 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Se na semana passada não houve vendas/desperdício/ponto, essas secções não aparecem
 - [ ] Os números de horas batem com o mês no Pessoas → Ponto
 
+## 137. Sugestão de preço quando um ingrediente sobe
+
+- [ ] Inventário → Preços → Subidas: abrir uma subida com fichas que têm preço de venda mostra a "Sugestão: €X para a margem voltar a Y%"
+- [ ] "Aplicar €X" pede confirmação e, ao confirmar, o preço da ficha muda (confere na ficha técnica) e a sugestão desaparece
+- [ ] Uma ficha cujo preço já foi subido o suficiente não mostra sugestão
+- [ ] Uma ficha sem preço de venda mostra "sem preço de venda" e nenhuma sugestão
+- [ ] Como Leitura: vê a sugestão mas não o botão Aplicar
+
 ---
 
 ## Notas / ajustes pedidos

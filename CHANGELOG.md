@@ -2,6 +2,16 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.108.0 — 2026-10-06 — Sugestão de preço quando um ingrediente sobe
+
+Quando um ingrediente sobe, a app sugere o novo preço de venda.
+
+- **Inventário → Preços → Subidas**: ao abrir uma subida de preço, em cada ficha afetada aparece, a laranja, por exemplo **"Sugestão: €1,60 (hoje €1,00) para a margem voltar a 74% (hoje 56%)"** com o botão **"Aplicar €1,60"**. Um toque, confirmas, e o preço de venda da ficha passa a esse valor.
+- **Como se calcula**: o preço que tinhas dava uma certa margem com o custo antigo; para ter a mesma margem com o custo novo, o preço sem IVA passa a custo ÷ (1 − margem), soma-se o IVA e arredonda-se **para cima aos 5 cêntimos**.
+- **Usa o preço e o custo de hoje**: se já subiste o preço entretanto, sugere só o que falta; se já recuperaste a margem, a sugestão desaparece sozinha. Se o custo desceu, não sugere nada.
+- Só quem pode editar (não a Leitura) vê o botão. Nunca muda nada sozinho: tens sempre de confirmar, e podes alterar o preço depois na ficha.
+- Testes: manter a margem com e sem IVA, custo que desce ou fica igual, ficha sem preço, venda com prejuízo, preço já subido (total ou a meio caminho) e variações que o arredondamento não muda.
+
 ## 1.107.0 — 2026-10-06 — Resumo semanal para o proprietário
 
 Resumo semanal para o proprietário: como correu a semana, numa só mensagem.
