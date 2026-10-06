@@ -1739,6 +1739,11 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Tocar no aviso "N por enviar" com ligação: envia já
 - [ ] Sem Wi-Fi, registar uma temperatura: o teclado e o aviso de fora dos limites funcionam e o registo fica guardado
 
+## 117. Ficha técnica: janela de edição com rolagem
+
+- [ ] Fichas técnicas → Editar (lápis): consigo rolar os campos até ao fim (Conservação) e o botão Guardar está sempre visível por baixo
+- [ ] O mesmo numa "Nova ficha técnica" e com o teclado aberto no telemóvel
+
 ---
 
 ## Notas / ajustes pedidos

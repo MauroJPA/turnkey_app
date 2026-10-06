@@ -2,6 +2,13 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.90.1 — 2026-10-06 — Ficha técnica: janela de edição com rolagem
+
+Correção: a janela "Editar ficha" / "Nova ficha técnica" passa a rolar e o botão Guardar fica sempre visível.
+
+- Com os campos novos (temperatura do forno, formato, característica…) a janela ficou mais alta do que o ecrã e não dava para chegar ao botão **Guardar**. Agora os campos rolam dentro da janela e o botão **Guardar/Criar** fica fixo por baixo, mesmo em ecrãs baixos.
+- Sem alterações no servidor.
+
 ## 1.90.0 — 2026-10-06 — Quiosque offline
 
 Quiosque offline: se o Wi-Fi cair, as tarefas continuam a poder ser registadas.

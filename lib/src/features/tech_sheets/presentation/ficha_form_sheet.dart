@@ -148,216 +148,238 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
         top: 8,
         bottom: MediaQuery.of(context).viewInsets.bottom + 16,
       ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              editar ? 'Editar ficha' : 'Nova ficha técnica',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _nome,
-              decoration: const InputDecoration(labelText: 'Nome do produto *'),
-              textCapitalization: TextCapitalization.sentences,
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Obrigatório' : null,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _categoria,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Categoria (opcional)',
-                helperText: 'Escreve uma nova ou toca numa já usada.',
-              ),
-              onChanged: (_) => setState(() {}),
-            ),
-            if (categoriasUsadas.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Wrap(
-                  spacing: 6,
-                  runSpacing: 0,
+      // os campos rolam; o botão Guardar fica sempre à vista por baixo
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Flexible(
+            child: SingleChildScrollView(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    for (final c in categoriasUsadas)
-                      ChoiceChip(
-                        label: Text(c),
-                        selected: _categoria.text.trim() == c,
-                        onSelected: (_) => setState(
-                          () => _categoria.text = _categoria.text.trim() == c
-                              ? ''
-                              : c,
+                    Text(
+                      editar ? 'Editar ficha' : 'Nova ficha técnica',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _nome,
+                      decoration: const InputDecoration(
+                        labelText: 'Nome do produto *',
+                      ),
+                      textCapitalization: TextCapitalization.sentences,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Obrigatório'
+                          : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _categoria,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: const InputDecoration(
+                        labelText: 'Categoria (opcional)',
+                        helperText: 'Escreve uma nova ou toca numa já usada.',
+                      ),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    if (categoriasUsadas.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Wrap(
+                          spacing: 6,
+                          runSpacing: 0,
+                          children: [
+                            for (final c in categoriasUsadas)
+                              ChoiceChip(
+                                label: Text(c),
+                                selected: _categoria.text.trim() == c,
+                                onSelected: (_) => setState(
+                                  () => _categoria.text =
+                                      _categoria.text.trim() == c ? '' : c,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _subnome,
+                      maxLength: 60,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: const InputDecoration(
+                        labelText: 'Subnome (opcional)',
+                        helperText:
+                            'Ex.: Red Velvet. Pode ir na etiqueta, por baixo '
+                            'do nome.',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            initialValue: valor,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Formato do cookie (opcional)',
+                              helperText:
+                                  'Mini, Recheado, Simples… define o peso por '
+                                  'unidade. Se não existe, cria-o aqui.',
+                              helperMaxLines: 2,
+                            ),
+                            items: [
+                              const DropdownMenuItem(
+                                value: '',
+                                child: Text('Sem formato'),
+                              ),
+                              for (final f in visiveis)
+                                DropdownMenuItem(
+                                  value: f.id,
+                                  child: Text(
+                                    f.rotulo,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              const DropdownMenuItem(
+                                value: _novoFormato,
+                                child: Text('＋ Novo formato…'),
+                              ),
+                            ],
+                            onChanged: (v) {
+                              if (v == _novoFormato) {
+                                _criarFormato();
+                              } else {
+                                setState(() => _formatoId = v ?? '');
+                              }
+                            },
+                          ),
+                        ),
+                        if (valor.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: IconButton(
+                              tooltip: 'Editar ou apagar este formato',
+                              icon: const Icon(Icons.edit_outlined),
+                              onPressed: () => _editarFormato(
+                                visiveis.firstWhere((f) => f.id == valor),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _descricao,
+                      maxLength: 300,
+                      minLines: 1,
+                      maxLines: 3,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: const InputDecoration(
+                        labelText: 'Característica (opcional)',
+                        helperText:
+                            'Curta: aparece por baixo do nome na etiqueta. '
+                            'Ex.: Brigadeiro de queijo creme e compota de frutos '
+                            'vermelhos.',
+                        helperMaxLines: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _validade,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Validade (dias)',
+                        helperText: 'a contar da data de fabrico',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _assadura,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Tempo de assadura (minutos)',
+                        helperText:
+                            'Aparece na montagem do produto e no cronómetro do '
+                            'forno.',
+                        helperMaxLines: 2,
+                      ),
+                      validator: (v) {
+                        final t = (v ?? '').trim();
+                        if (t.isEmpty) return null;
+                        final n = int.tryParse(t);
+                        return (n == null || n < 1 || n > 600)
+                            ? 'Entre 1 e 600 minutos'
+                            : null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _temperatura,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Temperatura do forno (°C)',
+                        suffixText: '°C',
+                        helperText:
+                            'Aparece ao assar, junto com o tempo: "Assar a 170 °C '
+                            'durante 11 min".',
+                        helperMaxLines: 2,
+                      ),
+                      validator: (v) {
+                        final t = (v ?? '').trim();
+                        if (t.isEmpty) return null;
+                        final n = int.tryParse(t);
+                        return (n == null || n < 50 || n > 400)
+                            ? 'Entre 50 e 400 °C'
+                            : null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      key: ValueKey('conservacao-$_conservacaoSel'),
+                      initialValue: _conservacaoSel,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Conservação',
+                      ),
+                      items: [
+                        const DropdownMenuItem(
+                          value: '',
+                          child: Text('— escolher —'),
+                        ),
+                        for (final c in conservacoesPadrao)
+                          DropdownMenuItem(value: c, child: Text(c)),
+                        const DropdownMenuItem(
+                          value: _outro,
+                          child: Text('Outro…'),
+                        ),
+                      ],
+                      onChanged: (v) =>
+                          setState(() => _conservacaoSel = v ?? ''),
+                    ),
+                    if (_conservacaoSel == _outro)
+                      TextFormField(
+                        controller: _conservacao,
+                        maxLength: 200,
+                        decoration: const InputDecoration(
+                          labelText: 'Modo de conservação',
                         ),
                       ),
                   ],
                 ),
               ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _subnome,
-              maxLength: 60,
-              textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(
-                labelText: 'Subnome (opcional)',
-                helperText:
-                    'Ex.: Red Velvet. Pode ir na etiqueta, por baixo '
-                    'do nome.',
-              ),
             ),
-            const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    initialValue: valor,
-                    isExpanded: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Formato do cookie (opcional)',
-                      helperText:
-                          'Mini, Recheado, Simples… define o peso por '
-                          'unidade. Se não existe, cria-o aqui.',
-                      helperMaxLines: 2,
-                    ),
-                    items: [
-                      const DropdownMenuItem(
-                        value: '',
-                        child: Text('Sem formato'),
-                      ),
-                      for (final f in visiveis)
-                        DropdownMenuItem(
-                          value: f.id,
-                          child: Text(
-                            f.rotulo,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      const DropdownMenuItem(
-                        value: _novoFormato,
-                        child: Text('＋ Novo formato…'),
-                      ),
-                    ],
-                    onChanged: (v) {
-                      if (v == _novoFormato) {
-                        _criarFormato();
-                      } else {
-                        setState(() => _formatoId = v ?? '');
-                      }
-                    },
-                  ),
-                ),
-                if (valor.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: IconButton(
-                      tooltip: 'Editar ou apagar este formato',
-                      icon: const Icon(Icons.edit_outlined),
-                      onPressed: () => _editarFormato(
-                        visiveis.firstWhere((f) => f.id == valor),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _descricao,
-              maxLength: 300,
-              minLines: 1,
-              maxLines: 3,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Característica (opcional)',
-                helperText:
-                    'Curta: aparece por baixo do nome na etiqueta. '
-                    'Ex.: Brigadeiro de queijo creme e compota de frutos '
-                    'vermelhos.',
-                helperMaxLines: 2,
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _validade,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Validade (dias)',
-                helperText: 'a contar da data de fabrico',
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _assadura,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Tempo de assadura (minutos)',
-                helperText:
-                    'Aparece na montagem do produto e no cronómetro do '
-                    'forno.',
-                helperMaxLines: 2,
-              ),
-              validator: (v) {
-                final t = (v ?? '').trim();
-                if (t.isEmpty) return null;
-                final n = int.tryParse(t);
-                return (n == null || n < 1 || n > 600)
-                    ? 'Entre 1 e 600 minutos'
-                    : null;
-              },
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _temperatura,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Temperatura do forno (°C)',
-                suffixText: '°C',
-                helperText:
-                    'Aparece ao assar, junto com o tempo: "Assar a 170 °C '
-                    'durante 11 min".',
-                helperMaxLines: 2,
-              ),
-              validator: (v) {
-                final t = (v ?? '').trim();
-                if (t.isEmpty) return null;
-                final n = int.tryParse(t);
-                return (n == null || n < 50 || n > 400)
-                    ? 'Entre 50 e 400 °C'
-                    : null;
-              },
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              key: ValueKey('conservacao-$_conservacaoSel'),
-              initialValue: _conservacaoSel,
-              isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Conservação'),
-              items: [
-                const DropdownMenuItem(value: '', child: Text('— escolher —')),
-                for (final c in conservacoesPadrao)
-                  DropdownMenuItem(value: c, child: Text(c)),
-                const DropdownMenuItem(value: _outro, child: Text('Outro…')),
-              ],
-              onChanged: (v) => setState(() => _conservacaoSel = v ?? ''),
-            ),
-            if (_conservacaoSel == _outro)
-              TextFormField(
-                controller: _conservacao,
-                maxLength: 200,
-                decoration: const InputDecoration(
-                  labelText: 'Modo de conservação',
-                ),
-              ),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: _submit,
-              child: Text(editar ? 'Guardar' : 'Criar'),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+          FilledButton(
+            onPressed: _submit,
+            child: Text(editar ? 'Guardar' : 'Criar'),
+          ),
+        ],
       ),
     );
   }
