@@ -194,11 +194,30 @@ void main() {
       final ontem = DateTime(2026, 10, 2);
       final movs = [
         mov('producao', 'loja', 'f1', 24, dia: ontem),
-        mov('desperdicio', 'loja', 'f1', 2, dia: ontem, motivo: MotivoDesperdicio.queimado),
-        mov('desperdicio', 'loja', 'f1', 1, dia: ontem, motivo: MotivoDesperdicio.consumoProprio),
+        mov(
+          'desperdicio',
+          'loja',
+          'f1',
+          2,
+          dia: ontem,
+          motivo: MotivoDesperdicio.queimado,
+        ),
+        mov(
+          'desperdicio',
+          'loja',
+          'f1',
+          1,
+          dia: ontem,
+          motivo: MotivoDesperdicio.consumoProprio,
+        ),
       ];
       final vendas = [
-        VendaDoLocal(localId: 'loja', data: ontem, fichaId: 'f1', quantidade: 15),
+        VendaDoLocal(
+          localId: 'loja',
+          data: ontem,
+          fichaId: 'f1',
+          quantidade: 15,
+        ),
       ];
       final l = calcularContagemDia(
         localId: 'loja',
@@ -221,8 +240,18 @@ void main() {
         mov('producao', 'loja', 'f1', 10, dia: DateTime(2026, 10, 2)),
       ];
       final vendas = [
-        VendaDoLocal(localId: 'loja', data: DateTime(2026, 10, 1), fichaId: 'f1', quantidade: 25),
-        VendaDoLocal(localId: 'loja', data: DateTime(2026, 10, 2), fichaId: 'f1', quantidade: 8),
+        VendaDoLocal(
+          localId: 'loja',
+          data: DateTime(2026, 10, 1),
+          fichaId: 'f1',
+          quantidade: 25,
+        ),
+        VendaDoLocal(
+          localId: 'loja',
+          data: DateTime(2026, 10, 2),
+          fichaId: 'f1',
+          quantidade: 8,
+        ),
       ];
       final l = calcularContagemDia(
         localId: 'loja',
@@ -253,9 +282,16 @@ void main() {
     });
 
     test('a estimativa nunca fica negativa', () {
-      final movs = [mov('producao', 'loja', 'f1', 5, dia: DateTime(2026, 10, 2))];
+      final movs = [
+        mov('producao', 'loja', 'f1', 5, dia: DateTime(2026, 10, 2)),
+      ];
       final vendas = [
-        VendaDoLocal(localId: 'loja', data: DateTime(2026, 10, 2), fichaId: 'f1', quantidade: 9),
+        VendaDoLocal(
+          localId: 'loja',
+          data: DateTime(2026, 10, 2),
+          fichaId: 'f1',
+          quantidade: 9,
+        ),
       ];
       final l = calcularContagemDia(
         localId: 'loja',
@@ -323,6 +359,73 @@ void main() {
       expect(r.porMotivo[null], 1);
       expect(r.porSabor['f2'], 7);
       expect(r.porLocal['alv'], 6);
+    });
+
+    test('resumoDesperdicio: custo por motivo, sabor e local; evitável', () {
+      final r = resumoDesperdicio(
+        movimentos: [
+          mov(
+            'desperdicio',
+            'loja',
+            'f1',
+            4,
+            motivo: MotivoDesperdicio.queimado,
+          ),
+          mov(
+            'desperdicio',
+            'alv',
+            'f2',
+            6,
+            motivo: MotivoDesperdicio.foraPrazo,
+          ),
+          mov(
+            'desperdicio',
+            'loja',
+            'f2',
+            2,
+            motivo: MotivoDesperdicio.degustacao,
+          ),
+          mov('desperdicio', 'loja', 'f1', 1),
+        ],
+        custoPorFicha: {'f1': 1.0, 'f2': 2.0},
+      );
+      expect(r.custo, 4 * 1.0 + 8 * 2.0 + 1 * 1.0);
+      expect(r.custoPorMotivo[MotivoDesperdicio.queimado], 4.0);
+      expect(r.custoPorMotivo[MotivoDesperdicio.foraPrazo], 12.0);
+      expect(r.custoPorMotivo[MotivoDesperdicio.degustacao], 4.0);
+      expect(r.custoPorMotivo[null], 1.0);
+      expect(r.custoPorSabor['f2'], 16.0);
+      expect(r.custoPorLocal['alv'], 12.0);
+      // evitável = queimado + fora de prazo; degustação é escolha; sem motivo não conta
+      expect(r.custoEvitavel, 16.0);
+      expect(r.custoOferta, 4.0);
+      expect(r.maiorPerdaEvitavel, MotivoDesperdicio.foraPrazo);
+    });
+
+    test('sem desperdício evitável não há "maior perda"', () {
+      final r = resumoDesperdicio(
+        movimentos: [
+          mov(
+            'desperdicio',
+            'loja',
+            'f1',
+            3,
+            motivo: MotivoDesperdicio.consumoProprio,
+          ),
+        ],
+        custoPorFicha: {'f1': 1.0},
+      );
+      expect(r.maiorPerdaEvitavel, isNull);
+      expect(r.custoEvitavel, 0);
+      expect(r.custoOferta, 3.0);
+    });
+
+    test('motivos evitáveis têm dica; os de escolha não', () {
+      expect(MotivoDesperdicio.queimado.evitavel, isTrue);
+      expect(MotivoDesperdicio.queimado.dica, isNotNull);
+      expect(MotivoDesperdicio.degustacao.evitavel, isFalse);
+      expect(MotivoDesperdicio.degustacao.dica, isNull);
+      expect(MotivoDesperdicio.outro.evitavel, isFalse);
     });
 
     test('balancoDoLocal: quantos foram para Alvalade e quantos voltaram', () {

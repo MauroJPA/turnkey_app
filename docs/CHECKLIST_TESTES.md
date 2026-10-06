@@ -1885,6 +1885,15 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] "Mostrar todos" lista também os que já compras ao melhor preço
 - [ ] O separador "Preços" do Inventário mostra "N a poupar" quando há poupanças e não há subidas por ver
 
+## 133. Custo do desperdício por motivo e sabor
+
+- [ ] Contagem → gráfico → Desperdício: cada barra mostra "N un · €X" e vem ordenada pelo custo
+- [ ] O cartão de cima mostra "Evitável" (€) quando há queimados, fora do prazo, quebrados ou erros
+- [ ] A dica "A perda evitável que mais custou: …" aparece com o motivo e o valor certos
+- [ ] A linha de comparação diz "% a mais/a menos que no período anterior" (a vermelho/verde) e muda ao trocar a semana/mês
+- [ ] Desperdício só de degustação/consumo próprio: sem dica e sem "Evitável"
+- [ ] Sem registos no período anterior: aparece "Sem desperdício registado no período anterior para comparar."
+
 ---
 
 ## Notas / ajustes pedidos

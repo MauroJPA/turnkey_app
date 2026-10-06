@@ -36,6 +36,23 @@ enum MotivoDesperdicio {
   final String api;
   final String label;
 
+  /// Perda que se pode evitar mexendo no dia a dia (forno, prazos, manuseio,
+  /// receita). Degustação e consumo próprio são escolhas; "outro" fica de fora.
+  bool get evitavel =>
+      this == queimado ||
+      this == foraPrazo ||
+      this == quebrado ||
+      this == erroProducao;
+
+  /// Pista do que fazer para reduzir este desperdício.
+  String? get dica => switch (this) {
+    queimado => 'Confirma a temperatura e o tempo do forno nas fichas.',
+    foraPrazo => 'Assa menos: usa o "Quantos assar" e agenda só o que vendes.',
+    quebrado => 'Revê a embalagem e o transporte dos cookies.',
+    erroProducao => 'Revê a receita/ficha e o procedimento com a equipa.',
+    _ => null,
+  };
+
   static MotivoDesperdicio? fromApi(String? v) {
     for (final m in MotivoDesperdicio.values) {
       if (m.api == v) return m;

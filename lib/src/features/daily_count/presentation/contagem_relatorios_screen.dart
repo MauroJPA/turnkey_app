@@ -75,6 +75,16 @@ class _ContagemRelatoriosScreenState
                   children: [
                     _Desperdicio(
                       movimentos: todos,
+                      anteriores:
+                          ref
+                              .watch(
+                                movimentosProvider((
+                                  desde: _periodo.anterior.desde,
+                                  ate: _periodo.anterior.ate,
+                                )),
+                              )
+                              .valueOrNull ??
+                          const [],
                       nomes: nomes,
                       custos: custos,
                       locais: locais,
@@ -101,12 +111,16 @@ class _ContagemRelatoriosScreenState
 class _Desperdicio extends ConsumerWidget {
   const _Desperdicio({
     required this.movimentos,
+    required this.anteriores,
     required this.nomes,
     required this.custos,
     required this.locais,
   });
 
   final List<MovimentoProduto> movimentos;
+
+  /// Registos do período anterior (para comparar o custo).
+  final List<MovimentoProduto> anteriores;
   final Map<String, String> nomes;
   final Map<String, double> custos;
   final List<Local> locais;
@@ -114,8 +128,13 @@ class _Desperdicio extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
     final fmt = ref.watch(moneyFormatProvider);
     final r = resumoDesperdicio(movimentos: movimentos, custoPorFicha: custos);
+    final ant = resumoDesperdicio(
+      movimentos: anteriores,
+      custoPorFicha: custos,
+    );
     final nomeLocal = {for (final l in locais) l.id: l.nome};
 
     if (r.unidades == 0) {
@@ -132,7 +151,13 @@ class _Desperdicio extends ConsumerWidget {
       );
     }
 
-    Widget barra(String titulo, double valor, double max) => Padding(
+    // cada barra pesa o custo (o que dói no bolso); ao lado, as unidades
+    Widget barra(
+      String titulo,
+      double unidades,
+      double custo,
+      double maxCusto,
+    ) => Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,12 +166,12 @@ class _Desperdicio extends ConsumerWidget {
             children: [
               Expanded(child: Text(titulo)),
               Text(
-                _n(valor),
+                '${_n(unidades)} un · ${fmt(custo)}',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
           ),
-          LinearProgressIndicator(value: max > 0 ? valor / max : 0),
+          LinearProgressIndicator(value: maxCusto > 0 ? custo / maxCusto : 0),
         ],
       ),
     );
@@ -166,6 +191,8 @@ class _Desperdicio extends ConsumerWidget {
               children: [
                 _kpi('Deitados fora', _n(r.unidades), tt),
                 _kpi('Custo', fmt(r.custo), tt),
+                if (r.custoEvitavel > 0)
+                  _kpi('Evitável', fmt(r.custoEvitavel), tt),
                 if (r.assados > 0)
                   _kpi(
                     '% dos assados',
@@ -176,19 +203,62 @@ class _Desperdicio extends ConsumerWidget {
             ),
           ),
         ),
+        if (ant.custo > 0 || r.custo > 0)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
+            child: _Comparacao(atual: r.custo, anterior: ant.custo, fmt: fmt),
+          ),
+        if (r.maiorPerdaEvitavel != null)
+          Card(
+            margin: const EdgeInsets.only(top: 12),
+            color: cs.tertiaryContainer.withValues(alpha: 0.5),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.lightbulb_outline),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'A perda evitável que mais custou: '
+                      '${r.maiorPerdaEvitavel!.label.toLowerCase()} — '
+                      '${fmt(r.custoPorMotivo[r.maiorPerdaEvitavel]!)}. '
+                      '${r.maiorPerdaEvitavel!.dica ?? ''}',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         const SizedBox(height: 12),
         Text('Por motivo', style: tt.titleSmall),
-        for (final e in ordenado(r.porMotivo))
-          barra(e.key?.label ?? 'Sem motivo', e.value, r.unidades),
+        for (final e in ordenado(r.custoPorMotivo))
+          barra(
+            e.key?.label ?? 'Sem motivo',
+            r.porMotivo[e.key] ?? 0,
+            e.value,
+            r.custo,
+          ),
         const SizedBox(height: 12),
         Text('Por sabor', style: tt.titleSmall),
-        for (final e in ordenado(r.porSabor))
-          barra(nomes[e.key] ?? 'Produto', e.value, r.unidades),
+        for (final e in ordenado(r.custoPorSabor))
+          barra(
+            nomes[e.key] ?? 'Produto',
+            r.porSabor[e.key] ?? 0,
+            e.value,
+            r.custo,
+          ),
         if (r.porLocal.length > 1) ...[
           const SizedBox(height: 12),
           Text('Por local', style: tt.titleSmall),
-          for (final e in ordenado(r.porLocal))
-            barra(nomeLocal[e.key] ?? 'Local', e.value, r.unidades),
+          for (final e in ordenado(r.custoPorLocal))
+            barra(
+              nomeLocal[e.key] ?? 'Local',
+              r.porLocal[e.key] ?? 0,
+              e.value,
+              r.custo,
+            ),
         ],
         const SizedBox(height: 12),
         Text(
@@ -207,6 +277,61 @@ class _Desperdicio extends ConsumerWidget {
       Text(v, style: tt.titleLarge),
     ],
   );
+}
+
+/// "▲ 18 % face ao período anterior (€12,40)": se o desperdício está a subir.
+class _Comparacao extends StatelessWidget {
+  const _Comparacao({
+    required this.atual,
+    required this.anterior,
+    required this.fmt,
+  });
+
+  final double atual;
+  final double anterior;
+  final MoneyFmt fmt;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    if (anterior <= 0) {
+      return Text(
+        'Sem desperdício registado no período anterior para comparar.',
+        style: Theme.of(context).textTheme.bodySmall,
+      );
+    }
+    final pct = (atual - anterior) / anterior * 100;
+    final subiu = pct > 0.5;
+    final desceu = pct < -0.5;
+    final cor = subiu
+        ? cs.error
+        : desceu
+        ? Colors.green
+        : cs.outline;
+    return Row(
+      children: [
+        Icon(
+          subiu
+              ? Icons.trending_up
+              : desceu
+              ? Icons.trending_down
+              : Icons.trending_flat,
+          color: cor,
+          size: 20,
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            subiu || desceu
+                ? '${pct.abs().toStringAsFixed(0)} % ${subiu ? 'a mais' : 'a menos'} '
+                      'que no período anterior (${fmt(anterior)})'
+                : 'Igual ao período anterior (${fmt(anterior)})',
+            style: TextStyle(color: cor),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _Balanco extends StatelessWidget {

@@ -2,6 +2,16 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.105.0 — 2026-10-06 — Custo do desperdício por motivo e sabor
+
+Custo do desperdício por motivo e por sabor — vês em euros onde se perde dinheiro e o que fazer.
+
+- **Contagem → ícone do gráfico → Desperdício**: cada motivo, sabor e local aparece agora com **unidades e o custo em €** (matéria-prima), ordenado pelo que **custa mais** (antes era só por unidades: 6 cookies caros pesavam o mesmo que 6 baratos).
+- **Evitável vs escolha**: o cartão de cima separa o **custo evitável** (queimado, fora do prazo, quebrado/caído, erro de produção) do que foi escolha (degustação, consumo próprio), para saberes o que dá para poupar.
+- **Dica para a maior perda evitável**: ex.: "A perda evitável que mais custou: queimado — €18,40. Confirma a temperatura e o tempo do forno nas fichas." (fora do prazo → assar menos com o "Quantos assar"; quebrado → embalagem/transporte; erro de produção → receita/procedimento).
+- **Comparação com o período anterior**: "▲ 18 % a mais que no período anterior (€12,40)" a vermelho se subiu, a verde se desceu — escolhe a semana/mês no seletor de cima como sempre.
+- Testes: custo por motivo/sabor/local, evitável vs escolha, maior perda evitável (e ausência dela), dicas só nos motivos evitáveis.
+
 ## 1.104.0 — 2026-10-06 — Comparador de preços entre fornecedores
 
 Comparador de preços: vê onde é mais barato comprar cada ingrediente.

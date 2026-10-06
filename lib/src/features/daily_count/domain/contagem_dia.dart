@@ -231,6 +231,9 @@ class ResumoDesperdicio {
     required this.porMotivo,
     required this.porSabor,
     required this.porLocal,
+    this.custoPorMotivo = const {},
+    this.custoPorSabor = const {},
+    this.custoPorLocal = const {},
   });
 
   final double unidades;
@@ -244,8 +247,42 @@ class ResumoDesperdicio {
   final Map<String, double> porSabor;
   final Map<String, double> porLocal;
 
+  /// O mesmo, mas em custo (unidades × custo da ficha).
+  final Map<MotivoDesperdicio?, double> custoPorMotivo;
+  final Map<String, double> custoPorSabor;
+  final Map<String, double> custoPorLocal;
+
   /// Desperdício como % dos cookies assados (0 se não há assados).
   double get percentDosAssados => assados > 0 ? unidades / assados * 100 : 0;
+
+  /// Custo do que se podia ter evitado (queimado, fora de prazo, quebrado, erro).
+  double get custoEvitavel => custoPorMotivo.entries
+      .where((e) => e.key?.evitavel ?? false)
+      .fold<double>(0, (s, e) => s + e.value);
+
+  /// Custo do que foi escolha (degustação, consumo próprio).
+  double get custoOferta => custoPorMotivo.entries
+      .where(
+        (e) =>
+            e.key == MotivoDesperdicio.degustacao ||
+            e.key == MotivoDesperdicio.consumoProprio,
+      )
+      .fold<double>(0, (s, e) => s + e.value);
+
+  /// O motivo evitável que mais custou (null se não há nenhum).
+  MotivoDesperdicio? get maiorPerdaEvitavel {
+    MotivoDesperdicio? melhor;
+    var max = 0.0;
+    for (final e in custoPorMotivo.entries) {
+      final k = e.key;
+      if (k == null || !k.evitavel) continue;
+      if (e.value > max) {
+        max = e.value;
+        melhor = k;
+      }
+    }
+    return melhor;
+  }
 }
 
 ResumoDesperdicio resumoDesperdicio({
@@ -258,11 +295,18 @@ ResumoDesperdicio resumoDesperdicio({
   final motivos = <MotivoDesperdicio?, double>{};
   final sabores = <String, double>{};
   final locais = <String, double>{};
+  final custoMotivos = <MotivoDesperdicio?, double>{};
+  final custoSabores = <String, double>{};
+  final custoLocais = <String, double>{};
   for (final m in movimentos) {
     if (m.tipo == TipoMovimento.producao) assados += m.quantidade;
     if (m.tipo != TipoMovimento.desperdicio) continue;
     unidades += m.quantidade;
-    custo += m.quantidade * (custoPorFicha[m.fichaId] ?? 0);
+    final c = m.quantidade * (custoPorFicha[m.fichaId] ?? 0);
+    custo += c;
+    custoMotivos[m.motivo] = (custoMotivos[m.motivo] ?? 0) + c;
+    custoSabores[m.fichaId] = (custoSabores[m.fichaId] ?? 0) + c;
+    custoLocais[m.localId] = (custoLocais[m.localId] ?? 0) + c;
     motivos[m.motivo] = (motivos[m.motivo] ?? 0) + m.quantidade;
     sabores[m.fichaId] = (sabores[m.fichaId] ?? 0) + m.quantidade;
     locais[m.localId] = (locais[m.localId] ?? 0) + m.quantidade;
@@ -274,6 +318,9 @@ ResumoDesperdicio resumoDesperdicio({
     porMotivo: motivos,
     porSabor: sabores,
     porLocal: locais,
+    custoPorMotivo: custoMotivos,
+    custoPorSabor: custoSabores,
+    custoPorLocal: custoLocais,
   );
 }
 
