@@ -1791,6 +1791,17 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Como administrador, um pedido de férias pendente mostra o cartão "Férias por aprovar" no Início
 - [ ] O nível Leitura não vê a página Pessoas
 
+## 123. Escala semanal da equipa
+
+- [ ] Pessoas → Escala → tocar no nome de alguém: o diálogo vem com os dias de trabalho marcados; Guardar → a semana aparece preenchida
+- [ ] Tocar num dia → "Folga" ou outro turno: o dia fica com moldura; "Voltar ao habitual" desfaz
+- [ ] Um dia de férias aprovadas aparece verde na escala; um dia em que a empresa não trabalha aparece "—"
+- [ ] O cartão "O meu horário" mostra a minha semana
+- [ ] Pessoas → Ponto: a pessoa mostra "previsto … (+/−…)" até ontem
+- [ ] Quiosque: depois de escolher a pessoa, o cartão do ponto mostra "Hoje: 08:00–16:30"
+- [ ] "Imprimir o mapa de horário" abre a semana com horas por pessoa
+- [ ] Um Editor vê a escala mas não consegue mudar nada; Leitura não vê a página
+
 ---
 
 ## Notas / ajustes pedidos

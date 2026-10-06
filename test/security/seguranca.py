@@ -1127,6 +1127,54 @@ def teste_anotacoes():
     check(s in (200, 204), 'a administração apaga notas de outros', f'status {s}')
 
 
+def teste_escala():
+    sec('7a10. Escala semanal')
+    uid = users['editorA']
+    m = {'empresa': empresas['A'], 'pessoa': f'u:{uid}', 'nome': 'Editor A', 'user': uid, 'dia_semana': 2,
+         'inicio': '08:00', 'fim': '16:30', 'pausa_min': 30}
+    s, _, _ = call('POST', '/api/collections/escala_modelo/records', m, tok['editorA'])
+    check(s in (400, 403), 'o editor não define horários', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/escala_modelo/records', m, tok['viewerA'])
+    check(s in (400, 403), 'Leitura não define horários', f'status {s}')
+    s, r, _ = call('POST', '/api/collections/escala_modelo/records', m, tok['adminA'])
+    check(s == 200, 'o administrador define o horário habitual', f'status {s} {str(r)[:100]}')
+    mid = r.get('id')
+    s, _, _ = call('POST', '/api/collections/escala_modelo/records', m, tok['adminA'])
+    check(s == 400, 'um só horário por pessoa e dia da semana', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/escala_modelo/records', {**m, 'dia_semana': 3, 'inicio': '25:00'}, tok['adminA'])
+    check(s == 400, 'hora inválida é recusada', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/escala_modelo/records', {**m, 'dia_semana': 9}, tok['adminA'])
+    check(s == 400, 'dia da semana inválido é recusado', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/escala_modelo/records', {**m, 'empresa': empresas['B'], 'dia_semana': 4}, tok['adminA'])
+    check(s in (400, 403), 'não se define horário numa empresa alheia', f'status {s}')
+    s, r, _ = call('GET', '/api/collections/escala_modelo/records', tok=tok['editorA'])
+    check(s == 200 and any(i.get('id') == mid for i in r.get('items', [])), 'a equipa vê o horário')
+    s, r, _ = call('GET', '/api/collections/escala_modelo/records', tok=tok['viewerA'])
+    check(s == 200 and not r.get('items'), 'Leitura não vê a escala', f'status {s}')
+    s, _, _ = call('GET', f'/api/collections/escala_modelo/records/{mid}', tok=tok['editorB'])
+    check(s == 404, 'empresa B não vê a escala da A', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/escala_modelo/records/{mid}', {'fim': '18:00'}, tok['editorA'])
+    check(s in (403, 404), 'o editor não altera o horário', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/escala_modelo/records/{mid}', {'fim': '17:00'}, tok['adminA'])
+    check(s == 200, 'o administrador altera o horário', f'status {s}')
+    e = {'empresa': empresas['A'], 'pessoa': f'u:{uid}', 'nome': 'Editor A', 'user': uid, 'data': '2026-10-07 00:00:00.000Z',
+         'folga': True}
+    s, _, _ = call('POST', '/api/collections/escala_excecoes/records', e, tok['editorA'])
+    check(s in (400, 403), 'o editor não cria exceções', f'status {s}')
+    s, r, _ = call('POST', '/api/collections/escala_excecoes/records', e, tok['adminA'])
+    check(s == 200, 'o administrador cria uma exceção (folga)', f'status {s} {str(r)[:100]}')
+    eid = r.get('id')
+    s, _, _ = call('POST', '/api/collections/escala_excecoes/records', e, tok['adminA'])
+    check(s == 400, 'uma só exceção por pessoa e dia', f'status {s}')
+    s, _, _ = call('GET', f'/api/collections/escala_excecoes/records/{eid}', tok=tok['editorB'])
+    check(s == 404, 'empresa B não vê as exceções da A', f'status {s}')
+    s, _, _ = call('DELETE', f'/api/collections/escala_excecoes/records/{eid}', tok=tok['editorA'])
+    check(s in (403, 404), 'o editor não apaga exceções', f'status {s}')
+    call('DELETE', f'/api/collections/escala_excecoes/records/{eid}', tok=tok['adminA'])
+    s, _, _ = call('DELETE', f'/api/collections/escala_modelo/records/{mid}', tok=tok['adminA'])
+    check(s in (200, 204), 'o administrador apaga o horário', f'status {s}')
+
+
 def teste_estado_backups():
     sec('7a3. Estado dos backups (só administradores)')
     s, _, _ = call('GET', '/api/gc_turnkey/backups/estado')
@@ -2529,6 +2577,7 @@ def main():
         teste_ponto()
         teste_ferias()
         teste_anotacoes()
+        teste_escala()
         teste_segredos()
         teste_sem_chave()
         teste_faturas_ia()

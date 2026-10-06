@@ -6,12 +6,14 @@ import '../../../app/routes.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/help_actions.dart';
+import 'escala_view.dart';
 import 'ferias_view.dart';
 import 'notas_view.dart';
 import 'ponto_view.dart';
 
 /// As secções de Pessoas.
 enum SecaoPessoas {
+  escala('Escala', Icons.calendar_view_week_outlined, Routes.pessoasEscala),
   ponto('Ponto', Icons.access_time, Routes.pessoasPonto),
   ferias('Férias', Icons.beach_access_outlined, Routes.pessoasFerias),
   notas('Notas', Icons.sticky_note_2_outlined, Routes.pessoasNotas);
@@ -22,6 +24,7 @@ enum SecaoPessoas {
   final String rota;
 
   HelpTopic get ajuda => switch (this) {
+    SecaoPessoas.escala => HelpTopic.pessoasEscala,
     SecaoPessoas.ponto => HelpTopic.pessoasPonto,
     SecaoPessoas.ferias => HelpTopic.pessoasFerias,
     SecaoPessoas.notas => HelpTopic.pessoasNotas,
@@ -85,6 +88,9 @@ class PessoasScreen extends ConsumerWidget {
           ),
           Expanded(
             child: switch (secao) {
+              SecaoPessoas.escala => const EscalaView(
+                key: ValueKey('pessoas-escala'),
+              ),
               SecaoPessoas.ponto => const PontoView(
                 key: ValueKey('pessoas-ponto'),
               ),

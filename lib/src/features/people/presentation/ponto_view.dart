@@ -6,10 +6,16 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
+import '../../pricing/data/cost_config_repository.dart';
+import '../../pricing/domain/dias_trabalho.dart';
 import '../../quiosque/application/colaboradores_providers.dart';
 import '../../quiosque/domain/colaborador.dart';
+import '../application/escala_providers.dart';
+import '../application/ferias_providers.dart';
 import '../application/ponto_providers.dart';
 import '../data/ponto_repository.dart';
+import '../domain/escala.dart';
+import '../domain/ferias.dart';
 import '../domain/ponto.dart';
 
 const _meses = [
@@ -93,6 +99,28 @@ class _PontoViewState extends ConsumerState<PontoView> {
     final recente = ref.watch(pontoRecenteProvider).valueOrNull ?? const [];
     final tt = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
+
+    // horas previstas (escala) para comparar com as marcadas
+    final modeloEscala =
+        ref.watch(escalaModeloProvider).valueOrNull ?? const <TurnoModelo>[];
+    final mesInicio = DateTime(_mes.year, _mes.month);
+    final mesFim = DateTime(_mes.year, _mes.month + 1);
+    final excecoesMes =
+        ref
+            .watch(escalaExcecoesProvider((de: mesInicio, ate: mesFim)))
+            .valueOrNull ??
+        const <ExcecaoEscala>[];
+    final ausenciasAno =
+        ref.watch(feriasAnoProvider(_mes.year)).valueOrNull ??
+        const <Ausencia>[];
+    final diasTrab =
+        ref.watch(costConfigProvider).valueOrNull?.diasDeTrabalho ??
+        todosOsDias;
+    // compara-se até ontem (hoje ainda não acabou)
+    final hoje0 = DateTime(agora.year, agora.month, agora.day);
+    final corte = hoje0.isBefore(mesInicio)
+        ? mesInicio
+        : (hoje0.isBefore(mesFim) ? hoje0 : mesFim);
 
     final jornadasRecentes = calcularJornadas(recente, agora);
     final aTrabalhar = [
@@ -218,11 +246,34 @@ class _PontoViewState extends ConsumerState<PontoView> {
                 margin: const EdgeInsets.symmetric(vertical: 4),
                 child: ListTile(
                   title: Text(t.nome.isEmpty ? 'Sem nome' : t.nome),
-                  subtitle: Text(
-                    '${t.dias} dia(s)'
-                    '${t.aTrabalhar ? ' · a trabalhar' : ''}'
-                    '${t.avisos > 0 ? ' · ${t.avisos} com aviso' : ''}',
-                    style: t.avisos > 0 ? TextStyle(color: cs.error) : null,
+                  subtitle: Builder(
+                    builder: (_) {
+                      final previsto = horasPrevistas(
+                        pessoa: t.pessoa,
+                        de: mesInicio,
+                        ate: corte,
+                        modelo: modeloEscala,
+                        excecoes: excecoesMes,
+                        ausencias: ausenciasAno,
+                        diasTrabalho: diasTrab,
+                      );
+                      final marcado = jornadas
+                          .where(
+                            (j) =>
+                                j.pessoa == t.pessoa && j.dia.isBefore(corte),
+                          )
+                          .fold(
+                            Duration.zero,
+                            (s, j) => s + j.trabalhado(agora),
+                          );
+                      return Text(
+                        '${t.dias} dia(s)'
+                        '${previsto > Duration.zero ? ' · previsto ${formatarDuracao(previsto)} (${saldoTexto(marcado - previsto)})' : ''}'
+                        '${t.aTrabalhar ? ' · a trabalhar' : ''}'
+                        '${t.avisos > 0 ? ' · ${t.avisos} com aviso' : ''}',
+                        style: t.avisos > 0 ? TextStyle(color: cs.error) : null,
+                      );
+                    },
                   ),
                   trailing: Text(
                     formatarDuracao(t.trabalhado),

@@ -2,6 +2,20 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.95.0 — 2026-10-06 — Escala semanal da equipa
+
+Escala semanal da equipa (Pessoas → Escala): o mapa de horário de trabalho.
+
+- **Definir uma só vez**: toca no nome de uma pessoa → marca os dias em que trabalha, as horas e a pausa (já vem preenchido com os dias de trabalho da empresa; "Igual ao primeiro dia marcado" copia as horas). A escala de **todas as semanas** fica feita.
+- **Mudar só um dia**: toca nesse dia → outro turno ou folga (com nota, ex.: "troca com o Rui"); fica com uma moldura. "Voltar ao habitual" desfaz.
+- **Respeita as ausências e o fecho**: férias, baixas e faltas aprovadas aparecem a verde/laranja; os dias em que a empresa não trabalha aparecem "—".
+- **Cada pessoa vê o seu**: cartão "O meu horário" com a semana. Toda a equipa (menos a Leitura) vê a escala; só o proprietário/administrador a altera.
+- **Horas previstas × marcadas**: no Ponto, ao lado das horas de cada pessoa aparece "previsto 160h (+3h 20m)" — o saldo (horas extra ou em falta) até ontem. No **quiosque**, depois de encostar o cartão, aparece o horário de hoje.
+- **Imprimir o mapa de horário** da semana para afixar (a lei pede o mapa de horário de trabalho afixado).
+- Turnos que passam da meia-noite (ex.: 22:00–06:00) contam bem.
+- Servidor: migration `1791060000_escala` (coleções `escala_modelo` e `escala_excecoes`). Sem endpoints novos.
+- Testes: horas e pausas, turnos de noite, horário habitual × exceções × férias × fecho, horas previstas, mapa em HTML; 21 verificações de segurança novas.
+
 ## 1.94.0 — 2026-10-06 — Notas da equipa
 
 Notas da equipa (Pessoas → Notas) e novos cartões no Início.

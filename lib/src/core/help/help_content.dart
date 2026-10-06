@@ -37,6 +37,7 @@ enum HelpTopic {
   lotes,
   rentabilidade,
   pessoasPonto,
+  pessoasEscala,
   pessoasFerias,
   pessoasNotas,
   previsaoAssar,
@@ -418,6 +419,15 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Os dias contam-se como a lei manda: dias úteis, de segunda a sexta, sem feriados nacionais (a app sabe a Páscoa e os feriados móveis; feriados municipais não entram). O direito por omissão é 22 dias úteis por ano; a administração muda o de cada pessoa em "Direito a férias" (por exemplo, no ano de entrada). "Restam" desconta os dias gozados e os pedidos pendentes.',
       'O mapa do mês mostra uma linha por pessoa e um quadrado por dia: verde = férias, verde claro = por aprovar, laranja = baixa, vermelho = falta; os fins de semana e feriados ficam mais escuros. Toda a equipa vê as férias aprovadas dos colegas; as baixas e faltas só as vê a própria pessoa e a administração (são dados pessoais).',
       'A administração também regista ausências de qualquer pessoa (férias, baixa, falta) com "Registar férias / ausência" e imprime o "Mapa de férias" do ano. A lei pede que o mapa seja elaborado até 15 de abril e fique afixado até 31 de outubro. A app avisa quando os períodos se sobrepõem para a mesma pessoa.',
+    ],
+  ),
+  HelpTopic.pessoasEscala: (
+    titulo: 'Escala semanal (mapa de horário)',
+    paragrafos: [
+      'Mostra, semana a semana, quem trabalha e a que horas. Cada pessoa vê o seu horário no cartão "O meu horário".',
+      'Para a administração: toca no nome de alguém e define o horário habitual — marca os dias em que trabalha, as horas de entrada e saída e a pausa ("Igual ao primeiro dia marcado" copia as horas). Faz isto uma só vez por pessoa: a escala de todas as semanas fica feita. Para um dia especial, toca nesse dia: outro turno ou folga só nesse dia (fica com uma moldura e "(alterado)"); "Voltar ao habitual" desfaz.',
+      'A escala respeita as férias, baixas e faltas aprovadas (aparecem a verde/laranja) e os dias em que a empresa não trabalha (Configurações → Dias de trabalho, "—").',
+      'No Ponto, ao lado das horas de cada pessoa passa a aparecer as horas previstas e o saldo (horas a mais ou a menos) até ontem; no quiosque, depois de encostar o cartão, aparece o horário de hoje. "Imprimir o mapa de horário" faz a folha da semana para afixar (a lei pede o mapa de horário de trabalho afixado).',
     ],
   ),
   HelpTopic.pessoasPonto: (

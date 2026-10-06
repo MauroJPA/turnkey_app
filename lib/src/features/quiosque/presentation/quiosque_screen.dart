@@ -10,6 +10,8 @@ import '../../daily_count/presentation/forno_widgets.dart';
 import '../../haccp/domain/haccp.dart';
 import '../../haccp/presentation/haccp_icones.dart';
 import '../../invoices/domain/invoice_erros.dart';
+import '../../people/application/escala_providers.dart';
+import '../../people/domain/escala.dart';
 import '../../people/domain/ponto.dart';
 import '../application/fila_offline_service.dart';
 import '../domain/colaborador.dart';
@@ -603,6 +605,29 @@ class _CartaoPonto extends ConsumerWidget {
     final texto = ultimo == null
         ? 'Ponto: ainda sem entrada'
         : '${ultimo.tipo.label} às ${hora(ultimo.dataHora)}';
+    // o horário de hoje (da escala), se há
+    final hojeD = DateTime.now();
+    final dia0 = DateTime(hojeD.year, hojeD.month, hojeD.day);
+    final modeloEscala = ref.watch(escalaModeloProvider).valueOrNull;
+    final excecoesHoje = ref
+        .watch(
+          escalaExcecoesProvider((
+            de: dia0,
+            ate: dia0.add(const Duration(days: 1)),
+          )),
+        )
+        .valueOrNull;
+    final turnoHoje = modeloEscala == null || excecoesHoje == null
+        ? null
+        : diaDaEscala(
+            pessoa: pessoa,
+            dia: dia0,
+            modelo: modeloEscala,
+            excecoes: excecoesHoje,
+          );
+    final horarioHoje = turnoHoje != null && turnoHoje.estado == EstadoDia.turno
+        ? 'Hoje: ${turnoHoje.texto}'
+        : null;
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
       padding: const EdgeInsets.all(12),
@@ -618,6 +643,7 @@ class _CartaoPonto extends ConsumerWidget {
               const Icon(Icons.access_time),
               const SizedBox(width: 8),
               Expanded(child: Text(texto, style: tt.titleSmall)),
+              if (horarioHoje != null) Text(horarioHoje, style: tt.bodySmall),
             ],
           ),
           const SizedBox(height: 8),
