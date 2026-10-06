@@ -39,6 +39,7 @@ import '../data/invoice_repository.dart';
 import '../domain/fatura.dart';
 import '../domain/invoice_erros.dart';
 import '../domain/match_ingrediente.dart';
+import 'fatura_pdf_view.dart';
 import 'fatura_zoom_view.dart';
 import 'invoice_owner_widgets.dart';
 
@@ -1534,14 +1535,24 @@ class _RevisaoState extends ConsumerState<_Revisao> {
 
   /// A fatura em ecrã inteiro. O botão de fechar usa o contexto do próprio
   /// diálogo (com o do ecrã fechava a página errada e a foto não saía).
-  void _abrirTelaCheia(String url) {
+  void _abrirTelaCheia(String url, {bool pdf = false}) {
     showDialog<void>(
       context: context,
       useSafeArea: false,
       builder: (ctx) => Dialog.fullscreen(
         child: Stack(
           children: [
-            Positioned.fill(child: FaturaZoomView(url: url)),
+            Positioned.fill(
+              child: pdf
+                  ? FaturaPdfView(
+                      chave: widget.fatura.id,
+                      url: url,
+                      alternativa: const Center(
+                        child: Text('Não foi possível abrir o PDF.'),
+                      ),
+                    )
+                  : FaturaZoomView(url: url),
+            ),
             SafeArea(
               child: Align(
                 alignment: Alignment.topRight,
@@ -1599,34 +1610,47 @@ class _RevisaoState extends ConsumerState<_Revisao> {
   Widget _previewComUrl(Fatura f, String url, {required bool wide}) {
     final cs = Theme.of(context).colorScheme;
 
+    final cartaoPdf = Container(
+      width: double.infinity,
+      color: cs.surfaceContainerHighest,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.picture_as_pdf_outlined, size: 40, color: cs.primary),
+          const SizedBox(height: 8),
+          const Text('Fatura em PDF'),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            onPressed: () async {
+              final u = await ref
+                  .read(invoiceRepositoryProvider)
+                  .ficheiroUrlSeguro(f);
+              await launchUrl(
+                Uri.parse(u),
+                mode: LaunchMode.externalApplication,
+              );
+            },
+            icon: const Icon(Icons.open_in_new),
+            label: const Text('Abrir PDF'),
+          ),
+        ],
+      ),
+    );
+
+    Future<void> abrirFora() async {
+      final u = await ref.read(invoiceRepositoryProvider).ficheiroUrlSeguro(f);
+      await launchUrl(Uri.parse(u), mode: LaunchMode.externalApplication);
+    }
+
     if (f.ficheiroEhPdf) {
-      return Container(
-        width: double.infinity,
-        color: cs.surfaceContainerHighest,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.picture_as_pdf_outlined, size: 40, color: cs.primary),
-            const SizedBox(height: 8),
-            const Text('Fatura em PDF'),
-            const SizedBox(height: 8),
-            FilledButton.icon(
-              onPressed: () async {
-                final u = await ref
-                    .read(invoiceRepositoryProvider)
-                    .ficheiroUrlSeguro(f);
-                await launchUrl(
-                  Uri.parse(u),
-                  mode: LaunchMode.externalApplication,
-                );
-              },
-              icon: const Icon(Icons.open_in_new),
-              label: const Text('Abrir PDF'),
-            ),
-          ],
-        ),
+      return FaturaPdfView(
+        chave: f.id,
+        url: url,
+        alternativa: cartaoPdf,
+        aoTelaCheia: () => _abrirTelaCheia(url, pdf: true),
+        aoAbrirFora: abrirFora,
       );
     }
 
@@ -1669,7 +1693,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
               const SizedBox(width: 6),
               Text(_verFatura ? 'Ocultar fatura' : 'Ver fatura'),
               const Spacer(),
-              if (_verFatura && !f.ficheiroEhPdf) ...[
+              if (_verFatura) ...[
                 Icon(
                   Icons.drag_handle,
                   size: 22,
@@ -2517,7 +2541,7 @@ class _RevisaoState extends ConsumerState<_Revisao> {
       builder: (context, c) {
         final tecladoAberto = MediaQuery.of(context).viewInsets.bottom > 0;
         final frac = tecladoAberto ? _fracFatura * 0.6 : _fracFatura;
-        final altura = f.ficheiroEhPdf ? 150.0 : c.maxHeight * frac;
+        final altura = c.maxHeight * frac;
         return Column(
           children: [
             if (_verFatura)

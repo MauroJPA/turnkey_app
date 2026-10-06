@@ -2045,6 +2045,18 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Fatura em PDF: mostra o cartão pequeno com "Abrir PDF" (abre à parte)
 - [ ] Computador (ecrã largo): a foto continua ao lado das linhas, com zoom e botões
 
+## 148. Faturas em PDF vistas dentro da app
+
+- [ ] Rever uma fatura em PDF: aparece a 1.ª página em cima (a meio ecrã), com "A preparar o PDF…" durante um instante
+- [ ] Zoom com dois dedos / duplo toque / botões + e − sobre o texto do PDF; ecrã inteiro abre e o ✕ fecha
+- [ ] PDF com várias páginas: "Pág. 1/N" e setas ◀ ▶ mudam de página (cada página começa sem zoom)
+- [ ] O ícone ↗ abre o PDF no leitor do telemóvel
+- [ ] Abrir o ecrã inteiro não volta a "preparar" o PDF (aparece logo)
+- [ ] PDF protegido por palavra-passe ou estragado: mostra o cartão "Abrir PDF" (sem erro feio)
+- [ ] PDF digitalizado (imagem) e PDF de texto (do email do fornecedor): ambos legíveis
+- [ ] Telemóvel mais antigo: o PDF abre na mesma (build "legacy" do leitor)
+- [ ] Faturas em foto continuam como antes
+
 ---
 
 ## Notas / ajustes pedidos

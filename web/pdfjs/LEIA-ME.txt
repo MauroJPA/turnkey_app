@@ -1,0 +1,6 @@
+PDF.js (Mozilla) — leitor de PDF empacotado na app (nada vai para fora).
+Pacote npm: pdfjs-dist 4.10.38 (build "legacy", para telemóveis mais antigos), licença Apache-2.0 (ver LICENSE).
+SHA-256 do pacote .tgz: 1011b38553532d7078c59f26b15a471f8dae00f101b60e2add9b8511737a1ce0
+Os ficheiros pdf.min.js e pdf.worker.min.js são legacy/build/pdf.min.mjs e pdf.worker.min.mjs
+renomeados para .js (o servidor garante o tipo JavaScript certo).
+Usado por web/gc_pdf.js, que converte cada página em imagem para a revisão de faturas.

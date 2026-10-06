@@ -384,9 +384,7 @@ class _SheetState extends ConsumerState<_Sheet> {
                             icon: const Icon(Icons.copy),
                             label: const Text('Copiar resumo (CSV)'),
                             onPressed: () {
-                              Clipboard.setData(
-                                ClipboardData(text: _csv(fs)),
-                              );
+                              Clipboard.setData(ClipboardData(text: _csv(fs)));
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('Resumo copiado.'),

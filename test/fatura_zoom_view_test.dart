@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gc_turnkey/src/features/invoices/presentation/fatura_zoom_view.dart';
@@ -77,5 +79,28 @@ void main() {
     await t.pumpWidget(_app(telaCheia: () => aberto++));
     await t.tap(find.byKey(const ValueKey('fatura-tela-cheia')));
     expect(aberto, 1);
+  });
+
+  testWidgets('mostra uma imagem já em memória (página de PDF)', (t) async {
+    // PNG de 1×1 pixel
+    final png = base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/'
+      'iZk9HQAAAABJRU5ErkJggg==',
+    );
+    await t.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 360,
+            height: 400,
+            child: FaturaZoomView(bytes: png),
+          ),
+        ),
+      ),
+    );
+    await t.pump();
+    expect(find.byType(Image), findsOneWidget);
+    expect(t.widget<Image>(find.byType(Image)).image, isA<MemoryImage>());
+    expect(_escala(t), 1);
   });
 }

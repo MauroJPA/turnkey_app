@@ -91,7 +91,9 @@ ProdutoIngrediente? produtoDaMarca(
   for (final p in produtos) {
     if (p.ingredienteId != ingrediente.id) continue;
     if (normalizarNome(p.marca) != m) continue;
-    if (embalagemG > 0 && p.embalagemG > 0 && (p.embalagemG - embalagemG).abs() > 0.5) {
+    if (embalagemG > 0 &&
+        p.embalagemG > 0 &&
+        (p.embalagemG - embalagemG).abs() > 0.5) {
       continue;
     }
     return p;
@@ -161,7 +163,12 @@ MatchLinha? emparelharLinha({
   if (ing == null) return null;
   return (
     ingrediente: ing,
-    produto: produtoDaMarca(ing, produtos, marca: marca, embalagemG: embalagemG),
+    produto: produtoDaMarca(
+      ing,
+      produtos,
+      marca: marca,
+      embalagemG: embalagemG,
+    ),
   );
 }
 
@@ -185,7 +192,10 @@ Consumivel? emparelharConsumivel({
     final b = _tokens('${c.nome} ${c.marca}');
     if (b.isEmpty) continue;
     var score = 0.0;
-    for (final texto in [descricao, if (nomeGenerico.isNotEmpty) nomeGenerico]) {
+    for (final texto in [
+      descricao,
+      if (nomeGenerico.isNotEmpty) nomeGenerico,
+    ]) {
       final a = _tokens(texto);
       if (a.isEmpty) continue;
       final j = a.intersection(b).length / a.union(b).length;
@@ -224,7 +234,10 @@ Embalagem? emparelharEmbalagem({
     final b = _tokens('${emb.nome} ${emb.tipo}');
     if (b.isEmpty) continue;
     var score = 0.0;
-    for (final texto in [descricao, if (nomeGenerico.isNotEmpty) nomeGenerico]) {
+    for (final texto in [
+      descricao,
+      if (nomeGenerico.isNotEmpty) nomeGenerico,
+    ]) {
       final a = _tokens(texto);
       if (a.isEmpty) continue;
       final j = a.intersection(b).length / a.union(b).length;

@@ -1,12 +1,17 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 /// A foto da fatura com zoom: pinça com dois dedos, arrastar para andar pela
 /// imagem, duplo toque para ampliar/repor e botões + − (úteis no computador).
-/// Com [aoTelaCheia], mostra também o botão de ecrã inteiro.
+/// Com [aoTelaCheia], mostra também o botão de ecrã inteiro. A imagem vem do
+/// endereço [url] ou, se já se tem, dos [bytes] (ex.: uma página de PDF).
 class FaturaZoomView extends StatefulWidget {
-  const FaturaZoomView({super.key, required this.url, this.aoTelaCheia});
+  const FaturaZoomView({super.key, this.url, this.bytes, this.aoTelaCheia})
+    : assert(url != null || bytes != null);
 
-  final String url;
+  final String? url;
+  final Uint8List? bytes;
   final VoidCallback? aoTelaCheia;
 
   @override
@@ -74,21 +79,25 @@ class _FaturaZoomViewState extends State<FaturaZoomView> {
                     child: SizedBox(
                       width: _area.width,
                       height: _area.height,
-                      child: Image.network(
-                        widget.url,
-                        fit: BoxFit.contain,
-                        loadingBuilder: (ctx, child, prog) => prog == null
-                            ? child
-                            : const Center(child: CircularProgressIndicator()),
-                        errorBuilder: (ctx, e, s) => const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(24),
-                            child: Text(
-                              'Não foi possível carregar a imagem da fatura.',
+                      child: widget.bytes != null
+                          ? Image.memory(widget.bytes!, fit: BoxFit.contain)
+                          : Image.network(
+                              widget.url!,
+                              fit: BoxFit.contain,
+                              loadingBuilder: (ctx, child, prog) => prog == null
+                                  ? child
+                                  : const Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
+                              errorBuilder: (ctx, e, s) => const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(24),
+                                  child: Text(
+                                    'Não foi possível carregar a imagem da fatura.',
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
                     ),
                   ),
                 ),

@@ -192,6 +192,14 @@ empresa. O WhatsApp está no código mas **desligado** por omissão (precisa de 
 - `faturas_itens.equipamento` liga a linha ao registo criado: reaplicar a fatura salta as linhas já aplicadas (não duplica).
 - Testado em `teste_faturas_equipamento` (403 do Editor, ligação, reaplicar, valores inválidos, isolamento entre empresas).
 
+## PDF dentro da app (2.6.0)
+
+- O PDF das faturas é convertido em imagens **no próprio aparelho**, com o PDF.js (Mozilla, Apache-2.0, `pdfjs-dist` 4.10.38, build
+  *legacy*) que vai **dentro da app** (`web/pdfjs/`, SHA-256 do pacote em `web/pdfjs/LEIA-ME.txt`). Não se carrega nada de CDN e o PDF
+  não sai do aparelho; o endereço do ficheiro continua a ser o URL assinado de curta duração.
+- A CSP não mudou: `script-src 'self'`, `worker-src 'self' blob:`. O PDF.js corre com `isEvalSupported: false` (sem `eval`/`new Function`).
+- PDFs com scripts embebidos (JavaScript do PDF) não são executados: só se desenham as páginas.
+
 ## Riscos aceites / notas
 
 - O administrador pode editar o perfil da empresa (desenho) e, tecnicamente, o campo `plano`

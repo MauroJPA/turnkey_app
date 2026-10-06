@@ -2,6 +2,19 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.6.0 — 2026-10-06 — Faturas em PDF vistas dentro da app
+
+As faturas em **PDF** passam a ver-se **dentro da app**, ao rever, como as fotos: fixas em cima, com zoom, e as linhas por baixo.
+
+- **O PDF é convertido em imagens no próprio telemóvel** (uma por página), com o leitor PDF.js que vai dentro da app. Não depende de nada instalado no servidor, nada sai do aparelho e funciona em qualquer telemóvel.
+- **Mesmo comportamento das fotos**: metade do ecrã fixa em cima, zoom com dois dedos, duplo toque, botões + / − e ecrã inteiro.
+- **Várias páginas**: setas ◀ ▶ com "Pág. 1/3" para passar de uma à outra (até 10 páginas por fatura).
+- **Abrir o original**: o ícone ↗ abre o PDF no leitor do telemóvel, em qualidade total.
+- **Se um PDF não abrir** (protegido ou estragado), fica o cartão "Abrir PDF" de antes — nada se perde.
+- A conversão faz-se uma vez por fatura e fica em memória enquanto estás na app (sem repetir ao abrir o ecrã inteiro).
+- Segurança: o leitor vai embalado na app (`web/pdfjs`, Mozilla PDF.js 4.10.38, Apache-2.0), sem carregar nada de fora e sem executar scripts do PDF; a política de segurança (CSP) não mudou.
+- Testes: o visualizador com imagem em memória (página de PDF), zoom e ecrã inteiro.
+
 ## 2.5.2 — 2026-10-06 — Fatura fixa com zoom ao rever no telemóvel
 
 Rever uma fatura no telemóvel ficou muito mais prático: **a foto fica fixa em cima, com zoom, e as linhas rolam por baixo**.
