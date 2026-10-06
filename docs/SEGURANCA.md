@@ -137,6 +137,15 @@ empresa. O WhatsApp está no código mas **desligado** por omissão (precisa de 
   e uma empresa não consegue ver nem alterar o registo de outra por reutilizar o id (testado em `teste_quiosque_offline`).
 - Sem endpoints novos nem alterações de regras no servidor.
 
+## Ponto e dados das pessoas (1.92.0)
+
+- `ponto_registos` (horas de entrada/saída) são dados pessoais dos colaboradores (RGPD): o proprietário/administrador lê todos; cada
+  conta lê só os seus (campo `user`); quem marca no quiosque (papel Editor) cria mas não lê os dos outros. Só o proprietário/administrador
+  corrige ou apaga, e a correção guarda a hora original.
+- `GET /api/gc_turnkey/ponto/estado` devolve apenas a última marcação (chave da pessoa, tipo, hora) das últimas 36 horas; sem nomes.
+- A página "Pessoas" vem oculta para o papel Leitura. A hora vem do relógio do aparelho que marca (no quiosque offline é a hora real da
+  marcação); o servidor guarda também a data de criação.
+
 ## Riscos aceites / notas
 
 - O administrador pode editar o perfil da empresa (desenho) e, tecnicamente, o campo `plano`

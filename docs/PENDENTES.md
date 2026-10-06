@@ -1,6 +1,6 @@
 # Pendentes (fila de trabalho)
 
-Última versão fechada: **1.91.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
+Última versão fechada: **1.92.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
 (editar → `bash scripts/verificar.sh` → pubspec + CHANGELOG + docs/CHECKLIST_TESTES.md → commit com caminhos
 explícitos → `git branch -f develop main` → `git tag vX.Y.Z`). No fim: `powershell -File scripts\empacotar-producao.ps1`
 e dar ao Mauro o SHA-256 + comando de publicação.
@@ -19,6 +19,9 @@ Fila atual (pedido do Mauro em 06/10/2026, **cada item = uma versão**, por esta
 - ~~**1.88.0**~~ (feito) Tabela de preços para revendedores (PDF e texto para WhatsApp, preço + IVA, desconto por volume) a partir dos canais.
 - ~~**1.89.0**~~ (feito) "Quantos assar amanhã": sugestão por dia da semana e desperdício + predição estatística/IA que melhora com o histórico.
 - ~~**1.90.0**~~ (feito) Quiosque offline: guarda os registos no aparelho se o Wi-Fi cair e envia depois.
+- ~~**1.92.0**~~ (feito) Pessoas → Ponto: entrada/pausa/saída (quiosque com NFC, também offline, e na app), horas do mês, correções do administrador, CSV.
+- **1.93.0** Pessoas → Férias: mapa de férias e ausências (pedidos, aprovação, saldo de dias, calendário da equipa).
+- **1.94.0** Pessoas → Notas: anotações da equipa (livro de ocorrências / recados) com fixar e arquivar.
 - No fim: empacotar, dar SHA-256 + comando; atualizar docs/SEGURANCA.md se houver novos endpoints.
 
 ## Notas para quem retomar

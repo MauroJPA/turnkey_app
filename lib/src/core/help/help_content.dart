@@ -36,6 +36,7 @@ enum HelpTopic {
   avisos,
   lotes,
   rentabilidade,
+  pessoasPonto,
   previsaoAssar,
   tabelaRevendedores,
   consumiveis,
@@ -398,6 +399,15 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'A margem de segurança (um pouco acima do previsto, para não faltar) vem do erro desse modelo. Nos sabores que costumam ir para o lixo (5 % ou mais do que se faz, medido pelo Desperdício da Contagem) a margem encolhe e a partir de 15 % desaparece.',
       '"Descontar o que já há em stock" tira o que ainda tens nos locais (contagem de fecho de hoje, ou a estimativa pelas contas). O total mostra também as fornadas, pela média das tuas fornadas dos últimos 60 dias.',
       'O ajuste do dia (−20 %, +20 %, +50 % evento) sobe ou desce tudo de uma vez: a app não sabe de feriados, chuva ou encomendas especiais. Com mais semanas de vendas a previsão acerta melhor — no início, com pouco histórico, trata-a como uma sugestão. Precisa de vendas ligadas a fichas técnicas (Vendus ou importação).',
+    ],
+  ),
+  HelpTopic.pessoasPonto: (
+    titulo: 'Ponto da equipa',
+    paragrafos: [
+      'Registo de entrada, pausa e saída de cada pessoa. Marca-se aqui ("O meu ponto") ou no quiosque de tarefas, onde cada pessoa encosta o cartão e toca em Entrada, Pausa ou Saída — também funciona sem ligação (fica guardado e segue depois).',
+      'O proprietário e os administradores veem todas as marcações: quem está a trabalhar agora e, por mês, as horas de cada pessoa (descontada a pausa). Toca numa pessoa para ver os dias; toca numa marcação para a corrigir (hora, tipo e motivo) ou apagar — a correção fica assinalada e guarda a hora original. "Marcação manual" serve para quando alguém se esqueceu de marcar. Os outros só veem as suas próprias marcações.',
+      'Avisos a vermelho: "Falta a saída" (a jornada passa de 16 horas ou ficou de um dia anterior e não conta como trabalhada até se corrigir), "Pausa sem fim", saída sem entrada. "Copiar a folha do mês" dá o CSV (uma linha por jornada) para colar numa folha de cálculo ou enviar à contabilidade.',
+      'Atenção: a app regista as horas, mas não é um sistema certificado de assiduidade; confirma com a tua contabilista o que a lei exige (registo do tempo de trabalho e mapa de horário).',
     ],
   ),
   HelpTopic.rentabilidade: (

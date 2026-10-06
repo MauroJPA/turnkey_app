@@ -10,6 +10,7 @@ import '../../daily_count/presentation/forno_widgets.dart';
 import '../../haccp/domain/haccp.dart';
 import '../../haccp/presentation/haccp_icones.dart';
 import '../../invoices/domain/invoice_erros.dart';
+import '../../people/domain/ponto.dart';
 import '../application/fila_offline_service.dart';
 import '../domain/colaborador.dart';
 import '../domain/fila_offline.dart';
@@ -88,6 +89,7 @@ class _QuiosqueScreenState extends ConsumerState<QuiosqueScreen> {
   }
 
   void _identificar(Colaborador c) {
+    ref.invalidate(estadoPontoQuiosqueProvider);
     setState(() {
       _quem = c;
       _avisoCartao = null;
@@ -155,6 +157,37 @@ class _QuiosqueScreenState extends ConsumerState<QuiosqueScreen> {
           'Segue quando a ligação voltar.',
         );
       }
+    } on Object catch (e) {
+      _msg(mensagemAmigavel(e), erro: true);
+    } finally {
+      if (mounted) setState(() => _ocupado = false);
+      _reiniciarInatividade();
+    }
+  }
+
+  Future<void> _marcarPonto(TipoPonto tipo) async {
+    final quem = _quem;
+    if (quem == null || _ocupado) return;
+    setState(() => _ocupado = true);
+    final agora = DateTime.now();
+    try {
+      final enviado = await ref
+          .read(filaOfflineProvider.notifier)
+          .registarPonto(
+            pessoa: chavePessoa(quem),
+            nome: quem.nome,
+            userId: quem.userId,
+            tipo: tipo,
+            dataHora: agora,
+          );
+      final hh = agora.hour.toString().padLeft(2, '0');
+      final mm = agora.minute.toString().padLeft(2, '0');
+      _msg(
+        enviado
+            ? '✓ ${tipo.label} às $hh:$mm — ${quem.nome}'
+            : '✓ ${tipo.label} às $hh:$mm guardada neste aparelho (sem ligação). '
+                  'Segue quando a ligação voltar.',
+      );
     } on Object catch (e) {
       _msg(mensagemAmigavel(e), erro: true);
     } finally {
@@ -442,6 +475,11 @@ class _QuiosqueScreenState extends ConsumerState<QuiosqueScreen> {
             ],
           ),
         ),
+        _CartaoPonto(
+          pessoa: chavePessoa(_quem!),
+          ocupado: _ocupado,
+          onMarcar: _marcarPonto,
+        ),
         Expanded(
           child: lista == null
               ? (estados.hasError
@@ -529,6 +567,78 @@ class _ChipPorEnviar extends ConsumerWidget {
         ),
         label: Text(n > 0 ? '$n por enviar' : 'Sem ligação'),
         onPressed: fila.aEnviar ? null : onTap,
+      ),
+    );
+  }
+}
+
+/// O ponto de quem está no quiosque: o que marcou por último e os botões do
+/// que pode marcar a seguir (entrada, pausa, saída).
+class _CartaoPonto extends ConsumerWidget {
+  const _CartaoPonto({
+    required this.pessoa,
+    required this.ocupado,
+    required this.onMarcar,
+  });
+
+  final String pessoa;
+  final bool ocupado;
+  final void Function(TipoPonto) onMarcar;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final estado =
+        ref.watch(estadoPontoQuiosqueProvider).valueOrNull ?? const {};
+    var ultimo = estado[pessoa];
+    // uma marcação com mais de 16 horas é de outro dia (saída esquecida)
+    if (ultimo != null &&
+        DateTime.now().difference(ultimo.dataHora) > jornadaMaxima) {
+      ultimo = null;
+    }
+    final opcoes = proximosPontos(ultimo?.tipo);
+    String hora(DateTime d) =>
+        '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+    final texto = ultimo == null
+        ? 'Ponto: ainda sem entrada'
+        : '${ultimo.tipo.label} às ${hora(ultimo.dataHora)}';
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.access_time),
+              const SizedBox(width: 8),
+              Expanded(child: Text(texto, style: tt.titleSmall)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              for (var i = 0; i < opcoes.length; i++) ...[
+                if (i > 0) const SizedBox(width: 8),
+                Expanded(
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, 52),
+                      textStyle: const TextStyle(fontSize: 17),
+                    ),
+                    onPressed: ocupado ? null : () => onMarcar(opcoes[i]),
+                    child: Text(opcoes[i].label),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
       ),
     );
   }

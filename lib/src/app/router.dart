@@ -20,6 +20,7 @@ import '../features/invoices/presentation/invoices_screen.dart';
 import '../features/navigation/presentation/navegacao_screen.dart';
 import '../features/orders/presentation/encomenda_detail_screen.dart';
 import '../features/orders/presentation/encomendas_screen.dart';
+import '../features/people/presentation/pessoas_screen.dart';
 import '../features/production/presentation/cart_review_screen.dart';
 import '../features/production/presentation/producao_screen.dart';
 import '../features/products/presentation/produto_detail_screen.dart';
@@ -243,6 +244,20 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: Routes.colaboradores,
             builder: (_, __) => const ColaboradoresScreen(),
           ),
+          // Pessoas: ponto (e, a seguir, férias e notas) numa página
+          GoRoute(
+            path: Routes.pessoas,
+            redirect: (_, state) =>
+                state.uri.path == Routes.pessoas ? Routes.pessoasPonto : null,
+          ),
+          for (final s in SecaoPessoas.values)
+            GoRoute(
+              path: s.rota,
+              pageBuilder: (_, __) => NoTransitionPage(
+                key: const ValueKey('pessoas'),
+                child: PessoasScreen(secao: s),
+              ),
+            ),
           // Contabilidade: uma página, várias secções (cada uma com o seu endereço)
           for (final s in SecaoContabilidade.values)
             GoRoute(

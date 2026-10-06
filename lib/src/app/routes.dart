@@ -28,6 +28,8 @@ abstract class Routes {
   static const invoices = '/faturas';
   static const sales = '/vendas';
   static const encomendas = '/encomendas';
+  static const pessoas = '/pessoas';
+  static const pessoasPonto = '/pessoas/ponto';
   static const contagem = '/contagem';
   static const contagemRelatorios = '/contagem/relatorios';
   static const haccp = '/haccp';

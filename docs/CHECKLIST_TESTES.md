@@ -1758,6 +1758,18 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Em "Hoje": os sabores já vendidos hoje mostram "já vendeu N hoje" e o a assar baixa em conformidade
 - [ ] Se hoje for dia de folga, a página abre no próximo dia de trabalho
 
+## 120. Registo de ponto
+
+- [ ] Início → Pessoas → Ponto: "O meu ponto" → Entrada; aparecem Início da pausa e Saída; "A trabalhar agora" mostra o meu nome
+- [ ] Marcar pausa e fim da pausa e saída: o total do mês desconta a pausa
+- [ ] No quiosque: escolher uma pessoa → cartão "Ponto" → Entrada; a marcação aparece em Pessoas → Ponto como "Quiosque"
+- [ ] Quiosque sem Wi-Fi: marcar entrada fica guardada ("1 por enviar"); ao voltar o Wi-Fi aparece em Pessoas com a hora real
+- [ ] Administrador: tocar numa pessoa → marcação → corrigir a hora com motivo: fica "corrigida (era …)"; apagar pede confirmação
+- [ ] "Marcação manual" acrescenta uma marcação esquecida (pessoa, tipo, data e hora, motivo)
+- [ ] Uma entrada de ontem sem saída aparece com "Falta a saída" e não conta horas
+- [ ] "Copiar a folha do mês (CSV)" cola uma linha por jornada
+- [ ] Um utilizador Editor só vê as suas marcações; Leitura não vê a página Pessoas
+
 ---
 
 ## Notas / ajustes pedidos

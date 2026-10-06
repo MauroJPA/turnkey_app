@@ -117,6 +117,13 @@ const paginasApp = <PaginaApp>[
     'Pedidos dos clientes por data/hora',
   ),
   PaginaApp(
+    'pessoas',
+    Routes.pessoas,
+    'Pessoas',
+    Icons.badge_outlined,
+    'Ponto da equipa (e, a seguir, férias e notas)',
+  ),
+  PaginaApp(
     'financeiro',
     Routes.painelFinanceiro,
     'Contabilidade',

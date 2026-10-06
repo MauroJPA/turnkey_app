@@ -4,9 +4,49 @@ import 'dart:math' as math;
 import 'package:pocketbase/pocketbase.dart';
 
 import '../../haccp/domain/haccp.dart';
+import '../../people/domain/ponto.dart';
 import 'colaborador.dart';
 
-/// Um registo do quiosque que ainda não chegou ao servidor (a ligação caiu).
+/// Os dados de uma marcação de ponto à espera de ligação.
+class PontoPendente {
+  const PontoPendente({
+    required this.pessoa,
+    required this.nome,
+    required this.tipo,
+    this.userId = '',
+  });
+
+  final String pessoa;
+  final String nome;
+  final String userId;
+
+  /// O valor guardado no servidor (`entrada`, `saida`, `pausa_inicio`, `pausa_fim`).
+  final String tipo;
+
+  Map<String, dynamic> toJson() => {
+    'pessoa': pessoa,
+    'nome': nome,
+    'user': userId,
+    'tipo': tipo,
+  };
+
+  static PontoPendente? fromJson(Object? j) {
+    if (j is! Map ||
+        '${j['pessoa'] ?? ''}'.isEmpty ||
+        '${j['tipo'] ?? ''}'.isEmpty) {
+      return null;
+    }
+    return PontoPendente(
+      pessoa: '${j['pessoa']}',
+      nome: '${j['nome'] ?? ''}',
+      userId: '${j['user'] ?? ''}',
+      tipo: '${j['tipo']}',
+    );
+  }
+}
+
+/// Um registo do quiosque que ainda não chegou ao servidor (a ligação caiu):
+/// uma tarefa HACCP ou, se [ponto] existe, uma marcação de ponto.
 ///
 /// Leva o seu próprio [id] (15 letras/números, o formato do PocketBase): se o
 /// envio chegou ao servidor mas a resposta se perdeu, reenviar não duplica —
@@ -22,10 +62,14 @@ class RegistoPendente {
     this.notas = '',
     this.acaoCorretiva = '',
     this.tentativas = 0,
+    this.ponto,
   });
 
   final String id;
   final String controloId;
+
+  /// Só nas marcações de ponto.
+  final PontoPendente? ponto;
 
   /// Quando a pessoa tocou (não quando chegou ao servidor).
   final DateTime dataHora;
@@ -46,6 +90,7 @@ class RegistoPendente {
     notas: notas,
     acaoCorretiva: acaoCorretiva,
     tentativas: tentativas + 1,
+    ponto: ponto,
   );
 
   Map<String, dynamic> toJson() => {
@@ -58,6 +103,7 @@ class RegistoPendente {
     'notas': notas,
     'acao': acaoCorretiva,
     'tentativas': tentativas,
+    if (ponto != null) 'ponto': ponto!.toJson(),
   };
 
   static RegistoPendente? fromJson(Object? j) {
@@ -65,7 +111,12 @@ class RegistoPendente {
     final id = '${j['id'] ?? ''}';
     final controlo = '${j['controlo'] ?? ''}';
     final quando = DateTime.tryParse('${j['dataHora'] ?? ''}');
-    if (!idPbValido(id) || controlo.isEmpty || quando == null) return null;
+    final ponto = PontoPendente.fromJson(j['ponto']);
+    if (!idPbValido(id) ||
+        (controlo.isEmpty && ponto == null) ||
+        quando == null) {
+      return null;
+    }
     final v = j['valor'];
     return RegistoPendente(
       id: id,
@@ -77,6 +128,7 @@ class RegistoPendente {
       notas: '${j['notas'] ?? ''}',
       acaoCorretiva: '${j['acao'] ?? ''}',
       tentativas: j['tentativas'] is int ? j['tentativas'] as int : 0,
+      ponto: ponto,
     );
   }
 }
@@ -252,7 +304,7 @@ List<StatusControlo> comPendentes(
       d.year == agora.year && d.month == agora.month && d.day == agora.day;
   final porControlo = <String, int>{};
   for (final p in pendentes) {
-    if (hoje(p.dataHora)) {
+    if (p.ponto == null && hoje(p.dataHora)) {
       porControlo[p.controloId] = (porControlo[p.controloId] ?? 0) + 1;
     }
   }
@@ -275,4 +327,48 @@ List<StatusControlo> comPendentes(
                     : EstadoControlo.pendenteHoje),
         ),
   ];
+}
+
+// --- ponto: última marcação de cada pessoa, guardada no aparelho ----------------
+
+String codificarEstadoPonto(Map<String, UltimoPonto> m) => jsonEncode({
+  for (final e in m.entries)
+    e.key: {
+      't': e.value.tipo.api,
+      'h': e.value.dataHora.toUtc().toIso8601String(),
+    },
+});
+
+Map<String, UltimoPonto> lerEstadoPonto(String? texto) {
+  if (texto == null || texto.trim().isEmpty) return const {};
+  try {
+    final j = jsonDecode(texto);
+    if (j is! Map) return const {};
+    final out = <String, UltimoPonto>{};
+    for (final e in j.entries) {
+      final v = e.value;
+      if (v is! Map) continue;
+      final t = TipoPonto.fromApi('${v['t']}');
+      final h = DateTime.tryParse('${v['h']}')?.toLocal();
+      if (t != null && h != null) out['${e.key}'] = UltimoPonto(t, h);
+    }
+    return out;
+  } on FormatException {
+    return const {};
+  }
+}
+
+/// Junta duas listas de "última marcação": para cada pessoa fica a mais recente.
+Map<String, UltimoPonto> juntarEstadoPonto(
+  Map<String, UltimoPonto> a,
+  Map<String, UltimoPonto> b,
+) {
+  final out = {...a};
+  for (final e in b.entries) {
+    final atual = out[e.key];
+    if (atual == null || e.value.dataHora.isAfter(atual.dataHora)) {
+      out[e.key] = e.value;
+    }
+  }
+  return out;
 }

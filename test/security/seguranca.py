@@ -962,6 +962,56 @@ def teste_quiosque_offline():
     check(s == 200 and sum(1 for i in r.get('items', []) if i.get('id') == 'offlinetest0001') == 1, 'há um só registo depois do reenvio')
 
 
+def teste_ponto():
+    sec('7a7. Registo de ponto')
+    base = {'empresa': empresas['A'], 'pessoa': 'c:colab-teste', 'nome': 'Ana', 'tipo': 'entrada',
+            'data_hora': '2026-10-07 08:00:00.000Z', 'origem': 'quiosque'}
+    s, _, _ = call('POST', '/api/collections/ponto_registos/records', base, tok['viewerA'])
+    check(s in (400, 403), 'leitura não marca ponto', f'status {s}')
+    s, r, _ = call('POST', '/api/collections/ponto_registos/records', base, tok['editorA'])
+    check(s == 200, 'editor (quiosque) marca o ponto de qualquer pessoa', f'status {s} {str(r)[:100]}')
+    pid = r.get('id')
+    s, _, _ = call('POST', '/api/collections/ponto_registos/records', {**base, 'empresa': empresas['B']}, tok['editorA'])
+    check(s in (400, 403), 'não se marca ponto numa empresa alheia', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/ponto_registos/records', {**base, 'tipo': 'almoco'}, tok['editorA'])
+    check(s == 400, 'tipo de marcação inválido é recusado', f'status {s}')
+    # quem lê: só o proprietário/administrador (e cada um as suas, pela conta)
+    s, r, _ = call('GET', '/api/collections/ponto_registos/records', tok=tok['editorA'])
+    check(s == 200 and not any(i.get('pessoa') == 'c:colab-teste' for i in r.get('items', [])),
+          'o editor não vê as marcações dos outros', f'status {s}')
+    s, r, _ = call('GET', '/api/collections/ponto_registos/records', tok=tok['adminA'])
+    check(s == 200 and any(i.get('id') == pid for i in r.get('items', [])), 'o administrador vê as marcações')
+    s, _, _ = call('GET', f'/api/collections/ponto_registos/records/{pid}', tok=tok['editorB'])
+    check(s == 404, 'empresa B não vê o ponto da A', f'status {s}')
+    # cada um vê as suas
+    s, r, _ = call('POST', '/api/collections/ponto_registos/records',
+                   {**base, 'pessoa': f"u:{users['editorA']}", 'user': users['editorA'], 'origem': 'app'}, tok['editorA'])
+    check(s == 200, 'editor marca o seu próprio ponto', f'status {s} {str(r)[:100]}')
+    meu = r.get('id')
+    s, r, _ = call('GET', '/api/collections/ponto_registos/records', tok=tok['editorA'])
+    check(s == 200 and any(i.get('id') == meu for i in r.get('items', [])), 'o editor vê a sua marcação')
+    s, _, _ = call('PATCH', f'/api/collections/ponto_registos/records/{meu}', {'data_hora': '2026-10-07 07:00:00.000Z'}, tok['editorA'])
+    check(s in (403, 404), 'o editor não altera marcações (nem as suas)', f'status {s}')
+    s, _, _ = call('DELETE', f'/api/collections/ponto_registos/records/{meu}', tok=tok['editorA'])
+    check(s in (403, 404), 'o editor não apaga marcações', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/ponto_registos/records/{pid}',
+                   {'data_hora': '2026-10-07 08:10:00.000Z', 'corrigido': True}, tok['adminA'])
+    check(s == 200, 'o administrador corrige uma marcação', f'status {s}')
+    # estado para o quiosque
+    s, r, _ = call('GET', '/api/gc_turnkey/ponto/estado', tok=tok['viewerA'])
+    check(s == 403, 'estado do ponto: leitura recusada', f'status {s}')
+    s, _, _ = call('GET', '/api/gc_turnkey/ponto/estado')
+    check(s in (401, 403), 'estado do ponto: sem sessão recusado', f'status {s}')
+    s, r, _ = call('GET', '/api/gc_turnkey/ponto/estado', tok=tok['editorA'])
+    check(s == 200 and isinstance(r.get('pessoas'), list), 'estado do ponto: editor recebe a lista', f'status {s}')
+    s, r, _ = call('GET', '/api/gc_turnkey/ponto/estado', tok=tok['editorB'])
+    check(s == 200 and not any(p.get('pessoa') == 'c:colab-teste' for p in r.get('pessoas', [])),
+          'estado do ponto: empresa B não vê pessoas da A')
+    s, _, _ = call('DELETE', f'/api/collections/ponto_registos/records/{pid}', tok=tok['adminA'])
+    check(s in (200, 204), 'o administrador apaga uma marcação', f'status {s}')
+    call('DELETE', f'/api/collections/ponto_registos/records/{meu}', tok=tok['adminA'])
+
+
 def teste_estado_backups():
     sec('7a3. Estado dos backups (só administradores)')
     s, _, _ = call('GET', '/api/gc_turnkey/backups/estado')
@@ -2361,6 +2411,7 @@ def main():
         teste_avisos()
         teste_lotes()
         teste_quiosque_offline()
+        teste_ponto()
         teste_segredos()
         teste_sem_chave()
         teste_faturas_ia()

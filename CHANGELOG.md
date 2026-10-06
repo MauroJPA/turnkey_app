@@ -2,6 +2,20 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 1.92.0 — 2026-10-06 — Registo de ponto
+
+Registo de ponto: entrada, pausa e saída, na app e no quiosque.
+
+- **Nova página "Pessoas"** (Início → Pessoas, ou no rodapé se a escolheres) com a secção **Ponto**. Vem escondida para o nível Leitura; o proprietário/administrador pode mudar as permissões em Configurações → Navegação e permissões.
+- **O meu ponto**: botões Entrada → Início da pausa / Saída → Fim da pausa… só aparece o que faz sentido a seguir.
+- **No quiosque**: depois de encostar o cartão (ou escolher o nome) aparece o cartão **Ponto** por cima das tarefas, com os botões Entrada / Pausa / Saída e a hora da última marcação. **Funciona sem ligação**: fica guardado no aparelho (com a hora real) e segue sozinho quando a ligação voltar, como as tarefas.
+- **Quem está a trabalhar agora** e, por mês, as **horas de cada pessoa** (descontada a pausa), com os dias e avisos: *Falta a saída* (jornada com mais de 16 horas ou de um dia anterior: não conta até corrigir), *Pausa sem fim*, saída ou fim de pausa sem entrada. Jornadas que passam da meia-noite contam para o dia da entrada.
+- **Correções** (proprietário/administrador): toca numa pessoa → dia → marcação para mudar a hora/tipo ou apagar, com motivo; a marcação fica assinalada "corrigida (era 08:03)". **Marcação manual** para quando alguém se esqueceu.
+- **Copiar a folha do mês (CSV)** para uma folha de cálculo ou para a contabilista.
+- **Privacidade**: o administrador lê todas as marcações; cada pessoa só lê as suas; quem marca no quiosque não consegue ler as dos outros (o quiosque só sabe qual foi a última marcação de cada um). A app regista as horas mas não é um sistema certificado de assiduidade.
+- Servidor: migration `1791030000_ponto` (coleção `ponto_registos`) e `GET /api/gc_turnkey/ponto/estado`. Nova regra: os registos do quiosque já aceitam ponto na mesma fila de envio.
+- Testes: cálculo das jornadas (pausas, meia-noite, esquecimentos, fora de ordem), totais e CSV, fila e estado do ponto sem ligação; 17 verificações de segurança novas (papéis, empresa, privacidade, correções).
+
 ## 1.91.0 — 2026-10-06 — Quantos assar: hoje e dias de trabalho
 
 "Quantos assar" começa em **hoje** e respeita os dias de trabalho.

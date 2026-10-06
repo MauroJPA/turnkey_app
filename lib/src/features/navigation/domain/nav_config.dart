@@ -17,10 +17,10 @@ enum NivelAcesso {
   }
 
   String get label => switch (this) {
-        NivelAcesso.oculto => 'Oculto',
-        NivelAcesso.ver => 'Só ver',
-        NivelAcesso.editar => 'Editar',
-      };
+    NivelAcesso.oculto => 'Oculto',
+    NivelAcesso.ver => 'Só ver',
+    NivelAcesso.editar => 'Editar',
+  };
 }
 
 /// Nível de acesso por omissão de um papel numa página (igual ao
@@ -36,7 +36,8 @@ NivelAcesso nivelPorOmissao(Papel papel, String chave) {
           ? NivelAcesso.ver
           : NivelAcesso.editar;
     case Papel.viewer:
-      return NivelAcesso.ver;
+      // ponto e férias são dados das pessoas: a Leitura não os vê
+      return chave == 'pessoas' ? NivelAcesso.oculto : NivelAcesso.ver;
   }
 }
 
@@ -71,9 +72,9 @@ class NavConfig {
 
   /// Páginas do rodapé que este papel pode abrir (Início não incluído).
   List<PaginaApp> rodapePara(Papel papel) => [
-        for (final k in rodape)
-          if (paginaPorChave(k) case final p? when acessivel(papel, k)) p,
-      ];
+    for (final k in rodape)
+      if (paginaPorChave(k) case final p? when acessivel(papel, k)) p,
+  ];
 
   NavConfig comRodape(List<String> novo) =>
       NavConfig(id: id, rodape: novo, acesso: acesso);
@@ -92,10 +93,10 @@ class NavConfig {
   }
 
   Map<String, dynamic> acessoJson() => {
-        for (final e in acesso.entries)
-          if (e.value.isNotEmpty)
-            e.key: {for (final c in e.value.entries) c.key: c.value.name},
-      };
+    for (final e in acesso.entries)
+      if (e.value.isNotEmpty)
+        e.key: {for (final c in e.value.entries) c.key: c.value.name},
+  };
 
   factory NavConfig.fromRecord(RecordModel r) {
     final rawRodape = r.data['rodape'];

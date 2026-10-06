@@ -6,6 +6,9 @@ import '../../../core/storage/prefs_locais.dart';
 import '../../haccp/application/haccp_providers.dart';
 import '../../haccp/data/haccp_repository.dart';
 import '../../haccp/domain/haccp.dart';
+import '../../people/application/ponto_providers.dart';
+import '../../people/data/ponto_repository.dart';
+import '../../people/domain/ponto.dart';
 import '../domain/colaborador.dart';
 import '../domain/fila_offline.dart';
 import 'colaboradores_providers.dart';
@@ -14,6 +17,7 @@ const _chaveFila = 'quiosque_fila';
 const _chaveRejeitados = 'quiosque_rejeitados';
 const _chaveEstados = 'quiosque_estados';
 const _chavePessoas = 'quiosque_pessoas';
+const _chavePonto = 'quiosque_ponto';
 
 /// Depois de quantos envios falhados (por razões que não são a ligação) um
 /// registo é posto de lado.
@@ -112,6 +116,67 @@ class FilaOffline extends Notifier<EstadoFila> {
     }
   }
 
+  /// Guarda no aparelho a última marcação da pessoa (é daí que o quiosque
+  /// sabe o que oferecer a seguir, mesmo sem ligação).
+  void _lembrarPonto(String pessoa, TipoPonto tipo, DateTime quando) {
+    final atual = lerEstadoPonto(lerPref(_chavePonto));
+    guardarPref(
+      _chavePonto,
+      codificarEstadoPonto(
+        juntarEstadoPonto(atual, {pessoa: UltimoPonto(tipo, quando)}),
+      ),
+    );
+    ref.invalidate(estadoPontoQuiosqueProvider);
+  }
+
+  /// Marca o ponto de uma pessoa (quiosque). Devolve `true` se chegou ao
+  /// servidor e `false` se ficou guardada à espera de ligação.
+  Future<bool> registarPonto({
+    required String pessoa,
+    required String nome,
+    String userId = '',
+    required TipoPonto tipo,
+    required DateTime dataHora,
+  }) async {
+    final id = novoIdPb();
+    try {
+      await ref
+          .read(pontoRepositoryProvider)
+          .registar(
+            id: id,
+            pessoa: pessoa,
+            nome: nome,
+            userId: userId,
+            tipo: tipo,
+            dataHora: dataHora,
+            origem: OrigemPonto.quiosque,
+          );
+      state = state.copiar(semLigacao: false);
+      _lembrarPonto(pessoa, tipo, dataHora);
+      return true;
+    } on Object catch (e) {
+      if (!eErroDeLigacao(e)) rethrow;
+      _guardar([
+        ...state.pendentes,
+        RegistoPendente(
+          id: id,
+          controloId: '',
+          dataHora: dataHora,
+          conforme: true,
+          ponto: PontoPendente(
+            pessoa: pessoa,
+            nome: nome,
+            userId: userId,
+            tipo: tipo.api,
+          ),
+        ),
+      ]);
+      state = state.copiar(semLigacao: true);
+      _lembrarPonto(pessoa, tipo, dataHora);
+      return false;
+    }
+  }
+
   /// Tenta enviar tudo o que está guardado, por ordem. Devolve quantos
   /// chegaram ao servidor.
   Future<int> sincronizar() async {
@@ -128,16 +193,31 @@ class FilaOffline extends Notifier<EstadoFila> {
           continue;
         }
         try {
-          await _repo.registar(
-            id: r.id,
-            controloId: r.controloId,
-            dataHora: r.dataHora,
-            valor: r.valor,
-            conforme: r.conforme,
-            responsavel: r.responsavel,
-            notas: r.notas,
-            acaoCorretiva: r.acaoCorretiva,
-          );
+          final p = r.ponto;
+          if (p != null) {
+            await ref
+                .read(pontoRepositoryProvider)
+                .registar(
+                  id: r.id,
+                  pessoa: p.pessoa,
+                  nome: p.nome,
+                  userId: p.userId,
+                  tipo: TipoPonto.fromApi(p.tipo) ?? TipoPonto.entrada,
+                  dataHora: r.dataHora,
+                  origem: OrigemPonto.quiosque,
+                );
+          } else {
+            await _repo.registar(
+              id: r.id,
+              controloId: r.controloId,
+              dataHora: r.dataHora,
+              valor: r.valor,
+              conforme: r.conforme,
+              responsavel: r.responsavel,
+              notas: r.notas,
+              acaoCorretiva: r.acaoCorretiva,
+            );
+          }
           enviados++;
         } on Object catch (e) {
           if (eIdJaExiste(e)) {
@@ -165,7 +245,10 @@ class FilaOffline extends Notifier<EstadoFila> {
         semLigacao: parar ? state.semLigacao : false,
       );
     }
-    if (enviados > 0) ref.read(haccpActionsProvider).refrescar();
+    if (enviados > 0) {
+      ref.read(haccpActionsProvider).refrescar();
+      ref.invalidate(estadoPontoQuiosqueProvider);
+    }
     return enviados;
   }
 
@@ -216,3 +299,21 @@ final pessoasQuiosqueProvider = FutureProvider.autoDispose<List<Colaborador>>((
     return c;
   }
 });
+
+/// O que cada pessoa marcou por último (servidor + o que ficou guardado neste
+/// aparelho; fica a marcação mais recente).
+final estadoPontoQuiosqueProvider =
+    FutureProvider.autoDispose<Map<String, UltimoPonto>>((ref) async {
+      final local = lerEstadoPonto(lerPref(_chavePonto));
+      var servidor = const <String, UltimoPonto>{};
+      try {
+        servidor = await ref.watch(pontoEstadoProvider.future);
+      } on Object {
+        // sem ligação: vale o que se sabe deste aparelho
+      }
+      final juntos = juntarEstadoPonto(local, servidor);
+      if (juntos.isNotEmpty) {
+        guardarPref(_chavePonto, codificarEstadoPonto(juntos));
+      }
+      return juntos;
+    });
