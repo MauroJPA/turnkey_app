@@ -14,6 +14,7 @@ import '../application/contagem_providers.dart';
 import '../domain/contagem_dia.dart';
 import '../domain/local.dart';
 import '../domain/movimento_produto.dart';
+import '../../../app/theme/cores_estado.dart';
 
 String _n(double v) =>
     v == v.roundToDouble() ? '${v.toInt()}' : v.toStringAsFixed(1);
@@ -306,7 +307,7 @@ class _Comparacao extends StatelessWidget {
     final cor = subiu
         ? cs.error
         : desceu
-        ? Colors.green
+        ? cs.sucesso
         : cs.outline;
     return Row(
       children: [

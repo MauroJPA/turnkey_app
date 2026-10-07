@@ -9,6 +9,7 @@ import '../../../core/alerts/alerta_forno.dart';
 import '../../tech_sheets/application/tech_sheets_providers.dart';
 import '../application/contagem_providers.dart';
 import '../domain/fornada.dart';
+import '../../../app/theme/cores_estado.dart';
 
 String _n(double v) => v == v.roundToDouble() ? '${v.toInt()}' : '$v';
 
@@ -65,7 +66,13 @@ class CartaoFornada extends StatelessWidget {
     final hh = fornada.inicio.hour.toString().padLeft(2, '0');
     final mm = fornada.inicio.minute.toString().padLeft(2, '0');
     return Card(
-      color: algumPronto ? cs.errorContainer : cs.secondaryContainer,
+      color: algumPronto ? cs.avisoSuave : cs.secondaryContainer,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: algumPronto
+            ? BorderSide(color: cs.aviso, width: 1.5)
+            : BorderSide.none,
+      ),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -269,7 +276,13 @@ class _ResumoFornoCardState extends ConsumerState<ResumoFornoCard> {
       (s) => s.fornada.prontoItem(s.item, agora),
     );
     return Card(
-      color: algumPronto ? cs.errorContainer : cs.secondaryContainer,
+      color: algumPronto ? cs.avisoSuave : cs.secondaryContainer,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: algumPronto
+            ? BorderSide(color: cs.aviso, width: 1.5)
+            : BorderSide.none,
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => context.go(Routes.contagem),

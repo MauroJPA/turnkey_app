@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../application/comparar_precos_providers.dart';
 import '../domain/comparar_precos.dart';
+import '../../../app/theme/cores_estado.dart';
 
 /// "Mais barato noutro sítio": para cada ingrediente comprado de mais de uma
 /// forma, o preço ao kg de cada marca/fornecedor e quanto se poupa.
@@ -124,7 +125,7 @@ class _CartaoComparacao extends StatelessWidget {
         collapsedShape: const Border(),
         leading: Icon(
           c.temPoupanca ? Icons.savings_outlined : Icons.check_circle_outline,
-          color: c.temPoupanca ? Colors.green : cs.outline,
+          color: c.temPoupanca ? cs.sucesso : cs.outline,
         ),
         title: Text(c.ingrediente.nomeComCaracteristica),
         subtitle: Text(
@@ -137,7 +138,7 @@ class _CartaoComparacao extends StatelessWidget {
             ? Text(
                 '−${c.poupancaPct.toStringAsFixed(0)}%',
                 style: tt.titleMedium?.copyWith(
-                  color: Colors.green,
+                  color: cs.sucesso,
                   fontWeight: FontWeight.bold,
                 ),
               )
@@ -172,7 +173,7 @@ class _CartaoComparacao extends StatelessWidget {
                     '${fmt(o.custo)}/$u',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: identical(o, barata) ? Colors.green : null,
+                      color: identical(o, barata) ? cs.sucesso : null,
                     ),
                   ),
                 ],

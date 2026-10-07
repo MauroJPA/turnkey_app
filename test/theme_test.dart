@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gc_turnkey/src/app/theme/app_theme.dart';
+import 'package:gc_turnkey/src/app/theme/cores_estado.dart';
 import 'package:gc_turnkey/src/features/settings/domain/empresa.dart';
 
 void main() {
+  coresEstadoTests();
   test('parseHex aceita #RRGGBB e RRGGBB, rejeita o resto', () {
     expect(AppTheme.parseHex('#8D5B34'), isNotNull);
     expect(AppTheme.parseHex('8D5B34'), isNotNull);
@@ -86,5 +88,24 @@ void main() {
     expect(TemaApp.claro.modo, ThemeMode.light);
     expect(TemaApp.escuro.modo, ThemeMode.dark);
     expect(TemaApp.sistema.modo, ThemeMode.system);
+  });
+}
+
+void coresEstadoTests() {
+  double contraste(Color a, Color b) {
+    final la = a.computeLuminance(), lb = b.computeLuminance();
+    final hi = la > lb ? la : lb, lo = la > lb ? lb : la;
+    return (hi + 0.05) / (lo + 0.05);
+  }
+
+  test('cores de estado legíveis sobre o fundo nos dois modos', () {
+    for (final p in AppTheme.paletasMarca) {
+      for (final (b, m) in [(Brightness.light, p.claro), (Brightness.dark, p.escuro)]) {
+        final cs = ColorScheme.fromSeed(seedColor: p.cor, brightness: b);
+        expect(contraste(cs.sucesso, m.superficie), greaterThanOrEqualTo(4.5));
+        expect(contraste(cs.aviso, m.superficie), greaterThanOrEqualTo(4.5));
+        expect(contraste(cs.sobreAvisoSuave, cs.avisoSuave), greaterThanOrEqualTo(4.5));
+      }
+    }
   });
 }

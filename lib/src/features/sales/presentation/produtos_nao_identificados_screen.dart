@@ -145,7 +145,7 @@ class ProdutosNaoIdentificadosScreen extends ConsumerWidget {
               ),
               for (final p in lista)
                 ListTile(
-                  leading: const Icon(Icons.link_off, color: Colors.red),
+                  leading: Icon(Icons.link_off, color: Theme.of(context).colorScheme.error),
                   title: Text(p.descricao.isEmpty ? '(sem descrição)' : p.descricao),
                   subtitle: Text(
                     '${p.linhas} linha(s) · '

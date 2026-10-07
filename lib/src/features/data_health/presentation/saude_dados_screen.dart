@@ -11,6 +11,7 @@ import '../../ingredients/domain/ingredient.dart';
 import '../../tech_sheets/application/tech_sheets_providers.dart';
 import '../../tech_sheets/domain/tech_sheet.dart';
 import '../domain/saude_dados.dart';
+import '../../../app/theme/cores_estado.dart';
 
 /// A análise com o que falta preencher.
 final saudeDadosProvider = FutureProvider.autoDispose<RelatorioSaude>((
@@ -49,8 +50,8 @@ class SaudeDadosScreen extends ConsumerWidget {
         onRetry: () => ref.invalidate(saudeDadosProvider),
         data: (r) {
           final cor = r.essenciais == 0
-              ? Colors.green
-              : (r.completoPct >= 80 ? Colors.orange : cs.error);
+              ? cs.sucesso
+              : (r.completoPct >= 80 ? cs.aviso : cs.error);
           return RefreshIndicator(
             onRefresh: () async => ref.invalidate(saudeDadosProvider),
             child: ListView(

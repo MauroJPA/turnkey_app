@@ -13,6 +13,7 @@ import '../data/variacao_preco_repository.dart';
 import '../domain/sugestao_preco.dart';
 import '../domain/variacao_preco.dart';
 import 'comparar_precos_lista.dart';
+import '../../../app/theme/cores_estado.dart';
 
 enum _Filtro { subidas, descidas, todas, maisBaratos }
 
@@ -167,6 +168,7 @@ class _SugestaoPreco extends ConsumerWidget {
     );
     if (s == null) return const SizedBox.shrink();
     final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
     final podeEditar = ref.watch(currentPapelProvider).canEditBusiness;
 
     Future<void> aplicar() async {
@@ -204,7 +206,7 @@ class _SugestaoPreco extends ConsumerWidget {
             'Sugestão: ${fmt(s.precoSugerido)} (hoje ${fmt(s.precoAtual)}) '
             'para a margem voltar a ${s.margemAlvo.toStringAsFixed(0)}% '
             '(hoje ${s.margemAtual.toStringAsFixed(0)}%)',
-            style: tt.bodySmall?.copyWith(color: Colors.orange),
+            style: tt.bodySmall?.copyWith(color: cs.aviso),
           ),
           if (podeEditar)
             TextButton(
@@ -241,7 +243,7 @@ class _CartaoVariacao extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final cor = v.subiu ? cs.error : Colors.green;
+    final cor = v.subiu ? cs.error : cs.sucesso;
     final sinal = v.pct > 0 ? '+' : '';
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -302,7 +304,7 @@ class _CartaoVariacao extends StatelessWidget {
                                 style: tt.bodySmall?.copyWith(
                                   color: f.custoDepois > f.custoAntes
                                       ? cs.error
-                                      : Colors.green,
+                                      : cs.sucesso,
                                 ),
                               )
                             else

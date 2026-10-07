@@ -17,6 +17,7 @@ import '../../inventory/presentation/stock_badge.dart';
 import '../application/consumivel_providers.dart';
 import '../domain/consumivel.dart';
 import 'consumivel_sheet.dart';
+import '../../../app/theme/cores_estado.dart';
 
 /// Cor/etiqueta do estado da ficha de dados de segurança.
 ({String texto, IconData icone, Color cor}) apresentaEstadoFds(
@@ -26,12 +27,12 @@ import 'consumivel_sheet.dart';
   EstadoFds.ok => (
     texto: 'FDS ok',
     icone: Icons.verified_outlined,
-    cor: Colors.green.shade700,
+    cor: cs.sucesso,
   ),
   EstadoFds.antiga => (
     texto: 'FDS antiga',
     icone: Icons.history,
-    cor: Colors.orange.shade800,
+    cor: cs.aviso,
   ),
   EstadoFds.falta => (
     texto: 'Falta FDS',

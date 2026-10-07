@@ -23,6 +23,7 @@ import '../application/previsao_providers.dart';
 import '../domain/plano_pronto.dart';
 import '../domain/previsao_assar.dart';
 import 'plano_pronto_sheet.dart';
+import '../../../app/theme/cores_estado.dart';
 
 String _rotuloDia(DateTime d, int offset) => offset == 0
     ? 'Hoje'
@@ -734,7 +735,7 @@ class _ComoAcertou extends StatelessWidget {
                     style: tt.bodySmall?.copyWith(
                       color: a.desvioPct < -5
                           ? cs.error
-                          : (a.desvioPct > 5 ? Colors.orange : cs.primary),
+                          : (a.desvioPct > 5 ? cs.aviso : cs.primary),
                     ),
                   ),
                 ],
@@ -775,8 +776,8 @@ class _Linha extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
     final cor = switch (p.confianca) {
-      Confianca.alta => Colors.green,
-      Confianca.media => Colors.orange,
+      Confianca.alta => cs.sucesso,
+      Confianca.media => cs.aviso,
       Confianca.baixa => cs.error,
     };
     final detalhe = [

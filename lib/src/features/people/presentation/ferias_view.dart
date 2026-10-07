@@ -13,6 +13,7 @@ import '../application/ferias_providers.dart';
 import '../data/ferias_repository.dart';
 import '../domain/ferias.dart';
 import '../domain/ponto.dart';
+import '../../../app/theme/cores_estado.dart';
 
 const _meses = [
   'janeiro',
@@ -36,8 +37,8 @@ void _atualizar(WidgetRef ref) {
 
 Color _corDe(Ausencia a, ColorScheme cs) {
   final base = switch (a.tipo) {
-    TipoAusencia.ferias => Colors.green,
-    TipoAusencia.baixa => Colors.orange,
+    TipoAusencia.ferias => cs.sucesso,
+    TipoAusencia.baixa => cs.aviso,
     TipoAusencia.falta => cs.error,
     TipoAusencia.outro => cs.outline,
   };
@@ -300,9 +301,9 @@ class _FeriasViewState extends ConsumerState<FeriasView> {
                 spacing: 12,
                 children: [
                   for (final (cor, texto) in [
-                    (Colors.green, 'Férias'),
-                    (Colors.green.withValues(alpha: 0.35), 'Por aprovar'),
-                    (Colors.orange, 'Baixa'),
+                    (cs.sucesso, 'Férias'),
+                    (cs.sucesso.withValues(alpha: 0.35), 'Por aprovar'),
+                    (cs.aviso, 'Baixa'),
                     (cs.error, 'Falta'),
                   ])
                     Row(
