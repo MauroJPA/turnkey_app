@@ -173,18 +173,29 @@ function linhasHoras(app, empresaId, sem) {
   const porPessoa = {};
   const nomes = {};
   const estado = {};
+  // a pausa que a escala prevê (preenche-se na saída se a pessoa não a marcou)
+  let escala = null;
+  let escalaDia = null;
+  try {
+    escalaDia = require(__hooks + '/escala_dia.js');
+    escala = escalaDia.carregar(app, empresaId, mais(sem.de, -1), mais(sem.ate, 1));
+  } catch (_) {
+    escala = null;
+  }
   for (const r of regs) {
     const p = r.getString('pessoa');
     nomes[p] = r.getString('nome') || nomes[p] || 'Pessoa';
     const t = new Date(String(r.getString('data_hora')).replace(' ', 'T')).getTime();
-    const e = (estado[p] = estado[p] || { entrada: null, pausa: 0, pausaDesde: null });
+    const e = (estado[p] = estado[p] || { entrada: null, pausa: 0, pausaDesde: null, marcouPausa: false });
     const tipo = r.getString('tipo');
     if (tipo === 'entrada') {
       e.entrada = t;
       e.pausa = 0;
       e.pausaDesde = null;
+      e.marcouPausa = false;
     } else if (tipo === 'pausa_inicio' && e.entrada !== null && e.pausaDesde === null) {
       e.pausaDesde = t;
+      e.marcouPausa = true;
     } else if (tipo === 'pausa_fim' && e.pausaDesde !== null) {
       e.pausa += t - e.pausaDesde;
       e.pausaDesde = null;
@@ -192,6 +203,11 @@ function linhasHoras(app, empresaId, sem) {
       if (e.pausaDesde !== null) {
         e.pausa += t - e.pausaDesde;
         e.pausaDesde = null;
+      }
+      if (!e.marcouPausa && e.pausa === 0 && escala && t - e.entrada <= 16 * 3600000) {
+        // sem pausa marcada: conta a da escala (no máximo a duração do turno)
+        const min = escalaDia.pausaPrevistaMin(escala, p, new Date(e.entrada));
+        e.pausa = Math.min(min * 60000, t - e.entrada);
       }
       const dur = t - e.entrada - e.pausa;
       // a jornada conta na semana em que começou; ignora absurdos (> 16 h)

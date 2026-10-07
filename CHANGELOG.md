@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.11.0 — 2026-10-07 — Pausa automática na saída
+
+Quando alguém **sai sem ter marcado a pausa**, a saída passa a **preencher a pausa sozinha**, com a que a Escala prevê para esse dia.
+
+- **Como funciona**: ao fechar a jornada (entrada → saída) sem nenhuma marcação de pausa, desconta-se a pausa do turno desse dia (a do horário habitual, da regra em lote ou da alteração de um só dia, a que mandar). Nunca é maior do que a própria jornada.
+- **Só quando não marcou nada**: se a pessoa marcou a pausa (até só o início), vale o que marcou. Se nesse dia não há turno na Escala (folga/fechado), não se desconta nada. Quem ainda está a trabalhar só a recebe na saída.
+- **Onde se vê**: na jornada do Ponto aparece "Pausa 30m (automática, a da escala)"; o CSV traz "30m (automática)". Entra nas horas trabalhadas, no saldo contra o previsto e no resumo semanal (as horas da equipa).
+- Não escreve marcações: é calculado a partir da Escala. Se mudares a Escala de um dia que já passou, a pausa automática desse dia muda com ela.
+- Ficheiros: `ponto.dart` (`pausaAutomatica`), `ponto_view.dart`, hook novo `escala_dia.js` (usado por `resumo_semanal.js`). Sem migrations.
+- Testes: 7 testes de Dart (automática, marcada, só início, em curso, limite da jornada, sem pausa na escala, CSV), 5 de Node para a pausa prevista (alteração de um dia, regras, alternadas, dias fechados, feriados) e um cenário no servidor (resumo semanal conta 8 h).
+
 ## 2.10.0 — 2026-10-07 — Escala: horário em lote, folgas fixas e dias fechados
 
 A escala (Pessoas → Escala) fica **muito mais fácil de preencher**: um botão **"Horário em lote"** aplica o mesmo horário (ou folga) a **várias pessoas e vários dias de uma vez**, para sempre ou até uma data.

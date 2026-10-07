@@ -181,6 +181,21 @@ class _PontoViewState extends ConsumerState<PontoView> {
         ? mesInicio
         : (hoje0.isBefore(mesFim) ? hoje0 : mesFim);
 
+    // se saiu sem marcar a pausa, conta a que a escala prevê para esse dia
+    Duration pausaDaEscala(String pessoa, DateTime entrada) {
+      final d = diaDaEscala(
+        pessoa: pessoa,
+        dia: entrada,
+        modelo: modeloEscala,
+        excecoes: excecoesMes,
+        regras: regrasEscala,
+        diasTrabalho: diasTrab,
+      );
+      return d.estado == EstadoDia.turno
+          ? Duration(minutes: d.pausaMin)
+          : Duration.zero;
+    }
+
     final jornadasRecentes = calcularJornadas(recente, agora);
     final aTrabalhar = [
       for (final j in jornadasRecentes)
@@ -201,7 +216,11 @@ class _PontoViewState extends ConsumerState<PontoView> {
       value: ref.watch(pontoMesProvider(_mes)),
       onRetry: () => ref.invalidate(pontoMesProvider),
       data: (registos) {
-        final jornadas = calcularJornadas(registos, agora);
+        final jornadas = calcularJornadas(
+          registos,
+          agora,
+          pausaAutomatica: pausaDaEscala,
+        );
         final totais = totaisPorPessoa(jornadas, agora);
         final totalGeral = totais.fold(
           Duration.zero,
@@ -502,7 +521,8 @@ class _FolhaPessoa extends ConsumerWidget {
                       ),
                       if (j.pausa > Duration.zero)
                         Text(
-                          'Pausa ${formatarDuracao(j.pausa)}',
+                          'Pausa ${formatarDuracao(j.pausa)}'
+                          '${j.pausaAutomatica ? ' (automática, a da escala)' : ''}',
                           style: tt.bodySmall,
                         ),
                       for (final a in j.avisos)

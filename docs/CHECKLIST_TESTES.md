@@ -2112,6 +2112,19 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Ponto: as horas previstas do mês e o "Saída às …" usam o horário da regra (conferir com uma regra de horário de verão)
 - [ ] No telemóvel o lote abre em ecrã quase inteiro, tudo legível, botão "Aplicar" visível no fim
 
+## 153. Pausa automática na saída
+
+- [ ] Definir na Escala um horário com pausa de 30 min para uma pessoa; essa pessoa marca Entrada e, depois de umas horas, Saída **sem marcar pausa**: no Ponto a jornada mostra "Pausa 30m (automática, a da escala)" e o trabalhado já vem descontado
+- [ ] Se marcar "Início da pausa" e "Fim da pausa", vale o que marcou (sem "automática")
+- [ ] Marcar só "Início da pausa" e sair: a pausa acaba na saída (aviso "Pausa sem fim"), sem pausa automática por cima
+- [ ] Alguém ainda a trabalhar: não mostra pausa até sair
+- [ ] Num dia em que a pessoa não tem turno na Escala (folga/fechado) e mesmo assim marca ponto: não se desconta pausa
+- [ ] Turno com pausa diferente num dia (alteração de um só dia ou regra em lote): a pausa automática usa essa
+- [ ] Jornada curta (p. ex. 20 min) nunca fica com pausa maior do que a jornada
+- [ ] O saldo do mês (previsto × marcado) deixa de ficar 30 min "a menos" por dia quando ninguém marca pausa
+- [ ] CSV do Ponto: coluna Pausa traz "30m (automática)"
+- [ ] Resumo semanal: as horas da equipa já descontam a pausa automática
+
 ---
 
 ## Notas / ajustes pedidos

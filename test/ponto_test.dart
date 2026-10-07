@@ -206,4 +206,106 @@ void main() {
       expect(lerEstadoPonto('lixo'), isEmpty);
     });
   });
+
+  group('pausa automática na saída', () {
+    const meia = Duration(minutes: 30);
+    Duration meiaHora(String pessoa, DateTime entrada) => meia;
+
+    test('sem pausa marcada, a saída preenche a da escala', () {
+      final j = calcularJornadas(
+        [
+          r('u:1', TipoPonto.entrada, h(8)),
+          r('u:1', TipoPonto.saida, h(16, 30)),
+        ],
+        agora,
+        pausaAutomatica: meiaHora,
+      ).single;
+      expect(j.pausa, meia);
+      expect(j.pausaAutomatica, isTrue);
+      expect(j.trabalhado(agora), const Duration(hours: 8));
+      expect(j.avisos, isEmpty);
+    });
+
+    test('se a pausa foi marcada, não se muda nada', () {
+      final j = calcularJornadas(
+        [
+          r('u:1', TipoPonto.entrada, h(8)),
+          r('u:1', TipoPonto.pausaInicio, h(12)),
+          r('u:1', TipoPonto.pausaFim, h(12, 45)),
+          r('u:1', TipoPonto.saida, h(16, 30)),
+        ],
+        agora,
+        pausaAutomatica: meiaHora,
+      ).single;
+      expect(j.pausa, const Duration(minutes: 45));
+      expect(j.pausaAutomatica, isFalse);
+    });
+
+    test('pausa começada e sem fim também conta como marcada', () {
+      final j = calcularJornadas(
+        [
+          r('u:1', TipoPonto.entrada, h(8)),
+          r('u:1', TipoPonto.pausaInicio, h(12)),
+          r('u:1', TipoPonto.saida, h(12, 20)),
+        ],
+        agora,
+        pausaAutomatica: meiaHora,
+      ).single;
+      expect(j.pausa, const Duration(minutes: 20));
+      expect(j.pausaAutomatica, isFalse);
+    });
+
+    test('quem ainda está a trabalhar só a recebe na saída', () {
+      final j = calcularJornadas(
+        [r('u:1', TipoPonto.entrada, h(9))],
+        agora,
+        pausaAutomatica: meiaHora,
+      ).single;
+      expect(j.aTrabalhar, isTrue);
+      expect(j.pausa, Duration.zero);
+      expect(j.pausaAutomatica, isFalse);
+      expect(j.trabalhado(agora), const Duration(hours: 9));
+    });
+
+    test('nunca é maior do que a jornada', () {
+      final j = calcularJornadas(
+        [
+          r('u:1', TipoPonto.entrada, h(8)),
+          r('u:1', TipoPonto.saida, h(8, 20)),
+        ],
+        agora,
+        pausaAutomatica: meiaHora,
+      ).single;
+      expect(j.pausa, const Duration(minutes: 20));
+      expect(j.trabalhado(agora), Duration.zero);
+    });
+
+    test('sem pausa na escala (zero) não preenche nada', () {
+      final j = calcularJornadas(
+        [r('u:1', TipoPonto.entrada, h(8)), r('u:1', TipoPonto.saida, h(12))],
+        agora,
+        pausaAutomatica: (_, _) => Duration.zero,
+      ).single;
+      expect(j.pausa, Duration.zero);
+      expect(j.pausaAutomatica, isFalse);
+    });
+
+    test('a pausa vem da escala de cada pessoa e o CSV assinala-a', () {
+      final js = calcularJornadas(
+        [
+          r('u:1', TipoPonto.entrada, h(8)),
+          r('u:1', TipoPonto.saida, h(16, 30)),
+          r('u:2', TipoPonto.entrada, h(8), nome: 'Rui'),
+          r('u:2', TipoPonto.saida, h(16, 30), nome: 'Rui'),
+        ],
+        agora,
+        pausaAutomatica: (p, _) =>
+            p == 'u:1' ? const Duration(minutes: 45) : Duration.zero,
+      );
+      expect(js.firstWhere((j) => j.pessoa == 'u:1').pausa.inMinutes, 45);
+      expect(js.firstWhere((j) => j.pessoa == 'u:2').pausa, Duration.zero);
+      final csv = jornadasCsv(js, agora);
+      expect(csv, contains('45m (automática)'));
+    });
+  });
 }

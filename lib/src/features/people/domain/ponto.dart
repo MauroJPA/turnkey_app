@@ -93,6 +93,7 @@ class Jornada {
     required this.entrada,
     this.saida,
     this.pausa = Duration.zero,
+    this.pausaAutomatica = false,
     this.registos = const [],
     this.aTrabalhar = false,
     this.semSaida = false,
@@ -106,6 +107,9 @@ class Jornada {
 
   /// Tempo de pausa já descontado.
   final Duration pausa;
+
+  /// A pausa não foi marcada: foi preenchida na saída com a que a escala prevê.
+  final bool pausaAutomatica;
   final List<RegistoPonto> registos;
 
   /// Ainda não saiu e a entrada é de hoje.
@@ -132,11 +136,18 @@ const jornadaMaxima = Duration(hours: 16);
 
 /// Agrupa as marcações em jornadas, pessoa a pessoa, por ordem de entrada.
 ///
+/// Se a pessoa saiu sem marcar nenhuma pausa, a pausa prevista pela escala
+/// ([pausaAutomatica]) é preenchida na saída (nunca mais do que a jornada).
+///
 /// Entrada → (pausa início → pausa fim)* → saída. Marcações fora de ordem
 /// (saída sem entrada, entrada com outra já aberta…) não se perdem: ficam
 /// em [Jornada.avisos]. Uma jornada aberta com mais de 16 horas (ou de um
 /// dia que já passou) é uma saída esquecida e não conta como trabalhada.
-List<Jornada> calcularJornadas(List<RegistoPonto> registos, DateTime agora) {
+List<Jornada> calcularJornadas(
+  List<RegistoPonto> registos,
+  DateTime agora, {
+  Duration Function(String pessoa, DateTime entrada)? pausaAutomatica,
+}) {
   final porPessoa = <String, List<RegistoPonto>>{};
   for (final r in registos) {
     porPessoa.putIfAbsent(r.pessoa, () => []).add(r);
@@ -159,13 +170,28 @@ List<Jornada> calcularJornadas(List<RegistoPonto> registos, DateTime agora) {
           saida == null &&
           !semSaida &&
           agora.difference(e.dataHora) <= jornadaMaxima;
+      // saiu sem marcar pausa nenhuma: conta a que a escala prevê
+      var pausaFinal = pausa;
+      var automatica = false;
+      if (dentroDoLimite &&
+          pausa == Duration.zero &&
+          !regs.any((r) => r.tipo == TipoPonto.pausaInicio)) {
+        final prevista =
+            pausaAutomatica?.call(e.pessoa, e.dataHora) ?? Duration.zero;
+        if (prevista > Duration.zero) {
+          final duracao = saida.difference(e.dataHora);
+          pausaFinal = prevista < duracao ? prevista : duracao;
+          automatica = true;
+        }
+      }
       out.add(
         Jornada(
           pessoa: e.pessoa,
           nome: e.nome,
           entrada: e.dataHora,
           saida: dentroDoLimite ? saida : null,
-          pausa: pausa,
+          pausa: pausaFinal,
+          pausaAutomatica: automatica,
           registos: regs,
           aTrabalhar: emCurso,
           semSaida: !dentroDoLimite && !emCurso,
@@ -313,7 +339,7 @@ String jornadasCsv(List<Jornada> jornadas, DateTime agora) {
         d(j.dia),
         h(j.entrada),
         h(j.saida),
-        formatarDuracao(j.pausa),
+        '${formatarDuracao(j.pausa)}${j.pausaAutomatica ? ' (automática)' : ''}',
         formatarDuracao(j.trabalhado(agora)),
         c(j.avisos.join(' / ')),
       ].join(';'),

@@ -1236,6 +1236,13 @@ def teste_resumo_semanal():
         novo('ponto_registos', {'empresa': empresas['A'], 'pessoa': 'c:semanal-teste', 'nome': 'Sara Semanal', 'tipo': tipo,
                                 'data_hora': f'{quarta.isoformat()} {hora}:00.000Z', 'origem': 'manual'})
 
+    # sem pausa marcada: a saída preenche a pausa prevista pela escala (30 min na quarta) -> 8 h
+    novo('escala_modelo', {'empresa': empresas['A'], 'pessoa': 'c:semanal-auto', 'nome': 'Ana Automatica',
+                           'dia_semana': quarta.isoweekday(), 'inicio': '08:00', 'fim': '16:30', 'pausa_min': 30})
+    for tipo, hora in (('entrada', '08:00'), ('saida', '16:30')):
+        novo('ponto_registos', {'empresa': empresas['A'], 'pessoa': 'c:semanal-auto', 'nome': 'Ana Automatica', 'tipo': tipo,
+                                'data_hora': f'{quarta.isoformat()} {hora}:00.000Z', 'origem': 'manual'})
+
     s, r, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': False, 'semanal': True}, tok['adminA'])
     texto = r.get('texto', '')
     check(s == 200 and texto.startswith('Resumo da semana'), 'o administrador vê o resumo semanal', f'status {s} {texto[:80]}')
@@ -1245,7 +1252,8 @@ def teste_resumo_semanal():
     if ficha and local:
         check('Desperdício: 6 un · €15,00 (evitável: €10,00)' in texto, 'desperdício em euros com o evitável à parte', texto[:500])
         check('A perda evitável que mais custou: queimado (€10,00)' in texto, 'a maior perda evitável')
-    check('Horas da equipa: 7,5 h (1 pessoa)' in texto and 'Sara Semanal 7,5 h' in texto, 'horas da equipa (pausa descontada)', texto[:600])
+    check('Horas da equipa: 15,5 h (2 pessoas)' in texto and 'Sara Semanal 7,5 h' in texto, 'horas da equipa (pausa descontada)', texto[:600])
+    check('Ana Automatica 8 h' in texto, 'saída sem pausa marcada: conta a pausa da escala (8h30 - 30m)', texto[:600])
     # uma semana sem nada devolve a mensagem de vazio, sem rebentar
     s, r, _ = call('POST', '/api/gc_turnkey/avisos/testar', {'enviar': False, 'semanal': True}, tok['ownerB'])
     check(s == 200 and 'Vendas:' not in r.get('texto', '') and 'Sara Semanal' not in r.get('texto', ''),
