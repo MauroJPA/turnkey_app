@@ -8,6 +8,9 @@ própria base de dados — **não mexe** no PocketBase nem nas outras aplicaçõ
 > Tudo o que interessa fica em **`data/`** (base de dados e ficheiros) e **`.env`** (segredos):
 > para mudar de máquina — ou para a nuvem — levas essas duas coisas (ver o passo 11).
 
+> **Depois de instalado:** liga o **vigia de segurança** (um alarme que procura sinais de invasão de
+> 10 em 10 minutos e avisa pela app/Telegram) — ver a secção "Vigia de segurança" no fim deste documento.
+
 ## 0. Antes de começar
 
 ```bash
@@ -236,3 +239,21 @@ A imagem constrói-se sozinha em `amd64` e `arm64`, por isso qualquer Linux com 
    na *firewall* da nuvem; manter o SSH só por chave).
 5. Backups na nova máquina: repetir `backup/LEIA-ME.md` (o rclone.conf tem de ir para lá ou voltar a configurar-se).
 6. Ensaio (passo 7) e só depois desligar o servidor antigo.
+
+## Vigia de segurança (recomendado)
+
+Um script que corre **de 10 em 10 minutos** e procura sinais de invasão: entradas SSH estranhas, chaves e
+tarefas novas, mineradores, aparelhos novos no Tailscale, ficheiros da app alterados sem atualização,
+atualizações de segurança em atraso… **Só lê** (não altera nada). Avisa na app (Início e Configurações →
+Segurança e backups) e, se tiveres o Telegram/email ligados, também por aí.
+
+```bash
+cd /opt/gc_turnkey
+sudo bash seguranca/instalar-vigia.sh        # instala o timer e faz a 1.ª ronda (aprende o que é normal)
+sudo python3 seguranca/vigia.py estado       # ver o último resultado
+```
+
+- [ ] Instalar **num servidor que sabes estar limpo** (o que existir hoje fica como "normal").
+- [ ] Na app, **Configurações → Segurança e backups → Vigia do servidor** mostra "Tudo calmo".
+- [ ] Depois de uma mudança tua (nova chave SSH, novo contentor…), carregar em **"Já verifiquei"**.
+- Detalhes, lista do que vigia e limites: `seguranca/LEIA-ME.md`.

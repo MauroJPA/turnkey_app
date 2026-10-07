@@ -2,6 +2,28 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.8.0 — 2026-10-07 — Vigia de segurança do servidor
+
+Um **vigia de segurança** no servidor: um alarme "inteligente" que procura sinais de invasão de 10 em 10 minutos e te avisa.
+
+- **O que faz**: corre no servidor (timer do systemd) e **só lê** — não altera nada, não bloqueia ninguém, nada sai do servidor. O resultado aparece em **Configurações → Segurança e backups → Vigia do servidor** e no **Início** ("Segurança do servidor", a vermelho se for urgente).
+- **O que vigia**:
+  - **Acesso SSH**: entradas vindas da internet, **muitas tentativas falhadas seguidas de uma entrada**, aparelhos ou IPs novos, horas a que nunca entras, entradas como `root`.
+  - **Contas**: utilizadores novos, quem ganhou `sudo`/`docker`, um 2.º root, contas sem palavra-passe, `sudoers` alterado.
+  - **Como um intruso volta**: chaves SSH novas, tarefas `cron` e serviços `systemd` novos, comandos típicos de ataque (`curl … | sh`, `base64 -d`, `/dev/tcp`), `ld.so.preload`.
+  - **Rede**: portas novas, contentores Docker novos ou com portas abertas, **aparelhos novos na rede Tailscale**, ligações a pools de mineração.
+  - **Processos**: mineradores de criptomoedas, programas a correr de `/tmp`, CPU a 90 % durante mais de 1 hora, programas setuid novos.
+  - **A app**: **ficheiros da app (hooks, migrations, web) alterados sem haver atualização**, novo superutilizador do PocketBase, mudanças de proprietários/administradores, rajadas de falhas de login e pedidos "à procura de falhas".
+  - **Higiene**: atualizações de segurança em atraso, reinício pendente, disco cheio, serviços do gc_turnkey que falharam.
+- **Como é "inteligente"**: **aprende o que é normal** no teu servidor e só avisa do que **muda**; **liga os pontos** (chave nova + acesso novo = "POSSÍVEL INTRUSÃO"); **explica em português** o que viu e **o que fazer**; reaprende sozinho quando **atualizas a app** (se algo muda sem versão nova, é alerta crítico).
+- **"Já verifiquei"**: se o alerta é uma coisa tua (um contentor novo, uma chave nova), carregas e o vigia aprende. Alertas sem nada a aprender (ex.: a intrusão) calam 24 h.
+- **Avisos**: a app avisa **uma vez** de cada alerta novo por **Telegram/email** (os de Configurações → Avisos), inclui-os no **resumo diário** e avisa se o próprio vigia **parar** (sem dados há 40 min). Opcional: aviso direto por Telegram a partir do servidor.
+- **Só o dono do servidor** vê e aceita estes alertas.
+- **Instalar (uma vez, no servidor)**: `cd /opt/gc_turnkey && sudo bash seguranca/instalar-vigia.sh` — a primeira ronda aprende o estado atual como normal (instala num servidor que sabes estar limpo). O cartão na app mostra o comando se ainda não estiver instalado.
+- Ficheiros novos: `seguranca/vigia.py`, `seguranca/instalar-vigia.sh`, `seguranca/LEIA-ME.md` (no pacote do servidor), hooks `seguranca_vigia.pb.js` e `vigia_core.js`. Sem migrations.
+- Limites honestos: é um alarme de movimento, não um muro; se o servidor já estava comprometido ao instalar, só as regras duras (mineradores, /tmp, root a mais…) avisam. Ver `seguranca/LEIA-ME.md`.
+- Testes: 47 testes do vigia com cenários de invasão simulados (força bruta seguida de acesso, chave nova, minerador, hook alterado, atualização legítima…) e, no servidor, permissões, "já verifiquei" e ficheiro estragado.
+
 ## 2.7.0 — 2026-10-06 — Repor palavras-passe e remover membros da equipa
 
 Quando alguém da equipa se esquece da palavra-passe, o proprietário (ou o administrador) **repõe-a para uma provisória** — e também pode **remover** quem saiu da equipa.

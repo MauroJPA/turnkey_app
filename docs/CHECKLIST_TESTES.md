@@ -2070,6 +2070,22 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] "Remover da equipa": confirma; a pessoa desaparece da lista e já não entra; o ponto/férias/faturas dela continuam visíveis com o nome
 - [ ] Não deixa remover a própria conta nem o último proprietário; o administrador não remove outro administrador
 
+## 150. Vigia de segurança do servidor
+
+- [ ] Servidor: `cd /opt/gc_turnkey && sudo bash seguranca/instalar-vigia.sh` corre sem erros e mostra o estado ("ok" na 1.ª ronda)
+- [ ] `systemctl list-timers gc_turnkey-vigia` mostra o timer a cada 10 minutos; `journalctl -u gc_turnkey-vigia -n 20` sem erros
+- [ ] App → Configurações → Segurança e backups: aparece "Vigia do servidor — Tudo calmo" e "Última verificação há … · 10 verificações a correr"
+- [ ] Antes de instalar: o cartão mostra o comando de instalação e "Copiar comando"
+- [ ] Com outra conta (Editor/Leitura/administrador que não é o dono): o cartão do vigia não aparece
+- [ ] Teste real inofensivo: `sudo useradd -m teste-vigia` → em ≤ 10 min aparece "utilizador novo" (atenção); `sudo userdel -r teste-vigia` → fica "algo desapareceu" (info)
+- [ ] "Já verifiquei" num alerta: pede confirmação, diz "o vigia aprende na próxima ronda" e, passados ≤ 10 min, o alerta desaparece e não volta
+- [ ] Criar um contentor novo (`docker run -d --name teste-vigia alpine sleep 600`) → alerta de "contentor Docker novo"; apagá-lo (`docker rm -f teste-vigia`)
+- [ ] Início: com um alerta de atenção/urgente aparece "Segurança do servidor" (laranja/vermelho); sem alertas não aparece
+- [ ] Telegram/email: um alerta novo chega uma só vez (não de 5 em 5 minutos); aparece também no resumo diário
+- [ ] Parar o vigia (`sudo systemctl stop gc_turnkey-vigia.timer`): ao fim de ~40 min a app avisa "O vigia parou de correr"; `sudo systemctl start gc_turnkey-vigia.timer` volta ao normal
+- [ ] Atualizar a app para uma versão nova: o vigia não alerta (reaprende os ficheiros e diz "App atualizada para …")
+- [ ] `sudo python3 seguranca/vigia.py estado` mostra o último resultado em JSON; `… aceitar` reaprende tudo
+
 ---
 
 ## Notas / ajustes pedidos

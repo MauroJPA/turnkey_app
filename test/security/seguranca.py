@@ -490,6 +490,94 @@ def teste_papeis():
     check(s == 400, 'equipa: não se remove o último proprietário', f'status {s}')
 
 
+def teste_vigia():
+    """7a5. Vigia de segurança do servidor: a app lê o que o script escreve."""
+    sec('7a5. Vigia de segurança do servidor')
+    import importlib.util as _iu
+    if not tmp:
+        aviso('vigia: sem pasta de dados do servidor de teste', 'passo ignorado')
+        return
+    dados = os.path.join(tmp, 'data')
+    os.makedirs(dados, exist_ok=True)
+    spec = _iu.spec_from_file_location('vigia_teste', os.path.join(RAIZ, 'deploy', 'seguranca', 'vigia.py'))
+    vg = _iu.module_from_spec(spec)
+    spec.loader.exec_module(vg)
+
+    s, _, _ = call('GET', '/api/gc_turnkey/seguranca/vigia')
+    check(s in (401, 403), 'sem sessão não vê o vigia', f'status {s}')
+    for quem in ('editorA', 'viewerA', 'editorB'):
+        s, r, _ = call('GET', '/api/gc_turnkey/seguranca/vigia', tok=tok[quem])
+        check(s == 200 and r.get('operador') is False and 'achados' not in r, f'{quem}: não vê o vigia', f'{s} {str(r)[:80]}')
+        s, _, _ = call('POST', '/api/gc_turnkey/seguranca/vigia/aceitar', {'id': 'x'}, tok[quem])
+        check(s in (401, 403), f'{quem}: não aceita alertas', f'status {s}')
+
+    # o dono (operador) vê "ainda não instalado"
+    s, r, _ = call('GET', '/api/gc_turnkey/seguranca/vigia', tok=tok['ownerA'])
+    dono = 'ownerA'
+    if r.get('operador') is not True:
+        dono = None
+        for quem in ('ownerB', 'adminA'):
+            s2, r2, _ = call('GET', '/api/gc_turnkey/seguranca/vigia', tok=tok[quem])
+            if r2.get('operador') is True:
+                dono, r = quem, r2
+                break
+    check(dono is not None and r.get('instalado') is False, 'o dono vê o vigia "ainda não instalado"', str(r)[:100])
+    if dono is None:
+        return
+
+    # um ficheiro produzido pelo próprio vigia (a sério, com factos simulados)
+    import time as _t
+    cfg = vg.Config(tmp, dados, os.path.join(tmp, 'vigia_estado'), {})
+    base = {
+        'utilizadores': ['root|0|/bin/bash'], 'uid0': ['root'], 'sem_senha': [], 'grupos_privilegiados': [],
+        'chaves_ssh': [], 'cron': [], 'unidades': [], 'rc_shell': [], 'suspeitos': [], 'ld_preload': False,
+        'sudoers': ['sudoers#a'], 'sshd': ['sshd#a'], 'portas': [], 'ligacoes': [], 'containers': [],
+        'docker_portas_abertas': [], 'tailscale': [], 'processos': [], 'processos_exe': [], 'suid': [],
+        'tmp_exec': [], 'ssh': [],
+    }
+    agora = int(_t.time())
+    vg.correr(cfg, simular=base, agora=agora - 600, enviar=False)
+    mau = dict(base, chaves_ssh=['/root|eeeeeeeeeeeeeeee'], containers=['miner|alpine'])
+    vg.correr(cfg, simular=mau, agora=agora, enviar=False)
+
+    s, r, _ = call('GET', '/api/gc_turnkey/seguranca/vigia', tok=tok[dono])
+    check(s == 200 and r.get('instalado') is True and r.get('estado') == 'critico', 'o dono vê o estado crítico do vigia', f'{s} {str(r)[:120]}')
+    ach = {a['id']: a for a in r.get('achados', [])}
+    check('chaves_ssh:/root|eeeeeeeeeeeeeeee' in ach and ach['chaves_ssh:/root|eeeeeeeeeeeeeeee']['gravidade'] == 'critico',
+          'a chave SSH nova aparece como crítica', str(list(ach))[:160])
+    check(all(set(a) == {'id', 'gravidade', 'categoria', 'titulo', 'detalhe', 'fazer', 'desde', 'vezes', 'itens', 'aceite'}
+              for a in ach.values()), 'cada alerta traz só os campos esperados')
+    check(r.get('parado') is False and r.get('idade', 999) < 120, 'o vigia está a correr (dados recentes)', str(r.get('idade')))
+    check('/home' not in json.dumps(r) and 'eeeeeeeeeeeeeeee' not in json.dumps({k: v for k, v in r.items() if k != 'achados'}),
+          'sem caminhos nem segredos fora dos alertas')
+
+    # "já verifiquei": só o dono; id inexistente recusado; o vigia aprende
+    s, _, _ = call('POST', '/api/gc_turnkey/seguranca/vigia/aceitar', {'id': 'nao-existe'}, tok[dono])
+    check(s == 400, 'aceitar um alerta que não existe é recusado', f'status {s}')
+    s, _, _ = call('POST', '/api/gc_turnkey/seguranca/vigia/aceitar', {'id': 'containers:miner|alpine'}, tok[dono])
+    check(s == 200, 'o dono aceita um alerta ("já verifiquei")', f'status {s}')
+    s, r, _ = call('GET', '/api/gc_turnkey/seguranca/vigia', tok=tok[dono])
+    check({a['id']: a for a in r['achados']}['containers:miner|alpine']['aceite'] is True, 'a app marca o alerta como aceite')
+    r2 = vg.correr(cfg, simular=mau, agora=agora + 600, enviar=False)
+    check('containers:miner|alpine' not in {a['id'] for a in r2['achados']}, 'o vigia aprendeu o contentor e deixou de alertar')
+    check('chaves_ssh:/root|eeeeeeeeeeeeeeee' in {a['id'] for a in r2['achados']}, 'o que não foi aceite continua a alertar')
+
+    # vigia parado: dados antigos
+    with open(os.path.join(dados, 'seguranca_vigia.json'), encoding='utf-8') as f:
+        j = json.load(f)
+    j['quando'] = agora - 3 * 3600
+    with open(os.path.join(dados, 'seguranca_vigia.json'), 'w', encoding='utf-8') as f:
+        json.dump(j, f)
+    s, r, _ = call('GET', '/api/gc_turnkey/seguranca/vigia', tok=tok[dono])
+    check(r.get('parado') is True, 'dados com 3 horas: a app avisa que o vigia parou', str(r.get('idade')))
+    # ficheiro estragado não rebenta a app
+    with open(os.path.join(dados, 'seguranca_vigia.json'), 'w', encoding='utf-8') as f:
+        f.write('isto nao e json')
+    s, r, _ = call('GET', '/api/gc_turnkey/seguranca/vigia', tok=tok[dono])
+    check(s == 200 and r.get('instalado') is False, 'um ficheiro estragado não dá erro 500', f'status {s}')
+    os.remove(os.path.join(dados, 'seguranca_vigia.json'))
+
+
 def teste_equipa_acessos():
     """2b. Repor a palavra-passe e remover membros da equipa."""
     sec('2b. Equipa: palavra-passe provisória e remoção')
@@ -606,6 +694,8 @@ ROTAS = [
     ('POST', '/api/gc_turnkey/team/members/{users}/senha'),
     ('DELETE', '/api/gc_turnkey/team/members/{users}'),
     ('POST', '/api/gc_turnkey/conta/senha'),
+    ('GET', '/api/gc_turnkey/seguranca/vigia'),
+    ('POST', '/api/gc_turnkey/seguranca/vigia/aceitar'),
     ('POST', '/api/gc_turnkey/vendus/sincronizar'),
     ('POST', '/api/gc_turnkey/ingredientes/juntar'),
     ('POST', '/api/gc_turnkey/financeiro/classificar-custos'),
@@ -3246,6 +3336,7 @@ def main():
         teste_aprovacao()
         teste_aprovacoes_na_app()
         teste_estado_backups()
+        teste_vigia()
         teste_2fa()
         teste_avisos()
         teste_resumo_semanal()

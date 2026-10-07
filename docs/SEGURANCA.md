@@ -212,6 +212,22 @@ empresa. O WhatsApp está no código mas **desligado** por omissão (precisa de 
   Os registos que ela criou ficam (guardam o nome); desaparecem só as preferências do menu e o cartão do quiosque (relações em cascata).
 - Testado em `teste_equipa_acessos` (permissões, outra empresa, sessão antiga a fechar, provisória → nova, remoção) e nas rotas de `ROTAS`.
 
+## Vigia de segurança do servidor (2.8.0)
+
+- `deploy/seguranca/vigia.py` (Python, só biblioteca padrão) corre como root de 10 em 10 minutos (timer systemd, com `ProtectSystem=strict`
+  e escrita só na pasta de estado e em `data/`). **Só lê**: SSH (journal), contas, chaves, cron/systemd, rede (`ss`, Docker, Tailscale),
+  processos, ficheiros da app (hashes) e a base de dados do PocketBase **em modo só de leitura** (superutilizadores, proprietários,
+  registos de pedidos). Nunca altera o sistema, nunca guarda chaves, palavras-passe nem conteúdo de ficheiros (só hashes e nomes).
+- Aprende uma *baseline* na 1.ª ronda (`/var/lib/gc_turnkey-vigia`, só root) e alerta do que muda; regras duras para o que nunca é normal
+  (mineradores, programas a correr de /tmp, 2.º uid 0, contas sem palavra-passe, `ld.so.preload`, padrões `curl|sh`/`base64 -d`/`/dev/tcp`);
+  liga sinais ("possível intrusão"). Limite honesto: se o servidor já estava comprometido ao instalar, só as regras duras avisam.
+- Resultado: `data/seguranca_vigia.json` (sem segredos). A app (`seguranca_vigia.pb.js`) só o mostra ao **operador da plataforma** (o dono
+  do servidor, ver `operador.js`); os outros utilizadores não veem nem aceitam alertas. "Já verifiquei" escreve `data/seguranca_acks.json`
+  (o vigia lê só os `id`, que tem de existir nos alertas atuais).
+- Avisos: a app avisa **uma vez** por alerta novo (Telegram/email do dono) e se o vigia parar (sem dados há 40 min); o `/etc/gc_turnkey-vigia.conf`
+  (modo 600) aceita um Telegram direto opcional.
+- Testado em `test/seguranca/test_vigia.py` (cenários de invasão simulados) e `teste_vigia` (app ↔ vigia, permissões, ficheiro estragado).
+
 ## Riscos aceites / notas
 
 - O administrador pode editar o perfil da empresa (desenho) e, tecnicamente, o campo `plano`

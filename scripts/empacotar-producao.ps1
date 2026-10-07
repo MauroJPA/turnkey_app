@@ -23,7 +23,7 @@ if ($LASTEXITCODE -ne 0) { throw "flutter build web falhou" }
 
 $saida = Join-Path (Get-Location) "dist\gc_turnkey-servidor"
 if (Test-Path $saida) { Remove-Item $saida -Recurse -Force }
-New-Item -ItemType Directory -Force "$saida\docs", "$saida\backup" | Out-Null
+New-Item -ItemType Directory -Force "$saida\docs", "$saida\backup", "$saida\seguranca" | Out-Null
 
 Write-Host "2/4  A juntar ficheiros ..."
 Copy-Item "build\web" "$saida\web" -Recurse
@@ -48,6 +48,8 @@ foreach ($f in "Dockerfile", "compose.yaml", ".env.example", "gc_turnkey.sh") {
 }
 Copy-Item "deploy\backup\*" "$saida\backup" -Recurse
 Remove-Item "$saida\backup\logs" -Recurse -Force -ErrorAction SilentlyContinue
+Copy-Item "deploy\seguranca\*" "$saida\seguranca" -Recurse
+Remove-Item "$saida\seguranca\__pycache__" -Recurse -Force -ErrorAction SilentlyContinue
 foreach ($d in "SERVIDOR_LINUX.md", "BACKUPS.md", "SEGURANCA.md") {
   Copy-Item "docs\$d" "$saida\docs\$d"
 }
@@ -64,7 +66,7 @@ Instalar:   ver docs/SERVIDOR_LINUX.md
 # funcionam com CRLF. (A app web compilada nao se mexe.)
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 Get-ChildItem $saida -Recurse -File | Where-Object {
-  $_.FullName -notlike "$saida\web\*" -and $_.Extension -in ".sh", ".md", ".yaml", ".js", ".txt", ".example", ""
+  $_.FullName -notlike "$saida\web\*" -and $_.Extension -in ".sh", ".md", ".yaml", ".js", ".txt", ".example", ".py", ""
 } | ForEach-Object {
   $t = [System.IO.File]::ReadAllText($_.FullName)
   [System.IO.File]::WriteAllText($_.FullName, ($t -replace "`r`n", "`n"), $utf8)

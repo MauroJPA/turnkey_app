@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router.dart';
 import 'backups_card.dart';
 import 'dois_passos_card.dart';
+import 'vigia_card.dart';
 
 /// Segurança e backups (só administradores): o estado dos backups e o 2.º
 /// passo no início de sessão, juntos numa página curta.
@@ -23,6 +24,8 @@ class SegurancaScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // só o dono do servidor o vê (para os outros não ocupa espaço)
+          const VigiaCard(),
           Text(
             'Estado dos backups',
             style: Theme.of(context).textTheme.titleMedium,

@@ -13,7 +13,9 @@ import '../data/aprovacoes_repository.dart';
 import '../data/avisos_repository.dart';
 import '../data/backups_repository.dart';
 import '../data/dois_passos_repository.dart';
+import '../data/vigia_repository.dart';
 import '../domain/opcoes_resumo.dart';
+import '../domain/vigia.dart';
 import 'integracoes_sheet.dart';
 
 /// Configurações: uma lista de grupos, cada um com o seu estado à vista
@@ -37,6 +39,9 @@ class OpcoesScreen extends ConsumerWidget {
     final vendus = admin ? ref.watch(estadoVendusProvider).valueOrNull : null;
     final aprovacoes = ref.watch(aprovacoesProvider).valueOrNull;
 
+    final vigia = admin ? ref.watch(vigiaProvider).valueOrNull : null;
+    final vigiaMal =
+        vigia != null && vigia.instalado && vigia.nivel != GravidadeVigia.info;
     final backupMal = backups?.problema() ?? false;
     final vendusMal = vendus != null && vendus.desatualizado(DateTime.now());
 
@@ -142,8 +147,11 @@ class OpcoesScreen extends ConsumerWidget {
                   subtitulo: resumoSeguranca(
                     backupComProblema: backups == null ? null : backupMal,
                     doisPassos: doisPassos?.ativo,
+                    vigia: vigia == null || !vigia.instalado
+                        ? null
+                        : vigia.resumo.toLowerCase(),
                   ),
-                  alerta: backupMal,
+                  alerta: backupMal || vigiaMal,
                   rota: Routes.opcoesSeguranca,
                 ),
               ],

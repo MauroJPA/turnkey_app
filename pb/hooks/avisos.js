@@ -366,6 +366,7 @@ function montar(app, empresaId, cfg) {
   sec('Vendus sem sincronizar', seguro(() => vendusAtrasado(app, empresaId)));
   sec('Formações a caducar', seguro(() => formacoesACaducar(app, empresaId)));
   sec('Backups', seguro(() => backupsComProblema(app)));
+  sec('Segurança do servidor', seguro(() => require(__hooks + '/vigia_core.js').linhasParaResumo(app, empresaId)));
 
   let nome = '';
   try {

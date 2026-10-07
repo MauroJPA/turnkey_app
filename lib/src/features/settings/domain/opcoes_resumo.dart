@@ -35,8 +35,10 @@ String resumoAvisos({
 String resumoSeguranca({
   required bool? backupComProblema,
   required bool? doisPassos,
+  String? vigia,
 }) {
   final partes = [
+    if (vigia != null && vigia.isNotEmpty) 'Vigia: $vigia',
     if (backupComProblema != null)
       backupComProblema ? 'Backup com problema' : 'Backups ok',
     if (doisPassos != null)

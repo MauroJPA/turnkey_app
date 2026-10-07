@@ -34,6 +34,8 @@ import '../../schedule/application/schedule_providers.dart';
 import '../../schedule/domain/production_plan.dart';
 import '../../settings/data/aprovacoes_repository.dart';
 import '../../settings/data/backups_repository.dart';
+import '../../settings/data/vigia_repository.dart';
+import '../../settings/domain/vigia.dart';
 import '../../shopping/application/shopping_providers.dart';
 import '../../traceability/data/lotes_repository.dart';
 import '../../traceability/domain/validades.dart';
@@ -91,6 +93,28 @@ final tarefasHojeProvider = Provider.autoDispose<List<TarefaHoje>>((ref) {
         rota: Routes.opcoesSeguranca,
         resumo: backups.avisos().take(2).join(' '),
         quantidade: 1,
+      ),
+    );
+  }
+
+  // vigia de segurança do servidor (só o dono do servidor o recebe)
+  final vigia = ref.watch(vigiaProvider).valueOrNull;
+  if (vigia != null && vigia.instalado && vigia.nivel != GravidadeVigia.info) {
+    tarefas.add(
+      TarefaHoje(
+        chave: 'vigia',
+        icon: Icons.gpp_maybe_outlined,
+        titulo: vigia.haIncidente
+            ? 'Possível intrusão no servidor'
+            : 'Segurança do servidor',
+        urgencia: vigia.nivel == GravidadeVigia.critico
+            ? Urgencia.urgente
+            : Urgencia.atencao,
+        rota: Routes.opcoesSeguranca,
+        quantidade: vigia.ativos.isEmpty ? 1 : vigia.ativos.length,
+        resumo: vigia.ativos.isEmpty
+            ? 'O vigia parou de correr'
+            : vigia.ativos.take(2).map((a) => a.titulo).join(' · '),
       ),
     );
   }
