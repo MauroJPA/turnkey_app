@@ -24,6 +24,8 @@ class AppTheme {
   /// Cores predefinidas para escolher em Configurações → Aparência — a
   /// mesma lógica da roda de cores do iOS/macOS (um tom vivo por linha).
   static const List<({String nome, Color cor})> presets = [
+    (nome: 'Gookie · Verde', cor: gookieVerde),
+    (nome: 'Gookie · Caramelo', cor: gookieCaramelo),
     (nome: 'Castanho cookie', cor: Color(0xFF8D5B34)),
     (nome: 'Azul', cor: Color(0xFF0A7CFF)),
     (nome: 'Índigo', cor: Color(0xFF5856D6)),
@@ -35,6 +37,73 @@ class AppTheme {
     (nome: 'Turquesa', cor: Color(0xFF00A9A0)),
     (nome: 'Grafite', cor: Color(0xFF6E6E73)),
   ];
+
+  /// Paletas completas da marca Gookie (manual da marca, secção IV): verde
+  /// institucional `#192621` (cerca de 70 %), caramelo `#B58054` e creme
+  /// `#FFFBF0` (cerca de 30 %). Escolher uma em Configurações → Aparência grava
+  /// a sua [cor] em `cor_marca` (sem mexer na secundária/fundo/letras) e o
+  /// tema aplica os papéis de cor abaixo, já afinados para os dois modos e com
+  /// contraste legível (texto ≥ 4,5:1).
+  static const Color gookieVerde = Color(0xFF192621);
+  static const Color gookieCaramelo = Color(0xFFB58054);
+  static const Color gookieCreme = Color(0xFFFFFBF0);
+
+  static const List<PaletaMarca> paletasMarca = [
+    PaletaMarca(
+      nome: 'Gookie · Verde',
+      cor: gookieVerde,
+      claro: PapeisCor(
+        primaria: gookieVerde,
+        sobrePrimaria: gookieCreme,
+        secundaria: Color(0xFF8F5E36),
+        sobreSecundaria: gookieCreme,
+        fundo: Color(0xFFF3EDE0),
+        superficie: gookieCreme,
+        texto: gookieVerde,
+      ),
+      escuro: PapeisCor(
+        primaria: Color(0xFFE0B88C),
+        sobrePrimaria: gookieVerde,
+        secundaria: gookieCaramelo,
+        sobreSecundaria: gookieVerde,
+        fundo: gookieVerde,
+        superficie: Color(0xFF22312B),
+        texto: gookieCreme,
+      ),
+    ),
+    PaletaMarca(
+      nome: 'Gookie · Caramelo',
+      cor: gookieCaramelo,
+      claro: PapeisCor(
+        primaria: Color(0xFF8F5E36),
+        sobrePrimaria: gookieCreme,
+        secundaria: gookieVerde,
+        sobreSecundaria: gookieCreme,
+        fundo: gookieCreme,
+        superficie: Colors.white,
+        texto: gookieVerde,
+      ),
+      escuro: PapeisCor(
+        primaria: gookieCaramelo,
+        sobrePrimaria: gookieVerde,
+        secundaria: Color(0xFFE0B88C),
+        sobreSecundaria: gookieVerde,
+        fundo: gookieVerde,
+        superficie: Color(0xFF22312B),
+        texto: gookieCreme,
+      ),
+    ),
+  ];
+
+  /// A paleta da marca que corresponde a esta cor de destaque (ou `null`).
+  static PaletaMarca? paletaMarcaDe(Color? cor) {
+    if (cor == null) return null;
+    final rgb = cor.toARGB32() & 0xFFFFFF;
+    for (final p in paletasMarca) {
+      if ((p.cor.toARGB32() & 0xFFFFFF) == rgb) return p;
+    }
+    return null;
+  }
 
   static ThemeData light(
     Color? brand, {
@@ -94,6 +163,48 @@ class AppTheme {
       seedColor: seedColor,
       brightness: brightness,
     );
+
+    // Paleta fixa da marca (manual da marca): só quando a cor de destaque é
+    // uma das paletas Gookie; a secundária/fundo/letras personalizadas
+    // continuam a mandar por cima, se houver.
+    final paleta = paletaMarcaDe(seedColor);
+    final papeis = paleta == null
+        ? null
+        : (isDark ? paleta.escuro : paleta.claro);
+    if (papeis != null) {
+      scheme = scheme.copyWith(
+        primary: papeis.primaria,
+        onPrimary: papeis.sobrePrimaria,
+        primaryContainer: Color.alphaBlend(
+          papeis.primaria.withValues(alpha: isDark ? 0.30 : 0.14),
+          papeis.superficie,
+        ),
+        onPrimaryContainer: papeis.texto,
+        secondary: papeis.secundaria,
+        onSecondary: papeis.sobreSecundaria,
+        secondaryContainer: Color.alphaBlend(
+          papeis.secundaria.withValues(alpha: isDark ? 0.32 : 0.16),
+          papeis.superficie,
+        ),
+        onSecondaryContainer: papeis.texto,
+        surface: papeis.superficie,
+        onSurface: papeis.texto,
+        onSurfaceVariant: papeis.texto.withValues(alpha: 0.72),
+        surfaceContainerLowest: papeis.superficie,
+        surfaceContainerLow: papeis.fundo,
+        surfaceContainer: papeis.superficie,
+        surfaceContainerHigh: Color.alphaBlend(
+          papeis.texto.withValues(alpha: 0.05),
+          papeis.superficie,
+        ),
+        surfaceContainerHighest: Color.alphaBlend(
+          papeis.texto.withValues(alpha: 0.09),
+          papeis.superficie,
+        ),
+        outline: papeis.texto.withValues(alpha: 0.45),
+        outlineVariant: papeis.texto.withValues(alpha: 0.18),
+      );
+    }
 
     // Distribuição de cores avançada (Configurações → Aparência): a cor de
     // marca continua a gerar a paleta base (M3 `fromSeed`, garante contraste),
@@ -368,4 +479,47 @@ class AppTheme {
       ),
     );
   }
+}
+
+
+/// Papéis de cor de uma paleta de marca num modo (claro ou escuro).
+class PapeisCor {
+  const PapeisCor({
+    required this.primaria,
+    required this.sobrePrimaria,
+    required this.secundaria,
+    required this.sobreSecundaria,
+    required this.fundo,
+    required this.superficie,
+    required this.texto,
+  });
+
+  final Color primaria;
+  final Color sobrePrimaria;
+  final Color secundaria;
+  final Color sobreSecundaria;
+
+  /// Fundo da página (atrás dos cartões).
+  final Color fundo;
+
+  /// Cartões, folhas e diálogos.
+  final Color superficie;
+  final Color texto;
+}
+
+/// Paleta completa da marca, escolhível em Configurações → Aparência.
+class PaletaMarca {
+  const PaletaMarca({
+    required this.nome,
+    required this.cor,
+    required this.claro,
+    required this.escuro,
+  });
+
+  final String nome;
+
+  /// Cor de destaque gravada em `cor_marca` — identifica a paleta.
+  final Color cor;
+  final PapeisCor claro;
+  final PapeisCor escuro;
 }

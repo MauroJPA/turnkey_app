@@ -305,7 +305,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 fonteFamilia: _fonteFamilia,
                 temFontePersonalizada: empresa.temFontePersonalizada,
                 onTema: (t) => setState(() => _tema = t),
-                onCor: (hex) => setState(() => _cor.text = hex),
+                onCor: (hex) => setState(() {
+                  _cor.text = hex;
+                  // Paleta da marca: define ela própria secundária, fundo e
+                  // letras — limpa as personalizadas para ela valer por inteiro.
+                  if (AppTheme.paletaMarcaDe(AppTheme.parseHex(hex)) != null) {
+                    _corSec.clear();
+                    _corFundo.clear();
+                    _corTexto.clear();
+                  }
+                }),
                 onLogoVisivel: (v) => setState(() => _logoVisivel = v),
                 onLogoAlinhamento: (a) => setState(() => _logoAlinhamento = a),
                 onLogoTamanho: (v) => setState(() => _logoTamanho = v),
@@ -690,7 +699,13 @@ class _AparenciaControls extends StatelessWidget {
           onSelectionChanged: (s) => onTema(s.first),
         ),
         const SizedBox(height: 16),
-        Text('Cor de destaque', style: Theme.of(context).textTheme.labelLarge),
+        Text('Paleta e cor de destaque',
+            style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: 4),
+        Text(
+          'As paletas «Gookie» seguem o manual da marca (verde, caramelo e creme), nos dois modos.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
         const SizedBox(height: 8),
         Wrap(
           spacing: 12,
