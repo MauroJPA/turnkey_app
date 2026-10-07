@@ -2143,6 +2143,18 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Fechar o separador logo depois de apagar (antes dos 6 s): ao voltar o item ainda lá está
 - [ ] As confirmações que ficam (apagar para sempre, ponto, vendas, remover da equipa) continuam a aparecer
 
+## 156. Primeiros passos no Início
+
+- [ ] Com o proprietário/administrador: no fim do Início aparece "Primeiros passos · N de M" com barra e os 3 próximos passos
+- [ ] "Ver todos" mostra a lista inteira (feitos riscados com visto) e "Mostrar só o que falta" volta
+- [ ] Tocar num passo (ex.: "Avisos por Telegram ou email") abre o ecrã certo
+- [ ] "IA para ler faturas" e "Vigia" mostram o comando para correr no servidor (copiável)
+- [ ] Depois de fazer um passo (ex.: ligar o Telegram) e voltar ao Início, o passo fica feito e o progresso sobe
+- [ ] O "x" esconde o cartão neste aparelho; noutro aparelho/navegador ainda aparece
+- [ ] Com tudo feito o cartão desaparece
+- [ ] Editor e Leitura não veem o cartão
+- [ ] "Vigia" só aparece ao dono do servidor; "Cópia externa" fica feito quando o último backup externo correu bem
+
 ---
 
 ## Notas / ajustes pedidos

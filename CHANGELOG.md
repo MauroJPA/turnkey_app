@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.13.0 — 2026-10-07 — Primeiros passos no Início
+
+**Primeiros passos**: um cartão no fim do Início (só para o proprietário e administradores) que mostra **o que falta configurar** para a app estar a 100 %, com barra de progresso e atalhos.
+
+- **O que verifica** (o servidor conta, a app mostra): logótipo, dias em que trabalhas, ingredientes (3 ou mais), preços (80 % dos ingredientes com preço), primeira receita, primeiro produto, equipa e cartões, horários na Escala, avisos por Telegram/email, **IA para ler faturas** (chave no servidor), **cópia de segurança externa** e, só para o dono do servidor, o **vigia de segurança**.
+- **Agilidade**: mostra só os 3 próximos passos ("Ver todos" abre a lista); tocar num passo leva direto ao ecrã certo. Os que são do servidor (IA, vigia) mostram o comando a correr.
+- **Discreto**: o "x" esconde o cartão neste aparelho, e ele desaparece sozinho quando está tudo feito. Se o servidor não responder, o cartão simplesmente não aparece.
+- **Privacidade**: o servidor só devolve números e sim/não (nunca conteúdo, chaves ou ids); cada empresa só vê a sua.
+- Ficheiros: `GET /api/gc_turnkey/arranque` (`arranque.pb.js`, `arranque_core.js`), `arranque.dart`, `arranque_repository.dart`, `arranque_card.dart`. Sem migrations.
+- Testes: 5 de Node (regras de cada passo), 3 de Dart e, no servidor, permissões (sem sessão/Editor/Leitura recusados) e contagens por empresa.
+
 ## 2.12.0 — 2026-10-07 — Desfazer em vez de confirmar
 
 **Desfazer em vez de "Tens a certeza?"**: apagar passa a ser um toque, com a possibilidade de voltar atrás durante uns segundos.

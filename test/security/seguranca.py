@@ -859,6 +859,7 @@ ROTAS = [
     ('DELETE', '/api/gc_turnkey/team/members/{users}'),
     ('POST', '/api/gc_turnkey/conta/senha'),
     ('GET', '/api/gc_turnkey/seguranca/vigia'),
+    ('GET', '/api/gc_turnkey/arranque'),
     ('POST', '/api/gc_turnkey/seguranca/vigia/aceitar'),
     ('POST', '/api/gc_turnkey/seguranca/vigia/explicar'),
     ('POST', '/api/gc_turnkey/vendus/sincronizar'),
@@ -3528,6 +3529,35 @@ def teste_unidades():
           'compras em unidades nativas: 200 g, 200 ml e 4 un', str(nec))
 
 
+def teste_arranque():
+    sec('7a11. Primeiros passos (checklist de arranque)')
+    s, _, _ = call('GET', '/api/gc_turnkey/arranque')
+    check(s in (401, 403), 'sem sessão não vê os primeiros passos', f'status {s}')
+    for quem in ('editorA', 'viewerA', 'editorB'):
+        s, _, _ = call('GET', '/api/gc_turnkey/arranque', tok=tok[quem])
+        check(s == 403, f'{quem}: não vê os primeiros passos', f'status {s}')
+    semear('ingredientes', 'A')
+    for emp, quem in (('A', 'adminA'), ('B', 'ownerB')):
+        s, r, _ = call('GET', '/api/gc_turnkey/arranque', tok=tok[quem])
+        check(s == 200 and isinstance(r.get('passos'), list) and r.get('total') == len(r['passos']),
+              f'{quem}: vê os primeiros passos da própria empresa', f'status {s} {str(r)[:120]}')
+        if s != 200:
+            continue
+        passos = r['passos']
+        check(all(set(p) == {'chave', 'feito', 'detalhe'} for p in passos), f'{quem}: só devolve chave, feito e detalhe')
+        check(r.get('feitos') == sum(1 for p in passos if p['feito']), f'{quem}: a contagem de feitos bate certo')
+        chaves = [p['chave'] for p in passos]
+        check(chaves[:3] == ['empresa', 'dias', 'ingredientes'] and 'backups' in chaves, f'{quem}: passos pela ordem certa', str(chaves))
+        # o número de ingredientes é o da empresa, não o de toda a gente
+        filtro = urllib.parse.quote(f'empresa="{empresas[emp]}" && deletado != true')
+        s2, r2, _ = call('GET', f'/api/collections/ingredientes/records?perPage=1&filter={filtro}', tok=su)
+        real = r2.get('totalItems') if s2 == 200 else None
+        det = next((p['detalhe'] for p in passos if p['chave'] == 'ingredientes'), '')
+        check(real is not None and det.startswith(f'{real} ingrediente'),
+              f'{quem}: conta só os ingredientes da própria empresa', f'real {real}, detalhe "{det}"')
+        check(not any(str(empresas[x]) in json.dumps(r) for x in ('A', 'B')), f'{quem}: não mostra ids de empresas')
+
+
 def main():
     arrancar()
     try:
@@ -3542,6 +3572,7 @@ def main():
         teste_estado_backups()
         teste_vigia()
         teste_vigia_ia()
+        teste_arranque()
         teste_2fa()
         teste_avisos()
         teste_resumo_semanal()
