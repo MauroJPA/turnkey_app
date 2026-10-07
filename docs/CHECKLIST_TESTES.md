@@ -2169,6 +2169,17 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] "Compras" mostra os itens por comprar
 - [ ] Com um Editor/Leitura só aparecem as partes a que tem acesso
 
+## 158. Telegram com botões
+
+- [ ] Avisos: o Telegram ligado a uma conversa PRIVADA com o bot (chat com número positivo). Com o servidor a correr, um colaborador pede férias na app: chega ao Telegram "… pediu férias …" com ✅ Aprovar e ❌ Recusar
+- [ ] Carregar em Aprovar: em cerca de 1 minuto a mensagem passa a "✅ Aprovado: …" e sem botões; na app o pedido está aprovado
+- [ ] Carregar outra vez ou em Recusar depois de decidido: não muda nada ("Já estava aprovado")
+- [ ] Alguém entra no ponto e esquece a saída: passado o fim do turno (+1 h) chega "⏱️ Saída por marcar" com "Saída às HH:MM"; ao carregar a saída fica marcada (Ponto: nota "Saída marcada pelo Telegram")
+- [ ] Vigia: um alerta de atenção chega com "Já verifiquei: …"; carregar faz o vigia aprender na ronda seguinte. Alertas críticos não trazem botão
+- [ ] Se o chat configurado for um grupo (número negativo), as mensagens chegam SEM botões
+- [ ] Os botões não funcionam noutro chat nem em mensagens reencaminhadas para outra pessoa
+- [ ] Nada do token aparece em mensagens nem no ecrã
+
 ---
 
 ## Notas / ajustes pedidos

@@ -1,6 +1,6 @@
 # Pendentes (fila de trabalho)
 
-Última versão fechada: **2.14.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
+Última versão fechada: **2.15.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
 (editar → `bash scripts/verificar.sh` → pubspec + CHANGELOG + docs/CHECKLIST_TESTES.md → commit com caminhos
 explícitos → `git branch -f develop main` → `git tag vX.Y.Z`). No fim: `powershell -File scripts\empacotar-producao.ps1`
 e dar ao Mauro o SHA-256 + comando de publicação.
@@ -26,7 +26,7 @@ Fila atual (pedido do Mauro em 06/10/2026, **cada item = uma versão**, por esta
 - ~~**2.11.0**~~ (feito) Ponto: pausa preenchida automaticamente na saída (a da Escala) quando a pessoa não a marcou.
 - ~~**2.11.1**~~ (feito) Backup antes de atualizar: tolera ficheiros de estado que mudam durante o tar; publicar põe o gc_turnkey.sh novo primeiro.
 - ~~**2.12.0**~~ (feito) Desfazer em vez de confirmar (lixeira, notas, férias, regras de horário, faturas).
-- ~~**2.13.0**~~ (feito) Checklist "Primeiros passos" no Início. ~~**2.14.0**~~ (feito) Fecho do dia · **2.15.0** Telegram com botões (aprovar/saída) · **2.16.0** Instalar como app (PWA) · depois: nova paleta de cores (à espera de escolha do Mauro).
+- ~~**2.13.0**~~ (feito) Checklist "Primeiros passos" no Início. ~~**2.14.0**~~ (feito) Fecho do dia · ~~**2.15.0**~~ (feito) Telegram com botões (aprovar/saída/vigia) · **2.16.0** Instalar como app (PWA) · depois: nova paleta de cores (à espera de escolha do Mauro).
 - No fim: empacotar, dar SHA-256 + comando; atualizar docs/SEGURANCA.md se houver novos endpoints.
 
 ## Fila 2.x — UI/UX mais ágil (aprovada pelo Mauro em 06/10/2026; branch `ux-2`, cada item = uma versão, por esta ordem)

@@ -236,6 +236,14 @@ empresa. O WhatsApp está no código mas **desligado** por omissão (precisa de 
 - Limites: 20 explicações por dia; as últimas 30 ficam guardadas (`data/seguranca_ia.json`) e reabrem sem voltar a enviar. Só o dono do servidor (operador) pode pedir. Sem chave de IA configurada, o botão não aparece.
 - Testado em `test/seguranca/test_vigia_ia.js` e `teste_vigia_ia` (servidor Gemini falso: texto enviado sem IPs/emails, comando perigoso removido, limite, cache, outras contas recusadas).
 
+### Telegram com botões (2.15.0)
+
+- Mensagens com botões (aprovar/recusar férias, "Saída às HH:MM", "Já verifiquei" do vigia) **só vão para conversas privadas** (chat com id positivo): num grupo qualquer membro os poderia carregar.
+- O servidor não tem endereço público: de minuto a minuto (`telegram_botoes.pb.js`) pergunta ao Telegram (`getUpdates`, só `callback_query`) o que foi carregado. O `offset` fica em `pb_data/telegram_offset_<empresa>.json`; os avisos de saída já feitos em `telegram_avisados.json`.
+- Cada carregamento só é tratado se: vem do chat configurado da empresa (privado) e do próprio utilizador desse chat; a assinatura (HMAC-SHA256 com o token do bot sobre `tipo|alvo|empresa`) bate certo; e o estado atual o permite (só se aprova o que está "por aprovar", só se marca a saída de quem ainda está dentro, etc.). Alertas **críticos** do vigia nunca se aceitam por aqui.
+- O token do bot continua cifrado em `segredos_empresa`; não vai em mensagens, respostas, nem registos (os erros do cron tiram `bot<token>`).
+- Testado em `teste_telegram_botoes` (Telegram falso): assinatura falsa, outro chat, grupo, outra pessoa, formato errado, tipo desconhecido, repetição, outra empresa.
+
 ## Riscos aceites / notas
 
 - O administrador pode editar o perfil da empresa (desenho) e, tecnicamente, o campo `plano`

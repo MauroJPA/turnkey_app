@@ -26,6 +26,7 @@ import sys
 import tempfile
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -860,6 +861,7 @@ ROTAS = [
     ('POST', '/api/gc_turnkey/conta/senha'),
     ('GET', '/api/gc_turnkey/seguranca/vigia'),
     ('GET', '/api/gc_turnkey/arranque'),
+    ('POST', '/api/gc_turnkey/telegram/sondar'),
     ('POST', '/api/gc_turnkey/seguranca/vigia/aceitar'),
     ('POST', '/api/gc_turnkey/seguranca/vigia/explicar'),
     ('POST', '/api/gc_turnkey/vendus/sincronizar'),
@@ -1156,6 +1158,11 @@ class _TelegramFalso(BaseHTTPRequestHandler):
     def do_GET(self):
         if tg_estado['modo'] == '401':
             return self._resp(401, {'ok': False})
+        ups = tg_estado.get('updates')
+        if ups is not None:
+            q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            off = int((q.get('offset') or ['0'])[0])
+            return self._resp(200, {'ok': True, 'result': [u for u in ups if u['update_id'] >= off]})
         self._resp(200, {'ok': True, 'result': [
             {'update_id': 1, 'message': {'chat': {'id': 987654, 'first_name': 'Mauro', 'last_name': 'P'}}},
             {'update_id': 2, 'message': {'chat': {'id': -100123, 'title': 'Equipa Gookie'}}},
@@ -1268,6 +1275,153 @@ def teste_resumo_semanal():
         call('PATCH', f'/api/collections/fichas_tecnicas/records/{ficha}', {'custo_produto': custo_antes}, su)
 
 
+def teste_telegram_botoes(cfg_id):
+    """Telegram com botões: aprovar/recusar, saída por marcar e segurança dos botões."""
+    import hmac
+    import hashlib
+    sec('7a4b. Telegram com botões')
+    emp = empresas['A']
+    uid = users['editorA']
+
+    def assina(tipo, alvo):
+        return hmac.new(TOKEN_TG.encode(), f'{tipo}|{alvo}|{emp}'.encode(), hashlib.sha256).hexdigest()[:10]
+
+    def botao(tipo, alvo, sig=None):
+        return f'p|{tipo}|{alvo}|{sig or assina(tipo, alvo)}'
+
+    contador = {'n': 100}
+
+    def clique(dados, chat=987654, tipo='private', de=None):
+        contador['n'] += 1
+        tg_estado['updates'].append({
+            'update_id': contador['n'],
+            'callback_query': {
+                'id': f'cb{contador["n"]}', 'from': {'id': de if de is not None else chat},
+                'message': {'message_id': 7, 'text': 'Mensagem do bot', 'chat': {'id': chat, 'type': tipo}},
+                'data': dados,
+            },
+        })
+
+    def sondar(quem='adminA'):
+        s, r, _ = call('POST', '/api/gc_turnkey/telegram/sondar', {}, tok[quem])
+        return s, r
+
+    def criar(col, corpo):
+        s, r, _ = call('POST', f'/api/collections/{col}/records', corpo, su)
+        return r.get('id') if s == 200 else None
+
+    def estado_ferias(i):
+        s, r, _ = call('GET', f'/api/collections/ferias/records/{i}', tok=su)
+        return r.get('estado')
+
+    ids_criados = []
+    try:
+        tg_estado.update(modo='ok', enviadas=[], updates=[])
+        call('PATCH', f'/api/collections/avisos_config/records/{cfg_id}', {'telegram_ativo': True, 'telegram_chat': '987654'}, tok['adminA'])
+        call('PUT', '/api/gc_turnkey/integracoes/telegram', {'valor': TOKEN_TG}, tok['adminA'])
+
+        # só a administração dispara/trata
+        s, _ = sondar('editorA')
+        check(s == 403, 'o editor não trata botões do Telegram', f'status {s}')
+        s, _, _ = call('POST', '/api/gc_turnkey/telegram/sondar', {})
+        check(s in (401, 403), 'sem sessão não trata botões do Telegram', f'status {s}')
+
+        # pedido de férias novo -> mensagem com "Aprovar" / "Recusar"
+        base = {'empresa': emp, 'pessoa': f'u:{uid}', 'nome': 'Editor A', 'user': uid, 'tipo': 'ferias',
+                'data_inicio': '2031-03-03 00:00:00.000Z', 'data_fim': '2031-03-07 00:00:00.000Z', 'dias_uteis': 5, 'estado': 'pedido'}
+        f1 = criar('ferias', base)
+        ids_criados.append(('ferias', f1))
+        check(f1 is not None, 'pedido de férias criado')
+        msgs = [x for x in tg_estado['enviadas'] if x['path'].endswith('/sendMessage')]
+        m = msgs[-1]['corpo'] if msgs else {}
+        teclas = [b for linha in m.get('reply_markup', {}).get('inline_keyboard', []) for b in linha]
+        check('pediu férias' in m.get('text', '') and len(teclas) == 2, 'o pedido de férias chega ao Telegram com 2 botões', str(m)[:200])
+        check(all(len(b['callback_data'].encode()) <= 64 for b in teclas), 'os botões cabem em 64 bytes')
+        check(TOKEN_TG not in json.dumps(m), 'o token nunca vai na mensagem')
+        dados_aprovar = next((b['callback_data'] for b in teclas if 'Aprovar' in b['text']), '')
+        dados_recusar = next((b['callback_data'] for b in teclas if 'Recusar' in b['text']), '')
+        check(dados_aprovar == botao('fa', f1) and dados_recusar == botao('fr', f1), 'a assinatura bate certo com o token')
+
+        # num grupo (id negativo) não vão botões
+        call('PATCH', f'/api/collections/avisos_config/records/{cfg_id}', {'telegram_chat': '-100123'}, tok['adminA'])
+        tg_estado['enviadas'] = []
+        f_g = criar('ferias', {**base, 'data_inicio': '2031-04-07 00:00:00.000Z', 'data_fim': '2031-04-08 00:00:00.000Z', 'dias_uteis': 2})
+        ids_criados.append(('ferias', f_g))
+        m = next((x['corpo'] for x in tg_estado['enviadas'] if x['path'].endswith('/sendMessage')), {})
+        check('pediu férias' in m.get('text', '') and 'reply_markup' not in m, 'num grupo a mensagem vai sem botões', str(m)[:160])
+        call('PATCH', f'/api/collections/avisos_config/records/{cfg_id}', {'telegram_chat': '987654'}, tok['adminA'])
+
+        # carregamentos inválidos não fazem nada
+        tg_estado['enviadas'] = []
+        clique(botao('fa', f1, 'ffffffffff'))                      # assinatura falsa
+        clique(dados_aprovar, chat=555555)                          # outro chat
+        clique(dados_aprovar, chat=-100123, tipo='group', de=987654)  # grupo
+        clique(dados_aprovar, de=424242)                            # outra pessoa no mesmo chat
+        clique('p|fa|' + f1)                                        # formato errado
+        clique(botao('xx', f1))                                     # tipo desconhecido (assinado)
+        s, r = sondar()
+        check(s == 200 and r.get('tratados', 0) <= 1 and estado_ferias(f1) == 'pedido',
+              'botões falsos, de outro chat, de grupo ou mal formados não aprovam nada', f'status {s} {r} {estado_ferias(f1)}')
+        check(all(x['path'].endswith(('/answerCallbackQuery', '/editMessageText', '/sendMessage')) for x in tg_estado['enviadas']), 'só responde pelo Telegram')
+
+        # "Aprovar" a sério
+        tg_estado['enviadas'] = []
+        clique(dados_aprovar)
+        s, r = sondar()
+        check(s == 200 and r.get('tratados') == 1 and estado_ferias(f1) == 'aprovado', 'Aprovar no Telegram aprova o pedido', f'status {s} {r} {estado_ferias(f1)}')
+        s2, rf, _ = call('GET', f'/api/collections/ferias/records/{f1}', tok=su)
+        check(rf.get('decidido_por') == users['ownerA'], 'fica registado quem decidiu (o proprietário)', str(rf.get('decidido_por')))
+        edits = [x['corpo'] for x in tg_estado['enviadas'] if x['path'].endswith('/editMessageText')]
+        check(len(edits) == 1 and 'Aprovado' in edits[0].get('text', '') and 'reply_markup' not in edits[0],
+              'a mensagem fica com o resultado e sem botões', str(edits)[:200])
+        check(any(x['path'].endswith('/answerCallbackQuery') for x in tg_estado['enviadas']), 'o Telegram recebe a resposta ao botão')
+
+        # não há segunda vez: a lista de pendentes já não repete e "Recusar" depois de aprovado não muda
+        s, r = sondar()
+        check(s == 200 and r.get('tratados') == 0, 'não trata duas vezes o mesmo botão', f'{r}')
+        clique(dados_recusar)
+        s, r = sondar()
+        check(estado_ferias(f1) == 'aprovado', 'recusar depois de aprovado não muda nada (já decidido)', estado_ferias(f1))
+
+        # outra empresa: um id de B com a assinatura de A é recusado
+        feriasB = semear('ferias', 'B')
+        if feriasB:
+            clique(botao('fr', feriasB[0]))
+            sondar()
+            s3, rb, _ = call('GET', f'/api/collections/ferias/records/{feriasB[0]}', tok=su)
+            check(rb.get('estado') != 'recusado', 'um pedido de outra empresa não se trata por aqui', str(rb.get('estado')))
+
+        # saída por marcar
+        entrada = time.time() - 20 * 3600
+        pessoa = 'c:tg-saida'
+        e1 = criar('ponto_registos', {'empresa': emp, 'pessoa': pessoa, 'nome': 'Rita Telegram', 'tipo': 'entrada', 'origem': 'manual',
+                                      'data_hora': time.strftime('%Y-%m-%d %H:%M:%S.000Z', time.gmtime(entrada))})
+        ids_criados.append(('ponto_registos', e1))
+        alvo = f'{pessoa}~{int(entrada + 8 * 3600)}'
+        clique(botao('sx', alvo))
+        s, r = sondar()
+        s3, regs, _ = call('GET', '/api/collections/ponto_registos/records?perPage=20&filter=' + urllib.parse.quote(f'pessoa="{pessoa}"') + '&sort=data_hora', tok=su)
+        tipos = [x.get('tipo') for x in regs.get('items', [])]
+        for x in regs.get('items', []):
+            if x['id'] != e1:
+                ids_criados.append(('ponto_registos', x['id']))
+        check(r.get('tratados') == 1 and tipos == ['entrada', 'saida'], 'Saída às HH:MM no Telegram regista a saída', f'{r} {tipos}')
+        saida = next((x for x in regs.get('items', []) if x.get('tipo') == 'saida'), {})
+        check('Telegram' in (saida.get('notas') or '') and saida.get('origem') == 'manual', 'a saída fica identificada como vinda do Telegram', str(saida)[:200])
+        # segunda vez e hora futura não registam nada
+        clique(botao('sx', alvo))
+        clique(botao('sx', f'{pessoa}~{int(time.time() + 5 * 3600)}'))
+        sondar()
+        s3, regs, _ = call('GET', '/api/collections/ponto_registos/records?perPage=20&filter=' + urllib.parse.quote(f'pessoa="{pessoa}"'), tok=su)
+        check(len(regs.get('items', [])) == 2, 'a saída não se regista duas vezes nem no futuro', str(len(regs.get('items', []))))
+    finally:
+        tg_estado['updates'] = None
+        for col, i in reversed(ids_criados):
+            if i:
+                call('DELETE', f'/api/collections/{col}/records/{i}', tok=su)
+        call('PATCH', f'/api/collections/avisos_config/records/{cfg_id}', {'telegram_chat': '987654'}, tok['adminA'])
+
+
 def teste_avisos():
     """Avisos e resumo diário (email / Telegram falso)."""
     if 'PB_URL' in os.environ:
@@ -1372,6 +1526,7 @@ def teste_avisos():
         # outra empresa nunca vê/usa o token da A
         s, r, _ = call('POST', '/api/gc_turnkey/avisos/telegram/detetar', {}, tok['ownerB'])
         check(s == 400, 'a empresa B não usa o token da A', f'status {s}')
+        teste_telegram_botoes(cfg_id)
         # limpeza: o teste seguinte (segredos) espera só o token do Vendus
         call('DELETE', '/api/gc_turnkey/integracoes/telegram', tok=tok['adminA'])
     finally:

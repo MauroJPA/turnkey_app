@@ -302,7 +302,11 @@ class _FormularioState extends ConsumerState<_Formulario> {
             '1) No Telegram, fala com @BotFather → /newbot e copia o token.\n'
             '2) Cola-o aqui e guarda.\n'
             '3) Abre o teu bot e envia /start.\n'
-            '4) Toca em "Detetar o meu chat".',
+            '4) Toca em "Detetar o meu chat".\n\n'
+            'Numa conversa privada com o bot, os pedidos de férias, as saídas '
+            'por marcar e os alertas de atenção do vigia trazem botões '
+            '(Aprovar, Saída às 16:30, Já verifiquei) que resolvem tudo ali, '
+            'em cerca de um minuto. Num grupo não há botões.',
             style: tt.bodySmall,
           ),
           const SizedBox(height: 8),

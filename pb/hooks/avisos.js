@@ -196,6 +196,11 @@ function validadesAAcabar(app, empresaId) {
 // Quem entrou e ainda não marcou a saída: sem saída há mais de 16 h ou, se a
 // escala diz quando o turno acaba, mais de 60 min depois do fim.
 function saidasPorMarcar(app, empresaId) {
+  return saidasPendentes(app, empresaId).map((x) => x.texto);
+}
+
+// Os mesmos casos, em dados: { pessoa, nome, entradaMs, fimMs (ou null), texto }.
+function saidasPendentes(app, empresaId) {
   const agora = new Date();
   const desde = new Date(agora.getTime() - 72 * 3600 * 1000).toISOString().replace('T', ' ');
   const regs = app.findRecordsByFilter('ponto_registos', 'empresa = {:e} && data_hora >= {:d}', '-data_hora', 2000, 0, { e: empresaId, d: desde });
@@ -266,11 +271,17 @@ function saidasPorMarcar(app, empresaId) {
     const passou = horas > 16 || (fim && agora.getTime() > fim.getTime() + 3600000);
     if (!passou) continue;
     const mesmoDia = hojeISO(quando) === hojeISO(agora);
-    out.push(
-      (r.getString('nome') || 'Sem nome') +
+    out.push({
+      pessoa: p,
+      nome: r.getString('nome') || 'Sem nome',
+      entradaMs: quando.getTime(),
+      fimMs: fim ? fim.getTime() : null,
+      fimTexto: fim ? hm(fim) : '',
+      texto:
+        (r.getString('nome') || 'Sem nome') +
         ' — entrada ' + (mesmoDia ? '' : quando.getDate() + '/' + (quando.getMonth() + 1) + ' ') + 'às ' + hm(quando) +
         (fim ? ' (turno até ' + hm(fim) + ')' : ''),
-    );
+    });
   }
   return out;
 }
@@ -454,15 +465,18 @@ function enviarEmail(app, para, resumo) {
   }
 }
 
-function enviarTelegram(token, chat, texto) {
+// `teclado` (opcional): [[{ text, callback_data }]] — botões por baixo da mensagem.
+function enviarTelegram(token, chat, texto, teclado) {
   if (!token) return 'Falta o token do bot do Telegram.';
   if (!chat) return 'Falta o chat do Telegram.';
   try {
+    const corpo = { chat_id: String(chat), text: String(texto).substring(0, 3800), disable_web_page_preview: true };
+    if (teclado && teclado.length) corpo.reply_markup = { inline_keyboard: teclado };
     const r = $http.send({
       url: ($os.getenv('GC_TURNKEY_TELEGRAM_URL') || 'https://api.telegram.org') + '/bot' + token + '/sendMessage',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: String(chat), text: String(texto).substring(0, 3800), disable_web_page_preview: true }),
+      body: JSON.stringify(corpo),
       timeout: 20,
     });
     if (r.statusCode !== 200) {
@@ -498,7 +512,19 @@ function enviar(app, empresaId, cfg, resumo, ler) {
   const res = {};
   if (cfg.getBool('email_ativo')) res.email = enviarEmail(app, cfg.getString('email_para'), resumo);
   if (cfg.getBool('telegram_ativo')) {
-    res.telegram = enviarTelegram(ler(app, empresaId, 'telegram'), cfg.getString('telegram_chat'), resumo.texto);
+    const token = ler(app, empresaId, 'telegram');
+    const chat = cfg.getString('telegram_chat');
+    // botões de ação (aprovar, "já verifiquei"…) só em conversa privada: num grupo
+    // qualquer pessoa os poderia carregar
+    let teclado = null;
+    if (resumo.acoes && resumo.acoes.length && token && chat && String(chat).charAt(0) !== '-') {
+      try {
+        teclado = require(__hooks + '/telegram_botoes.js').teclado(token, empresaId, resumo.acoes);
+      } catch (_) {
+        teclado = null;
+      }
+    }
+    res.telegram = enviarTelegram(token, chat, resumo.texto, teclado);
   }
   return res;
 }
@@ -521,4 +547,4 @@ function configDaEmpresa(app, empresaId) {
   }
 }
 
-module.exports = { formacoesACaducar, configDaEmpresa, montar, enviar, descrever, enviarTelegram, enviarWhatsApp, hojeISO, diasDeTrabalho, abertoNesse, proximoAberto };
+module.exports = { saidasPendentes, formacoesACaducar, configDaEmpresa, montar, enviar, descrever, enviarTelegram, enviarWhatsApp, hojeISO, diasDeTrabalho, abertoNesse, proximoAberto };

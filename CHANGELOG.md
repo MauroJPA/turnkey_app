@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.15.0 — 2026-10-07 — Telegram com botões
+
+**Telegram com botões**: alguns avisos do Telegram passam a trazer botões que resolvem a coisa ali mesmo, sem abrir a app.
+
+- **Pedido de férias novo** (chega logo): "✅ Aprovar" / "❌ Recusar". Fica registado quem decidiu (o proprietário) e a mensagem passa a mostrar o resultado.
+- **Saída por marcar** (verificado de 10 em 10 minutos, uma vez por pessoa): "Saída às 16:30", usando o fim do turno da Escala. Fica na ponto como saída manual com a nota "Saída marcada pelo Telegram".
+- **Vigia de segurança**: nos alertas de **atenção**, "Já verifiquei: …" (até 3). Os **críticos** (incidente, minerador…) só se aceitam na app.
+- **Demora cerca de 1 minuto** (o servidor não tem endereço público, por isso vai perguntar ao Telegram de minuto a minuto o que foi carregado). Não precisa de nada novo no Telegram.
+- **Seguro**: os botões **só aparecem em conversa privada** (num grupo qualquer membro os podia carregar); só valem se vierem do chat configurado e da própria pessoa; cada botão é **assinado** com o token do bot (liga a ação, o alvo e a empresa — um pedido inventado ou de outra empresa é recusado); cada ação confere o estado atual, por isso carregar duas vezes não faz nada de novo; o token nunca vai em mensagens nem no registo.
+- Ficheiros: `telegram_botoes.js` e `telegram_botoes.pb.js` (novos), `avisos.js` (botões nas mensagens e `saidasPendentes`), `vigia_core.js`. Rota `POST /api/gc_turnkey/telegram/sondar` (administração) para tratar já o que foi carregado. Sem migrations.
+- Testes (Telegram falso): botões nos pedidos de férias, ausência de botões em grupos, 6 tipos de carregamentos inválidos (assinatura falsa, outro chat, grupo, outra pessoa, formato errado, tipo desconhecido), aprovar/recusar, não tratar duas vezes, outra empresa, saída por marcar (segunda vez e hora futura recusadas).
+
 ## 2.14.0 — 2026-10-07 — Fecho do dia
 
 **Fecho do dia**: um ecrã que reúne, numa lista, tudo o que convém ver antes de fechar — com o que falta a vermelho e um toque para ir tratar.

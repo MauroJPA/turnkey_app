@@ -241,6 +241,11 @@ function avisarNovos(app) {
     texto: texto,
     html: html,
     assunto: (critico ? '[URGENTE] ' : '') + '[gc_turnkey] Alerta de segurança do servidor',
+    // no Telegram (conversa privada): "Já verifiquei" nos alertas de atenção (nunca nos críticos)
+    acoes: novos
+      .filter((a) => a.gravidade === 'atencao')
+      .slice(0, 3)
+      .map((a) => ({ texto: 'Já verifiquei: ' + String(a.titulo).substring(0, 30), tipo: 'va', id: $security.sha256(a.id).substring(0, 10) })),
   };
 
   let enviado = false;
