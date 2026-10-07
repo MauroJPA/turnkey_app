@@ -80,6 +80,13 @@ const atalhosInicio = <AtalhoInicio>[
     Icons.point_of_sale_outlined,
     'vendas',
   ),
+  AtalhoInicio(
+    'fecho',
+    Routes.fecho,
+    'Fecho do dia',
+    Icons.nights_stay_outlined,
+    'contagem',
+  ),
 ];
 
 /// Quantos atalhos cabem no Início.

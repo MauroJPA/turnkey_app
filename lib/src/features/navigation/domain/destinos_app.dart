@@ -103,6 +103,14 @@ const seccoesApp = <DestinoApp>[
     palavras: 'sabores mais vendidos',
   ),
   DestinoApp(
+    rota: Routes.fecho,
+    label: 'Fecho do dia',
+    icon: Icons.nights_stay_outlined,
+    pagina: 'contagem',
+    dentroDe: 'Contagem diária',
+    palavras: 'fechar dia fim turno encerrar noite resumo',
+  ),
+  DestinoApp(
     rota: Routes.contagemRelatorios,
     label: 'Relatórios da contagem',
     icon: Icons.bar_chart,

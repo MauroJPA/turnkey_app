@@ -10,6 +10,7 @@ import '../features/auth/presentation/onboarding_screen.dart';
 import '../features/auth/presentation/pending_approval_screen.dart';
 import '../features/daily_count/presentation/contagem_relatorios_screen.dart';
 import '../features/daily_count/presentation/contagem_screen.dart';
+import '../features/daily_count/presentation/fecho_dia_screen.dart';
 import '../features/dashboard/presentation/home_shell.dart';
 import '../features/dashboard/presentation/main_shell.dart';
 import '../features/data_health/presentation/saude_dados_screen.dart';
@@ -257,6 +258,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'relatorios',
                 builder: (_, __) => const ContagemRelatoriosScreen(),
+              ),
+              GoRoute(
+                path: 'fecho',
+                builder: (_, __) => const FechoDiaScreen(),
               ),
             ],
           ),

@@ -2155,6 +2155,20 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Editor e Leitura não veem o cartão
 - [ ] "Vigia" só aparece ao dono do servidor; "Cópia externa" fica feito quando o último backup externo correu bem
 
+## 157. Fecho do dia
+
+- [ ] Mais → "Fecho do dia" (ou pesquisar "fechar dia") abre a lista com o resumo no topo
+- [ ] Depois das 17:00 o Início mostra "Fecho do dia" em "Para saber"; também se pode escolher como atalho
+- [ ] Com sabores com movimento e sem fecho contado: "Contar o que sobrou" fica a vermelho com o local e o número; tocar abre a Contagem
+- [ ] Contar o fecho de todos e voltar (puxar para atualizar): o passo fica verde
+- [ ] "Desperdício" mostra as unidades registadas hoje (e sugere registar se não há)
+- [ ] "Vendas do dia" mostra quantas e quanto (a soma bate com a página de Vendas)
+- [ ] HACCP com controlos por fazer: vermelho com o número; sem nada por fazer: verde
+- [ ] "Ponto da equipa" (administração): saída por marcar a vermelho com os nomes; quem ainda trabalha aparece como informação
+- [ ] "Amanhã": com produção agendada para amanhã fica verde; sem ela leva a "Quantos assar"
+- [ ] "Compras" mostra os itens por comprar
+- [ ] Com um Editor/Leitura só aparecem as partes a que tem acesso
+
 ---
 
 ## Notas / ajustes pedidos

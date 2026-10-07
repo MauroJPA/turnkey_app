@@ -37,6 +37,7 @@ abstract class Routes {
   static const pessoasFormacoes = '/pessoas/formacoes';
   static const contagem = '/contagem';
   static const contagemRelatorios = '/contagem/relatorios';
+  static const fecho = '/contagem/fecho';
   static const haccp = '/haccp';
   static const quiosque = '/quiosque';
   static const colaboradores = '/colaboradores';

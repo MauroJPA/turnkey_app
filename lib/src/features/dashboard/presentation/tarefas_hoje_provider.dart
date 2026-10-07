@@ -558,5 +558,19 @@ final tarefasHojeProvider = Provider.autoDispose<List<TarefaHoje>>((ref) {
     }
   }
 
+  // ao fim do dia, lembra o fecho (só um empurrão: não faz contas pesadas aqui)
+  if (acessivel('contagem') && hoje.hour >= 17) {
+    tarefas.add(
+      const TarefaHoje(
+        chave: 'fecho',
+        icon: Icons.nights_stay_outlined,
+        titulo: 'Fecho do dia',
+        urgencia: Urgencia.info,
+        rota: Routes.fecho,
+        resumo: 'Contagem, desperdício, vendas, HACCP, ponto e amanhã',
+      ),
+    );
+  }
+
   return tarefas;
 });

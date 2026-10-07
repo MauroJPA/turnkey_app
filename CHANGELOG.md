@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.14.0 — 2026-10-07 — Fecho do dia
+
+**Fecho do dia**: um ecrã que reúne, numa lista, tudo o que convém ver antes de fechar — com o que falta a vermelho e um toque para ir tratar.
+
+- **O que mostra**: o **fecho por contar** (por local e quantos sabores), o **desperdício** do dia, as **vendas** (quantas e quanto), o **HACCP** (controlos por fazer e não conformidades), as **saídas do ponto** por marcar (e quem ainda está a trabalhar), se há **produção agendada para amanhã** (senão leva a "Quantos assar") e as **compras** por fazer.
+- **Resumo no topo**: "Tudo em ordem — bom descanso!" ou "Faltam 2 coisas".
+- **Respeita as permissões**: só aparecem as partes a que a pessoa tem acesso (o ponto só para a administração).
+- **Onde se abre**: Mais → "Fecho do dia" (e na pesquisa: "fechar dia", "fim de turno"), como atalho do Início (escolhe-o no botão dos cursores) e, a partir das 17:00, uma linha em "Para saber".
+- Não guarda nada à parte: é um resumo do que já está registado; puxa para atualizar depois de tratar um passo.
+- Ficheiros: `fecho_dia.dart` (regras, testadas), `fecho_dia_providers.dart`, `fecho_dia_screen.dart`, rota `/contagem/fecho` (herda a permissão da Contagem). Sem migrations.
+- Testes: 6 testes das regras do fecho (dia em ordem, fecho por contar, HACCP e ponto, só informação, singulares e ligações).
+
 ## 2.13.0 — 2026-10-07 — Primeiros passos no Início
 
 **Primeiros passos**: um cartão no fim do Início (só para o proprietário e administradores) que mostra **o que falta configurar** para a app estar a 100 %, com barra de progresso e atalhos.
