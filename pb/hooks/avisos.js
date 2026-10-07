@@ -223,11 +223,38 @@ function saidasPorMarcar(app, empresaId) {
         f = ex.getString('fim');
       } catch (_) {
         const dow = quando.getDay() === 0 ? 7 : quando.getDay();
+        // regras em lote (a mais recente que cobre o dia manda)
+        let regra = null;
         try {
-          const m = app.findFirstRecordByFilter('escala_modelo', 'empresa = {:e} && pessoa = {:p} && dia_semana = {:w}', { e: empresaId, p: p, w: dow });
-          ini = m.getString('inicio');
-          f = m.getString('fim');
+          const regras = app.findRecordsByFilter('escala_regras', 'empresa = {:e} && pessoa = {:p} && de <= {:d}', 'created', 50, 0, { e: empresaId, p: p, d: iso + ' 23:59:59.999Z' });
+          const segunda = (txt) => {
+            const x = new Date(String(txt).substring(0, 10) + 'T00:00:00Z');
+            const w = x.getUTCDay() === 0 ? 7 : x.getUTCDay();
+            return x.getTime() - (w - 1) * 86400000;
+          };
+          for (const r of regras) {
+            const ate = String(r.getString('ate') || '').substring(0, 10);
+            if (ate && ate < iso) continue;
+            if (String(r.getString('dias')).split(',').indexOf(String(dow)) < 0) continue;
+            const cada = r.getInt('cada_semanas') || 1;
+            if (cada > 1) {
+              const semanas = Math.round((segunda(iso) - segunda(r.getString('de'))) / (7 * 86400000));
+              if (semanas % cada !== 0) continue;
+            }
+            regra = r;
+          }
         } catch (_) {}
+        if (regra) {
+          folga = regra.getBool('folga');
+          ini = regra.getString('inicio');
+          f = regra.getString('fim');
+        } else {
+          try {
+            const m = app.findFirstRecordByFilter('escala_modelo', 'empresa = {:e} && pessoa = {:p} && dia_semana = {:w}', { e: empresaId, p: p, w: dow });
+            ini = m.getString('inicio');
+            f = m.getString('fim');
+          } catch (_) {}
+        }
       }
       const mi = /^(\d{2}):(\d{2})$/.exec(ini);
       const mf = /^(\d{2}):(\d{2})$/.exec(f);

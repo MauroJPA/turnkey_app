@@ -29,6 +29,13 @@ String escreverDiasTrabalho(Set<int> dias) {
   return validos.join(',');
 }
 
+/// {1,3,5} → "1,3,5" (sempre escreve a lista, ao contrário de
+/// [escreverDiasTrabalho], que guarda "todos os dias" vazio).
+String escreverDiasLista(Set<int> dias) {
+  final validos = dias.where((d) => d >= 1 && d <= 7).toList()..sort();
+  return validos.join(',');
+}
+
 /// Texto curto: "segunda a sábado", "todos os dias", "seg, qua, sex".
 String resumoDiasTrabalho(Set<int> dias) {
   final d = dias.toList()..sort();

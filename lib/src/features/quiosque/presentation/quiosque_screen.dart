@@ -617,6 +617,7 @@ class _CartaoPonto extends ConsumerWidget {
           )),
         )
         .valueOrNull;
+    final regrasEscala = ref.watch(escalaRegrasProvider).valueOrNull;
     final turnoHoje = modeloEscala == null || excecoesHoje == null
         ? null
         : diaDaEscala(
@@ -624,6 +625,7 @@ class _CartaoPonto extends ConsumerWidget {
             dia: dia0,
             modelo: modeloEscala,
             excecoes: excecoesHoje,
+            regras: regrasEscala ?? const [],
           );
     final horarioHoje = turnoHoje != null && turnoHoje.estado == EstadoDia.turno
         ? 'Hoje: ${turnoHoje.texto}'

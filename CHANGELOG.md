@@ -2,6 +2,20 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.10.0 — 2026-10-07 — Escala: horário em lote, folgas fixas e dias fechados
+
+A escala (Pessoas → Escala) fica **muito mais fácil de preencher**: um botão **"Horário em lote"** aplica o mesmo horário (ou folga) a **várias pessoas e vários dias de uma vez**, para sempre ou até uma data.
+
+- **Em lote, em 4 passos**: 1) quem (ou "Toda a equipa"); 2) o que muda — **Trabalha** (entrada, saída, pausa) ou **Folga**; 3) em que dias da semana ("Dias de trabalho", "Seg a sex", "Fim de semana" ou à mão); 4) durante quanto tempo — **Para sempre** (a partir de uma data) ou **Até uma data**. Mostra um resumo antes de aplicar.
+- **Folgas fixas**: "Folga" + dias da semana + "Para sempre" (p. ex. toda a quarta-feira da Ana). E no horário habitual de cada pessoa, os dias sem turno já são folga fixa de todas as semanas.
+- **Semanas alternadas** (de 15 em 15 dias) e opção **"Não aplicar nos feriados nacionais"**.
+- **Dias fechados = folga automática**: os dias em que a empresa não trabalha (Configurações → Dias de trabalho) vêm já como folga para toda a equipa — ficam desativados no lote, bloqueados ("fechado · folga automática") no horário habitual e contam 0 horas previstas. A escala mostra-os como folga a cinzento.
+- **Regras de horário**: lista das regras em vigor (e futuras) com "Parar a partir de hoje" e "Apagar", para desfazer um horário de verão ou uma folga fixa sem mexer pessoa a pessoa. A regra mais recente ganha às anteriores; **férias/baixas aprovadas** e **alterações de um só dia** ganham a tudo. As células vindas de uma regra têm um contorno suave (o contorno forte continua a ser "alterado só nesse dia").
+- **Num dia**: o novo botão **"Vários dias…"** abre o lote já com essa pessoa, esse dia e o tipo (turno/folga).
+- Ponto (horas previstas), cartão do quiosque, "saída por marcar" e aviso do servidor passam a contar as regras.
+- Ficheiros: migration `1791130000_escala_regras` (coleção `escala_regras`: uma linha por pessoa, partilhando o `lote`; só proprietário/administrador escreve), `escala_lote_sheet.dart` (novo), `escala.dart` (`RegraEscala`), `escala_repository.dart`, `avisos.js`.
+- Testes: 10 testes de regras (para sempre, até uma data, folga fixa, alternadas, dia fechado, prioridades, feriados, horas, resumo) e as permissões das regras no servidor (editor/Leitura sem escrita, outra empresa sem acesso, dias/hora inválidos).
+
 ## 2.9.0 — 2026-10-07 — Explicar com IA nos alertas do vigia
 
 Um botão **"Explicar com IA"** em cada alerta do vigia: pede à IA (a mesma das faturas) que explique o alerta em português simples, diga se parece normal ou suspeito e o que fazer, por ordem.

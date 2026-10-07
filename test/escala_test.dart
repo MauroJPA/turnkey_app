@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gc_turnkey/src/features/people/domain/escala.dart';
 import 'package:gc_turnkey/src/features/people/domain/ferias.dart';
+import 'package:gc_turnkey/src/features/pricing/domain/dias_trabalho.dart';
 
 void main() {
   const seg = 8 * 60;
@@ -219,5 +220,183 @@ void main() {
     expect(html, contains('Folga'));
     expect(html, contains('40h 00m'));
     expect(html, contains('5/10 a 11/10/2026'));
+  });
+
+  group('regras de horário em lote', () {
+    RegraEscala regra({
+      String pessoa = 'u:1',
+      Set<int> dias = const {1, 2, 3, 4, 5},
+      DateTime? de,
+      DateTime? ate,
+      bool folga = false,
+      int cada = 1,
+      bool feriados = false,
+    }) => RegraEscala(
+      pessoa: pessoa,
+      dias: dias,
+      de: de ?? DateTime(2026, 10, 12),
+      ate: ate,
+      folga: folga,
+      inicio: folga ? null : 7 * 60,
+      fim: folga ? null : 15 * 60,
+      pausaMin: 0,
+      cadaSemanas: cada,
+      saltarFeriados: feriados,
+    );
+
+    DiaEscala dia(DateTime d, List<RegraEscala> regras, {Set<int>? trab}) =>
+        diaDaEscala(
+          pessoa: 'u:1',
+          dia: d,
+          modelo: modeloAna(),
+          excecoes: const [],
+          regras: regras,
+          diasTrabalho: trab ?? todosOsDias,
+        );
+
+    test('para sempre: vale a partir da data e nunca acaba', () {
+      final r = [regra()];
+      // antes da data: horário habitual
+      expect(dia(DateTime(2026, 10, 9), r).texto, '08:00–16:30');
+      expect(dia(DateTime(2026, 10, 9), r).regra, isFalse);
+      // a partir da data: o horário da regra
+      final d = dia(DateTime(2026, 10, 14), r);
+      expect(d.texto, '07:00–15:00');
+      expect(d.regra, isTrue);
+      expect(d.excecao, isFalse);
+      // muito mais tarde, continua
+      expect(dia(DateTime(2031, 3, 5), r).texto, '07:00–15:00');
+      // fora dos dias da semana da regra: habitual (folga ao sábado)
+      expect(dia(DateTime(2026, 10, 17), r).estado, EstadoDia.folga);
+    });
+
+    test('até uma data: acaba nesse dia (inclusive)', () {
+      final r = [regra(ate: DateTime(2026, 10, 16))];
+      expect(dia(DateTime(2026, 10, 16), r).texto, '07:00–15:00');
+      expect(dia(DateTime(2026, 10, 19), r).texto, '08:00–16:30');
+    });
+
+    test('folga fixa: a regra tira o turno do horário habitual', () {
+      final r = [
+        regra(dias: const {3}, folga: true),
+      ];
+      final qua = dia(DateTime(2026, 10, 14), r);
+      expect(qua.estado, EstadoDia.folga);
+      expect(qua.regra, isTrue);
+      expect(qua.previsto, Duration.zero);
+      expect(dia(DateTime(2026, 10, 15), r).estado, EstadoDia.turno);
+    });
+
+    test('semanas alternadas contam a partir da semana de início', () {
+      final r = [
+        regra(cada: 2, dias: const {6, 7}),
+      ];
+      // sábados: 17/10 (semana 0), 24/10 (1), 31/10 (2)
+      expect(dia(DateTime(2026, 10, 17), r).texto, '07:00–15:00');
+      expect(dia(DateTime(2026, 10, 24), r).estado, EstadoDia.folga);
+      expect(dia(DateTime(2026, 10, 31), r).texto, '07:00–15:00');
+    });
+
+    test('dias fechados são folga automática: nem as regras os abrem', () {
+      final trab = {1, 2, 3, 4, 5, 6};
+      final r = [
+        regra(dias: const {7}),
+      ];
+      final dom = dia(DateTime(2026, 10, 18), r, trab: trab);
+      expect(dom.estado, EstadoDia.fechado);
+      expect(dom.previsto, Duration.zero);
+    });
+
+    test(
+      'a regra mais recente ganha; um dia alterado e férias ganham a todas',
+      () {
+        final antiga = regra();
+        final nova = RegraEscala(
+          pessoa: 'u:1',
+          dias: const {1, 2, 3, 4, 5},
+          de: DateTime(2026, 10, 12),
+          inicio: 9 * 60,
+          fim: 17 * 60,
+        );
+        expect(
+          dia(DateTime(2026, 10, 14), [antiga, nova]).texto,
+          '09:00–17:00',
+        );
+        final folga = diaDaEscala(
+          pessoa: 'u:1',
+          dia: DateTime(2026, 10, 14),
+          modelo: modeloAna(),
+          regras: [antiga, nova],
+          excecoes: [
+            ExcecaoEscala(
+              pessoa: 'u:1',
+              data: DateTime(2026, 10, 14),
+              folga: true,
+            ),
+          ],
+        );
+        expect(folga.estado, EstadoDia.folga);
+        expect(folga.excecao, isTrue);
+        final ferias = diaDaEscala(
+          pessoa: 'u:1',
+          dia: DateTime(2026, 10, 14),
+          modelo: modeloAna(),
+          regras: [antiga, nova],
+          excecoes: const [],
+          ausencias: [
+            Ausencia(
+              id: 'a',
+              pessoa: 'u:1',
+              nome: 'Ana',
+              tipo: TipoAusencia.ferias,
+              de: DateTime(2026, 10, 12),
+              ate: DateTime(2026, 10, 16),
+              estado: EstadoAusencia.aprovado,
+            ),
+          ],
+        );
+        expect(ferias.estado, EstadoDia.ausente);
+      },
+    );
+
+    test('só vale para a pessoa da regra', () {
+      final r = [regra(pessoa: 'u:2')];
+      expect(dia(DateTime(2026, 10, 14), r).regra, isFalse);
+    });
+
+    test('não aplicar nos feriados nacionais', () {
+      // 1/12/2026 é feriado (terça-feira)
+      final r = [regra(de: DateTime(2026, 11, 30), feriados: true)];
+      expect(dia(DateTime(2026, 12, 1), r).regra, isFalse);
+      expect(dia(DateTime(2026, 12, 2), r).regra, isTrue);
+    });
+
+    test('as horas previstas somam as regras', () {
+      final h = horasPrevistas(
+        pessoa: 'u:1',
+        de: DateTime(2026, 10, 12),
+        ate: DateTime(2026, 10, 19),
+        modelo: modeloAna(),
+        excecoes: const [],
+        regras: [regra()],
+      );
+      expect(h, const Duration(hours: 40)); // 5 × 8 h
+    });
+
+    test('o resumo diz o que, quando e até quando', () {
+      expect(
+        regra().resumo,
+        'segunda a sexta · 07:00–15:00 · desde 12/10/2026, para sempre',
+      );
+      expect(
+        regra(dias: const {3}, folga: true, ate: DateTime(2026, 11, 30)).resumo,
+        'qua · folga · de 12/10/2026 a 30/11/2026',
+      );
+      expect(regra(cada: 2).resumo, contains('semanas alternadas'));
+      expect(
+        regra(ate: DateTime(2026, 10, 12), dias: const {1}).resumo,
+        contains('em 12/10/2026'),
+      );
+    });
   });
 }

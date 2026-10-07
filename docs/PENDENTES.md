@@ -1,6 +1,6 @@
 # Pendentes (fila de trabalho)
 
-Última versão fechada: **2.9.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
+Última versão fechada: **2.10.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
 (editar → `bash scripts/verificar.sh` → pubspec + CHANGELOG + docs/CHECKLIST_TESTES.md → commit com caminhos
 explícitos → `git branch -f develop main` → `git tag vX.Y.Z`). No fim: `powershell -File scripts\empacotar-producao.ps1`
 e dar ao Mauro o SHA-256 + comando de publicação.
@@ -22,6 +22,7 @@ Fila atual (pedido do Mauro em 06/10/2026, **cada item = uma versão**, por esta
 - ~~**1.92.0**~~ (feito) Pessoas → Ponto: entrada/pausa/saída (quiosque com NFC, também offline, e na app), horas do mês, correções do administrador, CSV.
 - ~~**1.93.0**~~ (feito) Pessoas → Férias: mapa de férias e ausências (pedidos, aprovação, saldo de dias, calendário da equipa).
 - ~~**1.94.0**~~ (feito) Pessoas → Notas: anotações da equipa (livro de ocorrências / recados) com fixar e arquivar.
+- ~~**2.10.0**~~ (feito) Escala: horário em lote (várias pessoas e dias de uma vez, para sempre ou até uma data, semanas alternadas), folgas fixas e dias fechados como folga automática.
 - No fim: empacotar, dar SHA-256 + comando; atualizar docs/SEGURANCA.md se houver novos endpoints.
 
 ## Fila 2.x — UI/UX mais ágil (aprovada pelo Mauro em 06/10/2026; branch `ux-2`, cada item = uma versão, por esta ordem)

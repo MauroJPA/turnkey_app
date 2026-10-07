@@ -1687,6 +1687,37 @@ def teste_escala():
     call('DELETE', f'/api/collections/escala_excecoes/records/{eid}', tok=tok['adminA'])
     s, _, _ = call('DELETE', f'/api/collections/escala_modelo/records/{mid}', tok=tok['adminA'])
     check(s in (200, 204), 'o administrador apaga o horário', f'status {s}')
+    # regras de horário em lote
+    r0 = {'empresa': empresas['A'], 'lote': 'lote-teste-1', 'pessoa': f'u:{uid}', 'nome': 'Editor A', 'user': uid,
+          'dias': '1,2,3,4,5', 'folga': False, 'inicio': '07:00', 'fim': '15:00', 'pausa_min': 0,
+          'de': '2026-10-12 00:00:00.000Z', 'cada_semanas': 1}
+    s, _, _ = call('POST', '/api/collections/escala_regras/records', r0, tok['editorA'])
+    check(s in (400, 403), 'o editor não cria regras de horário', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/escala_regras/records', r0, tok['viewerA'])
+    check(s in (400, 403), 'Leitura não cria regras de horário', f'status {s}')
+    s, r, _ = call('POST', '/api/collections/escala_regras/records', r0, tok['adminA'])
+    check(s == 200, 'o administrador cria uma regra (para sempre)', f'status {s} {str(r)[:120]}')
+    rid = r.get('id')
+    s, _, _ = call('POST', '/api/collections/escala_regras/records', {**r0, 'dias': '1,9'}, tok['adminA'])
+    check(s == 400, 'dias da semana inválidos são recusados', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/escala_regras/records', {**r0, 'inicio': '25:00'}, tok['adminA'])
+    check(s == 400, 'hora inválida na regra é recusada', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/escala_regras/records', {**r0, 'empresa': empresas['B']}, tok['adminA'])
+    check(s in (400, 403), 'não se cria regra numa empresa alheia', f'status {s}')
+    s, r, _ = call('GET', '/api/collections/escala_regras/records', tok=tok['editorA'])
+    check(s == 200 and any(i.get('id') == rid for i in r.get('items', [])), 'a equipa vê as regras')
+    s, r, _ = call('GET', '/api/collections/escala_regras/records', tok=tok['viewerA'])
+    check(s == 200 and not r.get('items'), 'Leitura não vê as regras', f'status {s}')
+    s, _, _ = call('GET', f'/api/collections/escala_regras/records/{rid}', tok=tok['editorB'])
+    check(s == 404, 'empresa B não vê as regras da A', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/escala_regras/records/{rid}', {'ate': '2026-12-31 00:00:00.000Z'}, tok['editorA'])
+    check(s in (403, 404), 'o editor não altera regras', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/escala_regras/records/{rid}', {'ate': '2026-12-31 00:00:00.000Z'}, tok['adminA'])
+    check(s == 200, 'o administrador termina uma regra (até uma data)', f'status {s}')
+    s, _, _ = call('DELETE', f'/api/collections/escala_regras/records/{rid}', tok=tok['editorA'])
+    check(s in (403, 404), 'o editor não apaga regras', f'status {s}')
+    s, _, _ = call('DELETE', f'/api/collections/escala_regras/records/{rid}', tok=tok['adminA'])
+    check(s in (200, 204), 'o administrador apaga a regra', f'status {s}')
 
 
 def teste_estado_backups():

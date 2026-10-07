@@ -160,6 +160,8 @@ class _PontoViewState extends ConsumerState<PontoView> {
     // horas previstas (escala) para comparar com as marcadas
     final modeloEscala =
         ref.watch(escalaModeloProvider).valueOrNull ?? const <TurnoModelo>[];
+    final regrasEscala =
+        ref.watch(escalaRegrasProvider).valueOrNull ?? const <RegraEscala>[];
     final mesInicio = DateTime(_mes.year, _mes.month);
     final mesFim = DateTime(_mes.year, _mes.month + 1);
     final excecoesMes =
@@ -359,6 +361,7 @@ class _PontoViewState extends ConsumerState<PontoView> {
                         ate: corte,
                         modelo: modeloEscala,
                         excecoes: excecoesMes,
+                        regras: regrasEscala,
                         ausencias: ausenciasAno,
                         diasTrabalho: diasTrab,
                       );

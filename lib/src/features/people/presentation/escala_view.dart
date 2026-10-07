@@ -16,25 +16,11 @@ import '../data/escala_repository.dart';
 import '../domain/escala.dart';
 import '../domain/ferias.dart';
 import '../domain/ponto.dart';
+import 'escala_lote_sheet.dart';
 
-void _atualizar(WidgetRef ref) {
-  ref.invalidate(escalaModeloProvider);
-  ref.invalidate(escalaExcecoesProvider);
-}
+void _atualizar(WidgetRef ref) => atualizarEscala(ref);
 
 String _dm(DateTime d) => '${d.day}/${d.month}';
-
-Future<int?> _escolherHora(BuildContext context, int atual) async {
-  final t = await showTimePicker(
-    context: context,
-    initialTime: TimeOfDay(hour: atual ~/ 60, minute: atual % 60),
-    builder: (ctx, child) => MediaQuery(
-      data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
-      child: child!,
-    ),
-  );
-  return t == null ? null : t.hour * 60 + t.minute;
-}
 
 /// A escala semanal da equipa: quem trabalha quando. O horário habitual de
 /// cada pessoa define-se uma vez; os dias especiais mudam-se com um toque.
@@ -82,6 +68,9 @@ class _EscalaViewState extends ConsumerState<EscalaView> {
         final excecoes =
             ref.watch(escalaExcecoesProvider(semana)).valueOrNull ??
             const <ExcecaoEscala>[];
+        final regras =
+            ref.watch(escalaRegrasProvider).valueOrNull ??
+            const <RegraEscala>[];
 
         // quem aparece: a administração vê toda a equipa (para a poder
         // configurar); os outros veem quem já tem horário
@@ -109,9 +98,16 @@ class _EscalaViewState extends ConsumerState<EscalaView> {
               dia: _segunda.add(Duration(days: i)),
               modelo: modelo,
               excecoes: excecoes,
+              regras: regras,
               ausencias: ausencias,
               diasTrabalho: diasTrab,
             ),
+        ];
+
+        // para o "Horário em lote": toda a equipa que a escala conhece
+        final equipa = <PessoaEscala>[
+          for (final p in linhas)
+            (chave: p.key, nome: p.value.nome, userId: p.value.userId),
         ];
 
         final meu = uid == null ? null : semanaDe('u:$uid');
@@ -229,7 +225,14 @@ class _EscalaViewState extends ConsumerState<EscalaView> {
                       )
                     : null,
                 onDia: admin
-                    ? (d) => _editarDia(p.key, p.value.nome, p.value.userId, d)
+                    ? (d) => _editarDia(
+                        p.key,
+                        p.value.nome,
+                        p.value.userId,
+                        d,
+                        equipa,
+                        diasTrab,
+                      )
                     : null,
               ),
             const SizedBox(height: 8),
@@ -237,6 +240,16 @@ class _EscalaViewState extends ConsumerState<EscalaView> {
               spacing: 8,
               runSpacing: 8,
               children: [
+                if (admin && equipa.isNotEmpty)
+                  FilledButton.tonalIcon(
+                    onPressed: () => abrirLoteEscala(
+                      context,
+                      pessoas: equipa,
+                      diasTrab: diasTrab,
+                    ),
+                    icon: const Icon(Icons.playlist_add_check),
+                    label: const Text('Horário em lote'),
+                  ),
                 if (linhas.isNotEmpty)
                   OutlinedButton.icon(
                     onPressed: () => abrirImpressao(
@@ -256,15 +269,20 @@ class _EscalaViewState extends ConsumerState<EscalaView> {
                   ),
               ],
             ),
-            if (admin)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  'Toca no nome para definir o horário habitual; toca num dia '
-                  'para o mudar só nesse dia (turno diferente ou folga).',
-                  style: tt.bodySmall?.copyWith(color: cs.outline),
-                ),
+            if (admin) const ListaRegrasEscala(),
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                admin
+                    ? 'Nome: horário habitual (dia sem turno = folga fixa). '
+                          'Dia: muda só esse dia. "Horário em lote": várias '
+                          'pessoas e dias, para sempre ou até uma data. Dias '
+                          'fechados são folga automática. Contorno forte = '
+                          'alterado só nesse dia; suave = regra em lote.'
+                    : 'Dias fechados são folga automática.',
+                style: tt.bodySmall?.copyWith(color: cs.outline),
               ),
+            ),
           ],
         );
       },
@@ -298,6 +316,8 @@ class _EscalaViewState extends ConsumerState<EscalaView> {
     String nome,
     String userId,
     DiaEscala d,
+    List<PessoaEscala> equipa,
+    Set<int> diasTrab,
   ) async {
     if (d.estado == EstadoDia.ausente) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -310,11 +330,23 @@ class _EscalaViewState extends ConsumerState<EscalaView> {
       );
       return;
     }
-    await showDialog<void>(
+    final lote = await showDialog<bool>(
       context: context,
       builder: (_) =>
           _DiaDialog(pessoa: pessoa, nome: nome, userId: userId, dia: d),
     );
+    if (lote == true && mounted) {
+      await abrirLoteEscala(
+        context,
+        pessoas: equipa,
+        diasTrab: diasTrab,
+        selecionadas: {pessoa},
+        de: d.dia,
+        ate: d.dia,
+        folga: d.estado != EstadoDia.turno,
+        dias: {d.dia.weekday},
+      );
+    }
   }
 }
 
@@ -443,7 +475,10 @@ class _Celula extends StatelessWidget {
     final (fundo, texto) = switch (dia.estado) {
       EstadoDia.turno => (cs.primaryContainer, cs.onPrimaryContainer),
       EstadoDia.folga => (cs.surfaceContainerHighest, cs.outline),
-      EstadoDia.fechado => (cs.surfaceContainerLow, cs.outline),
+      EstadoDia.fechado => (
+        cs.surfaceContainerLow,
+        cs.outline.withValues(alpha: 0.7),
+      ),
       EstadoDia.ausente => (
         dia.ausencia?.tipo == TipoAusencia.ferias
             ? Colors.green.withValues(alpha: 0.35)
@@ -469,7 +504,15 @@ class _Celula extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: cs.primary, width: 1.2),
                 )
-              : null,
+              : (dia.regra
+                    ? BoxDecoration(
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: cs.tertiary.withValues(alpha: 0.8),
+                          width: 1,
+                        ),
+                      )
+                    : null),
           alignment: Alignment.center,
           child: dia.estado == EstadoDia.turno
               ? Column(
@@ -481,7 +524,7 @@ class _Celula extends StatelessWidget {
                 )
               : Text(switch (dia.estado) {
                   EstadoDia.folga => 'folga',
-                  EstadoDia.fechado => '—',
+                  EstadoDia.fechado => 'folga',
                   _ => dia.texto.toLowerCase(),
                 }, style: estilo),
         ),
@@ -530,7 +573,8 @@ class _ModeloDialogState extends ConsumerState<_ModeloDialog> {
       for (final t in widget.atual) {
         if (t.diaSemana == d) m = t;
       }
-      _ativo[d] = m != null || (semModelo && widget.diasTrabalho.contains(d));
+      // um dia em que a empresa fecha já é folga automática
+      _ativo[d] = widget.diasTrabalho.contains(d) && (m != null || semModelo);
       _inicio[d] = m?.inicio ?? 8 * 60;
       _fim[d] = m?.fim ?? 16 * 60 + 30;
       _pausa[d] = m?.pausaMin ?? 30;
@@ -594,7 +638,9 @@ class _ModeloDialogState extends ConsumerState<_ModeloDialog> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Marca os dias em que trabalha e as horas. Tudo o resto é folga.',
+                'Marca os dias em que trabalha e as horas. Os dias sem marca '
+                'são folga fixa, todas as semanas (e os dias fechados já são '
+                'folga automática).',
                 style: tt.bodySmall,
               ),
               const SizedBox(height: 8),
@@ -603,7 +649,9 @@ class _ModeloDialogState extends ConsumerState<_ModeloDialog> {
                   children: [
                     Checkbox(
                       value: _ativo[d],
-                      onChanged: (v) => setState(() => _ativo[d] = v ?? false),
+                      onChanged: !widget.diasTrabalho.contains(d)
+                          ? null
+                          : (v) => setState(() => _ativo[d] = v ?? false),
                     ),
                     SizedBox(
                       width: 34,
@@ -614,55 +662,65 @@ class _ModeloDialogState extends ConsumerState<_ModeloDialog> {
                         ),
                       ),
                     ),
-                    Expanded(
-                      child: TextButton(
-                        onPressed: !_ativo[d]!
-                            ? null
-                            : () async {
-                                final h = await _escolherHora(
-                                  context,
-                                  _inicio[d]!,
-                                );
-                                if (h != null) setState(() => _inicio[d] = h);
-                              },
-                        child: Text(escreverHora(_inicio[d]!)),
+                    if (!widget.diasTrabalho.contains(d))
+                      Expanded(
+                        child: Text(
+                          'fechado · folga automática',
+                          style: tt.bodySmall?.copyWith(color: cs.outline),
+                        ),
+                      )
+                    else ...[
+                      Expanded(
+                        child: TextButton(
+                          onPressed: !_ativo[d]!
+                              ? null
+                              : () async {
+                                  final h = await escolherHora(
+                                    context,
+                                    _inicio[d]!,
+                                  );
+                                  if (h != null) setState(() => _inicio[d] = h);
+                                },
+                          child: Text(escreverHora(_inicio[d]!)),
+                        ),
                       ),
-                    ),
-                    const Text('–'),
-                    Expanded(
-                      child: TextButton(
-                        onPressed: !_ativo[d]!
-                            ? null
-                            : () async {
-                                final h = await _escolherHora(
-                                  context,
-                                  _fim[d]!,
-                                );
-                                if (h != null) setState(() => _fim[d] = h);
-                              },
-                        child: Text(escreverHora(_fim[d]!)),
+                      const Text('–'),
+                      Expanded(
+                        child: TextButton(
+                          onPressed: !_ativo[d]!
+                              ? null
+                              : () async {
+                                  final h = await escolherHora(
+                                    context,
+                                    _fim[d]!,
+                                  );
+                                  if (h != null) setState(() => _fim[d] = h);
+                                },
+                          child: Text(escreverHora(_fim[d]!)),
+                        ),
                       ),
-                    ),
-                    SizedBox(
-                      width: 70,
-                      child: DropdownButton<int>(
-                        value: const [0, 15, 30, 45, 60, 90].contains(_pausa[d])
-                            ? _pausa[d]
-                            : 30,
-                        isExpanded: true,
-                        underline: const SizedBox.shrink(),
-                        items: [
-                          for (final m in const [0, 15, 30, 45, 60, 90])
-                            DropdownMenuItem(
-                              value: m,
-                              child: Text(m == 0 ? 'sem pausa' : '${m}m'),
-                            ),
-                        ],
-                        onChanged: _ativo[d]!
-                            ? (v) => setState(() => _pausa[d] = v ?? 30)
-                            : null,
+                      SizedBox(
+                        width: 70,
+                        child: DropdownButton<int>(
+                          value:
+                              const [0, 15, 30, 45, 60, 90].contains(_pausa[d])
+                              ? _pausa[d]
+                              : 30,
+                          isExpanded: true,
+                          underline: const SizedBox.shrink(),
+                          items: [
+                            for (final m in const [0, 15, 30, 45, 60, 90])
+                              DropdownMenuItem(
+                                value: m,
+                                child: Text(m == 0 ? 'sem pausa' : '${m}m'),
+                              ),
+                          ],
+                          onChanged: _ativo[d]!
+                              ? (v) => setState(() => _pausa[d] = v ?? 30)
+                              : null,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               Align(
@@ -773,7 +831,7 @@ class _DiaDialogState extends ConsumerState<_DiaDialog> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () async {
-                        final h = await _escolherHora(context, _inicio);
+                        final h = await escolherHora(context, _inicio);
                         if (h != null) setState(() => _inicio = h);
                       },
                       child: Text(escreverHora(_inicio)),
@@ -786,7 +844,7 @@ class _DiaDialogState extends ConsumerState<_DiaDialog> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () async {
-                        final h = await _escolherHora(context, _fim);
+                        final h = await escolherHora(context, _fim);
                         if (h != null) setState(() => _fim = h);
                       },
                       child: Text(escreverHora(_fim)),
@@ -832,6 +890,10 @@ class _DiaDialogState extends ConsumerState<_DiaDialog> {
                   ),
             child: const Text('Voltar ao habitual'),
           ),
+        TextButton(
+          onPressed: _ocupado ? null : () => Navigator.pop(context, true),
+          child: const Text('Vários dias…'),
+        ),
         TextButton(
           onPressed: _ocupado ? null : () => Navigator.pop(context),
           child: const Text('Cancelar'),

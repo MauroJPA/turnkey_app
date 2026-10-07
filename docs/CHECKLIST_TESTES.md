@@ -2095,6 +2095,23 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Nenhum comando mostrado apaga/escreve/reinicia nada (só leitura: `last`, `tailscale status`, `ss -tlnp`…)
 - [ ] Depois de 20 pedidos no dia a app diz que o limite foi atingido
 
+## 152. Escala: horário em lote, folgas fixas e dias fechados
+
+- [ ] Pessoas → Escala (administrador): aparece o botão "Horário em lote"; com outra conta (Editor/Leitura) não aparece
+- [ ] Lote → "Toda a equipa" + Trabalha 08:00–16:30 + "Seg a sex" + "Para sempre" a partir de hoje: o resumo diz o certo e, ao "Aplicar", todas as pessoas ficam com esse horário daí em diante (dias anteriores ficam como estavam)
+- [ ] Lote → "Folga" + só quarta + "Para sempre" para uma pessoa: todas as quartas dela passam a "folga"; as outras pessoas não mudam
+- [ ] Lote → "Até uma data" (p. ex. 1 a 15 do mês seguinte): depois da data volta ao horário habitual sozinho
+- [ ] "Semanas alternadas": só aparece o turno de 15 em 15 dias (conferir 3 semanas seguidas)
+- [ ] "Não aplicar nos feriados nacionais": num feriado dentro do período o dia fica como o horário habitual
+- [ ] Dia em que a empresa fecha: o chip aparece desativado "dom · fechado", a célula da escala aparece "folga" a cinzento, e no horário habitual (tocar no nome) vem bloqueado "fechado · folga automática"; não conta horas previstas
+- [ ] Tocar no nome: os dias sem turno são folga fixa; guardar e ver na escala
+- [ ] Regras de horário (N): abre a lista; "Parar a partir de hoje" faz o horário voltar ao habitual daí em diante; "Apagar" pede confirmação e remove
+- [ ] Duas regras sobre os mesmos dias: ganha a mais recente
+- [ ] Um dia alterado à mão ("Voltar ao habitual") e férias aprovadas continuam a ganhar às regras
+- [ ] Num dia, "Vários dias…" abre o lote com essa pessoa, esse dia e turno/folga já preenchidos
+- [ ] Ponto: as horas previstas do mês e o "Saída às …" usam o horário da regra (conferir com uma regra de horário de verão)
+- [ ] No telemóvel o lote abre em ecrã quase inteiro, tudo legível, botão "Aplicar" visível no fim
+
 ---
 
 ## Notas / ajustes pedidos

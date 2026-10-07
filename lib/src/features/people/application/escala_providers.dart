@@ -10,6 +10,12 @@ final escalaModeloProvider = FutureProvider.autoDispose<List<TurnoModelo>>(
   (ref) => ref.watch(escalaRepositoryProvider).modelo(),
 );
 
+/// As regras de horário em lote (repetem-se por dias da semana, para sempre
+/// ou até uma data).
+final escalaRegrasProvider = FutureProvider.autoDispose<List<RegraEscala>>(
+  (ref) => ref.watch(escalaRepositoryProvider).regras(),
+);
+
 /// As alterações de dias concretos entre duas datas (`ate` exclusive).
 final escalaExcecoesProvider = FutureProvider.autoDispose
     .family<List<ExcecaoEscala>, IntervaloEscala>(

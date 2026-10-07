@@ -17,6 +17,7 @@ final saidasPorMarcarProvider = Provider.autoDispose<List<SaidaPorMarcar>>((
   final agora = DateTime.now();
   final hoje = DateTime(agora.year, agora.month, agora.day);
   final modelo = ref.watch(escalaModeloProvider).valueOrNull ?? const [];
+  final regras = ref.watch(escalaRegrasProvider).valueOrNull ?? const [];
   final excecoes =
       ref
           .watch(
@@ -36,6 +37,7 @@ final saidasPorMarcarProvider = Provider.autoDispose<List<SaidaPorMarcar>>((
         dia: DateTime(entrada.year, entrada.month, entrada.day),
         modelo: modelo,
         excecoes: excecoes,
+        regras: regras,
       ),
     ),
   );

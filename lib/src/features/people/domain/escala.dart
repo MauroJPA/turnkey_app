@@ -79,6 +79,85 @@ class ExcecaoEscala {
   final String notas;
 }
 
+/// Uma mudança ao horário habitual que se repete (criada em lote para várias
+/// pessoas): nos [dias] da semana, a partir de [de], até [ate] (vazio = para
+/// sempre), todas as semanas ou de [cadaSemanas] em [cadaSemanas].
+class RegraEscala {
+  const RegraEscala({
+    required this.pessoa,
+    required this.dias,
+    required this.de,
+    this.ate,
+    this.folga = false,
+    this.inicio,
+    this.fim,
+    this.pausaMin = 0,
+    this.cadaSemanas = 1,
+    this.saltarFeriados = false,
+    this.notas = '',
+    this.nome = '',
+    this.userId = '',
+    this.lote = '',
+    this.id = '',
+  });
+
+  final String id;
+  final String lote;
+  final String pessoa;
+  final String nome;
+  final String userId;
+  final Set<int> dias;
+  final DateTime de;
+  final DateTime? ate;
+  final bool folga;
+  final int? inicio;
+  final int? fim;
+  final int pausaMin;
+  final int cadaSemanas;
+  final bool saltarFeriados;
+  final String notas;
+
+  bool get eFolga => folga || inicio == null || fim == null;
+
+  /// Esta regra manda no dia [dia]? (Ignora se a empresa fecha nesse dia: isso
+  /// decide-se antes, em [diaDaEscala].)
+  bool cobre(DateTime dia) {
+    final d = _d(dia);
+    if (d.isBefore(_d(de))) return false;
+    if (ate != null && d.isAfter(_d(ate!))) return false;
+    if (!dias.contains(d.weekday)) return false;
+    if (cadaSemanas > 1) {
+      final semanas =
+          (segundaDaSemana(d).difference(segundaDaSemana(de)).inHours / 24)
+              .round() ~/
+          7;
+      if (semanas % cadaSemanas != 0) return false;
+    }
+    if (saltarFeriados && feriadosNacionais(d.year).contains(d)) return false;
+    return true;
+  }
+
+  /// "seg a sex · 08:00–16:30 · de 14/10 para sempre".
+  String get resumo {
+    final partes = <String>[
+      resumoDiasTrabalho(dias),
+      eFolga ? 'folga' : '${escreverHora(inicio!)}–${escreverHora(fim!)}',
+      if (cadaSemanas == 2)
+        'semanas alternadas'
+      else if (cadaSemanas > 2)
+        'de $cadaSemanas em $cadaSemanas semanas',
+      ate == null
+          ? 'desde ${_dmy(de)}, para sempre'
+          : (_d(ate!) == _d(de)
+                ? 'em ${_dmy(de)}'
+                : 'de ${_dmy(de)} a ${_dmy(ate!)}'),
+    ];
+    return partes.join(' · ');
+  }
+}
+
+String _dmy(DateTime d) => '${d.day}/${d.month}/${d.year}';
+
 enum EstadoDia { turno, folga, ausente, fechado }
 
 /// O que uma pessoa tem num dia.
@@ -90,6 +169,7 @@ class DiaEscala {
     this.fim = 0,
     this.pausaMin = 0,
     this.excecao = false,
+    this.regra = false,
     this.ausencia,
     this.notas = '',
   });
@@ -102,6 +182,9 @@ class DiaEscala {
 
   /// Vem de uma alteração para este dia (e não do horário habitual).
   final bool excecao;
+
+  /// Vem de uma regra de horário (em lote), e não do horário habitual.
+  final bool regra;
   final Ausencia? ausencia;
   final String notas;
 
@@ -121,12 +204,14 @@ class DiaEscala {
 DateTime _d(DateTime x) => DateTime(x.year, x.month, x.day);
 
 /// O dia de [pessoa] na escala: ausência aprovada (férias, baixa, falta) →
-/// alteração para esse dia → empresa fechada → horário habitual → folga.
+/// alteração para esse dia → empresa fechada (folga automática) → regra de
+/// horário mais recente → horário habitual → folga.
 DiaEscala diaDaEscala({
   required String pessoa,
   required DateTime dia,
   required Iterable<TurnoModelo> modelo,
   required Iterable<ExcecaoEscala> excecoes,
+  Iterable<RegraEscala> regras = const [],
   Iterable<Ausencia> ausencias = const [],
   Set<int> diasTrabalho = todosOsDias,
 }) {
@@ -162,6 +247,30 @@ DiaEscala diaDaEscala({
   if (!diasTrabalho.contains(d.weekday)) {
     return DiaEscala(dia: d, estado: EstadoDia.fechado);
   }
+  // a regra mais recente (a última da lista) que cobre o dia manda
+  RegraEscala? regra;
+  for (final r in regras) {
+    if (r.pessoa == pessoa && r.cobre(d)) regra = r;
+  }
+  if (regra != null) {
+    if (regra.eFolga) {
+      return DiaEscala(
+        dia: d,
+        estado: EstadoDia.folga,
+        regra: true,
+        notas: regra.notas,
+      );
+    }
+    return DiaEscala(
+      dia: d,
+      estado: EstadoDia.turno,
+      inicio: regra.inicio!,
+      fim: regra.fim!,
+      pausaMin: regra.pausaMin,
+      regra: true,
+      notas: regra.notas,
+    );
+  }
   for (final m in modelo) {
     if (m.pessoa == pessoa && m.diaSemana == d.weekday) {
       return DiaEscala(
@@ -183,6 +292,7 @@ Duration horasPrevistas({
   required DateTime ate,
   required Iterable<TurnoModelo> modelo,
   required Iterable<ExcecaoEscala> excecoes,
+  Iterable<RegraEscala> regras = const [],
   Iterable<Ausencia> ausencias = const [],
   Set<int> diasTrabalho = todosOsDias,
 }) {
@@ -197,6 +307,7 @@ Duration horasPrevistas({
       dia: d,
       modelo: modelo,
       excecoes: excecoes,
+      regras: regras,
       ausencias: ausencias,
       diasTrabalho: diasTrabalho,
     ).previsto;
