@@ -5,7 +5,7 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/printing/print_html.dart';
 import '../../../core/widgets/async_value_view.dart';
-import '../../../core/widgets/confirm_dialog.dart';
+import '../../../core/widgets/desfazer.dart';
 import '../../quiosque/application/colaboradores_providers.dart';
 import '../../quiosque/domain/colaborador.dart';
 import '../../settings/application/empresa_providers.dart';
@@ -75,22 +75,14 @@ class _FeriasViewState extends ConsumerState<FeriasView> {
     ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
   }
 
-  Future<void> _apagar(Ausencia a) async {
-    final ok = await confirmDialog(
-      context,
-      titulo: 'Apagar ${a.tipo.label.toLowerCase()}?',
-      mensagem: '${a.nome}, ${periodoTexto(a)}.',
-      confirmar: 'Apagar',
-      destrutivo: true,
-    );
-    if (!ok) return;
-    try {
-      await ref.read(feriasRepositoryProvider).apagar(a.id);
-      _atualizar(ref);
-    } on Object catch (e) {
-      _erro(e);
-    }
-  }
+  Future<void> _apagar(Ausencia a) => apagarComDesfazer(
+    context,
+    id: a.id,
+    mensagem: '${a.tipo.label} apagada: ${a.nome}, ${periodoTexto(a)}',
+    apagar: () => ref.read(feriasRepositoryProvider).apagar(a.id),
+    depois: () => _atualizar(ref),
+    aoFalhar: _erro,
+  );
 
   Future<void> _pedir(List<Ausencia> existentes) async {
     final pessoas = ref.read(currentPapelProvider).canEditConfig
@@ -126,7 +118,12 @@ class _FeriasViewState extends ConsumerState<FeriasView> {
     return AsyncValueView<List<Ausencia>>(
       value: ref.watch(feriasAnoProvider(_ano)),
       onRetry: () => ref.invalidate(feriasAnoProvider),
-      data: (todas) {
+      data: (todasBrutas) {
+        final ocultos = ref.watch(ocultosProvider);
+        final todas = [
+          for (final a in todasBrutas)
+            if (!ocultos.contains(a.id)) a,
+        ];
         final minhas = [
           for (final a in todas)
             if (a.pessoa == 'u:$uid') a,

@@ -364,14 +364,10 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
 
     return SwipeToDelete(
       key: ValueKey(r.id),
-      confirmar: () => confirmDialog(
-        context,
-        titulo: 'Mover para a lixeira',
-        mensagem: 'Mover "${r.nome}" para a lixeira?',
-        confirmar: 'Mover',
-      ),
       apagar: () =>
           _run(() => ref.read(recipeActionsProvider).moveToTrash(r.id)),
+      mensagemDesfazer: '"${r.nome}" foi para a lixeira',
+      desfazer: () => ref.read(recipeActionsProvider).restore(r.id),
       child: tile,
     );
   }

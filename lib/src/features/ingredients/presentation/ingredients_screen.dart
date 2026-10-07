@@ -833,14 +833,10 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
 
     return SwipeToDelete(
       key: ValueKey(i.id),
-      confirmar: () => confirmDialog(
-        context,
-        titulo: 'Mover para a lixeira',
-        mensagem: 'Mover "${i.nome}" para a lixeira?',
-        confirmar: 'Mover',
-      ),
       apagar: () =>
           _run(() => ref.read(ingredientActionsProvider).moveToTrash(i.id)),
+      mensagemDesfazer: '"${i.nome}" foi para a lixeira',
+      desfazer: () => ref.read(ingredientActionsProvider).restore(i.id),
       child: tile,
     );
   }

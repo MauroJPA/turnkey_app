@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/widgets/async_value_view.dart';
-import '../../../core/widgets/confirm_dialog.dart';
+import '../../../core/widgets/desfazer.dart';
 import '../application/notas_providers.dart';
 import '../data/notas_repository.dart';
 import '../domain/nota.dart';
@@ -118,7 +118,12 @@ class _NotasViewState extends ConsumerState<NotasView> {
           child: AsyncValueView<List<Nota>>(
             value: ref.watch(notasProvider(_arquivadas)),
             onRetry: () => ref.invalidate(notasProvider),
-            data: (todas) {
+            data: (todasBrutas) {
+              final ocultos = ref.watch(ocultosProvider);
+              final todas = [
+                for (final n in todasBrutas)
+                  if (!ocultos.contains(n.id)) n,
+              ];
               final lista = filtrarNotas(
                 todas,
                 categoria: _categoria,
@@ -208,14 +213,14 @@ class _NotasViewState extends ConsumerState<NotasView> {
                                 case 'editar':
                                   await mostrarNota(context, existente: n);
                                 case 'apagar':
-                                  final ok = await confirmDialog(
+                                  await apagarComDesfazer(
                                     context,
-                                    titulo: 'Apagar esta nota?',
-                                    mensagem: 'Não se pode desfazer.',
-                                    confirmar: 'Apagar',
-                                    destrutivo: true,
+                                    id: n.id,
+                                    mensagem: 'Nota apagada',
+                                    apagar: () => repo.apagar(n.id),
+                                    depois: () => _atualizar(ref),
+                                    aoFalhar: _erro,
                                   );
-                                  if (ok) await _fazer(() => repo.apagar(n.id));
                               }
                             },
                             itemBuilder: (_) => [

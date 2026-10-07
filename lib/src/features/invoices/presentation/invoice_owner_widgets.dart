@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,7 +8,7 @@ import '../../../core/data/marcas_fornecedores_providers.dart';
 import '../../../core/formatting/dates.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/autocomplete_text_field.dart';
-import '../../../core/widgets/confirm_dialog.dart';
+import '../../../core/widgets/desfazer.dart';
 import '../../../core/widgets/history_sheet.dart';
 import '../../settings/application/empresa_providers.dart';
 import '../application/invoice_providers.dart';
@@ -248,25 +250,26 @@ Future<bool> mostrarCorrigirItem(
   return ok == true;
 }
 
-/// Apagar uma fatura (só o proprietário): fica escondida, com registo, e pode ser restaurada.
+/// Apagar uma fatura (só o proprietário): fica escondida, com registo, e pode ser restaurada
+/// ("Desfazer" logo a seguir, ou em "Faturas apagadas").
 Future<bool> apagarFaturaComConfirmacao(
   BuildContext context,
   WidgetRef ref,
   Fatura f,
 ) async {
-  final ok = await confirmDialog(
-    context,
-    titulo: 'Apagar fatura?',
-    mensagem:
-        '${f.fornecedor.isEmpty ? 'Fatura' : f.fornecedor}'
-        '${f.numero.isEmpty ? '' : ' nº ${f.numero}'} deixa de aparecer, mas '
-        'continua guardada (com o ficheiro) e fica no histórico. Podes '
-        'restaurá-la em "Faturas apagadas".',
-    confirmar: 'Apagar',
-    destrutivo: true,
+  // sem pergunta: fica escondida (com o ficheiro e o histórico) e há "Desfazer"
+  final messenger = ScaffoldMessenger.of(context);
+  final acoes = ref.read(invoiceActionsProvider);
+  await acoes.apagar(f.id);
+  unawaited(
+    mostrarDesfazerEm(
+      messenger,
+      mensagem:
+          '${f.fornecedor.isEmpty ? 'Fatura' : f.fornecedor}'
+          '${f.numero.isEmpty ? '' : ' nº ${f.numero}'} apagada',
+      desfazer: () => acoes.restaurar(f.id),
+    ),
   );
-  if (!ok) return false;
-  await ref.read(invoiceActionsProvider).apagar(f.id);
   return true;
 }
 

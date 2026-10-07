@@ -483,14 +483,10 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
 
     return SwipeToDelete(
       key: ValueKey(f.id),
-      confirmar: () => confirmDialog(
-        context,
-        titulo: 'Mover para a lixeira',
-        mensagem: 'Mover "${f.nome}" para a lixeira?',
-        confirmar: 'Mover',
-      ),
       apagar: () =>
           _run(() => ref.read(fichaActionsProvider).moveToTrash(f.id)),
+      mensagemDesfazer: '"${f.nome}" foi para a lixeira',
+      desfazer: () => ref.read(fichaActionsProvider).restore(f.id),
       child: tile,
     );
   }

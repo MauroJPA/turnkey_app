@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/mensagem_amigavel.dart';
-import '../../../core/widgets/confirm_dialog.dart';
+import '../../../core/widgets/desfazer.dart';
 import '../../pricing/domain/dias_trabalho.dart';
 import '../application/escala_providers.dart';
 import '../data/escala_repository.dart';
@@ -364,8 +364,9 @@ class _LoteEscalaSheetState extends ConsumerState<LoteEscalaSheet> {
                     selected: _dias.contains(d),
                     onSelected: _fechado(d)
                         ? null
-                        : (v) =>
-                              setState(() => v ? _dias.add(d) : _dias.remove(d)),
+                        : (v) => setState(
+                            () => v ? _dias.add(d) : _dias.remove(d),
+                          ),
                   ),
               ],
             ),
@@ -498,8 +499,13 @@ class ListaRegrasEscala extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final regras =
-        ref.watch(escalaRegrasProvider).valueOrNull ?? const <RegraEscala>[];
+    final ocultos = ref.watch(ocultosProvider);
+    final regras = [
+      for (final r
+          in ref.watch(escalaRegrasProvider).valueOrNull ??
+              const <RegraEscala>[])
+        if (!ocultos.contains(r.lote)) r,
+    ];
     final n = DateTime.now();
     final hoje = DateTime(n.year, n.month, n.day);
     final porLote = <String, List<RegraEscala>>{};
@@ -521,20 +527,23 @@ class ListaRegrasEscala extends ConsumerWidget {
             l.first.lote,
             hoje.subtract(const Duration(days: 1)),
           );
+          atualizarEscala(ref);
         } else {
-          final ok = await confirmDialog(
+          await apagarComDesfazer(
             context,
-            titulo: 'Apagar esta regra?',
-            mensagem:
-                '${l.map((r) => r.nome).join(', ')}: ${l.first.resumo}.\n'
-                'Os dias voltam ao horário habitual.',
-            confirmar: 'Apagar',
-            destrutivo: true,
+            id: l.first.lote,
+            mensagem: 'Regra apagada — os dias voltam ao horário habitual',
+            apagar: () => repo.apagarLote(l.first.lote),
+            depois: () => atualizarEscala(ref),
+            aoFalhar: (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
+              }
+            },
           );
-          if (!ok) return;
-          await repo.apagarLote(l.first.lote);
         }
-        atualizarEscala(ref);
       } on Object catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(

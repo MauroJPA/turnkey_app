@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.12.0 — 2026-10-07 — Desfazer em vez de confirmar
+
+**Desfazer em vez de "Tens a certeza?"**: apagar passa a ser um toque, com a possibilidade de voltar atrás durante uns segundos.
+
+- **Mover para a lixeira** (ingredientes, receitas e fichas técnicas): deslizar já não pergunta nada; aparece "«Nome» foi para a lixeira · Desfazer".
+- **Notas da equipa, férias/ausências e regras de horário em lote**: o item **desaparece logo** da lista e só se apaga a sério passados 6 segundos, se ninguém carregar em Desfazer. Se a app fechar nesse intervalo, **nada é apagado** (o lado seguro). Apagar outro item confirma o anterior.
+- **Faturas** (só proprietário): apagar esconde a fatura (continua guardada, com o histórico) e aparece "Desfazer"; "Faturas apagadas" continua a existir.
+- **O que continua a perguntar** (porque não tem volta ou mexe em dados importantes): apagar para sempre, certificados de formações, marcações de ponto, vendas, encomendas, remover da equipa e aplicar faturas.
+- Detalhe técnico: um aviso com botão não desaparece sozinho no Flutter 3.47; os do "Desfazer" foram marcados para desaparecer à hora certa (um teste apanhou isto).
+- Ficheiros: `core/widgets/desfazer.dart` (novo), `swipe_to_delete.dart`, `ferias_view`, `notas_view`, `escala_lote_sheet`, `invoice_owner_widgets`. Sem migrations.
+- Testes: 5 testes de widgets do "Desfazer" (esconde já, apaga ao fim do tempo, repõe, falha devolve o item, vários seguidos).
+
 ## 2.11.1 — 2026-10-07 — Backup antes de atualizar mais robusto
 
 Corrige uma falha do **backup antes de atualizar**: "tar: data: file changed as we read it … A cópia de segurança FALHOU".

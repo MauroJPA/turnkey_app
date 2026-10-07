@@ -96,7 +96,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Ao criar uma receita pode já escrever o procedimento e anexar imagens (opcional).',
       'Os chips por baixo da pesquisa filtram por categoria (só mostram as que as tuas receitas realmente usam); as categorias são geríveis em Configurações → Categorias de receitas.',
       'O botão de ordenar (seta) organiza por Nome, Categoria ou Custo — toca outra vez no mesmo critério para inverter a ordem.',
-      'Deslize uma receita para a esquerda para a mover para a lixeira. O ícone do caixote do lixo mostra as receitas apagadas, que pode recuperar.',
+      'Deslize uma receita para a esquerda para a mover para a lixeira — sem perguntas: aparece "Desfazer" durante uns segundos. O ícone do caixote do lixo mostra as receitas apagadas, que pode recuperar. O mesmo vale para ingredientes e fichas técnicas; em notas, férias, regras de horário e faturas, "Desfazer" aparece em vez do "Tens a certeza?".',
     ],
   ),
   HelpTopic.receitaDetalhe: (

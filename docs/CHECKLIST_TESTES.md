@@ -2131,6 +2131,18 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Simular erro a sério (sem espaço ou sem permissão em `data/`): continua a dar "A cópia de segurança FALHOU" e o servidor fica a funcionar
 - [ ] `publicar-producao.sh` completo: backup, extração, atualização e "Estado" sem erros
 
+## 155. Desfazer em vez de confirmar
+
+- [ ] Ingredientes: deslizar um para a esquerda → vai para a lixeira sem perguntar e aparece "Desfazer"; carregar repõe-no na lista. Igual em Receitas e Fichas técnicas
+- [ ] Se não carregares em Desfazer, o item continua na lixeira (ícone do caixote) e pode ser recuperado de lá
+- [ ] Pessoas → Notas → ⋮ → Apagar: a nota some logo e aparece "Nota apagada · Desfazer"; com Desfazer volta; sem Desfazer fica apagada passados ~6 s (recarrega a página e confirma)
+- [ ] Pessoas → Férias: apagar um pedido segue o mesmo comportamento
+- [ ] Escala → Regras de horário → Apagar: a regra some e os dias voltam ao habitual; Desfazer repõe-na
+- [ ] Faturas (proprietário): apagar uma fatura já não pergunta; "Desfazer" restaura; "Faturas apagadas" também restaura
+- [ ] Apagar dois itens seguidos: ambos são apagados no fim (o primeiro não se perde)
+- [ ] Fechar o separador logo depois de apagar (antes dos 6 s): ao voltar o item ainda lá está
+- [ ] As confirmações que ficam (apagar para sempre, ponto, vendas, remover da equipa) continuam a aparecer
+
 ---
 
 ## Notas / ajustes pedidos
