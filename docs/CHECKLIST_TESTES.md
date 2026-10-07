@@ -2125,6 +2125,12 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] CSV do Ponto: coluna Pausa traz "30m (automática)"
 - [ ] Resumo semanal: as horas da equipa já descontam a pausa automática
 
+## 154. Backup antes de atualizar mais robusto
+
+- [ ] `bash gc_turnkey.sh backup-agora` com o vigia a correr: termina com "Feito: backups-manuais/…" (se aparecer "um ficheiro de estado mudou … a repetir", é normal) e o servidor volta a arrancar
+- [ ] Simular erro a sério (sem espaço ou sem permissão em `data/`): continua a dar "A cópia de segurança FALHOU" e o servidor fica a funcionar
+- [ ] `publicar-producao.sh` completo: backup, extração, atualização e "Estado" sem erros
+
 ---
 
 ## Notas / ajustes pedidos

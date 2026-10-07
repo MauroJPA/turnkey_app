@@ -1,6 +1,6 @@
 # Pendentes (fila de trabalho)
 
-Última versão fechada: **2.11.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
+Última versão fechada: **2.11.1** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
 (editar → `bash scripts/verificar.sh` → pubspec + CHANGELOG + docs/CHECKLIST_TESTES.md → commit com caminhos
 explícitos → `git branch -f develop main` → `git tag vX.Y.Z`). No fim: `powershell -File scripts\empacotar-producao.ps1`
 e dar ao Mauro o SHA-256 + comando de publicação.
@@ -24,6 +24,7 @@ Fila atual (pedido do Mauro em 06/10/2026, **cada item = uma versão**, por esta
 - ~~**1.94.0**~~ (feito) Pessoas → Notas: anotações da equipa (livro de ocorrências / recados) com fixar e arquivar.
 - ~~**2.10.0**~~ (feito) Escala: horário em lote (várias pessoas e dias de uma vez, para sempre ou até uma data, semanas alternadas), folgas fixas e dias fechados como folga automática.
 - ~~**2.11.0**~~ (feito) Ponto: pausa preenchida automaticamente na saída (a da Escala) quando a pessoa não a marcou.
+- ~~**2.11.1**~~ (feito) Backup antes de atualizar: tolera ficheiros de estado que mudam durante o tar; publicar põe o gc_turnkey.sh novo primeiro.
 - No fim: empacotar, dar SHA-256 + comando; atualizar docs/SEGURANCA.md se houver novos endpoints.
 
 ## Fila 2.x — UI/UX mais ágil (aprovada pelo Mauro em 06/10/2026; branch `ux-2`, cada item = uma versão, por esta ordem)

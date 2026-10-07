@@ -2,6 +2,15 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.11.1 — 2026-10-07 — Backup antes de atualizar mais robusto
+
+Corrige uma falha do **backup antes de atualizar**: "tar: data: file changed as we read it … A cópia de segurança FALHOU".
+
+- **Causa**: com o servidor parado, um programa de fora (o vigia de segurança de 10 em 10 minutos, as cópias externas…) escreveu um ficheiro de estado em `data/` enquanto o `tar` lia. O `tar` sai com código 1 e o `backup-agora` tratava isso como falha, embora a base de dados estivesse intacta.
+- **Agora**: `backup-agora` repete a cópia até 3 vezes e, se um ficheiro de estado continuar a mudar, aceita-a **com aviso** (a base de dados não muda com o servidor parado). Erros a sério (disco cheio, permissões) continuam a falhar como antes, e o servidor volta sempre a arrancar.
+- **`publicar-producao.sh`** passa a pôr primeiro o `gc_turnkey.sh` novo no servidor, antes do backup, para que esta correção valha **na própria atualização** que a traz (senão só valia na seguinte).
+- Sem alterações à app nem migrations.
+
 ## 2.11.0 — 2026-10-07 — Pausa automática na saída
 
 Quando alguém **sai sem ter marcado a pausa**, a saída passa a **preencher a pausa sozinha**, com a que a Escala prevê para esse dia.

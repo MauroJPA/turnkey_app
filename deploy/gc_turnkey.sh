@@ -148,8 +148,25 @@ cmd_backup_agora() {
   # O servidor TEM de voltar a arrancar mesmo que a cópia falhe (disco cheio,
   # permissões…): por isso o tar corre dentro de um "if" (o set -e não aborta
   # aqui) e o arranque vem sempre a seguir.
-  local ok=1
-  tar -czf "$f" data || ok=0
+  # O tar sai com 1 ("file changed as we read it") quando um programa de fora
+  # (o vigia, as cópias externas…) escreve um ficheiro de estado em data/ durante
+  # a leitura. Com o servidor parado isso é inofensivo (a base de dados não
+  # muda): tenta-se mais vezes e só se desiste com erro a sério (código 2+).
+  local ok=1 rc=0 tentativa
+  for tentativa in 1 2 3; do
+    rc=0
+    tar -czf "$f" data || rc=$?
+    [ "$rc" -ne 1 ] && break
+    msg "Um ficheiro de estado mudou durante a cópia (tentativa $tentativa/3) — a repetir ..."
+    sleep 3
+  done
+  # 1 depois de 3 tentativas = continua a haver um ficheiro de estado a mudar:
+  # a cópia está completa quanto à base de dados e aceita-se com aviso
+  if [ "$rc" -eq 1 ]; then
+    msg "AVISO: um ficheiro de estado mudou durante a cópia; o servidor estava parado, por isso a base de dados está intacta."
+    rc=0
+  fi
+  [ "$rc" -eq 0 ] || ok=0
   docker compose start gc_turnkey
   if [ "$ok" -ne 1 ]; then
     rm -f "$f"

@@ -52,6 +52,10 @@ echo
 
 cd "$APP_DIR"
 
+# O script de arranque novo vai à frente: as correções dele (p. ex. do backup)
+# valem já nesta atualização, em vez de só na seguinte.
+tar -xzf "$PACOTE" -C "$APP_DIR" ./gc_turnkey.sh 2>/dev/null || true
+
 echo "-- Backup antes de mexer"
 bash gc_turnkey.sh backup-agora
 
