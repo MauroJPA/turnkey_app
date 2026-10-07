@@ -153,4 +153,64 @@ void main() {
       );
     });
   });
+
+  group('Explicar com IA', () {
+    test('o estado diz se a IA está disponível', () {
+      final j = _json([]);
+      expect(EstadoVigia.fromJson(j).iaAtiva, isFalse);
+      j['ia'] = {'ativa': true, 'provider': 'Gemini (Google)'};
+      final e = EstadoVigia.fromJson(j);
+      expect(e.iaAtiva, isTrue);
+      expect(e.iaProvider, 'Gemini (Google)');
+    });
+
+    test('pré-visualização sem explicação guardada', () {
+      final p = PreviaIa.fromJson({
+        'previa': 'Alerta (gravidade: atencao) | Título: x',
+        'provider': 'Gemini (Google)',
+        'restantes': 19,
+        'cache': null,
+      });
+      expect(p.texto, contains('Título: x'));
+      expect(p.restantes, 19);
+      expect(p.cache, isNull);
+    });
+
+    test('pré-visualização com explicação guardada', () {
+      final p = PreviaIa.fromJson({
+        'previa': 'x',
+        'provider': 'Gemini (Google)',
+        'restantes': 3,
+        'cache': {
+          'quando': '2026-10-07T10:00:00Z',
+          'provider': 'Gemini (Google)',
+          'explicacao': {
+            'veredito': 'suspeito',
+            'resumo': 'Entrou alguém novo.',
+            'porque': 'Nunca tinha acontecido.',
+            'passos': [
+              {'texto': 'Vê quem entrou', 'comando': 'last -n 10'},
+              {'texto': 'Confirma o aparelho', 'comando': null},
+              {'texto': 'Outro', 'comando': ''},
+            ],
+            'naoFazer': ['Não desligues o servidor'],
+          },
+        },
+      });
+      final c = p.cache!;
+      expect(c.doCache, isTrue);
+      expect(c.veredito, VereditoIa.suspeito);
+      expect(c.veredito.label, 'Parece suspeito');
+      expect(c.passos.length, 3);
+      expect(c.passos[0].comando, 'last -n 10');
+      expect(c.passos[1].comando, isNull);
+      expect(c.passos[2].comando, isNull);
+      expect(c.naoFazer, ['Não desligues o servidor']);
+    });
+
+    test('veredito desconhecido vira "dúvida"', () {
+      expect(VereditoIa.fromApi('xpto'), VereditoIa.duvidoso);
+      expect(VereditoIa.fromApi('provavelmente_normal'), VereditoIa.normal);
+    });
+  });
 }

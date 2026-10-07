@@ -78,6 +78,8 @@ class EstadoVigia {
     this.verificacoes = 0,
     this.verificacoesComErro = 0,
     this.notas = const [],
+    this.iaAtiva = false,
+    this.iaProvider = '',
   });
 
   /// O script está instalado no servidor (já escreveu resultados).
@@ -94,6 +96,11 @@ class EstadoVigia {
   final int verificacoes;
   final int verificacoesComErro;
   final List<String> notas;
+
+  /// "Explicar com IA" está disponível (e qual é o fornecedor, p. ex. "Gemini
+  /// (Google)").
+  final bool iaAtiva;
+  final String iaProvider;
 
   /// Os alertas que pedem ação, os mais graves primeiro.
   List<AchadoVigia> get ativos => [
@@ -157,6 +164,8 @@ class EstadoVigia {
           .where((v) => v is Map && v['ok'] != true)
           .length,
       notas: [for (final n in (j['notas'] as List? ?? const [])) '$n'],
+      iaAtiva: (j['ia'] as Map?)?['ativa'] == true,
+      iaProvider: '${(j['ia'] as Map?)?['provider'] ?? ''}',
     );
   }
 }
@@ -169,4 +178,111 @@ String textoHa(DateTime? quando, DateTime agora) {
   if (d.inMinutes < 60) return 'há ${d.inMinutes} min';
   if (d.inHours < 48) return 'há ${d.inHours} h';
   return 'há ${d.inDays} dias';
+}
+
+/// O que a IA acha de um alerta.
+enum VereditoIa {
+  normal('provavelmente_normal', 'Provavelmente normal'),
+  duvidoso('duvidoso', 'Não dá para ter a certeza'),
+  suspeito('suspeito', 'Parece suspeito');
+
+  const VereditoIa(this.api, this.label);
+  final String api;
+  final String label;
+
+  static VereditoIa fromApi(Object? v) => VereditoIa.values.firstWhere(
+    (e) => e.api == v,
+    orElse: () => VereditoIa.duvidoso,
+  );
+}
+
+class PassoIa {
+  const PassoIa(this.texto, {this.comando});
+  final String texto;
+
+  /// Um comando só de leitura para confirmar (nunca se corre sozinho).
+  final String? comando;
+}
+
+/// A explicação devolvida pela IA (já limpa pelo servidor).
+class ExplicacaoIa {
+  const ExplicacaoIa({
+    required this.veredito,
+    required this.resumo,
+    this.porque = '',
+    this.passos = const [],
+    this.naoFazer = const [],
+    this.provider = '',
+    this.doCache = false,
+  });
+
+  final VereditoIa veredito;
+  final String resumo;
+  final String porque;
+  final List<PassoIa> passos;
+  final List<String> naoFazer;
+  final String provider;
+
+  /// Já estava guardada: nada foi enviado agora.
+  final bool doCache;
+
+  factory ExplicacaoIa.fromJson(
+    Map<String, dynamic> e, {
+    String provider = '',
+    bool doCache = false,
+  }) {
+    return ExplicacaoIa(
+      veredito: VereditoIa.fromApi(e['veredito']),
+      resumo: '${e['resumo'] ?? ''}',
+      porque: '${e['porque'] ?? ''}',
+      passos: [
+        for (final p in (e['passos'] as List? ?? const []))
+          if (p is Map)
+            PassoIa(
+              '${p['texto'] ?? ''}',
+              comando: (p['comando'] as String?)?.isEmpty ?? true
+                  ? null
+                  : p['comando'] as String?,
+            ),
+      ],
+      naoFazer: [for (final n in (e['naoFazer'] as List? ?? const [])) '$n'],
+      provider: provider,
+      doCache: doCache,
+    );
+  }
+}
+
+/// O que se mostra antes de enviar: o texto exato, para onde vai e o que já
+/// existe guardado.
+class PreviaIa {
+  const PreviaIa({
+    required this.texto,
+    required this.provider,
+    required this.restantes,
+    this.cache,
+  });
+
+  final String texto;
+  final String provider;
+  final int restantes;
+
+  /// Explicação já guardada (se houver, mostra-se sem enviar nada).
+  final ExplicacaoIa? cache;
+
+  factory PreviaIa.fromJson(Map<String, dynamic> j) {
+    final c = j['cache'];
+    final provider = '${j['provider'] ?? ''}';
+    return PreviaIa(
+      texto: '${j['previa'] ?? ''}',
+      provider: provider,
+      restantes: (j['restantes'] as num?)?.toInt() ?? 0,
+      cache: c is Map && c['explicacao'] is Map
+          ? ExplicacaoIa.fromJson(
+              Map<String, dynamic>.from(c['explicacao'] as Map),
+              provider: '${c['provider'] ?? provider}',
+              doCache: true,
+            )
+          : null,
+    );
+  }
 }

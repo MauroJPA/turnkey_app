@@ -45,6 +45,10 @@ por isso instala-o num servidor que sabes estar limpo.
 - **Aviso direto** (opcional, mesmo com a app em baixo): põe `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID`
   em `/etc/gc_turnkey-vigia.conf`.
 
+## Explicar com IA
+
+Em cada alerta da app há **"Explicar com IA"**: mostra primeiro o texto exato que seria enviado (já sem IPs, emails, nomes, hashes nem chaves) e só envia se confirmares. A resposta traz um veredito, os passos por ordem e comandos **só de leitura** para copiares (comandos perigosos são removidos). Usa a mesma IA das faturas (Gemini/Claude); sem chave configurada o botão não aparece.
+
 ## Quando recebes um alerta
 
 1. Lê o texto: diz o que é e **o que fazer**.

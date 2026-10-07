@@ -228,6 +228,14 @@ empresa. O WhatsApp está no código mas **desligado** por omissão (precisa de 
   (modo 600) aceita um Telegram direto opcional.
 - Testado em `test/seguranca/test_vigia.py` (cenários de invasão simulados) e `teste_vigia` (app ↔ vigia, permissões, ficheiro estragado).
 
+### "Explicar com IA" nos alertas do vigia (2.9.0)
+
+- **Só com o teu clique**, alerta a alerta: nada é enviado sozinho. Antes de enviar, a app mostra o **texto exato** (pré-visualização, `previa: true`, que não sai do servidor) e para onde vai (Gemini ou Claude, o mesmo das faturas).
+- O **servidor** monta o pedido (`vigia_ia.js`), não a app: só o tipo de alerta, o texto genérico e o "o que fazer", mais os títulos dos outros alertas ativos (para dar contexto). **Nunca saem**: IPs (trocados por "IP-público-1", "IP-Tailscale-1"…), emails, nomes de utilizadores e de aparelhos, caminhos com utilizadores, hashes, chaves e palavras-passe.
+- A resposta é **limpa** antes de chegar à app: comandos só de leitura são mantidos; qualquer comando que apague, escreva, reinicie, instale ou faça `curl|sh` é **descartado**. A app nunca corre nada sozinha: só mostra o comando para copiares.
+- Limites: 20 explicações por dia; as últimas 30 ficam guardadas (`data/seguranca_ia.json`) e reabrem sem voltar a enviar. Só o dono do servidor (operador) pode pedir. Sem chave de IA configurada, o botão não aparece.
+- Testado em `test/seguranca/test_vigia_ia.js` e `teste_vigia_ia` (servidor Gemini falso: texto enviado sem IPs/emails, comando perigoso removido, limite, cache, outras contas recusadas).
+
 ## Riscos aceites / notas
 
 - O administrador pode editar o perfil da empresa (desenho) e, tecnicamente, o campo `plano`

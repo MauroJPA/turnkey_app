@@ -49,6 +49,57 @@ class _Conteudo extends ConsumerStatefulWidget {
 class _ConteudoState extends ConsumerState<_Conteudo> {
   String? _ocupado;
 
+  void _aviso(String texto) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(texto)));
+  }
+
+  /// "Explicar com IA": mostra o texto EXATO que seria enviado (já sem IPs,
+  /// emails nem nomes), pede confirmação e só então envia. Se já há uma
+  /// explicação guardada, mostra-a logo (nada é enviado).
+  Future<void> _explicar(AchadoVigia a, {bool refazer = false}) async {
+    final repo = ref.read(vigiaRepositoryProvider);
+    setState(() => _ocupado = a.id);
+    try {
+      final previa = await repo.previaExplicacao(a.id);
+      if (!mounted) return;
+      if (previa.cache != null && !refazer) {
+        setState(() => _ocupado = null);
+        await _mostrar(a, previa.cache!);
+        return;
+      }
+      setState(() => _ocupado = null);
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => _ConfirmarEnvioIa(previa: previa),
+      );
+      if (ok != true || !mounted) return;
+      setState(() => _ocupado = '${a.id}#ia');
+      final ex = await repo.explicar(
+        a.id,
+        refazer: refazer || previa.cache != null,
+      );
+      if (!mounted) return;
+      setState(() => _ocupado = null);
+      await _mostrar(a, ex);
+    } on Object catch (e) {
+      _aviso(mensagemAmigavel(e));
+    } finally {
+      if (mounted) setState(() => _ocupado = null);
+    }
+  }
+
+  Future<void> _mostrar(AchadoVigia a, ExplicacaoIa ex) async {
+    final outra = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      constraints: const BoxConstraints(maxWidth: 640),
+      builder: (_) => _ExplicacaoIaSheet(achado: a, explicacao: ex),
+    );
+    if (outra == true && mounted) await _explicar(a, refazer: true);
+  }
+
   Future<void> _aceitar(AchadoVigia a) async {
     final ok = await confirmDialog(
       context,
@@ -211,6 +262,8 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
                   agora: agora,
                   ocupado: _ocupado == a.id,
                   aoAceitar: () => _aceitar(a),
+                  aExplicar: _ocupado == '${a.id}#ia',
+                  aoExplicar: e.iaAtiva ? () => _explicar(a) : null,
                 ),
               if (e.aAprender.isNotEmpty)
                 Padding(
@@ -240,6 +293,8 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
                           agora: agora,
                           ocupado: _ocupado == a.id,
                           aoAceitar: () => _aceitar(a),
+                          aExplicar: _ocupado == '${a.id}#ia',
+                          aoExplicar: e.iaAtiva ? () => _explicar(a) : null,
                         ),
                     ],
                   ),
@@ -280,12 +335,18 @@ class _LinhaAchado extends StatelessWidget {
     required this.agora,
     required this.ocupado,
     required this.aoAceitar,
+    this.aoExplicar,
+    this.aExplicar = false,
   });
 
   final AchadoVigia a;
   final DateTime agora;
   final bool ocupado;
   final VoidCallback aoAceitar;
+
+  /// "Explicar com IA" (null = não disponível neste servidor).
+  final VoidCallback? aoExplicar;
+  final bool aExplicar;
 
   @override
   Widget build(BuildContext context) {
@@ -338,20 +399,284 @@ class _LinhaAchado extends StatelessWidget {
               Text(a.fazer, style: tt.bodyMedium),
             ],
             const SizedBox(height: 10),
-            Align(
-              alignment: Alignment.centerRight,
-              child: FilledButton.tonal(
-                key: ValueKey('aceitar-${a.id}'),
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size(0, 36),
-                  visualDensity: VisualDensity.compact,
+            Wrap(
+              alignment: WrapAlignment.end,
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                if (aoExplicar != null)
+                  OutlinedButton.icon(
+                    key: ValueKey('explicar-${a.id}'),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 36),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    onPressed: (ocupado || aExplicar) ? null : aoExplicar,
+                    icon: aExplicar
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.auto_awesome, size: 18),
+                    label: Text(aExplicar ? 'A explicar…' : 'Explicar com IA'),
+                  ),
+                FilledButton.tonal(
+                  key: ValueKey('aceitar-${a.id}'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 36),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  onPressed: (ocupado || aExplicar) ? null : aoAceitar,
+                  child: Text(ocupado ? 'A anotar…' : 'Já verifiquei'),
                 ),
-                onPressed: ocupado ? null : aoAceitar,
-                child: Text(ocupado ? 'A anotar…' : 'Já verifiquei'),
-              ),
+              ],
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// O que vai para a IA, antes de enviar: o texto exato, para onde vai e o que
+/// já foi retirado.
+class _ConfirmarEnvioIa extends StatelessWidget {
+  const _ConfirmarEnvioIa({required this.previa});
+  final PreviaIa previa;
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    return AlertDialog(
+      key: const ValueKey('confirmar-envio-ia'),
+      title: const Text('Enviar este resumo à IA?'),
+      content: SizedBox(
+        width: 460,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Vai para ${previa.provider}. É só isto (os endereços IP, '
+                'emails, nomes de pessoas e aparelhos, hashes e chaves já foram '
+                'trocados por rótulos como "IP-Tailscale-1"):',
+                style: tt.bodyMedium,
+              ),
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: SelectableText(
+                  previa.texto,
+                  key: const ValueKey('texto-previa-ia'),
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Hoje ainda podes pedir ${previa.restantes} '
+                'explicaç${previa.restantes == 1 ? 'ão' : 'ões'}.',
+                style: tt.bodySmall,
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: previa.restantes > 0
+              ? () => Navigator.pop(context, true)
+              : null,
+          child: const Text('Enviar e explicar'),
+        ),
+      ],
+    );
+  }
+}
+
+/// A explicação da IA: o que significa, se parece normal ou suspeito, e os
+/// passos (com comandos só de leitura que se podem copiar).
+class _ExplicacaoIaSheet extends StatelessWidget {
+  const _ExplicacaoIaSheet({required this.achado, required this.explicacao});
+  final AchadoVigia achado;
+  final ExplicacaoIa explicacao;
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final ex = explicacao;
+    final cor = switch (ex.veredito) {
+      VereditoIa.normal => cs.primary,
+      VereditoIa.duvidoso => const Color(0xFFE08A00),
+      VereditoIa.suspeito => cs.error,
+    };
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.88,
+        ),
+        child: ListView(
+          key: const ValueKey('explicacao-ia'),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          shrinkWrap: true,
+          children: [
+            Text(achado.titulo, style: tt.titleMedium),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: cor.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.auto_awesome, color: cor, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      ex.veredito.label,
+                      key: const ValueKey('veredito-ia'),
+                      style: tt.titleSmall?.copyWith(color: cor),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(ex.resumo, style: tt.bodyLarge),
+            if (ex.porque.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(ex.porque, style: tt.bodyMedium),
+            ],
+            const SizedBox(height: 14),
+            Text('O que fazer, por ordem', style: tt.titleSmall),
+            for (var i = 0; i < ex.passos.length; i++)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      radius: 11,
+                      backgroundColor: cs.primaryContainer,
+                      child: Text(
+                        '${i + 1}',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(ex.passos[i].texto, style: tt.bodyMedium),
+                          if (ex.passos[i].comando != null)
+                            _Comando(comando: ex.passos[i].comando!),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            if (ex.naoFazer.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              Text('Não faças', style: tt.titleSmall),
+              for (final n in ex.naoFazer)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2, right: 6),
+                        child: Icon(
+                          Icons.block,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                      Expanded(child: Text(n, style: tt.bodyMedium)),
+                    ],
+                  ),
+                ),
+            ],
+            const SizedBox(height: 14),
+            Text(
+              'Gerado por IA (${ex.provider}${ex.doCache ? ', guardado de antes' : ''}). '
+              'Pode errar: confere antes de correr qualquer comando e, se tiveres '
+              'dúvidas sérias, pede ajuda a alguém de confiança. Os comandos só '
+              'leem informação; nada se corre sozinho.',
+              style: tt.bodySmall,
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Explicar outra vez'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Fechar'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Comando extends StatelessWidget {
+  const _Comando({required this.comando});
+  final String comando;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.only(left: 10),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: SelectableText(
+              comando,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Copiar comando',
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.copy, size: 16),
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: comando));
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Comando copiado.')),
+                );
+              }
+            },
+          ),
+        ],
       ),
     );
   }

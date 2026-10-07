@@ -7,6 +7,9 @@
 //
 //   GET  /api/gc_turnkey/seguranca/vigia          -> { operador, instalado, estado, achados, ... }
 //   POST /api/gc_turnkey/seguranca/vigia/aceitar  { id }  ("já verifiquei": o vigia aprende)
+//   POST /api/gc_turnkey/seguranca/vigia/explicar { id, previa?, refazer? }
+//        "Explicar com IA": o SERVIDOR monta o pedido a partir do alerta, sem IPs, emails nem nomes
+//        (vigia_ia.js). Com `previa` devolve só o texto que seria enviado (nada sai).
 //   cron (de 5 em 5 min)                          -> avisa (Telegram/email) dos alertas novos
 //
 // O "já verifiquei" escreve pb_data/seguranca_acks.json, que o vigia lê.
@@ -31,6 +34,22 @@ routerAdd('POST', '/api/gc_turnkey/seguranca/vigia/aceitar', (e) => {
   const r = require(`${__hooks}/vigia_core.js`).aceitar(e.app, id, auth.getString('email'));
   if (!r.ok) throw new BadRequestError(r.mensagem);
   return e.json(200, { ok: true });
+});
+
+routerAdd('POST', '/api/gc_turnkey/seguranca/vigia/explicar', (e) => {
+  const auth = e.auth;
+  if (!auth) throw new UnauthorizedError('Autenticação necessária.');
+  const { ehOperador } = require(`${__hooks}/operador.js`);
+  if (!ehOperador(e.app, auth)) throw new ForbiddenError('Só o dono do servidor pede explicações de segurança.');
+  const body = e.requestInfo().body || {};
+  const id = String(body.id || '').substring(0, 300);
+  if (!id) throw new BadRequestError('Falta o alerta.');
+  const r = require(`${__hooks}/vigia_core.js`).explicar(e.app, id, {
+    previa: body.previa === true,
+    refazer: body.refazer === true,
+  });
+  if (r.erro) throw new ApiError(r.erro.code, r.erro.message, null);
+  return e.json(200, r.ok);
 });
 
 // Avisa dos alertas novos (críticos e de atenção) pelos canais do dono.

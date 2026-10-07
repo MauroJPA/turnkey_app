@@ -5,6 +5,8 @@
 const FICHEIRO = 'seguranca_vigia.json';
 const ACKS = 'seguranca_acks.json';
 const AVISADOS = 'seguranca_avisados.json';
+const IA = 'seguranca_ia.json';
+const LIMITE_IA_DIA = 20; // explicações por dia (controla o custo)
 const MAX_IDADE_S = 40 * 60; // o vigia corre de 10 em 10 min: 40 min sem dados = parou
 
 function ler(app, nome) {
@@ -63,7 +65,82 @@ function estado(app) {
     achados: achados,
     verificacoes: verif,
     notas: (Array.isArray(j.notas) ? j.notas : []).slice(0, 5).map((x) => limpar(x, 200)),
+    ia: { ativa: iaAtiva(), provider: rotuloProvider() },
   };
+}
+
+// --- "Explicar com IA" -----------------------------------------------------
+// Desligável com GC_TURNKEY_VIGIA_IA=0 (nada é enviado para fora).
+function iaAtiva() {
+  return String($os.getenv('GC_TURNKEY_VIGIA_IA') || '1') !== '0';
+}
+
+function rotuloProvider() {
+  const p = String($os.getenv('GC_TURNKEY_AI_PROVIDER') || 'gemini').toLowerCase();
+  return p.indexOf('claude') >= 0 || p.indexOf('anthropic') >= 0 ? 'Claude (Anthropic)' : 'Gemini (Google)';
+}
+
+function lerIa(app) {
+  const j = ler(app, IA);
+  return j && typeof j === 'object' ? { dia: j.dia || '', n: Number(j.n) || 0, cache: j.cache || {} } : { dia: '', n: 0, cache: {} };
+}
+
+// previa: devolve só o texto que SERIA enviado (nada sai).
+// Devolve { ok } ou { erro: { code, message } }.
+function explicar(app, id, op) {
+  op = op || {};
+  if (!iaAtiva()) return { erro: { code: 403, message: 'A explicação por IA está desativada neste servidor.' } };
+  const e = estado(app);
+  if (!e.instalado) return { erro: { code: 400, message: 'O vigia ainda não está instalado.' } };
+  const a = e.achados.find((x) => x.id === id);
+  if (!a) return { erro: { code: 400, message: 'Esse alerta já não existe.' } };
+  const outros = e.achados.filter((x) => x.id !== id && x.gravidade !== 'info' && !x.aceite);
+  const ia = require(`${__hooks}/vigia_ia.js`);
+  const agora = Math.floor(Date.now() / 1000);
+  const pedido = ia.montarPedido(a, outros, agora);
+
+  const hoje = new Date().toISOString().substring(0, 10);
+  const est = lerIa(app);
+  if (est.dia !== hoje) {
+    est.dia = hoje;
+    est.n = 0;
+  }
+  const restantes = Math.max(0, LIMITE_IA_DIA - est.n);
+  const emCache = est.cache[id] || null;
+  const provider = rotuloProvider();
+
+  if (op.previa) {
+    return {
+      ok: {
+        previa: pedido.texto,
+        provider: provider,
+        restantes: restantes,
+        cache: emCache ? { explicacao: emCache.explicacao, quando: emCache.quando, provider: emCache.provider } : null,
+      },
+    };
+  }
+  if (emCache && !op.refazer) {
+    return { ok: { provider: emCache.provider, explicacao: emCache.explicacao, quando: emCache.quando, doCache: true, restantes: restantes } };
+  }
+  if (restantes <= 0) {
+    return { erro: { code: 429, message: 'Já pediste ' + LIMITE_IA_DIA + ' explicações hoje. Tenta amanhã (ou usa o "O que fazer" do alerta).' } };
+  }
+
+  const r = require(`${__hooks}/ai.js`).gerarJsonIA({ sistema: pedido.sistema, instrucao: pedido.instrucao });
+  if (!r.ok) return { erro: { code: r.code === 503 ? 503 : 502, message: r.message } };
+  const limpo = ia.limparResposta(r.dados);
+  if (!limpo) return { erro: { code: 502, message: 'A IA não devolveu uma explicação utilizável. Tenta de novo.' } };
+
+  est.n += 1;
+  const quando = new Date().toISOString();
+  est.cache[id] = { explicacao: limpo, quando: quando, provider: provider };
+  const chaves = Object.keys(est.cache);
+  if (chaves.length > 30) {
+    chaves.sort((x, y) => String(est.cache[x].quando).localeCompare(String(est.cache[y].quando)));
+    for (let i = 0; i < chaves.length - 30; i++) delete est.cache[chaves[i]];
+  }
+  gravar(app, IA, est);
+  return { ok: { provider: provider, explicacao: limpo, quando: quando, doCache: false, restantes: restantes - 1 } };
 }
 
 // "Já verifiquei": pede ao vigia para aprender este alerta como normal.
@@ -186,4 +263,4 @@ function avisarNovos(app) {
   gravar(app, AVISADOS, avisados);
 }
 
-module.exports = { estado, aceitar, linhasParaResumo, avisarNovos, empresaDoDono };
+module.exports = { estado, aceitar, explicar, linhasParaResumo, avisarNovos, empresaDoDono };

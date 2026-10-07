@@ -578,6 +578,170 @@ def teste_vigia():
     os.remove(os.path.join(dados, 'seguranca_vigia.json'))
 
 
+PORTA_IA_VIGIA = 8187
+ia_vigia = {'chamadas': 0, 'pedidos': [], 'modo': 'ok'}
+
+
+class _GeminiVigiaFalso(BaseHTTPRequestHandler):
+    def log_message(self, *a):
+        pass
+
+    def do_POST(self):
+        corpo = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))) or b'{}')
+        ia_vigia['chamadas'] += 1
+        ia_vigia['pedidos'].append(json.dumps(corpo, ensure_ascii=False))
+        if ia_vigia['modo'] == 'erro':
+            b = json.dumps({'error': {'status': 'UNAVAILABLE', 'message': 'high demand'}}).encode()
+            self.send_response(503)
+        else:
+            resposta = {
+                'veredito': 'suspeito', 'resumo': 'Alguém entrou de um sítio novo.', 'porque': 'Nunca tinha acontecido.',
+                'passos': [{'texto': 'Vê quem entrou', 'comando': 'last -n 10'},
+                           {'texto': 'Apaga tudo', 'comando': 'rm -rf /'}],
+                'nao_fazer': ['Não desligues o servidor'],
+            }
+            b = json.dumps({'candidates': [{'content': {'parts': [{'text': json.dumps(resposta)}]}}]}).encode()
+            self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Length', str(len(b)))
+        self.end_headers()
+        self.wfile.write(b)
+
+
+def teste_vigia_ia():
+    """7a6. "Explicar com IA" no vigia: anonimizado, com pré-visualização, cache e limite."""
+    global URL
+    if 'PB_URL' in os.environ:
+        return
+    sec('7a6. Vigia: explicar com IA (Gemini falso)')
+    srv = HTTPServer(('127.0.0.1', PORTA_IA_VIGIA), _GeminiVigiaFalso)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    original = URL
+    tmp2 = tempfile.mkdtemp(prefix='pbsec3_')
+    dados2 = os.path.join(tmp2, 'data')
+    mig = os.path.join(RAIZ, 'pb', 'migrations')
+    subprocess.run([PB_BIN, 'superuser', 'upsert', SUPER[0], SUPER[1], '--dir', dados2, '--migrationsDir', mig],
+                   check=True, capture_output=True)
+    env = {k: v for k, v in os.environ.items() if k not in ('GC_TURNKEY_DEV',)}
+    env.update({'GEMINI_API_KEY': 'chave-falsa', 'GC_TURNKEY_AI_PROVIDER': 'gemini',
+                'GC_TURNKEY_GEMINI_URL': f'http://127.0.0.1:{PORTA_IA_VIGIA}/v1beta/models/',
+                'GC_TURNKEY_AI_MODEL': 'modelo-ok', 'GC_TURNKEY_AI_MODEL_FALLBACK': '', 'GC_TURNKEY_AI_ESPERAS': '0'})
+    p2 = subprocess.Popen([PB_BIN, 'serve', '--dir', dados2, '--migrationsDir', mig,
+                           '--hooksDir', os.path.join(RAIZ, 'pb', 'hooks'), '--http', '127.0.0.1:8196'],
+                          stdout=open(os.path.join(tmp2, 'pb.log'), 'w'), stderr=subprocess.STDOUT, env=env)
+    URL = 'http://127.0.0.1:8196'
+    try:
+        for _ in range(40):
+            try:
+                if call('GET', '/api/health')[0] == 200:
+                    break
+            except Exception:
+                pass
+            time.sleep(0.5)
+        s1, r, _ = call('POST', '/api/collections/_superusers/auth-with-password', {'identity': SUPER[0], 'password': SUPER[1]})
+        su2 = r['token']
+        s1, e, _ = call('POST', '/api/collections/empresas/records',
+                        {'nome': 'X', 'slug': 'x-vigia-ia', 'moeda': 'EUR', 'regra_arredondamento': 'cima'}, su2)
+        for email, papel in (('dono@vigia.local', 'owner'), ('editor@vigia.local', 'editor')):
+            call('POST', '/api/collections/users/records',
+                 {'email': email, 'password': 'Teste12345!', 'passwordConfirm': 'Teste12345!', 'verified': True,
+                  'aprovado': True, 'empresa': e['id'], 'papel': papel}, su2)
+        def entrar(email):
+            return call('POST', '/api/collections/users/auth-with-password', {'identity': email, 'password': 'Teste12345!'})[1]['token']
+        dono, editor = entrar('dono@vigia.local'), entrar('editor@vigia.local')
+
+        def pedir(corpo, t=dono):
+            return call('POST', '/api/gc_turnkey/seguranca/vigia/explicar', corpo, t)
+
+        s1, r, _ = pedir({'id': 'x'}, editor)
+        check(s1 == 403, 'quem não é o dono não pede explicações', f'status {s1}')
+        s1, r, _ = pedir({'id': 'x'}, None)
+        check(s1 in (401, 403), 'sem sessão não pede explicações', f'status {s1}')
+        s1, r, _ = pedir({'id': 'x'})
+        check(s1 == 400, 'sem vigia instalado: recusado com mensagem clara', f'{s1} {str(r)[:100]}')
+
+        # o vigia escreveu um alerta com dados pessoais
+        agora = int(time.time())
+        achado = {'id': 'ssh-ip-novo:91.198.174.7', 'gravidade': 'atencao', 'categoria': 'acesso',
+                  'titulo': 'Primeiro acesso por SSH vindo de 91.198.174.7',
+                  'detalhe': 'Utilizador "ana" (rede publica). Chave 0123456789abcdef0123 em /home/ana/.ssh; contacto dono@exemplo.pt',
+                  'fazer': 'Se é teu, clica "Já verifiquei".', 'desde': agora - 300, 'vezes': 1, 'itens': ['/home/ana/.ssh/authorized_keys']}
+        outro = {'id': 'containers:miner|alpine', 'gravidade': 'atencao', 'categoria': 'rede', 'titulo': 'Há um contentor Docker novo ou diferente',
+                 'detalhe': 'miner (alpine)', 'fazer': '', 'desde': agora - 60, 'vezes': 1, 'itens': []}
+        with open(os.path.join(dados2, 'seguranca_vigia.json'), 'w', encoding='utf-8') as f:
+            json.dump({'versao': 1, 'quando': agora, 'estado': 'atencao', 'pontuacao': 20, 'achados': [achado, outro],
+                       'verificacoes': {'ssh': {'ok': True, 'quando': agora}}, 'notas': []}, f)
+
+        s1, r, _ = call('GET', '/api/gc_turnkey/seguranca/vigia', tok=dono)
+        check(r.get('ia', {}).get('ativa') is True and 'Gemini' in r.get('ia', {}).get('provider', ''),
+              'o estado diz que a IA está disponível e qual é', str(r.get('ia')))
+
+        s1, r, _ = pedir({'id': 'nao-existe', 'previa': True})
+        check(s1 == 400, 'alerta inexistente é recusado', f'status {s1}')
+
+        # pré-visualização: nada sai e o texto vem anonimizado
+        s1, r, _ = pedir({'id': achado['id'], 'previa': True})
+        previa = r.get('previa', '') if s1 == 200 else ''
+        check(s1 == 200 and previa and ia_vigia['chamadas'] == 0, 'a pré-visualização não envia nada à IA', f'{s1} chamadas={ia_vigia["chamadas"]}')
+        for proibido in ('91.198.174.7', 'ana', '0123456789abcdef', 'dono@exemplo.pt', '/home/ana'):
+            check(proibido not in previa, f'a pré-visualização não tem "{proibido}"', previa[:200])
+        check('IP-público-1' in previa and 'Outros alertas ativos' in previa and 'contentor Docker' in previa,
+              'traz o essencial e o contexto dos outros alertas', previa[:300])
+        check('Gemini' in r.get('provider', '') and r.get('restantes') == 20 and r.get('cache') is None,
+              'diz para onde iria, quantas restam e que não há cache', str(r)[:120])
+
+        # explicar a sério
+        s1, r, _ = pedir({'id': achado['id']})
+        ex = r.get('explicacao') or {}
+        check(s1 == 200 and ex.get('veredito') == 'suspeito' and r.get('doCache') is False and r.get('restantes') == 19,
+              'a IA explica o alerta', f'{s1} {str(r)[:160]}')
+        check(ia_vigia['chamadas'] == 1, 'uma só chamada à IA', str(ia_vigia['chamadas']))
+        enviado = ia_vigia['pedidos'][0]
+        for proibido in ('91.198.174.7', '0123456789abcdef', 'dono@exemplo.pt', '/home/ana'):
+            check(proibido not in enviado, f'o que foi para a IA não tem "{proibido}"', enviado[:200])
+        check('IP-público-1' in enviado, 'foi o texto anonimizado')
+        cmds = [p.get('comando') for p in ex.get('passos', [])]
+        check(cmds == ['last -n 10', None], 'o comando perigoso da IA foi retirado e o seguro ficou', str(cmds))
+
+        # cache: voltar a abrir não envia nada
+        s1, r, _ = pedir({'id': achado['id']})
+        check(s1 == 200 and r.get('doCache') is True and ia_vigia['chamadas'] == 1, 'a 2.ª vez vem da cache (nada enviado)', f'{s1} {str(r)[:80]}')
+        s1, r, _ = pedir({'id': achado['id'], 'previa': True})
+        check((r.get('cache') or {}).get('explicacao', {}).get('veredito') == 'suspeito', 'a pré-visualização mostra que já há explicação guardada')
+        s1, r, _ = pedir({'id': achado['id'], 'refazer': True})
+        check(s1 == 200 and r.get('doCache') is False and ia_vigia['chamadas'] == 2 and r.get('restantes') == 18,
+              '"explicar outra vez" volta a chamar a IA', f'{s1} chamadas={ia_vigia["chamadas"]}')
+
+        # IA em baixo: erro claro, sem gastar o limite
+        ia_vigia['modo'] = 'erro'
+        s1, r, _ = pedir({'id': outro['id']})
+        check(s1 in (502, 503) and 'high demand' in json.dumps(r) or s1 in (502, 503), 'IA em baixo: erro claro', f'{s1} {str(r)[:100]}')
+        ia_vigia['modo'] = 'ok'
+        s1, r, _ = pedir({'id': outro['id'], 'previa': True})
+        check(r.get('restantes') == 18, 'um erro da IA não gasta o limite diário', str(r.get('restantes')))
+
+        # limite diário
+        with open(os.path.join(dados2, 'seguranca_ia.json'), encoding='utf-8') as f:
+            est = json.load(f)
+        est['n'] = 20
+        with open(os.path.join(dados2, 'seguranca_ia.json'), 'w', encoding='utf-8') as f:
+            json.dump(est, f)
+        antes = ia_vigia['chamadas']
+        s1, r, _ = pedir({'id': outro['id']})
+        check(s1 == 429 and ia_vigia['chamadas'] == antes, 'ao 21.º pedido do dia: recusado sem chamar a IA', f'status {s1}')
+        s1, r, _ = pedir({'id': achado['id']})
+        check(s1 == 200 and r.get('doCache') is True, 'o que já está na cache continua a abrir com o limite esgotado', f'status {s1}')
+    finally:
+        URL = original
+        p2.terminate()
+        try:
+            p2.wait(10)
+        except Exception:
+            p2.kill()
+        srv.shutdown()
+        shutil.rmtree(tmp2, ignore_errors=True)
+
+
 def teste_equipa_acessos():
     """2b. Repor a palavra-passe e remover membros da equipa."""
     sec('2b. Equipa: palavra-passe provisória e remoção')
@@ -696,6 +860,7 @@ ROTAS = [
     ('POST', '/api/gc_turnkey/conta/senha'),
     ('GET', '/api/gc_turnkey/seguranca/vigia'),
     ('POST', '/api/gc_turnkey/seguranca/vigia/aceitar'),
+    ('POST', '/api/gc_turnkey/seguranca/vigia/explicar'),
     ('POST', '/api/gc_turnkey/vendus/sincronizar'),
     ('POST', '/api/gc_turnkey/ingredientes/juntar'),
     ('POST', '/api/gc_turnkey/financeiro/classificar-custos'),
@@ -3337,6 +3502,7 @@ def main():
         teste_aprovacoes_na_app()
         teste_estado_backups()
         teste_vigia()
+        teste_vigia_ia()
         teste_2fa()
         teste_avisos()
         teste_resumo_semanal()

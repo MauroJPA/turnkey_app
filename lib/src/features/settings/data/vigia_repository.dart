@@ -19,6 +19,33 @@ class VigiaRepository {
     return EstadoVigia.fromJson(m);
   }
 
+  /// O texto EXATO que seria enviado à IA (anonimizado pelo servidor) — não
+  /// envia nada. Traz também a explicação guardada, se já houver.
+  Future<PreviaIa> previaExplicacao(String id) async {
+    final res = await _pb.send(
+      '/api/gc_turnkey/seguranca/vigia/explicar',
+      method: 'POST',
+      body: {'id': id, 'previa': true},
+    );
+    return PreviaIa.fromJson(Map<String, dynamic>.from(res as Map));
+  }
+
+  /// Pede a explicação à IA (envia o texto da pré-visualização). Com
+  /// [refazer] ignora a que está guardada.
+  Future<ExplicacaoIa> explicar(String id, {bool refazer = false}) async {
+    final res = await _pb.send(
+      '/api/gc_turnkey/seguranca/vigia/explicar',
+      method: 'POST',
+      body: {'id': id, if (refazer) 'refazer': true},
+    );
+    final m = Map<String, dynamic>.from(res as Map);
+    return ExplicacaoIa.fromJson(
+      Map<String, dynamic>.from(m['explicacao'] as Map),
+      provider: '${m['provider'] ?? ''}',
+      doCache: m['doCache'] == true,
+    );
+  }
+
   /// "Já verifiquei": o vigia passa a ver isto como normal.
   Future<void> aceitar(String id) => _pb.send(
     '/api/gc_turnkey/seguranca/vigia/aceitar',

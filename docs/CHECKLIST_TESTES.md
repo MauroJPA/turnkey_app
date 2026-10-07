@@ -2086,6 +2086,15 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Atualizar a app para uma versão nova: o vigia não alerta (reaprende os ficheiros e diz "App atualizada para …")
 - [ ] `sudo python3 seguranca/vigia.py estado` mostra o último resultado em JSON; `… aceitar` reaprende tudo
 
+## 151. Explicar com IA nos alertas do vigia
+
+- [ ] Em Segurança e backups, cada alerta tem "Explicar com IA" (só para o dono do servidor; sem chave de IA não aparece)
+- [ ] Ao carregar mostra "Enviar este resumo à IA?" com o texto exato: sem IPs reais (só "IP-público-1"…), sem emails, nomes nem hashes; diz para onde vai (Gemini/Claude) e quantas explicações restam hoje
+- [ ] "Cancelar" não envia nada; "Enviar e explicar" mostra o veredito, o resumo, os passos numerados e os comandos com botão de copiar
+- [ ] Abrir de novo o mesmo alerta mostra a explicação guardada ("guardado de antes") sem enviar; há opção de refazer
+- [ ] Nenhum comando mostrado apaga/escreve/reinicia nada (só leitura: `last`, `tailscale status`, `ss -tlnp`…)
+- [ ] Depois de 20 pedidos no dia a app diz que o limite foi atingido
+
 ---
 
 ## Notas / ajustes pedidos

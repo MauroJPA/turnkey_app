@@ -55,6 +55,9 @@ if command -v python >/dev/null 2>&1 || command -v python3 >/dev/null 2>&1; then
   echo "== vigia de segurança do servidor (python)"
   PYTHONIOENCODING=utf-8 "$PY" test/seguranca/test_vigia.py >/tmp/verif_vigia.log 2>&1 \
     && ok "vigia de segurança (testes)" || { tail -20 /tmp/verif_vigia.log; mau "vigia de segurança"; }
+  if command -v node >/dev/null 2>&1; then
+    node test/seguranca/test_vigia_ia.js >/tmp/verif_vigia_ia.log 2>&1       && ok "vigia: explicar com IA (testes)" || { tail -20 /tmp/verif_vigia_ia.log; mau "vigia: explicar com IA"; }
+  fi
   echo "== segurança (isolamento, papéis, endpoints — servidor descartável)"
   PYTHONIOENCODING=utf-8 "$PY" test/security/seguranca.py >/tmp/verif_seg.log 2>&1     && ok "testes de segurança do PocketBase" || { grep "FALHA" /tmp/verif_seg.log | head -15; mau "segurança do PocketBase"; }
 else

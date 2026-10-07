@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.9.0 — 2026-10-07 — Explicar com IA nos alertas do vigia
+
+Um botão **"Explicar com IA"** em cada alerta do vigia: pede à IA (a mesma das faturas) que explique o alerta em português simples, diga se parece normal ou suspeito e o que fazer, por ordem.
+
+- **Só quando tu carregas.** Antes de enviar, a app mostra o **texto exato** que vai sair e para onde (Gemini/Claude). Se não confirmares, não sai nada.
+- **Sem segredos**: o servidor troca IPs por rótulos ("IP-público-1", "IP-Tailscale-1"), e retira emails, nomes de utilizadores e aparelhos, hashes, chaves e palavras-passe.
+- **Resposta segura**: veredito (provavelmente normal / não dá para ter a certeza / parece suspeito), porquê, passos por ordem, o que **não** fazer, e comandos **só de leitura** para copiares. Comandos que apagam, escrevem, reiniciam ou instalam são descartados; a app nunca corre nada sozinha.
+- Máximo de **20 por dia**; as últimas 30 ficam guardadas e reabrem sem enviar de novo. Só o dono do servidor. Sem chave de IA configurada, o botão não aparece.
+- Ficheiros: `pb/hooks/vigia_ia.js` (novo), `vigia_core.js`, `seguranca_vigia.pb.js` (rota `POST /api/gc_turnkey/seguranca/vigia/explicar`). Sem migrations.
+- Testes: 11 testes de anonimização/limpeza (`test/seguranca/test_vigia_ia.js`), cenários no servidor com Gemini falso (texto sem IPs/emails, comando perigoso removido, limite diário, cache, permissões) e testes Flutter.
+
 ## 2.8.0 — 2026-10-07 — Vigia de segurança do servidor
 
 Um **vigia de segurança** no servidor: um alarme "inteligente" que procura sinais de invasão de 10 em 10 minutos e te avisa.
