@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/theme/cores_estado.dart';
 import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../pricing/data/canal_venda_repository.dart';
 import '../../pricing/domain/canal_venda.dart';
 import '../../pricing/domain/cost_config.dart';
 import 'canal_sheet.dart';
-import '../../../app/theme/cores_estado.dart';
 
 /// Preços por canal de venda: a loja, as plataformas de entrega, os
 /// revendedores… Cada canal tem as suas taxas em cascata. Para cada um mostra

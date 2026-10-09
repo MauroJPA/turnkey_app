@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.16.0 — 2026-10-09 — Paletas da marca e cores de estado
+
+**Paletas da marca Gookie e cores de estado**: a app passa a poder usar as cores do manual da marca (verde, caramelo e creme) e as cores de "tudo certo / atenção" deixam de ser um verde, laranja e vermelho diferente em cada ecrã.
+
+- **Duas paletas completas** em Configurações → Empresa e aparência → "Paleta e cor de destaque": **Gookie · Verde** (verde institucional `#192621`, com caramelo e creme de apoio) e **Gookie · Caramelo** (caramelo `#B58054` sobre creme `#FFFBF0`). Cada uma define primária, secundária, fundo, superfícies e letras, **afinadas para o modo claro e para o escuro**, com texto legível (contraste mínimo 4,5:1, testado). Escolher uma limpa a secundária/fundo/letras personalizadas para a paleta valer por inteiro. As cores soltas (Castanho cookie, Azul, Índigo…) continuam a existir; o castanho cookie continua a ser a cor por omissão.
+- **Cores de estado afinadas à marca** (`cores_estado.dart`): "sucesso" (verde da marca) e "aviso" (caramelo queimado), claras no escuro e escuras no claro, em vez de `Colors.green/orange/red` soltos em 18 ecrãs (Contagem, HACCP, Férias, Formações, Escala, Preços, Backups, Rentabilidade…). O perigo continua a ser a cor de erro do tema.
+- **"Tirar do forno!"** deixa de ser um bloco vermelho vivo: passa a um fundo suave caramelo com contorno, que chama a atenção sem cansar a vista.
+- **Arrumação**: ordem dos imports corrigida em 15 ficheiros (o `flutter analyze` volta a ficar limpo).
+- Ficheiros: `app_theme.dart`, `cores_estado.dart` (novo), `settings_screen.dart` e os ecrãs acima. Sem migrations (usa o `cor_marca` que já existia).
+- Testes: `theme_test.dart` (cores do manual, contraste dos dois modos, paleta reconhecida pela cor de destaque, cores de estado legíveis).
+- Origem: este trabalho foi feito noutra sessão do Claude (ramo `claude/intelligent-pasteur-y08l3j`) e junto aqui ao `ux-2`.
+
 ## 2.15.0 — 2026-10-07 — Telegram com botões
 
 **Telegram com botões**: alguns avisos do Telegram passam a trazer botões que resolvem a coisa ali mesmo, sem abrir a app.

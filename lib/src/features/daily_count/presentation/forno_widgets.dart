@@ -5,11 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
+import '../../../app/theme/cores_estado.dart';
 import '../../../core/alerts/alerta_forno.dart';
 import '../../tech_sheets/application/tech_sheets_providers.dart';
 import '../application/contagem_providers.dart';
 import '../domain/fornada.dart';
-import '../../../app/theme/cores_estado.dart';
 
 String _n(double v) => v == v.roundToDouble() ? '${v.toInt()}' : '$v';
 

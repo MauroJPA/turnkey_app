@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
+import '../../../app/theme/cores_estado.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/storage/prefs_locais.dart';
 import '../../../core/widgets/async_value_view.dart';
@@ -13,7 +14,6 @@ import '../../tech_sheets/application/tech_sheets_providers.dart';
 import '../../tech_sheets/domain/tech_sheet.dart';
 import '../data/capacidade_forno_repository.dart';
 import '../domain/rentabilidade.dart';
-import '../../../app/theme/cores_estado.dart';
 
 /// Rentabilidade: que produtos dão mais lucro — por unidade, por hora de forno
 /// e em margem — vendidos na loja ou em cada canal (com as suas taxas).

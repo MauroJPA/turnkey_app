@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
+import '../../../app/theme/cores_estado.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
@@ -14,7 +15,6 @@ import '../application/contagem_providers.dart';
 import '../domain/contagem_dia.dart';
 import '../domain/local.dart';
 import '../domain/movimento_produto.dart';
-import '../../../app/theme/cores_estado.dart';
 
 String _n(double v) =>
     v == v.roundToDouble() ? '${v.toInt()}' : v.toStringAsFixed(1);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/theme/cores_estado.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/printing/print_html.dart';
@@ -13,7 +14,6 @@ import '../application/ferias_providers.dart';
 import '../data/ferias_repository.dart';
 import '../domain/ferias.dart';
 import '../domain/ponto.dart';
-import '../../../app/theme/cores_estado.dart';
 
 const _meses = [
   'janeiro',

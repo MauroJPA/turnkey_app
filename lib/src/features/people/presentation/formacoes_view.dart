@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../app/theme/cores_estado.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/widgets/async_value_view.dart';
@@ -13,7 +14,6 @@ import '../application/formacoes_providers.dart';
 import '../data/formacoes_repository.dart';
 import '../domain/formacao.dart';
 import '../domain/ponto.dart';
-import '../../../app/theme/cores_estado.dart';
 
 String _data(DateTime d) =>
     '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';

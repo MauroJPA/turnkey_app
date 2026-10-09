@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/theme/cores_estado.dart';
 import '../../../core/formatting/money_provider.dart';
 import '../application/comparar_precos_providers.dart';
 import '../domain/comparar_precos.dart';
-import '../../../app/theme/cores_estado.dart';
 
 /// "Mais barato noutro sítio": para cada ingrediente comprado de mais de uma
 /// forma, o preço ao kg de cada marca/fornecedor e quanto se poupa.

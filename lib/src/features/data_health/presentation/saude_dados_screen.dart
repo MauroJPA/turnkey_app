@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
+import '../../../app/theme/cores_estado.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/help_actions.dart';
@@ -11,7 +12,6 @@ import '../../ingredients/domain/ingredient.dart';
 import '../../tech_sheets/application/tech_sheets_providers.dart';
 import '../../tech_sheets/domain/tech_sheet.dart';
 import '../domain/saude_dados.dart';
-import '../../../app/theme/cores_estado.dart';
 
 /// A análise com o que falta preencher.
 final saudeDadosProvider = FutureProvider.autoDispose<RelatorioSaude>((

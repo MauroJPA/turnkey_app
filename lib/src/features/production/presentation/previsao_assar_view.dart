@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
+import '../../../app/theme/cores_estado.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/storage/prefs_locais.dart';
@@ -23,7 +24,6 @@ import '../application/previsao_providers.dart';
 import '../domain/plano_pronto.dart';
 import '../domain/previsao_assar.dart';
 import 'plano_pronto_sheet.dart';
-import '../../../app/theme/cores_estado.dart';
 
 String _rotuloDia(DateTime d, int offset) => offset == 0
     ? 'Hoje'

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
+import '../../../app/theme/cores_estado.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/formatting/money_provider.dart';
@@ -22,7 +23,6 @@ import 'canais_preco.dart';
 import 'declaracao_nutricional_sheet.dart';
 import 'ficha_form_sheet.dart';
 import 'quebra_preco.dart';
-import '../../../app/theme/cores_estado.dart';
 
 class TechSheetDetailScreen extends ConsumerStatefulWidget {
   const TechSheetDetailScreen({super.key, required this.fichaId});

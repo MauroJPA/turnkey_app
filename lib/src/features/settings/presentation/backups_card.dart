@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/theme/cores_estado.dart';
 import '../../../core/errors/mensagem_amigavel.dart';
 import '../data/backups_repository.dart';
-import '../../../app/theme/cores_estado.dart';
 
 /// "Estado dos backups" para administradores: o último backup automático e a
 /// cópia para fora do servidor, com aviso se algo falhou ou está atrasado.

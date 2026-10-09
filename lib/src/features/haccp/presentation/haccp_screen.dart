@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
+import '../../../app/theme/cores_estado.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
@@ -14,7 +15,6 @@ import 'haccp_controlo_dialog.dart';
 import 'haccp_icones.dart';
 import 'haccp_registo_sheet.dart';
 import 'haccp_relatorio_acao.dart';
-import '../../../app/theme/cores_estado.dart';
 
 String _dmy(DateTime d) =>
     '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';

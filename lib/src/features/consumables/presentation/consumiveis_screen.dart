@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
+import '../../../app/theme/cores_estado.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/formatting/busca.dart';
 import '../../../core/help/help_content.dart';
@@ -17,7 +18,6 @@ import '../../inventory/presentation/stock_badge.dart';
 import '../application/consumivel_providers.dart';
 import '../domain/consumivel.dart';
 import 'consumivel_sheet.dart';
-import '../../../app/theme/cores_estado.dart';
 
 /// Cor/etiqueta do estado da ficha de dados de segurança.
 ({String texto, IconData icone, Color cor}) apresentaEstadoFds(

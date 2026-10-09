@@ -2180,6 +2180,17 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Os botões não funcionam noutro chat nem em mensagens reencaminhadas para outra pessoa
 - [ ] Nada do token aparece em mensagens nem no ecrã
 
+## 159. Paletas da marca e cores de estado
+
+- [ ] Configurações → Empresa e aparência: aparecem "Gookie · Verde" e "Gookie · Caramelo" à frente das outras cores
+- [ ] Escolher "Gookie · Verde" e guardar: a app toda passa ao verde institucional; no modo escuro o fundo é verde muito escuro e os botões caramelo claro; no claro, creme com texto verde
+- [ ] O mesmo com "Gookie · Caramelo" nos dois modos (Claro, Automático e Escuro)
+- [ ] Texto legível em todo o lado (Início, Produção, Contagem, HACCP, Férias, Escala, Faturas, Configurações)
+- [ ] Voltar a "Castanho cookie" repõe o aspeto de antes
+- [ ] Quem tinha cores secundária/fundo/letras personalizadas: ao escolher uma paleta Gookie, esses campos limpam-se
+- [ ] "Tirar do forno!" já não é vermelho vivo: fundo caramelo suave com contorno; continua a destacar-se
+- [ ] Estados "tudo certo" (verde) e "atenção" (caramelo) com o mesmo tom nos vários ecrãs, nos dois modos; o perigo continua a vermelho
+
 ---
 
 ## Notas / ajustes pedidos
