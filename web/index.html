@@ -33,8 +33,44 @@
 
   <title>gc_turnkey</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    #gc-splash { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: #FFFBF0; color: #192621; font-family: Arial, Helvetica, sans-serif; }
+    @media (prefers-color-scheme: dark) { #gc-splash { background: #192621; color: #FFFBF0; } }
+    #gc-splash img { width: 88px; height: 88px; border-radius: 20px; }
+    #gc-splash .t { font-size: 15px; opacity: .85; }
+    #gc-splash .aviso { display: none; max-width: 300px; text-align: center; font-size: 14px; line-height: 1.45; }
+    #gc-splash button { margin-top: 10px; font-size: 15px; padding: 10px 22px; border-radius: 22px; border: 0; background: #B58054; color: #fff; }
+  </style>
 </head>
 <body>
+  <!-- ecrã de arranque: nunca fica um branco vazio (some quando a app desenha o 1.º ecrã) -->
+  <div id="gc-splash">
+    <img src="icons/Icon-192.png" alt="">
+    <div class="t" id="gc-splash-t">A carregar…</div>
+    <div class="aviso" id="gc-splash-aviso">
+      Está a demorar mais do que o normal. Confirma que o Wi-Fi ou o Tailscale está ligado neste telemóvel.
+      <br><button onclick="gcRecarregar()">Tentar de novo</button>
+    </div>
+  </div>
+  <script>
+    window.gcRecarregar = async function () {
+      try {
+        var regs = await navigator.serviceWorker.getRegistrations();
+        for (var r of regs) await r.unregister();
+        for (var k of await caches.keys()) await caches.delete(k);
+      } catch (_) {}
+      location.reload();
+    };
+    window.addEventListener('flutter-first-frame', function () {
+      var e = document.getElementById('gc-splash');
+      if (e) e.remove();
+    });
+    setTimeout(function () {
+      var a = document.getElementById('gc-splash-aviso');
+      var t = document.getElementById('gc-splash-t');
+      if (a && document.getElementById('gc-splash')) { a.style.display = 'block'; if (t) t.style.display = 'none'; }
+    }, 8000);
+  </script>
   <script src="gc_dispositivo.js"></script>
   <script src="gc_instalar.js"></script>
   <script src="gc_pdf.js"></script>

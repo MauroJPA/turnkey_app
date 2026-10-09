@@ -9,7 +9,7 @@
 'use strict';
 
 const CACHE = 'gc-shell-v1';
-const ESPERA_REDE_MS = 6000;
+const ESPERA_REDE_MS = 3000;
 
 // o mínimo para a app arrancar; o resto (CanvasKit, tipos de letra…) é
 // guardado à medida que a app o pede ou pela mensagem "cachear" da página

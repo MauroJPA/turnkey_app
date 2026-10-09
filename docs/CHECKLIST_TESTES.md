@@ -2216,6 +2216,14 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Fechar e reabrir a etiqueta do mesmo produto: a folha escolhida e as linhas de corte lembram-se
 - [ ] Etiqueta de um lote (Produção → Lotes → Etiqueta com QR): a mesma opção existe
 
+## 162. Ecrã de arranque e aviso de sem ligação ao servidor
+
+- [ ] No telemóvel com o Tailscale LIGADO: a app abre (ecrã do cookie "A carregar…" e logo a seguir a app), sem faixa de aviso
+- [ ] Desligar o Tailscale e abrir a app instalada: aparece o ecrã do cookie; passados 8 s diz "Está a demorar…" com "Tentar de novo"
+- [ ] Com a app já aberta, desligar o Tailscale e voltar à app: surge a faixa "Sem ligação ao servidor…" com "Tentar de novo"
+- [ ] Voltar a ligar o Tailscale e tocar "Tentar de novo": a faixa desaparece e os dados carregam
+- [ ] Se havia versão nova, aparece "Há uma versão nova… Atualizar" e atualizar mostra a versão certa (menu ⋮ do Início → versão)
+
 ---
 
 ## Notas / ajustes pedidos

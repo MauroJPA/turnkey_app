@@ -28,6 +28,10 @@ class AvisoVersaoNova extends StatefulWidget {
 
 class _AvisoVersaoNovaState extends State<AvisoVersaoNova> {
   String? _nova;
+
+  /// O servidor não respondeu: o que se vê pode ser a última cópia guardada no
+  /// telemóvel (sem Wi-Fi/Tailscale, por exemplo).
+  bool _semLigacao = false;
   Timer? _timer;
   StreamSubscription<html.Event>? _visivel;
   bool _atualizando = false;
@@ -55,13 +59,22 @@ class _AvisoVersaoNovaState extends State<AvisoVersaoNova> {
       final url = Uri.base.resolve(
         'version.json?nocache=${DateTime.now().millisecondsSinceEpoch}',
       );
-      final r = await http.get(url);
-      if (r.statusCode != 200) return;
+      final r = await http.get(url).timeout(const Duration(seconds: 8));
+      if (r.statusCode != 200) {
+        // o servidor respondeu (ex.: a reiniciar numa atualização): sem aviso
+        if (mounted && _semLigacao) setState(() => _semLigacao = false);
+        return;
+      }
       final v = (jsonDecode(r.body) as Map)['version']?.toString() ?? '';
       if (!mounted) return;
-      setState(() => _nova = (v.isNotEmpty && v != versaoCompilada) ? v : null);
+      setState(() {
+        _semLigacao = false;
+        _nova = (v.isNotEmpty && v != versaoCompilada) ? v : null;
+      });
     } on Object {
-      // sem rede ou sem version.json: não incomoda
+      // sem rede ou o servidor não responde: avisa, para não parecer que a app
+      // "não carrega nada" sem se perceber porquê
+      if (mounted) setState(() => _semLigacao = true);
     }
   }
 
@@ -115,8 +128,31 @@ class _AvisoVersaoNovaState extends State<AvisoVersaoNova> {
 
   @override
   Widget build(BuildContext context) {
-    if (_nova == null) return const SizedBox.shrink();
     final cs = Theme.of(context).colorScheme;
+    if (_semLigacao) {
+      return Material(
+        color: cs.errorContainer,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Sem ligação ao servidor. O que vês pode ser a última cópia '
+                  'guardada: confirma o Wi-Fi ou o Tailscale.',
+                  style: TextStyle(color: cs.onErrorContainer, fontSize: 13),
+                ),
+              ),
+              TextButton(
+                onPressed: _verificar,
+                child: const Text('Tentar de novo'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    if (_nova == null) return const SizedBox.shrink();
     return Material(
       color: cs.tertiaryContainer,
       child: Padding(

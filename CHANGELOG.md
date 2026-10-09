@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.18.1 — 2026-10-09 — Ecrã de arranque e aviso de sem ligação ao servidor
+
+Corrige o "ecrã todo branco" e a app "presa" numa versão antiga quando o telemóvel não chega ao servidor (Wi-Fi fora, ou **Tailscale desligado**).
+
+- **Ecrã de arranque**: ao abrir, aparece o cookie com "A carregar…" (em vez de um ecrã branco vazio). Se passar de 8 segundos, diz que está a demorar, sugere confirmar o Wi-Fi ou o Tailscale e oferece **"Tentar de novo"** (limpa a cópia guardada e recarrega).
+- **Aviso "Sem ligação ao servidor"**: se o servidor não responde, a app mostra uma faixa a dizer que o que se vê pode ser a última cópia guardada no telemóvel, com **"Tentar de novo"**. Desaparece sozinha quando a ligação volta (e verifica de 10 em 10 minutos e sempre que a app volta ao ecrã).
+- **Menos espera**: a app instalada esperava até 6 s pelo servidor antes de usar a cópia guardada; passa a esperar 3 s.
+- **Porquê acontecia**: o servidor está atrás do Tailscale (HTTPS). Sem o Tailscale ligado no telemóvel, o servidor não responde; a app usa então a cópia guardada (uma versão antiga, sem dados) e, durante a espera, o ecrã ficava branco.
+- `ensaio.py --build` passa a compilar com a versão certa (para testar o aviso de versão e de ligação).
+- Ficheiros: `web/index.html`, `web/gc_sw.js`, `aviso_versao_nova.dart`. Sem migrations.
+
 ## 2.18.0 — 2026-10-09 — Etiquetas 150 x 100 e várias por folha
 
 **Etiquetas de 150 × 100 e várias etiquetas numa folha maior** (Fichas técnicas → Informação do produto → impressora → Etiqueta).

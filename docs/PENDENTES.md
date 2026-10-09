@@ -1,6 +1,6 @@
 # Pendentes (fila de trabalho)
 
-Última versão fechada: **2.18.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
+Última versão fechada: **2.18.1** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
 (editar → `bash scripts/verificar.sh` → pubspec + CHANGELOG + docs/CHECKLIST_TESTES.md → commit com caminhos
 explícitos → `git branch -f develop main` → `git tag vX.Y.Z`). No fim: `powershell -File scripts\empacotar-producao.ps1`
 e dar ao Mauro o SHA-256 + comando de publicação.
@@ -28,6 +28,7 @@ Fila atual (pedido do Mauro em 06/10/2026, **cada item = uma versão**, por esta
 - ~~**2.12.0**~~ (feito) Desfazer em vez de confirmar (lixeira, notas, férias, regras de horário, faturas).
 - ~~**2.13.0**~~ (feito) Checklist "Primeiros passos" no Início. ~~**2.14.0**~~ (feito) Fecho do dia · ~~**2.15.0**~~ (feito) Telegram com botões (aprovar/saída/vigia) · ~~**2.16.0**~~ (feito) Paletas da marca Gookie + cores de estado. ~~**2.17.0**~~ (feito) Instalar como app (PWA: manifest, ícones, cartão "Instalar").
 - ~~**2.18.0**~~ (feito) Etiqueta 150 × 100 e várias etiquetas numa folha maior (para recortar).
+- ~~**2.18.1**~~ (feito) Ecrã de arranque (sem branco) e aviso de sem ligação ao servidor.
 - No fim: empacotar, dar SHA-256 + comando; atualizar docs/SEGURANCA.md se houver novos endpoints.
 
 ## Fila 2.x — UI/UX mais ágil (aprovada pelo Mauro em 06/10/2026; branch `ux-2`, cada item = uma versão, por esta ordem)

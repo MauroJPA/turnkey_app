@@ -111,7 +111,13 @@ def arrancar(compilar):
     os.makedirs(ENS, exist_ok=True)
     if compilar:
         print('a compilar a app web (cerca de 1 minuto)…')
-        subprocess.run(['flutter', 'build', 'web', '--release', '--dart-define=PB_URL=origin'], cwd=RAIZ, check=True, shell=(os.name == 'nt'))
+        import re
+        pub = open(os.path.join(RAIZ, 'pubspec.yaml'), encoding='utf-8').read()
+        versao = re.search(r'^version:\s*(\d+\.\d+\.\d+)', pub, re.M).group(1)
+        subprocess.run(
+            ['flutter', 'build', 'web', '--release', '--dart-define=PB_URL=origin', f'--dart-define=APP_VERSION={versao}'],
+            cwd=RAIZ, check=True, shell=(os.name == 'nt'),
+        )
     if not os.path.isdir(os.path.join(RAIZ, 'build', 'web')):
         sys.exit('falta build/web: corre com --build')
     cred = credenciais()
