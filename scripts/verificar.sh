@@ -56,6 +56,8 @@ if command -v python >/dev/null 2>&1 || command -v python3 >/dev/null 2>&1; then
   PYTHONIOENCODING=utf-8 "$PY" test/seguranca/test_vigia.py >/tmp/verif_vigia.log 2>&1 \
     && ok "vigia de segurança (testes)" || { tail -20 /tmp/verif_vigia.log; mau "vigia de segurança"; }
   if command -v node >/dev/null 2>&1; then
+    node test/seguranca/test_instalar.js >/tmp/verif_instalar.log 2>&1 \
+      && ok "instalar a app (testes)" || { tail -20 /tmp/verif_instalar.log; mau "instalar a app"; }
     node test/seguranca/test_arranque.js >/tmp/verif_arranque.log 2>&1       && ok "primeiros passos (testes)" || { tail -20 /tmp/verif_arranque.log; mau "primeiros passos"; }
     node test/seguranca/test_escala_dia.js >/tmp/verif_escala_dia.log 2>&1 \
       && ok "escala: pausa prevista (testes)" || { tail -20 /tmp/verif_escala_dia.log; mau "escala: pausa prevista"; }

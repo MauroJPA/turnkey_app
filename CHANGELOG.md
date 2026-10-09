@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.17.0 — 2026-10-09 — Instalar como app
+
+**Instalar como app**: a gc_turnkey passa a poder instalar-se no telemóvel, tablet ou computador, com ícone próprio, em ecrã inteiro e com atalhos.
+
+- **Ícone da marca**: os ícones eram o logótipo do Flutter; agora são um cookie com pepitas sobre o **verde institucional**, em todos os tamanhos (normal, "maskable" do Android e ícone do iPhone). Gerados por `scripts/gerar_icones.py`.
+- **Cartão "Instalar a app"** no fim do Início: no Chrome/Edge (Android e computador) basta tocar em **Instalar**; no iPhone/iPad mostra os passos do Safari (Partilhar → Adicionar ao ecrã principal). Só aparece se a app ainda não está instalada, e o "x" esconde-o neste aparelho.
+- **Atalhos no ícone** (carregar sem soltar, no Android): **Produzir agora**, **Contagem**, **Marcar ponto** e **Fecho do dia**.
+- **Manifest renovado**: nome, idioma (pt-PT), cor da barra e do arranque (verde e creme da marca), e a app deixa de ficar presa na vertical (a loja usa tablet na horizontal).
+- **Atenção**: o Chrome só oferece "Instalar" em **HTTPS** (ou em `localhost`). Com o endereço da loja em `http://192.168.x.x` o cartão não aparece no Android/computador; no iPhone aparece sempre. Se a app já é servida por HTTPS (p. ex. pelo Tailscale), funciona logo.
+- Ficheiros: `web/manifest.json`, `web/index.html`, `web/gc_instalar.js`, ícones em `web/icons/`, `instalacao.dart`, `instalar_app.dart` e `instalar_app_card.dart`. Sem migrations.
+- Testes: 5 de Node (aviso do navegador, pedido uma só vez, já instalada, iPhone/iPad, erro no pedido) e 4 de Dart.
+
 ## 2.16.0 — 2026-10-09 — Paletas da marca e cores de estado
 
 **Paletas da marca Gookie e cores de estado**: a app passa a poder usar as cores do manual da marca (verde, caramelo e creme) e as cores de "tudo certo / atenção" deixam de ser um verde, laranja e vermelho diferente em cada ecrã.

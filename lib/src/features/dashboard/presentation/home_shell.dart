@@ -18,6 +18,7 @@ import '../../settings/domain/empresa.dart';
 import '../domain/atalhos_inicio.dart';
 import '../domain/tarefa_hoje.dart';
 import 'arranque_card.dart';
+import 'instalar_app_card.dart';
 import 'tarefas_hoje_provider.dart';
 
 /// Ecrã inicial: o que precisa de ti hoje, com o botão que o resolve ali
@@ -193,6 +194,8 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           ],
           // o que falta configurar (só a administração; some quando está tudo feito)
           const ArranqueCard(),
+          // convite para instalar a app no aparelho (só se ainda não está instalada)
+          const InstalarAppCard(),
         ],
       ),
     );

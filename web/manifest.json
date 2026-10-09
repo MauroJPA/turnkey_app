@@ -1,12 +1,20 @@
 {
+    "id": "./",
     "name": "gc_turnkey",
     "short_name": "gc_turnkey",
-    "start_url": ".",
+    "lang": "pt-PT",
+    "start_url": "./",
+    "scope": "./",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "gc_turnkey — ERP para gestão de custos, produção e fichas técnicas",
-    "orientation": "portrait-primary",
+    "orientation": "any",
+    "background_color": "#FFFBF0",
+    "theme_color": "#192621",
+    "description": "gc_turnkey — receitas, custos, produção, equipa e fecho do dia da tua pastelaria",
+    "categories": [
+        "business",
+        "productivity",
+        "food"
+    ],
     "prefer_related_applications": false,
     "icons": [
         {
@@ -30,6 +38,55 @@
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Produzir agora",
+            "short_name": "Produzir",
+            "url": "./#/produzir",
+            "icons": [
+                {
+                    "src": "icons/Icon-192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
+        },
+        {
+            "name": "Contagem",
+            "url": "./#/contagem",
+            "icons": [
+                {
+                    "src": "icons/Icon-192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
+        },
+        {
+            "name": "Marcar ponto",
+            "short_name": "Ponto",
+            "url": "./#/pessoas/ponto",
+            "icons": [
+                {
+                    "src": "icons/Icon-192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
+        },
+        {
+            "name": "Fecho do dia",
+            "short_name": "Fecho",
+            "url": "./#/contagem/fecho",
+            "icons": [
+                {
+                    "src": "icons/Icon-192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
         }
     ]
 }

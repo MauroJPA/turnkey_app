@@ -1,5 +1,5 @@
 """Gera os ícones da app (web/icons e web/favicon.png): um cookie com pepitas
-de chocolate sobre o castanho da marca. Só precisa do Pillow:
+de chocolate sobre o verde da marca. Só precisa do Pillow:
 
     python scripts/gerar_icones.py
 
@@ -13,12 +13,12 @@ from PIL import Image, ImageDraw
 
 RAIZ = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'web')
 
-FUNDO = (141, 91, 52)        # castanho da marca (#8D5B34)
-FUNDO_ESCURO = (112, 70, 38)  # cantos mais escuros (profundidade)
-MASSA = (232, 184, 124)       # massa do cookie
-MASSA_BORDA = (205, 152, 92)  # bordo mais tostado
+FUNDO = (25, 38, 33)         # verde institucional da marca (#192621)
+FUNDO_ESCURO = (12, 20, 17)  # sombra do cookie (um tom mais escuro)
+MASSA = (225, 173, 112)       # massa do cookie (caramelo claro)
+MASSA_BORDA = (181, 128, 84)  # bordo caramelo da marca (#B58054)
 PEPITA = (74, 44, 23)         # chocolate
-REALCE = (244, 214, 168)      # brilho suave na massa
+REALCE = (255, 251, 240)      # creme da marca (brilho suave)
 
 # pepitas: (x, y, raio) em fração do raio do cookie (centro 0,0)
 PEPITAS = [

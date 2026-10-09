@@ -20,6 +20,7 @@ const ESSENCIAIS = [
   'flutter.js',
   'main.dart.js',
   'gc_dispositivo.js',
+  'gc_instalar.js',
   'manifest.json',
   'favicon.png',
 ];

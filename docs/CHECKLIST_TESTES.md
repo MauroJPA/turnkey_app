@@ -2191,6 +2191,17 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] "Tirar do forno!" já não é vermelho vivo: fundo caramelo suave com contorno; continua a destacar-se
 - [ ] Estados "tudo certo" (verde) e "atenção" (caramelo) com o mesmo tom nos vários ecrãs, nos dois modos; o perigo continua a vermelho
 
+## 160. Instalar como app
+
+- [ ] No telemóvel (Android, Chrome, endereço HTTPS): no fim do Início aparece "Instalar a app"; tocar em "Instalar" mostra o pedido do Android e, depois de aceitar, o ícone (cookie sobre verde) fica no ecrã principal
+- [ ] Abrir pelo ícone: ecrã inteiro, sem barra do navegador, barra de estado verde; o cartão já não aparece
+- [ ] Carregar sem soltar no ícone (Android): aparecem Produzir agora, Contagem, Marcar ponto e Fecho do dia, e cada um abre o ecrã certo
+- [ ] iPhone/iPad (Safari): o cartão mostra as instruções; seguir "Partilhar → Adicionar ao ecrã principal" cria o ícone com o cookie
+- [ ] O "x" esconde o cartão neste aparelho
+- [ ] Num tablet na horizontal a app roda (já não fica presa na vertical)
+- [ ] Com o endereço `http://192.168…` (sem HTTPS) no Android/computador o cartão não aparece (é normal)
+- [ ] O separador do navegador e o favicon mostram o cookie
+
 ---
 
 ## Notas / ajustes pedidos
