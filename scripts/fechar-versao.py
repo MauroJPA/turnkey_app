@@ -143,7 +143,7 @@ def main():
             sys.exit('Ficheiros que nunca devem ir para o git: ' + ', '.join(mau) + ' (nada foi commitado).')
         msg = f'{a.versao}: {a.titulo}\n\n{TRAILER}\n'
         subprocess.run(['git', 'commit', '-q', '-m', msg], cwd=RAIZ, check=True)
-        print('commit feito:', subprocess.run(['git', 'log', '--oneline', '-1'], cwd=RAIZ, capture_output=True, text=True).stdout.strip())
+        print('commit feito:', subprocess.run(['git', 'log', '--oneline', '-1'], cwd=RAIZ, capture_output=True, text=True, encoding='utf-8').stdout.strip())
         if a.tag:
             subprocess.run(['git', 'tag', f'v{a.versao}'], cwd=RAIZ, check=True)
             print(f'etiqueta v{a.versao} criada')
