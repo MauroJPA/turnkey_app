@@ -389,6 +389,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'A lista de ingredientes segue as regras da UE: por ordem decrescente de peso e com os alergénios a negrito. É calculada sozinha a partir da ficha técnica, das receitas e dos ingredientes. "Completa" usa o nome de cada ingrediente; "Resumida" usa nomes curtos, para etiquetas pequenas.',
       '"Falta completar" mostra o que ainda não está preenchido: nutrição de algum ingrediente, prazo de validade e modo de conservação. "Corrigir a nutrição" leva-te ao ingrediente em falta; "Preencher os dados" abre a ficha.',
       'Ícone da impressora: imprime a etiqueta (completa ou resumida) com a informação nutricional. Ícone de copiar: junta tudo num texto.',
+      'Etiquetas de 150 × 100 mm e várias numa folha: o tamanho 150 × 100 está na lista. Para recortares depois, liga "Várias etiquetas numa folha maior", escolhe a folha (150 × 100 mm) e o número de etiquetas: a app diz quantas cabem em cada folha (p. ex. 3 etiquetas de 50 × 100 mm numa folha de 150 × 100 mm) e quantas folhas vão sair, e põe linhas de corte tracejadas entre elas. Na impressora, escolhe o papel do tamanho da folha, sem margens e a 100 %.',
     ],
   ),
   HelpTopic.tabelaRevendedores: (

@@ -2202,6 +2202,20 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Com o endereço `http://192.168…` (sem HTTPS) no Android/computador o cartão não aparece (é normal)
 - [ ] O separador do navegador e o favicon mostram o cookie
 
+## 161. Etiquetas 150 x 100 e várias por folha
+
+- [ ] Ficha técnica → Informação do produto → impressora: a lista "Tamanho da etiqueta" inclui 150 × 100 mm
+- [ ] Ligar "Várias etiquetas numa folha maior", folha 150 × 100, etiqueta 50 × 100: diz "Cabem 3 etiquetas … (3 × 1)" e o número de etiquetas passa a 3
+- [ ] "Pré-visualizar e imprimir": a página mostra 3 etiquetas lado a lado, com tracejado entre elas (e não nas bordas)
+- [ ] Imprimir com papel 150 × 100 mm, margens nenhumas, escala 100 %: as 3 etiquetas ocupam a folha e as linhas de corte coincidem com os cortes
+- [ ] Mudar o número para 7: "7 etiquetas = 3 folhas"; a última folha só tem 1 etiqueta
+- [ ] Desligar "Linhas de corte": sai sem tracejado
+- [ ] Folha 100 × 150 (vertical) com etiqueta 50 × 80: 2 por folha
+- [ ] Etiqueta 150 × 100 numa folha 100 × 150: aviso de que não cabe
+- [ ] Desligar a função: volta uma etiqueta por página, como antes
+- [ ] Fechar e reabrir a etiqueta do mesmo produto: a folha escolhida e as linhas de corte lembram-se
+- [ ] Etiqueta de um lote (Produção → Lotes → Etiqueta com QR): a mesma opção existe
+
 ---
 
 ## Notas / ajustes pedidos

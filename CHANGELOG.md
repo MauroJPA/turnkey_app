@@ -2,6 +2,20 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.18.0 — 2026-10-09 — Etiquetas 150 x 100 e várias por folha
+
+**Etiquetas de 150 × 100 e várias etiquetas numa folha maior** (Fichas técnicas → Informação do produto → impressora → Etiqueta).
+
+- **Novo tamanho 150 × 100 mm** na lista de tamanhos da etiqueta (junto aos 50 × 80, 50 × 100, 60 × 80, 60 × 100 e 75 × 100).
+- **Nova função "Várias etiquetas numa folha maior"**: liga-se o interruptor, escolhe-se a **folha** (150 × 100 mm, ou 100 × 150 na vertical) e a app **arruma as etiquetas na folha** para recortares depois. Exemplo: com a etiqueta de 50 × 100 mm numa folha de 150 × 100 mm saem **3 por folha** (3 × 1); 50 × 80 também são 3; 75 × 100 e 60 × 100 são 2.
+- **Números certos**: o "Número de etiquetas" é o total; a app diz quantas cabem por folha e quantas folhas vão ser ("7 etiquetas = 3 folhas", a última a meio). Ao ligar a função, propõe logo encher uma folha.
+- **Linhas de corte** (ligadas por omissão): um tracejado fino só **entre** as etiquetas, nunca nas bordas, para recortares. Pode desligar-se.
+- **Impressão**: a página sai com o tamanho da **folha** (no diálogo: papel 150 × 100 mm, margens nenhumas, escala 100 %); no ecrã vê-se a primeira folha com a disposição real.
+- **Avisos**: se a etiqueta não cabe na folha escolhida, a app avisa e imprime uma por página, como antes. Sem a função ligada, nada muda.
+- As escolhas (folha e linhas de corte) ficam guardadas por produto, como o resto das definições da etiqueta. Serve também para as etiquetas de lote.
+- Ficheiros: `etiqueta.dart` (folhas, disposição, página), `etiqueta_sheet.dart`. Sem migrations.
+- Testes: 10 novos (150 × 100, quantas cabem, páginas, tamanho da página, várias folhas, linhas de corte, grelha de 2 linhas, etiqueta que não cabe, definições guardadas, sem folha).
+
 ## 2.17.0 — 2026-10-09 — Instalar como app
 
 **Instalar como app**: a gc_turnkey passa a poder instalar-se no telemóvel, tablet ou computador, com ícone próprio, em ecrã inteiro e com atalhos.

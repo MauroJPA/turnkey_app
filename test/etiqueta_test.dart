@@ -70,7 +70,10 @@ void main() {
         h,
         contains('<h1>Carolina do Sul</h1><p class="sub">Red Velvet</p>'),
       );
-      expect(h.indexOf('<p class="sub">') < h.indexOf('<p class="desc">'), isTrue);
+      expect(
+        h.indexOf('<p class="sub">') < h.indexOf('<p class="desc">'),
+        isTrue,
+      );
     });
 
     test('conteúdo legal: ingredientes, datas, peso, lote, produtor', () {
@@ -282,6 +285,156 @@ void main() {
       expect(a.any((e) => e.contains('validade')), isTrue);
       expect(a.any((e) => e.contains('conservação')), isTrue);
       expect(a.any((e) => e.contains('nutricionais')), isTrue);
+    });
+  });
+
+  group('várias etiquetas numa folha', () {
+    EtiquetaDados emFolha({
+      int copias = 3,
+      TamanhoEtiqueta? folha = const TamanhoEtiqueta(150, 100),
+      int largura = 50,
+      int altura = 100,
+      bool corte = true,
+    }) => EtiquetaDados(
+      nome: 'Boston',
+      fabrico: DateTime(2026, 10, 1),
+      copias: copias,
+      larguraMm: largura,
+      alturaTotalMm: altura,
+      folha: folha,
+      linhasDeCorte: corte,
+    );
+
+    test('150 × 100 existe como tamanho de etiqueta e de folha', () {
+      expect(tamanhosEtiqueta, contains(const TamanhoEtiqueta(150, 100)));
+      expect(tamanhoPadrao(150, 100), const TamanhoEtiqueta(150, 100));
+      expect(tamanhosFolha, contains(const TamanhoEtiqueta(150, 100)));
+      expect(tamanhosFolha, contains(const TamanhoEtiqueta(100, 150)));
+    });
+
+    test('quantas etiquetas cabem na folha', () {
+      const f = TamanhoEtiqueta(150, 100);
+      // o exemplo: 3 de 50 × 100 numa de 150 × 100
+      final a = disposicaoFolha(f, const TamanhoEtiqueta(50, 100));
+      expect((a.colunas, a.linhas, a.porFolha), (3, 1, 3));
+      // 50 × 80 também são 3 (sobram 20 mm de altura)
+      expect(disposicaoFolha(f, const TamanhoEtiqueta(50, 80)).porFolha, 3);
+      // 75 × 100 → 2; 60 × 100 → 2; 150 × 100 → 1
+      expect(disposicaoFolha(f, const TamanhoEtiqueta(75, 100)).porFolha, 2);
+      expect(disposicaoFolha(f, const TamanhoEtiqueta(60, 100)).porFolha, 2);
+      expect(disposicaoFolha(f, const TamanhoEtiqueta(150, 100)).porFolha, 1);
+      // na vertical (100 × 150): 2 de 50 × 80 em coluna, e 2 colunas
+      final v = disposicaoFolha(
+        const TamanhoEtiqueta(100, 150),
+        const TamanhoEtiqueta(50, 80),
+      );
+      expect((v.colunas, v.linhas, v.porFolha), (2, 1, 2));
+      // não cabe
+      expect(disposicaoFolha(f, const TamanhoEtiqueta(200, 100)).porFolha, 0);
+      expect(disposicaoFolha(f, const TamanhoEtiqueta(0, 0)).porFolha, 0);
+    });
+
+    test('páginas: etiquetas a dividir pelas que cabem em cada folha', () {
+      expect(emFolha(copias: 3).paginas, 1);
+      expect(emFolha(copias: 4).paginas, 2);
+      expect(emFolha(copias: 9).paginas, 3);
+      expect(emFolha(copias: 1).paginas, 1);
+      // sem folha: uma por página
+      expect(emFolha(copias: 5, folha: null).paginas, 5);
+      expect(emFolha(copias: 5, folha: null).emFolha, isFalse);
+    });
+
+    test('a página tem o tamanho da folha e as etiquetas dentro', () {
+      final h = etiquetaPagina(emFolha(copias: 3));
+      expect(h, contains('@page { size: 150mm 100mm; margin: 0; }'));
+      expect(h, contains('class="folha"'));
+      expect(RegExp(r'<div class="etq').allMatches(h).length, 3);
+      expect(h, contains('repeat(3, 50mm)'));
+      expect(h, contains('Imprimir 3 etiquetas (1 folha)'));
+      expect(h, contains('3 por folha de 150 × 100 mm (3 × 1)'));
+    });
+
+    test('mais etiquetas do que cabem: várias folhas, a última a meio', () {
+      final h = etiquetaPagina(emFolha(copias: 7));
+      expect(RegExp(r'<div class="folha').allMatches(h).length, 3);
+      expect(RegExp(r'<div class="etq').allMatches(h).length, 7);
+      // só a primeira folha se vê no ecrã
+      expect('folha rep'.allMatches(h).length, 2);
+      expect(h, contains('Imprimir 7 etiquetas (3 folhas)'));
+    });
+
+    test('linhas de corte só entre as etiquetas (não nas bordas)', () {
+      final h = etiquetaPagina(emFolha(copias: 3));
+      // 3 colunas × 1 linha: as duas primeiras levam o corte à direita; nenhuma em baixo
+      expect(RegExp(r'class="etq dc"').allMatches(h).length, 2);
+      expect(h, isNot(contains(' db"')));
+      final sem = etiquetaPagina(emFolha(copias: 3, corte: false));
+      expect(sem, isNot(contains('class="etq dc"')));
+    });
+
+    test('grelha com 2 linhas: corte em baixo na primeira linha', () {
+      final h = etiquetaPagina(
+        emFolha(
+          copias: 4,
+          folha: const TamanhoEtiqueta(100, 150),
+          largura: 50,
+          altura: 60,
+        ),
+      );
+      // 2 colunas × 2 linhas
+      expect(h, contains('repeat(2, 50mm)'));
+      expect(h, contains('class="etq dc db"'));
+      expect(h, contains('class="etq db"'));
+      expect(h, contains('class="etq dc"'));
+    });
+
+    test('etiqueta que não cabe na folha: aviso e sai uma por página', () {
+      final d = emFolha(
+        copias: 2,
+        largura: 150,
+        altura: 100,
+        folha: const TamanhoEtiqueta(100, 150),
+      );
+      expect(d.disposicao.porFolha, 0);
+      expect(d.emFolha, isFalse);
+      expect(
+        avisosEtiqueta(d).any((a) => a.contains('não cabe na folha')),
+        isTrue,
+      );
+      expect(etiquetaPagina(d), isNot(contains('class="folha"')));
+    });
+
+    test('as definições da folha vão e voltam e ignoram folhas inventadas', () {
+      const p = EtiquetaPrefs(
+        folha: TamanhoEtiqueta(150, 100),
+        linhasDeCorte: false,
+      );
+      final r = EtiquetaPrefs.fromJson(p.toJson());
+      expect(r.folha, const TamanhoEtiqueta(150, 100));
+      expect(r.linhasDeCorte, isFalse);
+      expect(EtiquetaPrefs.fromJson({}).folha, isNull);
+      expect(EtiquetaPrefs.fromJson({}).linhasDeCorte, isTrue);
+      expect(
+        EtiquetaPrefs.fromJson({
+          'folhaLarguraMm': 123,
+          'folhaAlturaMm': 77,
+        }).folha,
+        isNull,
+      );
+      // 150 × 100 também vale como etiqueta guardada
+      final g = EtiquetaPrefs.fromJson({
+        'larguraMm': 150,
+        'alturaTotalMm': 100,
+      });
+      expect((g.larguraMm, g.alturaTotalMm), (150, 100));
+    });
+
+    test('sem folha nada muda (uma por página)', () {
+      final h = etiquetaPagina(emFolha(copias: 3, folha: null));
+      expect(h, isNot(contains('class="folha"')));
+      expect(h, contains('@page { size: 50mm 100mm; margin: 0; }'));
+      expect(h, contains('Imprimir 3 etiquetas'));
+      expect(h, isNot(contains('<div class="folha')));
     });
   });
 }

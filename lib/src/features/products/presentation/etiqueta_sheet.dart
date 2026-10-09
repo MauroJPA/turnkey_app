@@ -66,6 +66,11 @@ class _SheetState extends ConsumerState<_Sheet> {
   final _lote = TextEditingController();
   bool _mostrarSubnome = false;
   TamanhoEtiqueta _tamanho = tamanhosEtiqueta.first;
+
+  /// Folha maior onde se juntam várias etiquetas para recortar (`null` = uma
+  /// etiqueta por página).
+  TamanhoEtiqueta? _folha;
+  bool _linhasDeCorte = true;
   int _frente = frenteMinMm;
   MedidasEtiqueta? _medidas;
   String _htmlMedido = '';
@@ -161,6 +166,8 @@ class _SheetState extends ConsumerState<_Sheet> {
       larguraMm: _tamanho.larguraMm,
       alturaTotalMm: _tamanho.alturaMm,
       alturaFrenteMm: _frente,
+      folha: _folha,
+      linhasDeCorte: _linhasDeCorte,
     );
   }
 
@@ -185,6 +192,91 @@ class _SheetState extends ConsumerState<_Sheet> {
     return null;
   }
 
+  /// "Várias etiquetas numa folha": junta etiquetas pequenas numa folha maior
+  /// (p. ex. 3 de 50 × 100 numa de 150 × 100) para recortar depois.
+  Widget _blocoFolha(EtiquetaDados dados) {
+    final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final ativo = _folha != null;
+    final disp = dados.disposicao;
+    final total = dados.copias;
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              value: ativo,
+              onChanged: (v) => setState(() {
+                _folha = v ? (_folha ?? tamanhosFolha.first) : null;
+                // ao ligar, propõe encher uma folha (se ainda estava em 1)
+                if (v && (int.tryParse(_copias.text.trim()) ?? 1) == 1) {
+                  final n = disposicaoFolha(_folha!, _tamanho).porFolha;
+                  if (n > 1) _copias.text = '$n';
+                }
+              }),
+              title: const Text('Várias etiquetas numa folha maior'),
+              subtitle: const Text(
+                'Para recortar depois: p. ex. 3 etiquetas de 50 × 100 mm numa '
+                'folha de 150 × 100 mm.',
+              ),
+            ),
+            if (ativo) ...[
+              DropdownButtonFormField<TamanhoEtiqueta>(
+                key: ValueKey('folha-${_folha!.label}'),
+                initialValue: _folha,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'Tamanho da folha (a que se põe na impressora)',
+                ),
+                items: [
+                  for (final t in tamanhosFolha)
+                    DropdownMenuItem(value: t, child: Text(t.label)),
+                ],
+                onChanged: (v) => setState(() => _folha = v ?? _folha),
+              ),
+              const SizedBox(height: 8),
+              if (disp.porFolha < 1)
+                Text(
+                  'A etiqueta de ${_tamanho.label} não cabe numa folha de '
+                  '${_folha!.label}. Escolhe uma etiqueta mais pequena ou '
+                  'outra folha.',
+                  style: tt.bodyMedium?.copyWith(color: cs.error),
+                )
+              else if (disp.porFolha == 1)
+                Text(
+                  'Só cabe 1 etiqueta de ${_tamanho.label} numa folha de '
+                  '${_folha!.label} — sai uma por folha.',
+                  style: tt.bodyMedium,
+                )
+              else
+                Text(
+                  'Cabem ${disp.porFolha} etiquetas de ${_tamanho.label} em '
+                  'cada folha de ${_folha!.label} '
+                  '(${disp.colunas} × ${disp.linhas}). '
+                  '$total etiqueta${total == 1 ? '' : 's'} = '
+                  '${dados.paginas} folha${dados.paginas == 1 ? '' : 's'}.',
+                  style: tt.bodyMedium,
+                ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                value: _linhasDeCorte,
+                onChanged: (v) => setState(() => _linhasDeCorte = v),
+                title: const Text('Linhas de corte'),
+                subtitle: const Text(
+                  'Tracejado fino entre as etiquetas, para recortares.',
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final produtorGuardado = ref.watch(produtorRotuloProvider);
@@ -201,6 +293,8 @@ class _SheetState extends ConsumerState<_Sheet> {
       _mostrarSubnome = p.mostrarSubnome && widget.ficha.subnome.isNotEmpty;
       _tamanho = p.tamanho;
       _frente = p.alturaFrenteMm;
+      _folha = p.folha;
+      _linhasDeCorte = p.linhasDeCorte;
     }
     if (!_produtorCarregado && produtorGuardado.hasValue) {
       _produtorCarregado = true;
@@ -352,7 +446,12 @@ class _SheetState extends ConsumerState<_Sheet> {
             controller: _copias,
             keyboardType: TextInputType.number,
             onChanged: (_) => setState(() {}),
-            decoration: const InputDecoration(labelText: 'Número de etiquetas'),
+            decoration: InputDecoration(
+              labelText: 'Número de etiquetas',
+              helperText: _folha == null
+                  ? null
+                  : 'No total, contando todas as que vão nas folhas.',
+            ),
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<TamanhoEtiqueta>(
@@ -459,6 +558,8 @@ class _SheetState extends ConsumerState<_Sheet> {
             ),
           ),
           const SizedBox(height: 12),
+          _blocoFolha(dados),
+          const SizedBox(height: 12),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             value: _mostrarE,
@@ -514,12 +615,19 @@ class _SheetState extends ConsumerState<_Sheet> {
                   larguraMm: d.larguraMm,
                   alturaTotalMm: d.alturaTotalMm,
                   alturaFrenteMm: d.alturaFrenteMm,
+                  folha: d.folha,
+                  linhasDeCorte: d.linhasDeCorte,
                 ),
               );
               abrirPaginaEtiquetas(etiquetaPagina(d));
             },
             icon: const Icon(Icons.print_outlined),
-            label: const Text('Pré-visualizar e imprimir'),
+            label: Text(
+              dados.emFolha
+                  ? 'Pré-visualizar e imprimir (${dados.paginas} '
+                        'folha${dados.paginas == 1 ? '' : 's'})'
+                  : 'Pré-visualizar e imprimir',
+            ),
           ),
         ],
       ),

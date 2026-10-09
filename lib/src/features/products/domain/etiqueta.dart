@@ -51,7 +51,36 @@ const tamanhosEtiqueta = [
   TamanhoEtiqueta(60, 80),
   TamanhoEtiqueta(60, 100),
   TamanhoEtiqueta(75, 100),
+  TamanhoEtiqueta(150, 100),
 ];
+
+/// Folhas (etiquetas grandes) onde se podem juntar várias etiquetas pequenas
+/// para recortar depois: 150 × 100 mm, na horizontal ou na vertical (100 × 150).
+const tamanhosFolha = [TamanhoEtiqueta(150, 100), TamanhoEtiqueta(100, 150)];
+
+/// Como as etiquetas se arrumam numa folha: [colunas] × [linhas].
+class DisposicaoFolha {
+  const DisposicaoFolha(this.colunas, this.linhas);
+  final int colunas;
+  final int linhas;
+
+  /// Quantas etiquetas cabem numa folha.
+  int get porFolha => colunas * linhas;
+}
+
+/// Quantas etiquetas de [etiqueta] cabem numa [folha] (sem rodar as
+/// etiquetas, para o texto sair sempre na posição certa). 0 × 0 se nem uma.
+DisposicaoFolha disposicaoFolha(
+  TamanhoEtiqueta folha,
+  TamanhoEtiqueta etiqueta,
+) {
+  if (etiqueta.larguraMm <= 0 || etiqueta.alturaMm <= 0) {
+    return const DisposicaoFolha(0, 0);
+  }
+  final c = folha.larguraMm ~/ etiqueta.larguraMm;
+  final l = folha.alturaMm ~/ etiqueta.alturaMm;
+  return c == 0 || l == 0 ? const DisposicaoFolha(0, 0) : DisposicaoFolha(c, l);
+}
 
 /// Aproxima uma medida qualquer (ex.: guardada por uma versão antiga) a um
 /// tamanho padrão: o igual; senão o da mesma largura com altura suficiente
@@ -80,6 +109,8 @@ class EtiquetaPrefs {
     this.larguraMm = 50,
     this.alturaTotalMm = 80,
     this.alturaFrenteMm = frenteMinMm,
+    this.folha,
+    this.linhasDeCorte = true,
   });
 
   final bool resumida;
@@ -97,6 +128,13 @@ class EtiquetaPrefs {
 
   /// Entre [frenteMinMm] e [frenteMaxMm]; a parte de baixo ocupa o resto.
   final int alturaFrenteMm;
+
+  /// Folha maior onde se juntam várias etiquetas (para recortar); `null` =
+  /// uma etiqueta por página.
+  final TamanhoEtiqueta? folha;
+
+  /// Linhas tracejadas entre as etiquetas da folha, para recortar.
+  final bool linhasDeCorte;
 
   TamanhoEtiqueta get tamanho => TamanhoEtiqueta(larguraMm, alturaTotalMm);
 
@@ -120,6 +158,13 @@ class EtiquetaPrefs {
                         : 25)
               : 80);
     final tamanho = tamanhoPadrao(largura, total);
+    final fl = raw['folhaLarguraMm'];
+    final fa = raw['folhaAlturaMm'];
+    TamanhoEtiqueta? folha;
+    if (fl is num && fa is num) {
+      final t = TamanhoEtiqueta(fl.round(), fa.round());
+      if (tamanhosFolha.contains(t)) folha = t;
+    }
     return EtiquetaPrefs(
       resumida: raw['resumida'] == true,
       modoNutri: porNome(
@@ -143,6 +188,8 @@ class EtiquetaPrefs {
         frenteMinMm,
         frenteMaxMm,
       ),
+      folha: folha,
+      linhasDeCorte: raw['linhasDeCorte'] != false,
     );
   }
 
@@ -156,6 +203,9 @@ class EtiquetaPrefs {
     'larguraMm': larguraMm,
     'alturaTotalMm': alturaTotalMm,
     'alturaFrenteMm': alturaFrenteMm,
+    'folhaLarguraMm': folha?.larguraMm ?? 0,
+    'folhaAlturaMm': folha?.alturaMm ?? 0,
+    'linhasDeCorte': linhasDeCorte,
   };
 }
 
@@ -186,6 +236,8 @@ class EtiquetaDados {
     this.larguraMm = 50,
     this.alturaTotalMm = 80,
     this.alturaFrenteMm = frenteMinMm,
+    this.folha,
+    this.linhasDeCorte = true,
   });
 
   final String nome;
@@ -235,11 +287,39 @@ class EtiquetaDados {
   /// Altura da parte de baixo (depois da dobra): o que sobra.
   int get alturaCorpoMm => alturaTotalMm - alturaFrenteMm;
 
+  /// Folha maior onde se juntam várias etiquetas para recortar; `null` = uma
+  /// etiqueta por página.
+  final TamanhoEtiqueta? folha;
+
+  /// Linhas tracejadas de corte entre as etiquetas da folha.
+  final bool linhasDeCorte;
+
+  /// Como as etiquetas se arrumam na folha (0 × 0 se não há folha ou não cabe).
+  DisposicaoFolha get disposicao => folha == null
+      ? const DisposicaoFolha(0, 0)
+      : disposicaoFolha(folha!, TamanhoEtiqueta(larguraMm, alturaTotalMm));
+
+  /// Quantas etiquetas vão em cada página (1 sem folha).
+  int get etiquetasPorFolha =>
+      disposicao.porFolha < 1 ? 1 : disposicao.porFolha;
+
+  /// Há folha e cabe mais do que uma etiqueta nela.
+  bool get emFolha => disposicao.porFolha > 1;
+
+  /// Páginas necessárias para [copias] etiquetas.
+  int get paginas {
+    final n = copias < 1 ? 1 : copias;
+    return (n + etiquetasPorFolha - 1) ~/ etiquetasPorFolha;
+  }
+
   DateTime get validade => fabrico.add(Duration(days: validadeDias));
 }
 
 /// O que falta para a etiqueta ficar completa (lista vazia = nada a apontar).
 List<String> avisosEtiqueta(EtiquetaDados d) => [
+  if (d.folha != null && d.disposicao.porFolha < 1)
+    'A etiqueta de ${d.larguraMm} × ${d.alturaTotalMm} mm não cabe na folha '
+        'de ${d.folha!.label}',
   if (d.ingredientes == null || d.ingredientes!.vazia)
     'Sem lista de ingredientes',
   if (d.produtor.trim().isEmpty) 'Falta o nome e a morada do produtor',
@@ -308,7 +388,11 @@ String _ingredientesHtml(ListaIngredientes lista) {
   return b.toString();
 }
 
-String _etiquetaHtml(EtiquetaDados d, {required bool repetida}) {
+String _etiquetaHtml(
+  EtiquetaDados d, {
+  required bool repetida,
+  String extra = '',
+}) {
   final nutri = d.nutri;
   final lista = d.ingredientes == null
       ? null
@@ -357,7 +441,7 @@ String _etiquetaHtml(EtiquetaDados d, {required bool repetida}) {
     );
   }
   return '''
-<div class="etq${repetida ? ' rep' : ''}">
+<div class="etq${repetida ? ' rep' : ''}$extra">
 <section class="topo"><h1>${_esc(d.nome)}</h1>${d.subnome.trim().isEmpty ? '' : '<p class="sub">${_esc(d.subnome.trim())}</p>'}${d.descricao.trim().isEmpty ? '' : '<p class="desc">${_esc(d.descricao.trim())}</p>'}${d.pesoLiquidoG > 0 ? '<p class="peso">Peso líquido: ${_g(d.pesoLiquidoG, casas: 0)} g${d.mostrarE ? ' ℮' : ''}</p>' : ''}</section>
 <section class="corpo">
 $corpo</section>
@@ -372,10 +456,47 @@ $corpo</section>
 /// mínimas medidas (`etq:<token>:<frente>:<corpo>`), para a app as mostrar.
 String etiquetaPagina(EtiquetaDados d, {String tokenMedicao = ''}) {
   final copias = d.copias < 1 ? 1 : d.copias;
+  final emFolha = d.emFolha;
+  final disp = d.disposicao;
+  final pagLarg = emFolha ? d.folha!.larguraMm : d.larguraMm;
+  final pagAlt = emFolha ? d.folha!.alturaMm : d.alturaTotalMm;
   final etiquetas = StringBuffer();
-  for (var i = 0; i < copias; i++) {
-    etiquetas.writeln(_etiquetaHtml(d, repetida: i > 0));
+  if (emFolha) {
+    // várias etiquetas por folha: grelha (colunas × linhas), com linhas
+    // tracejadas entre elas para recortar; a última folha pode ficar a meio
+    final porFolha = disp.porFolha;
+    for (var f = 0; f < d.paginas; f++) {
+      etiquetas.writeln('<div class="folha${f > 0 ? ' rep' : ''}">');
+      final nesta = (copias - f * porFolha).clamp(0, porFolha);
+      for (var i = 0; i < nesta; i++) {
+        final col = i % disp.colunas;
+        final lin = i ~/ disp.colunas;
+        final extra =
+            '${d.linhasDeCorte && col < disp.colunas - 1 ? ' dc' : ''}'
+            '${d.linhasDeCorte && lin < disp.linhas - 1 ? ' db' : ''}';
+        etiquetas.writeln(_etiquetaHtml(d, repetida: false, extra: extra));
+      }
+      etiquetas.writeln('</div>');
+    }
+  } else {
+    for (var i = 0; i < copias; i++) {
+      etiquetas.writeln(_etiquetaHtml(d, repetida: i > 0));
+    }
   }
+  // ecrã: a folha cabe em ~900 px
+  final zoomFolha = (900 / (pagLarg * 3.7795))
+      .clamp(1.0, 4.0)
+      .toStringAsFixed(2);
+  final textoBotao = emFolha
+      ? 'Imprimir $copias etiqueta${copias == 1 ? '' : 's'} '
+            '(${d.paginas} folha${d.paginas == 1 ? '' : 's'})'
+      : 'Imprimir $copias etiqueta${copias == 1 ? '' : 's'}';
+  final textoMedidas = emFolha
+      ? '${d.larguraMm} × ${d.alturaTotalMm} mm × ${disp.porFolha} por folha de '
+            '$pagLarg × $pagAlt mm (${disp.colunas} × ${disp.linhas}); recorta pelas '
+            'linhas tracejadas. No diálogo: papel $pagLarg × $pagAlt mm, margens '
+            'nenhumas, escala 100 %.'
+      : '${d.larguraMm} × ${d.alturaTotalMm} mm · frente ${d.alturaFrenteMm} mm + ${d.alturaCorpoMm} mm depois da dobra. No diálogo: papel ${d.larguraMm} × ${d.alturaTotalMm} mm, margens nenhumas, escala 100 %.';
   return '''
 <!DOCTYPE html>
 <html lang="pt">
@@ -383,11 +504,18 @@ String etiquetaPagina(EtiquetaDados d, {String tokenMedicao = ''}) {
 <meta charset="utf-8">
 <title>Etiqueta — ${_esc(d.nome)}</title>
 <style>
-  @page { size: ${d.larguraMm}mm ${d.alturaTotalMm}mm; margin: 0; }
+  @page { size: ${pagLarg}mm ${pagAlt}mm; margin: 0; }
   * { box-sizing: border-box; }
   body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #000; }
   .etq { width: ${d.larguraMm}mm; height: ${d.alturaTotalMm}mm; overflow: hidden; background: #fff; break-after: page; page-break-after: always; position: relative; }
   .etq:last-child { break-after: auto; page-break-after: auto; }
+  .folha { width: ${pagLarg}mm; height: ${pagAlt}mm; display: grid; grid-template-columns: repeat(${disp.colunas < 1 ? 1 : disp.colunas}, ${d.larguraMm}mm); grid-auto-rows: ${d.alturaTotalMm}mm; align-content: start; justify-content: start; overflow: hidden; background: #fff; break-after: page; page-break-after: always; }
+  .folha:last-child { break-after: auto; page-break-after: auto; }
+  .folha .etq { break-after: auto; page-break-after: auto; }
+  .etq.dc::after, .etq.db::after { content: ''; position: absolute; inset: 0; pointer-events: none; }
+  .etq.dc::after { border-right: 0.2mm dashed #000; }
+  .etq.db::after { border-bottom: 0.2mm dashed #000; }
+  .etq.dc.db::after { border-right: 0.2mm dashed #000; border-bottom: 0.2mm dashed #000; }
   .topo { height: ${d.alturaFrenteMm}mm; padding: 1.2mm 2.5mm; overflow: hidden; text-align: center; display: flex; flex-direction: column; justify-content: center; }
   .topo h1 { font-size: 13pt; margin: 0 0 0.6mm; text-transform: uppercase; line-height: 1.05; }
   .topo .sub { font-size: 9pt; font-weight: bold; margin: 0 0 0.6mm; line-height: 1.1; }
@@ -413,6 +541,9 @@ String etiquetaPagina(EtiquetaDados d, {String tokenMedicao = ''}) {
     .barra .aviso { color: #b00020; margin-top: 8px; }
     .etq { zoom: 4; margin: 0 auto 16px; box-shadow: 0 1px 6px rgba(0,0,0,.4); }
     .etq.rep { display: none; }
+    .folha { width: auto; height: auto; grid-template-columns: repeat(${disp.colunas < 1 ? 1 : disp.colunas}, auto); grid-auto-rows: auto; overflow: visible; justify-content: center; gap: 0; margin: 0 auto 16px; }
+    .folha.rep { display: none; }
+    .folha .etq { zoom: $zoomFolha; margin: 0; box-shadow: none; outline: 0.1mm solid #bbb; }
     .etq .topo { border-bottom: 0.15mm dashed #999; }
     .etq.estoira { outline: 0.4mm solid #b00020; }
   }
@@ -421,8 +552,8 @@ String etiquetaPagina(EtiquetaDados d, {String tokenMedicao = ''}) {
 </head>
 <body>
 <div class="barra">
-  <button onclick="window.print()">Imprimir $copias etiqueta${copias == 1 ? '' : 's'}</button>
-  <span> ${d.larguraMm} × ${d.alturaTotalMm} mm · frente ${d.alturaFrenteMm} mm + ${d.alturaCorpoMm} mm depois da dobra. No diálogo: papel ${d.larguraMm} × ${d.alturaTotalMm} mm, margens nenhumas, escala 100 %.</span>
+  <button onclick="window.print()">$textoBotao</button>
+  <span> $textoMedidas</span>
   <div id="medido"></div>
   <div class="aviso" id="aviso"></div>
 </div>
