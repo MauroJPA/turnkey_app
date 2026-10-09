@@ -7,6 +7,7 @@ import '../../pricing/data/canal_venda_repository.dart';
 import '../../pricing/domain/canal_venda.dart';
 import '../../pricing/domain/cost_config.dart';
 import 'canal_sheet.dart';
+import '../../../app/theme/cores_estado.dart';
 
 /// Preços por canal de venda: a loja, as plataformas de entrega, os
 /// revendedores… Cada canal tem as suas taxas em cascata. Para cada um mostra
@@ -249,7 +250,7 @@ class _CartaoCanal extends StatelessWidget {
               if (r.totalTaxas > 0) _Seg('Taxas', r.totalTaxas, cs.error),
               _Seg('Custo', custoCanal, cs.tertiary),
               _Seg('Estrutura', estrutura, cs.secondary),
-              if (lucro > 0) _Seg('Lucro', lucro, Colors.green),
+              if (lucro > 0) _Seg('Lucro', lucro, cs.sucesso),
             ],
             fmt: fmt,
           ),

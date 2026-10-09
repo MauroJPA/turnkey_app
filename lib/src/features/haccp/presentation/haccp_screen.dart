@@ -14,6 +14,7 @@ import 'haccp_controlo_dialog.dart';
 import 'haccp_icones.dart';
 import 'haccp_registo_sheet.dart';
 import 'haccp_relatorio_acao.dart';
+import '../../../app/theme/cores_estado.dart';
 
 String _dmy(DateTime d) =>
     '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
@@ -204,7 +205,7 @@ class _CartaoControlo extends StatelessWidget {
     final (cor, texto) = switch (status.estado) {
       EstadoControlo.emDia => (cs.primary, 'Em dia'),
       EstadoControlo.pendenteHoje => (
-        Colors.orange.shade800,
+        cs.aviso,
         c.esperadosPorDia > 1
             ? 'Hoje: ${status.feitosHoje} de ${status.esperadosHoje}'
             : 'Fazer hoje',

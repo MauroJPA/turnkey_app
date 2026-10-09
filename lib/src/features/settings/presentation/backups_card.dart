@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/mensagem_amigavel.dart';
 import '../data/backups_repository.dart';
+import '../../../app/theme/cores_estado.dart';
 
 /// "Estado dos backups" para administradores: o último backup automático e a
 /// cópia para fora do servidor, com aviso se algo falhou ou está atrasado.
@@ -47,7 +48,7 @@ class BackupsCard extends ConsumerWidget {
         if (s == null) return const SizedBox.shrink();
         final agora = DateTime.now().toUtc();
         final problema = s.problema(agora);
-        final cor = problema ? cs.error : Colors.green;
+        final cor = problema ? cs.error : cs.sucesso;
         return Container(
           margin: const EdgeInsets.symmetric(vertical: 4),
           padding: const EdgeInsets.all(12),
@@ -233,7 +234,7 @@ class _Linha extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final cor = neutro ? cs.outline : (ok ? Colors.green : cs.error);
+    final cor = neutro ? cs.outline : (ok ? cs.sucesso : cs.error);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(

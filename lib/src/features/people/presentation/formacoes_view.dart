@@ -13,14 +13,15 @@ import '../application/formacoes_providers.dart';
 import '../data/formacoes_repository.dart';
 import '../domain/formacao.dart';
 import '../domain/ponto.dart';
+import '../../../app/theme/cores_estado.dart';
 
 String _data(DateTime d) =>
     '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 
 Color _cor(EstadoValidade e, ColorScheme cs) => switch (e) {
   EstadoValidade.caducada => cs.error,
-  EstadoValidade.aCaducar => Colors.orange,
-  EstadoValidade.valida => Colors.green,
+  EstadoValidade.aCaducar => cs.aviso,
+  EstadoValidade.valida => cs.sucesso,
   EstadoValidade.semValidade => cs.outline,
 };
 

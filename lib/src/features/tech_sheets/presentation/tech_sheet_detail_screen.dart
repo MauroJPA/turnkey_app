@@ -22,6 +22,7 @@ import 'canais_preco.dart';
 import 'declaracao_nutricional_sheet.dart';
 import 'ficha_form_sheet.dart';
 import 'quebra_preco.dart';
+import '../../../app/theme/cores_estado.dart';
 
 class TechSheetDetailScreen extends ConsumerStatefulWidget {
   const TechSheetDetailScreen({super.key, required this.fichaId});
@@ -292,8 +293,8 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
                 itens: [for (final sd in d.ficha.custoSemDados) sd.nome],
               ),
               _AvisoIncompleto(
-                cor: Colors.amber.shade100,
-                corTexto: Colors.amber.shade900,
+                cor: Theme.of(context).colorScheme.avisoSuave,
+                corTexto: Theme.of(context).colorScheme.sobreAvisoSuave,
                 icone: Icons.local_dining_outlined,
                 titulo: 'Nutrição em falta',
                 itens: d.ficha.nutri.completo

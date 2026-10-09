@@ -13,6 +13,7 @@ import '../../tech_sheets/application/tech_sheets_providers.dart';
 import '../../tech_sheets/domain/tech_sheet.dart';
 import '../data/capacidade_forno_repository.dart';
 import '../domain/rentabilidade.dart';
+import '../../../app/theme/cores_estado.dart';
 
 /// Rentabilidade: que produtos dão mais lucro — por unidade, por hora de forno
 /// e em margem — vendidos na loja ou em cada canal (com as suas taxas).
@@ -272,7 +273,7 @@ class _Linha extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final cor = l.prejuizo ? cs.error : Colors.green;
+    final cor = l.prejuizo ? cs.error : cs.sucesso;
     final frac = (l.lucroUn.abs() / maxAbs).clamp(0.02, 1.0);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),

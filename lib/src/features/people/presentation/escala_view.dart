@@ -17,6 +17,7 @@ import '../domain/escala.dart';
 import '../domain/ferias.dart';
 import '../domain/ponto.dart';
 import 'escala_lote_sheet.dart';
+import '../../../app/theme/cores_estado.dart';
 
 void _atualizar(WidgetRef ref) => atualizarEscala(ref);
 
@@ -481,8 +482,8 @@ class _Celula extends StatelessWidget {
       ),
       EstadoDia.ausente => (
         dia.ausencia?.tipo == TipoAusencia.ferias
-            ? Colors.green.withValues(alpha: 0.35)
-            : Colors.orange.withValues(alpha: 0.35),
+            ? cs.sucesso.withValues(alpha: 0.35)
+            : cs.aviso.withValues(alpha: 0.35),
         cs.onSurface,
       ),
     };
