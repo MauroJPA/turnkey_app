@@ -53,3 +53,6 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 /dist/
+
+# servidor de ensaio local (scripts/ensaio.py)
+.ensaio/
