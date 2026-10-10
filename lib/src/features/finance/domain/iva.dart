@@ -36,11 +36,13 @@ class LinhaIva {
 DateTime _dia(DateTime d) => DateTime(d.year, d.month, d.day);
 
 /// O IVA de cada linha de venda. [taxaPadraoPercent] (0 = não definida) só
-/// se usa nas linhas sem o valor sem IVA registado.
+/// se usa nas linhas sem o valor sem IVA registado; [taxaPorFicha] é a taxa
+/// própria de cada produto (ex.: bebidas), que ganha à da empresa.
 List<LinhaIva> linhasDeIva({
   required List<Venda> vendas,
   required List<VendaItem> itens,
   required double taxaPadraoPercent,
+  Map<String, double> taxaPorFicha = const {},
 }) {
   final porVenda = {for (final v in vendas) v.id: v};
   final out = <LinhaIva>[];
@@ -57,12 +59,13 @@ List<LinhaIva> linhasDeIva({
           origem: OrigemIva.registado,
         ),
       );
-    } else if (taxaPadraoPercent > 0) {
+    } else if ((taxaPorFicha[it.fichaId] ?? taxaPadraoPercent) > 0) {
+      final taxa = taxaPorFicha[it.fichaId] ?? taxaPadraoPercent;
       out.add(
         LinhaIva(
           dia: _dia(v.data),
           bruto: bruto,
-          iva: bruto - bruto / (1 + taxaPadraoPercent / 100),
+          iva: bruto - bruto / (1 + taxa / 100),
           origem: OrigemIva.estimado,
         ),
       );

@@ -77,8 +77,8 @@ class FichaActions {
     _ref.invalidate(fichasListProvider);
   }
 
-  Future<FichaTecnica> create(FichaInput input) async {
-    final f = await _repo.create(input);
+  Future<FichaTecnica> create(FichaInput input, {bool revenda = false}) async {
+    final f = await _repo.create(input, revenda: revenda);
     _refreshLists();
     return f;
   }
@@ -101,6 +101,11 @@ class FichaActions {
   Future<void> restore(String id) async {
     await _repo.setDeleted(id, deletado: false);
     _refreshLists();
+  }
+
+  Future<void> setIva(String id, double? pct) async {
+    await _repo.setIva(id, pct);
+    _refreshDetail(id);
   }
 
   Future<void> setPrecoVenda(String id, double valor) async {

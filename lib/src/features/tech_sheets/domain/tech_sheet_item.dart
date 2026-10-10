@@ -18,6 +18,10 @@ class ItemFicha with _$ItemFicha {
     @Default(0) double quantidadeG,
     @Default('') String nomeResolvido,
     @Default(0) double custoPorGramaResolvido,
+
+    /// Unidade das quantidades de um ingrediente: `g`, `ml` ou `un` (garrafas,
+    /// latas… na revenda).
+    @Default('g') String unidade,
   }) = _ItemFicha;
 
   const ItemFicha._();
@@ -32,9 +36,18 @@ class ItemFicha with _$ItemFicha {
   double get custoLinha => custoPorGramaResolvido * quantidadeG;
   String get nome => nomeResolvido.isEmpty ? 'Item' : nomeResolvido;
 
+  /// "120 g", "33 ml", "1 un".
+  String get quantidadeTexto {
+    final q = quantidadeG == quantidadeG.roundToDouble()
+        ? quantidadeG.toStringAsFixed(0)
+        : quantidadeG.toStringAsFixed(1);
+    return '$q $unidade';
+  }
+
   factory ItemFicha.fromRecord(RecordModel r) {
     var nome = '';
     var cpg = 0.0;
+    var unidade = 'g';
 
     final ing = r.get<List<RecordModel>>('expand.ingrediente', []);
     final rec = r.get<List<RecordModel>>('expand.receita', []);
@@ -54,6 +67,8 @@ class ItemFicha with _$ItemFicha {
     } else if (ing.isNotEmpty) {
       final e = ing.first;
       nome = e.getStringValue('nome');
+      final u = e.getStringValue('unidade');
+      if (u == 'ml' || u == 'un') unidade = u;
       final preco = e.getDoubleValue('preco');
       final g = e.getDoubleValue('gramas_embalagem');
       cpg = g > 0 ? preco / g : 0;
@@ -81,6 +96,7 @@ class ItemFicha with _$ItemFicha {
       quantidadeG: r.getDoubleValue('quantidade_g'),
       nomeResolvido: nome,
       custoPorGramaResolvido: cpg,
+      unidade: unidade,
     );
   }
 }

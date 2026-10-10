@@ -27,6 +27,7 @@ mixin _$ItemFicha {
   double get quantidadeG => throw _privateConstructorUsedError;
   String get nomeResolvido => throw _privateConstructorUsedError;
   double get custoPorGramaResolvido => throw _privateConstructorUsedError;
+  String get unidade => throw _privateConstructorUsedError;
 
   /// Create a copy of ItemFicha
   /// with the given fields replaced by the non-null parameter values.
@@ -51,6 +52,7 @@ abstract class $ItemFichaCopyWith<$Res> {
     double quantidadeG,
     String nomeResolvido,
     double custoPorGramaResolvido,
+    String unidade,
   });
 }
 
@@ -79,6 +81,7 @@ class _$ItemFichaCopyWithImpl<$Res, $Val extends ItemFicha>
     Object? quantidadeG = null,
     Object? nomeResolvido = null,
     Object? custoPorGramaResolvido = null,
+    Object? unidade = null,
   }) {
     return _then(
       _value.copyWith(
@@ -122,6 +125,10 @@ class _$ItemFichaCopyWithImpl<$Res, $Val extends ItemFicha>
                 ? _value.custoPorGramaResolvido
                 : custoPorGramaResolvido // ignore: cast_nullable_to_non_nullable
                       as double,
+            unidade: null == unidade
+                ? _value.unidade
+                : unidade // ignore: cast_nullable_to_non_nullable
+                      as String,
           )
           as $Val,
     );
@@ -148,6 +155,7 @@ abstract class _$$ItemFichaImplCopyWith<$Res>
     double quantidadeG,
     String nomeResolvido,
     double custoPorGramaResolvido,
+    String unidade,
   });
 }
 
@@ -175,6 +183,7 @@ class __$$ItemFichaImplCopyWithImpl<$Res>
     Object? quantidadeG = null,
     Object? nomeResolvido = null,
     Object? custoPorGramaResolvido = null,
+    Object? unidade = null,
   }) {
     return _then(
       _$ItemFichaImpl(
@@ -218,6 +227,10 @@ class __$$ItemFichaImplCopyWithImpl<$Res>
             ? _value.custoPorGramaResolvido
             : custoPorGramaResolvido // ignore: cast_nullable_to_non_nullable
                   as double,
+        unidade: null == unidade
+            ? _value.unidade
+            : unidade // ignore: cast_nullable_to_non_nullable
+                  as String,
       ),
     );
   }
@@ -237,6 +250,7 @@ class _$ItemFichaImpl extends _ItemFicha {
     this.quantidadeG = 0,
     this.nomeResolvido = '',
     this.custoPorGramaResolvido = 0,
+    this.unidade = 'g',
   }) : super._();
 
   @override
@@ -262,10 +276,13 @@ class _$ItemFichaImpl extends _ItemFicha {
   @override
   @JsonKey()
   final double custoPorGramaResolvido;
+  @override
+  @JsonKey()
+  final String unidade;
 
   @override
   String toString() {
-    return 'ItemFicha(id: $id, fichaId: $fichaId, slot: $slot, ingredienteId: $ingredienteId, receitaId: $receitaId, embalagemId: $embalagemId, kitId: $kitId, quantidadeG: $quantidadeG, nomeResolvido: $nomeResolvido, custoPorGramaResolvido: $custoPorGramaResolvido)';
+    return 'ItemFicha(id: $id, fichaId: $fichaId, slot: $slot, ingredienteId: $ingredienteId, receitaId: $receitaId, embalagemId: $embalagemId, kitId: $kitId, quantidadeG: $quantidadeG, nomeResolvido: $nomeResolvido, custoPorGramaResolvido: $custoPorGramaResolvido, unidade: $unidade)';
   }
 
   @override
@@ -288,7 +305,8 @@ class _$ItemFichaImpl extends _ItemFicha {
             (identical(other.nomeResolvido, nomeResolvido) ||
                 other.nomeResolvido == nomeResolvido) &&
             (identical(other.custoPorGramaResolvido, custoPorGramaResolvido) ||
-                other.custoPorGramaResolvido == custoPorGramaResolvido));
+                other.custoPorGramaResolvido == custoPorGramaResolvido) &&
+            (identical(other.unidade, unidade) || other.unidade == unidade));
   }
 
   @override
@@ -304,6 +322,7 @@ class _$ItemFichaImpl extends _ItemFicha {
     quantidadeG,
     nomeResolvido,
     custoPorGramaResolvido,
+    unidade,
   );
 
   /// Create a copy of ItemFicha
@@ -327,6 +346,7 @@ abstract class _ItemFicha extends ItemFicha {
     final double quantidadeG,
     final String nomeResolvido,
     final double custoPorGramaResolvido,
+    final String unidade,
   }) = _$ItemFichaImpl;
   const _ItemFicha._() : super._();
 
@@ -350,6 +370,8 @@ abstract class _ItemFicha extends ItemFicha {
   String get nomeResolvido;
   @override
   double get custoPorGramaResolvido;
+  @override
+  String get unidade;
 
   /// Create a copy of ItemFicha
   /// with the given fields replaced by the non-null parameter values.

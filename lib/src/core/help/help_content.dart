@@ -8,6 +8,7 @@ enum HelpTopic {
   receitas,
   receitaDetalhe,
   fichas,
+  revenda,
   fichaDetalhe,
   produzir,
   agendar,
@@ -117,11 +118,24 @@ const Map<HelpTopic, HelpEntry> helpContent = {
   HelpTopic.fichas: (
     titulo: 'Fichas técnicas',
     paragrafos: [
+      'A página chama-se "Produtos para venda" e tem duas secções: Fichas técnicas (o que produzimos) e Revenda (o que compramos já feito para revender, como bebidas). Troca entre elas nos botões do topo.',
       'Uma ficha técnica é o produto final que vende — por exemplo "Cookie Boston".',
       'Junta uma massa, um recheio e/ou uma cobertura, e diz o peso de cada parte.',
       'Serve para saber o custo e o preço de venda sugerido.',
       'Na lista, cada ficha mostra os dois preços: "sugerido" (calculado a partir do custo e dos Percentuais de custo) e "venda" (o preço real que praticas). Toca no preço de venda para o editar sem precisar de abrir a ficha.',
       'O botão de ordenar (seta) organiza por Nome, Custo ou Preço de venda; os chips de categoria (quando há mais do que uma) filtram a lista.',
+    ],
+  ),
+  HelpTopic.revenda: (
+    titulo: 'Revenda',
+    paragrafos: [
+      'Produtos que compras já feitos e revendes tal como vêm: água, Coca-Cola, Compal, snacks… Ficam em "Produtos para venda" → Revenda, separados das fichas técnicas (o que produzimos).',
+      'Criar: + → nome (ex.: "Coca-Cola lata 33 cl") e categoria (ex.: Bebidas). Depois, no produto, em "Artigo comprado" → Adicionar → escolhe o artigo que compras (o ingrediente que entra pelas faturas, de preferência medido em unidades) e a quantidade (normalmente 1). O custo, a nutrição e o histórico saem dele, e o custo atualiza-se sozinho quando entra uma fatura com preço novo.',
+      'Preço de venda, preço sugerido, quebra de preço (custo, impostos, lucro) e canais (taxas das plataformas) funcionam como numa ficha técnica, para saber por quanto vender e quanto fica de lucro líquido.',
+      'IVA: as bebidas costumam ter uma taxa diferente da dos bolos. No produto, toca na linha "IVA" e põe a taxa deste produto (ex.: 23); "Usar a da empresa" volta à das Configurações. A linha mostra quanto IVA vai em cada venda, e essa taxa é usada na quebra de preço, nos canais, na tabela de revendedores e no IVA estimado da Contabilidade (quando a venda não traz o IVA do Vendus). Confirma a taxa certa com o teu contabilista.',
+      'Pode levar embalagem (copo, palhinha…) nos blocos de embalagem, como numa ficha.',
+      'Os produtos de revenda aparecem nas vendas, encomendas, rentabilidade e tabela de revendedores, mas não na produção, no "Quantos assar" nem na contagem de fornadas.',
+      'Na lista, o ícone dos talheres a vermelho só avisa da nutrição em falta (a validade e a conservação vêm no rótulo do próprio produto).',
     ],
   ),
   HelpTopic.fichaDetalhe: (

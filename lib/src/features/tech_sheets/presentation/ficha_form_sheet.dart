@@ -16,20 +16,32 @@ Future<FichaInput?> showFichaFormSheet(
   /// estiver definido) — ex.: a partir da descrição de uma linha de venda
   /// sem produto identificado.
   String nomeInicial = '',
+
+  /// Produto de revenda (só nome e categoria; sem formato, forno nem
+  /// validade). Ao editar, vale o do produto.
+  bool revenda = false,
 }) {
   return showModalBottomSheet<FichaInput>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (_) =>
-        _FichaFormSheet(existente: existente, nomeInicial: nomeInicial),
+    builder: (_) => _FichaFormSheet(
+      existente: existente,
+      nomeInicial: nomeInicial,
+      revenda: existente?.revenda ?? revenda,
+    ),
   );
 }
 
 class _FichaFormSheet extends ConsumerStatefulWidget {
-  const _FichaFormSheet({this.existente, this.nomeInicial = ''});
+  const _FichaFormSheet({
+    this.existente,
+    this.nomeInicial = '',
+    this.revenda = false,
+  });
   final FichaTecnica? existente;
   final String nomeInicial;
+  final bool revenda;
 
   @override
   ConsumerState<_FichaFormSheet> createState() => _FichaFormSheetState();
@@ -129,12 +141,14 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
   @override
   Widget build(BuildContext context) {
     final editar = widget.existente != null;
+    final revenda = widget.revenda;
     final formatos = ref.watch(formatosProvider).valueOrNull ?? const [];
     final categoriasUsadas = {
       for (final f
           in ref.watch(fichasListProvider(false)).valueOrNull ??
               const <FichaTecnica>[])
-        if (f.categoria.trim().isNotEmpty) f.categoria.trim(),
+        if (f.revenda == revenda && f.categoria.trim().isNotEmpty)
+          f.categoria.trim(),
     }.toList()..sort();
     final visiveis = formatos
         .where((f) => f.ativo || f.id == _formatoId)
@@ -162,14 +176,21 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      editar ? 'Editar ficha' : 'Nova ficha técnica',
+                      revenda
+                          ? (editar
+                                ? 'Editar produto de revenda'
+                                : 'Novo produto de revenda')
+                          : (editar ? 'Editar ficha' : 'Nova ficha técnica'),
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _nome,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Nome do produto *',
+                        hintText: revenda
+                            ? 'Ex.: Água 50 cl, Coca-Cola lata 33 cl'
+                            : null,
                       ),
                       textCapitalization: TextCapitalization.sentences,
                       validator: (v) => (v == null || v.trim().isEmpty)
@@ -180,9 +201,12 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
                     TextFormField(
                       controller: _categoria,
                       textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Categoria (opcional)',
-                        helperText: 'Escreve uma nova ou toca numa já usada.',
+                        helperText: revenda
+                            ? 'Ex.: Bebidas, Snacks. Escreve uma nova ou toca '
+                                  'numa já usada.'
+                            : 'Escreve uma nova ou toca numa já usada.',
                       ),
                       onChanged: (_) => setState(() {}),
                     ),
@@ -205,170 +229,182 @@ class _FichaFormSheetState extends ConsumerState<_FichaFormSheet> {
                           ],
                         ),
                       ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _subnome,
-                      maxLength: 60,
-                      textCapitalization: TextCapitalization.words,
-                      decoration: const InputDecoration(
-                        labelText: 'Subnome (opcional)',
-                        helperText:
-                            'Ex.: Red Velvet. Pode ir na etiqueta, por baixo '
-                            'do nome.',
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            initialValue: valor,
-                            isExpanded: true,
-                            decoration: const InputDecoration(
-                              labelText: 'Formato do cookie (opcional)',
-                              helperText:
-                                  'Mini, Recheado, Simples… define o peso por '
-                                  'unidade. Se não existe, cria-o aqui.',
-                              helperMaxLines: 2,
-                            ),
-                            items: [
-                              const DropdownMenuItem(
-                                value: '',
-                                child: Text('Sem formato'),
-                              ),
-                              for (final f in visiveis)
-                                DropdownMenuItem(
-                                  value: f.id,
-                                  child: Text(
-                                    f.rotulo,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              const DropdownMenuItem(
-                                value: _novoFormato,
-                                child: Text('＋ Novo formato…'),
-                              ),
-                            ],
-                            onChanged: (v) {
-                              if (v == _novoFormato) {
-                                _criarFormato();
-                              } else {
-                                setState(() => _formatoId = v ?? '');
-                              }
-                            },
-                          ),
+                    if (revenda)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Text(
+                          'Depois de criar, escolhe o artigo comprado (o que '
+                          'entra pelas faturas): o custo, a nutrição e o lucro '
+                          'saem dele.',
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
-                        if (valor.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: IconButton(
-                              tooltip: 'Editar ou apagar este formato',
-                              icon: const Icon(Icons.edit_outlined),
-                              onPressed: () => _editarFormato(
-                                visiveis.firstWhere((f) => f.id == valor),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _descricao,
-                      maxLength: 300,
-                      minLines: 1,
-                      maxLines: 3,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(
-                        labelText: 'Característica (opcional)',
-                        helperText:
-                            'Curta: aparece por baixo do nome na etiqueta. '
-                            'Ex.: Brigadeiro de queijo creme e compota de frutos '
-                            'vermelhos.',
-                        helperMaxLines: 2,
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _validade,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Validade (dias)',
-                        helperText: 'a contar da data de fabrico',
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _assadura,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Tempo de assadura (minutos)',
-                        helperText:
-                            'Aparece na montagem do produto e no cronómetro do '
-                            'forno.',
-                        helperMaxLines: 2,
-                      ),
-                      validator: (v) {
-                        final t = (v ?? '').trim();
-                        if (t.isEmpty) return null;
-                        final n = int.tryParse(t);
-                        return (n == null || n < 1 || n > 600)
-                            ? 'Entre 1 e 600 minutos'
-                            : null;
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _temperatura,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Temperatura do forno (°C)',
-                        suffixText: '°C',
-                        helperText:
-                            'Aparece ao assar, junto com o tempo: "Assar a 170 °C '
-                            'durante 11 min".',
-                        helperMaxLines: 2,
-                      ),
-                      validator: (v) {
-                        final t = (v ?? '').trim();
-                        if (t.isEmpty) return null;
-                        final n = int.tryParse(t);
-                        return (n == null || n < 50 || n > 400)
-                            ? 'Entre 50 e 400 °C'
-                            : null;
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      key: ValueKey('conservacao-$_conservacaoSel'),
-                      initialValue: _conservacaoSel,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Conservação',
-                      ),
-                      items: [
-                        const DropdownMenuItem(
-                          value: '',
-                          child: Text('— escolher —'),
-                        ),
-                        for (final c in conservacoesPadrao)
-                          DropdownMenuItem(value: c, child: Text(c)),
-                        const DropdownMenuItem(
-                          value: _outro,
-                          child: Text('Outro…'),
-                        ),
-                      ],
-                      onChanged: (v) =>
-                          setState(() => _conservacaoSel = v ?? ''),
-                    ),
-                    if (_conservacaoSel == _outro)
+                    if (!revenda) ...[
+                      const SizedBox(height: 12),
                       TextFormField(
-                        controller: _conservacao,
-                        maxLength: 200,
+                        controller: _subnome,
+                        maxLength: 60,
+                        textCapitalization: TextCapitalization.words,
                         decoration: const InputDecoration(
-                          labelText: 'Modo de conservação',
+                          labelText: 'Subnome (opcional)',
+                          helperText:
+                              'Ex.: Red Velvet. Pode ir na etiqueta, por baixo '
+                              'do nome.',
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              initialValue: valor,
+                              isExpanded: true,
+                              decoration: const InputDecoration(
+                                labelText: 'Formato do cookie (opcional)',
+                                helperText:
+                                    'Mini, Recheado, Simples… define o peso por '
+                                    'unidade. Se não existe, cria-o aqui.',
+                                helperMaxLines: 2,
+                              ),
+                              items: [
+                                const DropdownMenuItem(
+                                  value: '',
+                                  child: Text('Sem formato'),
+                                ),
+                                for (final f in visiveis)
+                                  DropdownMenuItem(
+                                    value: f.id,
+                                    child: Text(
+                                      f.rotulo,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                const DropdownMenuItem(
+                                  value: _novoFormato,
+                                  child: Text('＋ Novo formato…'),
+                                ),
+                              ],
+                              onChanged: (v) {
+                                if (v == _novoFormato) {
+                                  _criarFormato();
+                                } else {
+                                  setState(() => _formatoId = v ?? '');
+                                }
+                              },
+                            ),
+                          ),
+                          if (valor.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: IconButton(
+                                tooltip: 'Editar ou apagar este formato',
+                                icon: const Icon(Icons.edit_outlined),
+                                onPressed: () => _editarFormato(
+                                  visiveis.firstWhere((f) => f.id == valor),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _descricao,
+                        maxLength: 300,
+                        minLines: 1,
+                        maxLines: 3,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: const InputDecoration(
+                          labelText: 'Característica (opcional)',
+                          helperText:
+                              'Curta: aparece por baixo do nome na etiqueta. '
+                              'Ex.: Brigadeiro de queijo creme e compota de frutos '
+                              'vermelhos.',
+                          helperMaxLines: 2,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _validade,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Validade (dias)',
+                          helperText: 'a contar da data de fabrico',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _assadura,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Tempo de assadura (minutos)',
+                          helperText:
+                              'Aparece na montagem do produto e no cronómetro do '
+                              'forno.',
+                          helperMaxLines: 2,
+                        ),
+                        validator: (v) {
+                          final t = (v ?? '').trim();
+                          if (t.isEmpty) return null;
+                          final n = int.tryParse(t);
+                          return (n == null || n < 1 || n > 600)
+                              ? 'Entre 1 e 600 minutos'
+                              : null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _temperatura,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Temperatura do forno (°C)',
+                          suffixText: '°C',
+                          helperText:
+                              'Aparece ao assar, junto com o tempo: "Assar a 170 °C '
+                              'durante 11 min".',
+                          helperMaxLines: 2,
+                        ),
+                        validator: (v) {
+                          final t = (v ?? '').trim();
+                          if (t.isEmpty) return null;
+                          final n = int.tryParse(t);
+                          return (n == null || n < 50 || n > 400)
+                              ? 'Entre 50 e 400 °C'
+                              : null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        key: ValueKey('conservacao-$_conservacaoSel'),
+                        initialValue: _conservacaoSel,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Conservação',
+                        ),
+                        items: [
+                          const DropdownMenuItem(
+                            value: '',
+                            child: Text('— escolher —'),
+                          ),
+                          for (final c in conservacoesPadrao)
+                            DropdownMenuItem(value: c, child: Text(c)),
+                          const DropdownMenuItem(
+                            value: _outro,
+                            child: Text('Outro…'),
+                          ),
+                        ],
+                        onChanged: (v) =>
+                            setState(() => _conservacaoSel = v ?? ''),
+                      ),
+                      if (_conservacaoSel == _outro)
+                        TextFormField(
+                          controller: _conservacao,
+                          maxLength: 200,
+                          decoration: const InputDecoration(
+                            labelText: 'Modo de conservação',
+                          ),
+                        ),
+                    ],
                   ],
                 ),
               ),

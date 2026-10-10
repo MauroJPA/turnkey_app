@@ -95,6 +95,14 @@ class FichaTecnica with _$FichaTecnica {
     /// corrigir, tal como `nutri.semDados`.
     @Default(<({String id, String nome})>[])
     List<({String id, String nome})> custoSemDados,
+
+    /// Produto de revenda (comprado já feito: água, Coca-Cola…), em vez de
+    /// produzido por nós. Tem o mesmo detalhe (custo, preço, nutrição,
+    /// histórico), mas não entra na produção nem na contagem de fornadas.
+    @Default(false) bool revenda,
+
+    /// Taxa de IVA própria deste produto (%); `null` = a da empresa.
+    double? ivaProduto,
   }) = _FichaTecnica;
 
   const FichaTecnica._();
@@ -104,6 +112,9 @@ class FichaTecnica with _$FichaTecnica {
   NutriCache get nutri => NutriCache.fromJson(nutriRaw);
 
   bool get temPrecoVenda => precoVenda > 0;
+
+  /// O IVA a usar nas contas deste produto: o seu, ou o da empresa.
+  double ivaPara(double ivaEmpresa) => ivaProduto ?? ivaEmpresa;
 
   /// Preço de venda (ao público, com IVA) sem o IVA de [ivaPct] %. O IVA é
   /// cobrado em cima do preço limpo, por isso as contas fazem-se sobre este.
@@ -153,6 +164,10 @@ class FichaTecnica with _$FichaTecnica {
       },
       custoCompleto: r.getBoolValue('custo_completo'),
       custoSemDados: _semDadosCusto(r.data['custo_sem_dados']),
+      revenda: r.getBoolValue('revenda'),
+      ivaProduto: r.getBoolValue('iva_proprio')
+          ? r.getDoubleValue('iva_pct')
+          : null,
     );
   }
 }

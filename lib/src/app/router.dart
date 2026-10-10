@@ -340,9 +340,20 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
+          // Produtos para venda: Fichas técnicas e Revenda (duas secções)
+          GoRoute(
+            path: Routes.revenda,
+            pageBuilder: (_, __) => const NoTransitionPage(
+              key: ValueKey('produtos-venda'),
+              child: TechSheetsScreen(revenda: true),
+            ),
+          ),
           GoRoute(
             path: Routes.techSheets,
-            builder: (_, __) => const TechSheetsScreen(),
+            pageBuilder: (_, __) => const NoTransitionPage(
+              key: ValueKey('produtos-venda'),
+              child: TechSheetsScreen(),
+            ),
             routes: [
               GoRoute(
                 path: ':id',

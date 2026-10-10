@@ -33,6 +33,22 @@ class DestinoApp {
 /// procuram: "férias", "preços", "DRE"…).
 const seccoesApp = <DestinoApp>[
   DestinoApp(
+    rota: Routes.revenda,
+    label: 'Revenda',
+    icon: Icons.local_drink_outlined,
+    pagina: 'fichas',
+    dentroDe: 'Produtos para venda',
+    palavras: 'bebidas agua coca-cola compal sumos revender',
+  ),
+  DestinoApp(
+    rota: Routes.techSheets,
+    label: 'Fichas técnicas',
+    icon: Icons.receipt_long_outlined,
+    pagina: 'fichas',
+    dentroDe: 'Produtos para venda',
+    palavras: 'ficha tecnica produto custo preco',
+  ),
+  DestinoApp(
     rota: Routes.productionPrevisao,
     label: 'Quantos assar',
     icon: Icons.local_fire_department_outlined,
@@ -267,7 +283,7 @@ const seccoesApp = <DestinoApp>[
 /// Páginas com várias secções onde faz sentido voltar à última vista (quem
 /// vai e volta entre o Ponto e as Férias, ou fica nos Relatórios). Fora a
 /// Produção, que abre sempre em "Produzir".
-const paginasComMemoria = {'financeiro', 'pessoas', 'inventario'};
+const paginasComMemoria = {'financeiro', 'pessoas', 'inventario', 'fichas'};
 
 /// As rotas (a da página e as das secções) que pertencem à página [chave].
 Set<String> rotasDaPagina(String chave) => {

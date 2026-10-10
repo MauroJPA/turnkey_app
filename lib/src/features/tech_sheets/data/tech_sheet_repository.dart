@@ -29,9 +29,14 @@ class TechSheetRepository {
   Future<FichaTecnica> getById(String id) async =>
       FichaTecnica.fromRecord(await _c.getOne(id));
 
-  Future<FichaTecnica> create(FichaInput input) async {
+  Future<FichaTecnica> create(FichaInput input, {bool revenda = false}) async {
     final rec = await _c.create(
-      body: {...input.toBody(), 'empresa': _empresaId, 'deletado': false},
+      body: {
+        ...input.toBody(),
+        'empresa': _empresaId,
+        'deletado': false,
+        'revenda': revenda,
+      },
     );
     return FichaTecnica.fromRecord(rec);
   }
@@ -45,6 +50,12 @@ class TechSheetRepository {
   Future<void> setPrecoVenda(String id, double valor) =>
       _c.update(id, body: {'preco_venda': valor});
 
+  /// Taxa de IVA própria do produto; `null` = a das Configurações.
+  Future<void> setIva(String id, double? pct) => _c.update(
+    id,
+    body: {'iva_proprio': pct != null, 'iva_pct': pct ?? 0},
+  );
+
   Future<void> hardDelete(String id) => _c.delete(id);
 
   Future<FichaTecnica> duplicate(String id) async {
@@ -55,6 +66,9 @@ class TechSheetRepository {
         'nome': '${src.getStringValue('nome')} (cópia)',
         'categoria': src.getStringValue('categoria'),
         'deletado': false,
+        'revenda': src.getBoolValue('revenda'),
+        'iva_proprio': src.getBoolValue('iva_proprio'),
+        'iva_pct': src.getDoubleValue('iva_pct'),
       },
     );
     final itens = await _itens.getFullList(filter: 'ficha = "$id"');

@@ -95,13 +95,17 @@ List<LinhaTabela> calcularTabela({
   final out = <LinhaTabela>[];
   for (final f in fichas) {
     if (f.deletado || !f.temPrecoVenda || excluidos.contains(f.id)) continue;
-    final publico = config.semIva(f.precoVenda);
+    // cada produto com o seu IVA (ex.: bebidas de revenda)
+    final c = f.ivaProduto == null
+        ? config
+        : config.copyWith(ivaVendas: f.ivaProduto);
+    final publico = c.semIva(f.precoVenda);
     final base = precoRevenda(publico, descontoPct: descontoPct, canal: canal);
     out.add(
       LinhaTabela(
         ficha: f,
         precoSemIva: base,
-        precoComIva: centimos(config.comIva(base)),
+        precoComIva: centimos(c.comIva(base)),
         escalas: [for (final e in escalas) centimos(base * (1 - e.pct / 100))],
       ),
     );

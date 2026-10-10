@@ -119,6 +119,67 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
     );
   }
 
+  /// IVA próprio do produto (bebidas costumam ter outra taxa); vazio = o da
+  /// empresa.
+  Future<void> _editarIva(FichaTecnica ficha, double ivaEmpresa) async {
+    final ctrl = TextEditingController(
+      text: ficha.ivaProduto == null ? '' : _pct(ficha.ivaProduto!),
+    );
+    final r = await showDialog<({bool empresa, double? pct})>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('IVA deste produto'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: ctrl,
+              autofocus: true,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Taxa de IVA',
+                suffixText: '%',
+                hintText: 'Ex.: 23',
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Sem taxa própria, usa a das Configurações '
+              '(${_pct(ivaEmpresa)} %). Confirma a taxa certa com o teu '
+              'contabilista.',
+              style: Theme.of(ctx).textTheme.bodySmall,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, (empresa: true, pct: null)),
+            child: const Text('Usar a da empresa'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final v = double.tryParse(ctrl.text.replaceAll(',', '.').trim());
+              Navigator.pop(
+                ctx,
+                v == null || v < 0 || v > 100 ? null : (empresa: false, pct: v),
+              );
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+    if (r == null) return;
+    await _run(
+      () => ref
+          .read(fichaActionsProvider)
+          .setIva(widget.fichaId, r.empresa ? null : r.pct),
+    );
+  }
+
   Future<void> _editarPreco(FichaTecnica ficha) async {
     final ctrl = TextEditingController(
       text: ficha.precoVenda > 0 ? ficha.precoVenda.toStringAsFixed(2) : '',
@@ -166,13 +227,22 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final detailAsync = ref.watch(fichaDetailProvider(widget.fichaId));
-    final config = ref.watch(costConfigProvider).valueOrNull;
+    final configEmpresa = ref.watch(costConfigProvider).valueOrNull;
+    final fichaCarregada = detailAsync.valueOrNull?.ficha;
+    final revenda = fichaCarregada?.revenda ?? false;
+    // as contas deste produto usam o seu IVA (se tiver um)
+    final config = configEmpresa == null || fichaCarregada == null
+        ? configEmpresa
+        : configEmpresa.copyWith(
+            ivaVendas: fichaCarregada.ivaPara(configEmpresa.ivaVendas),
+          );
 
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(Routes.techSheets),
+          onPressed: () =>
+              context.go(revenda ? Routes.revenda : Routes.techSheets),
         ),
         title: Text(
           detailAsync.maybeWhen(
@@ -207,7 +277,7 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
           if (_podeEditar)
             detailAsync.maybeWhen(
               data: (d) => IconButton(
-                tooltip: 'Editar ficha',
+                tooltip: revenda ? 'Editar produto' : 'Editar ficha',
                 icon: const Icon(Icons.edit_outlined),
                 onPressed: _busy
                     ? null
@@ -226,7 +296,9 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
               ),
               orElse: () => const SizedBox.shrink(),
             ),
-          const HelpActions(topic: HelpTopic.fichaDetalhe),
+          HelpActions(
+            topic: revenda ? HelpTopic.revenda : HelpTopic.fichaDetalhe,
+          ),
         ],
       ),
       body: AsyncValueView<FichaDetail>(
@@ -284,6 +356,29 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
                 podeEditar: _podeEditar,
                 onEditarPreco: _busy ? null : () => _editarPreco(d.ficha),
               ),
+              if (configEmpresa != null && config != null)
+                ListTile(
+                  dense: true,
+                  leading: const Icon(Icons.percent),
+                  title: Text(
+                    d.ficha.ivaProduto == null
+                        ? 'IVA ${_pct(configEmpresa.ivaVendas)} % (o da empresa)'
+                        : 'IVA ${_pct(d.ficha.ivaProduto!)} % (deste produto)',
+                  ),
+                  subtitle: d.ficha.temPrecoVenda
+                      ? Text(
+                          'Em cada venda: '
+                          '${fmt(d.ficha.precoVenda - d.ficha.precoSemIva(config.ivaVendas))} '
+                          'de IVA a entregar ao Estado',
+                        )
+                      : null,
+                  trailing: _podeEditar
+                      ? const Icon(Icons.edit_outlined, size: 18)
+                      : null,
+                  onTap: _podeEditar && !_busy
+                      ? () => _editarIva(d.ficha, configEmpresa.ivaVendas)
+                      : null,
+                ),
               const Divider(height: 1),
               _AvisoIncompleto(
                 cor: Theme.of(context).colorScheme.errorContainer,
@@ -304,20 +399,27 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
                     showDeclaracaoNutricionalSheet(context, ficha: d.ficha),
               ),
               for (final slot in SlotFicha.values)
-                _SlotSection(
-                  slot: slot,
-                  itens: d.porSlot[slot] ?? const [],
-                  detail: d,
-                  podeEditar: _podeEditar,
-                  onAdd: () => _addTo(slot),
-                  onEditQty: _editQty,
-                  onRemove: (item) => _run(
-                    () => ref
-                        .read(fichaActionsProvider)
-                        .removeItem(widget.fichaId, item.id),
+                // a revenda é o artigo comprado (+ embalagem, se houver)
+                if (!d.ficha.revenda ||
+                    slot == SlotFicha.extra ||
+                    slot.ehEmbalagem)
+                  _SlotSection(
+                    slot: slot,
+                    titulo: d.ficha.revenda && slot == SlotFicha.extra
+                        ? 'Artigo comprado'
+                        : null,
+                    itens: d.porSlot[slot] ?? const [],
+                    detail: d,
+                    podeEditar: _podeEditar,
+                    onAdd: () => _addTo(slot),
+                    onEditQty: _editQty,
+                    onRemove: (item) => _run(
+                      () => ref
+                          .read(fichaActionsProvider)
+                          .removeItem(widget.fichaId, item.id),
+                    ),
+                    fmt: fmt,
                   ),
-                  fmt: fmt,
-                ),
               if (config != null)
                 QuebraPrecoTile(
                   custo: d.custoPreview,
@@ -401,7 +503,12 @@ class _Header extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              coluna(cell('Peso', '${detail.pesoTotal.toStringAsFixed(0)} g')),
+              // a revenda conta-se em unidades: no lugar do peso, o IVA
+              coluna(
+                ficha.revenda
+                    ? cell('IVA', '${_pct(iva)} %')
+                    : cell('Peso', '${detail.pesoTotal.toStringAsFixed(0)} g'),
+              ),
               coluna(cell('Custo', fmt(detail.custoPreview))),
               coluna(
                 InkWell(
@@ -578,6 +685,7 @@ class _AvisoIncompleto extends StatelessWidget {
 class _SlotSection extends StatelessWidget {
   const _SlotSection({
     required this.slot,
+    this.titulo,
     required this.itens,
     required this.detail,
     required this.podeEditar,
@@ -590,6 +698,9 @@ class _SlotSection extends StatelessWidget {
   final MoneyFmt fmt;
 
   final SlotFicha slot;
+
+  /// Em vez do nome do bloco (ex.: "Artigo comprado" na revenda).
+  final String? titulo;
   final List<ItemFicha> itens;
   final FichaDetail detail;
   final bool podeEditar;
@@ -608,7 +719,7 @@ class _SlotSection extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  slot.label,
+                  titulo ?? slot.label,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: Theme.of(context).colorScheme.primary,
                   ),
@@ -640,7 +751,7 @@ class _SlotSection extends StatelessWidget {
                     : item.isEmbalagem
                     ? '${item.quantidadeG.toStringAsFixed(0)} pç · '
                           '${fmt(item.custoLinha)}'
-                    : '${item.quantidadeG.toStringAsFixed(0)} g · '
+                    : '${item.quantidadeTexto} · '
                           '${detail.percentagem(item).toStringAsFixed(1)}% · '
                           '${fmt(item.custoLinha)}',
               ),
@@ -657,3 +768,8 @@ class _SlotSection extends StatelessWidget {
     );
   }
 }
+
+/// "23" ou "6,5".
+String _pct(double v) => v == v.roundToDouble()
+    ? v.toStringAsFixed(0)
+    : v.toStringAsFixed(1).replaceAll('.', ',');

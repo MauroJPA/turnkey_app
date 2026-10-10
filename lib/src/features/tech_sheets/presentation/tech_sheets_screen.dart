@@ -10,6 +10,7 @@ import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../../core/widgets/hub_segmentos.dart';
 import '../../../core/widgets/pendencia_aviso.dart';
 import '../../../core/widgets/sort_menu_button.dart';
 import '../../../core/widgets/swipe_to_delete.dart';
@@ -21,8 +22,13 @@ import '../application/tech_sheets_providers.dart';
 import '../domain/tech_sheet.dart';
 import 'ficha_form_sheet.dart';
 
+/// "Produtos para venda": as fichas técnicas (o que produzimos) e os produtos
+/// de revenda (comprados já feitos — bebidas…), cada um na sua secção.
 class TechSheetsScreen extends ConsumerStatefulWidget {
-  const TechSheetsScreen({super.key});
+  const TechSheetsScreen({super.key, this.revenda = false});
+
+  /// `true` = a secção Revenda.
+  final bool revenda;
 
   @override
   ConsumerState<TechSheetsScreen> createState() => _TechSheetsScreenState();
@@ -116,17 +122,27 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
   }
 
   Future<void> _add() async {
-    final input = await showFichaFormSheet(context);
+    final input = await showFichaFormSheet(context, revenda: widget.revenda);
     if (input == null) return;
     await _run(() async {
-      final f = await ref.read(fichaActionsProvider).create(input);
+      final f = await ref
+          .read(fichaActionsProvider)
+          .create(input, revenda: widget.revenda);
       if (mounted) context.go('${Routes.techSheets}/${f.id}');
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final listAsync = ref.watch(fichasListProvider(_trash));
+    final todasAsync = ref.watch(fichasListProvider(_trash));
+    // só as desta secção (fichas técnicas ou revenda)
+    final listAsync = todasAsync.whenData(
+      (l) => [
+        for (final f in l)
+          if (f.revenda == widget.revenda) f,
+      ],
+    );
+    final revenda = widget.revenda;
     final configAsync = ref.watch(costConfigProvider);
     final porCompletar = (listAsync.valueOrNull ?? const <FichaTecnica>[])
         .where((f) => pendenciasProduto(f).isNotEmpty)
@@ -145,7 +161,9 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go(Routes.home),
         ),
-        title: Text(_trash ? 'Fichas · Lixeira' : 'Fichas'),
+        title: Text(
+          _trash ? 'Produtos para venda · Lixeira' : 'Produtos para venda',
+        ),
         actions: [
           if (!_trash)
             SortMenuButton<FichaTecnica>(
@@ -166,23 +184,34 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
           ),
           if (_podeEditar && !_trash)
             IconButton(
-              tooltip: 'Nova ficha',
+              tooltip: revenda ? 'Novo produto de revenda' : 'Nova ficha',
               icon: const Icon(Icons.add),
               onPressed: _busy ? null : _add,
             ),
-          const HelpActions(topic: HelpTopic.fichas),
+          HelpActions(topic: revenda ? HelpTopic.revenda : HelpTopic.fichas),
         ],
       ),
       body: Column(
         children: [
           if (_busy) const LinearProgressIndicator(),
+          HubSegmentos<bool>(
+            principais: const [false, true],
+            atual: revenda,
+            rotulo: (r) => r ? 'Revenda' : 'Fichas técnicas',
+            icone: (r) =>
+                r ? Icons.local_drink_outlined : Icons.receipt_long_outlined,
+            aoEscolher: (r) =>
+                context.go(r ? Routes.revenda : Routes.techSheets),
+          ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
             child: TextField(
               onChanged: (v) => setState(() => _q = v),
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Procurar ficha',
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: revenda
+                    ? 'Procurar produto de revenda'
+                    : 'Procurar ficha',
                 isDense: true,
               ),
             ),
@@ -257,8 +286,12 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
                       all.isEmpty
                           ? (_trash
                                 ? 'Lixeira vazia'
+                                : revenda
+                                ? 'Sem produtos de revenda (água, Coca-Cola, '
+                                      'Compal…). Usa + para criar.'
                                 : 'Sem fichas. Usa + para criar.')
                           : 'Nada corresponde ao filtro.',
+                      textAlign: TextAlign.center,
                     ),
                   );
                 }
@@ -377,8 +410,10 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
       );
     }
 
-    // compara-se com o preço de venda ao público: com IVA
-    final preco = config?.precoSugeridoComIva(f.custoProduto);
+    // compara-se com o preço de venda ao público: com o IVA do produto
+    final preco = config
+        ?.copyWith(ivaVendas: f.ivaPara(config.ivaVendas))
+        .precoSugeridoComIva(f.custoProduto);
     final formatosTodos = f.formatoId.isEmpty
         ? null
         : ref.watch(formatosProvider).valueOrNull;
@@ -391,7 +426,8 @@ class _TechSheetsScreenState extends ConsumerState<TechSheetsScreen> {
     final subtitle = [
       if (f.categoria.isNotEmpty) f.categoria,
       if (formatoNome != null && formatoNome.isNotEmpty) formatoNome,
-      if (f.pesoProduto > 0) '${f.pesoProduto.toStringAsFixed(0)} g',
+      if (!f.revenda && f.pesoProduto > 0)
+        '${f.pesoProduto.toStringAsFixed(0)} g',
     ].join(' · ');
 
     final cs = Theme.of(context).colorScheme;

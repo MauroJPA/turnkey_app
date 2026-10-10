@@ -68,9 +68,11 @@ const paginasApp = <PaginaApp>[
   PaginaApp(
     'fichas',
     Routes.techSheets,
-    'Fichas Técnicas',
+    'Produtos para venda',
     Icons.receipt_long_outlined,
-    'Custo, preço de venda e informação do produto',
+    'Fichas técnicas (o que produzimos) e revenda (bebidas…): custo, preço, IVA e lucro',
+    rotasExtra: [Routes.revenda],
+    rotuloCurto: 'Produtos',
   ),
   PaginaApp(
     'faturas',

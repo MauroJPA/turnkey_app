@@ -2275,6 +2275,21 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] (Administrador) só vê/dá papéis de base Editor e Leitura; não vê o separador Permissões para os criar
 - [ ] O proprietário não tem opção de papel personalizado para si nem para outro proprietário
 
+## 166. Produtos para venda: fichas técnicas e revenda
+
+- [ ] Mais → **Produtos para venda** (no rodapé: "Produtos"): no topo, "Fichas técnicas" e "Revenda"; as fichas que já existiam estão em Fichas técnicas
+- [ ] Revenda → + → "Coca-Cola lata 33 cl", categoria Bebidas → abre o produto com "Artigo comprado" (sem massa/recheio/cobertura)
+- [ ] Artigo comprado → Adicionar → escolher o ingrediente da Coca-Cola (em unidades) com 1 → a linha mostra "1 un" e o custo por lata
+- [ ] Pôr o preço de venda (2,50) → linha "IVA … (o da empresa)" → tocar → 23 → passa a "IVA 23 % (deste produto)" e "Em cada venda: €0,47 de IVA"; o cartão mostra IVA 23 % no lugar do peso; sem IVA €2,04 e a margem mudam
+- [ ] "Usar a da empresa" volta à taxa das Configurações
+- [ ] Entrar uma fatura com novo preço da Coca-Cola → o custo do produto de revenda atualiza
+- [ ] A lista de Revenda só mostra revenda; a de Fichas técnicas só fichas; o + de cada secção cria do tipo certo; a lixeira de cada uma só mostra as suas
+- [ ] Produção (escolher produto), "Quantos assar" e Contagem diária não mostram as bebidas
+- [ ] Vendas/Encomendas: dá para escolher a Coca-Cola; Rentabilidade e Tabela de revendedores incluem-na, com o IVA de 23 %
+- [ ] Contabilidade → IVA: numa venda sem IVA do Vendus, a Coca-Cola conta com 23 % e o cookie com a taxa das Configurações
+- [ ] Pesquisa do "Mais": "revenda" ou "bebidas" leva à secção Revenda
+- [ ] Sair da página na secção Revenda e voltar pelo "Mais": abre na Revenda
+
 ---
 
 ## Notas / ajustes pedidos

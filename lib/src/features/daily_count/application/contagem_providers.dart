@@ -88,7 +88,11 @@ final contagemDoDiaProvider = FutureProvider.autoDispose
       final linhas = calcularContagemDia(
         localId: k.localId,
         dia: dia,
-        fichaIds: [for (final f in fichas) f.id],
+        // a contagem é dos cookies: a revenda (bebidas…) fica de fora
+        fichaIds: [
+          for (final f in fichas)
+            if (!f.revenda) f.id,
+        ],
         movimentos: movs,
         vendas: vendas,
       );

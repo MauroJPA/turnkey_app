@@ -10,6 +10,9 @@ abstract class Routes {
   static const ingredients = '/ingredientes';
   static const recipes = '/receitas';
   static const techSheets = '/fichas-tecnicas';
+
+  /// Produtos de revenda (secção de "Produtos para venda", ao lado das fichas).
+  static const revenda = '/revenda';
   static const production = '/produzir';
   static const miseEnPlace = '/mise-en-place';
   static const productionLotes = '/produzir/lotes';

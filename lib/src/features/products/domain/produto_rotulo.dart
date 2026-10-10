@@ -19,8 +19,9 @@ List<String> pendenciasProduto(FichaTecnica f) {
     else if (!n.completo)
       'Nutrição incompleta (${n.semDados.length} '
           '${n.semDados.length == 1 ? 'ingrediente' : 'ingredientes'} sem dados)',
-    if (f.validadeDias <= 0) 'Sem prazo de validade',
-    if (f.conservacao.trim().isEmpty) 'Sem modo de conservação',
+    // a revenda já traz rótulo próprio: só interessa a nutrição
+    if (!f.revenda && f.validadeDias <= 0) 'Sem prazo de validade',
+    if (!f.revenda && f.conservacao.trim().isEmpty) 'Sem modo de conservação',
   ];
 }
 

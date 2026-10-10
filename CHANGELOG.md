@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.22.0 — 2026-10-10 — Produtos para venda: fichas técnicas e revenda
+
+**Produtos para venda: Fichas técnicas e Revenda.** A página "Fichas Técnicas" passa a chamar-se **Produtos para venda** (no rodapé: "Produtos") e tem duas secções: **Fichas técnicas** (o que produzimos) e **Revenda** (o que compramos já feito para revender — água, Coca-Cola, Compal…).
+
+- **Revenda**: + → nome e categoria (ex.: Bebidas). No produto, "Artigo comprado" → escolher o artigo que entra pelas faturas (de preferência em unidades) e a quantidade (normalmente 1). O custo, a nutrição e o histórico saem dele e o custo atualiza-se sozinho com cada fatura. Preço de venda, preço sugerido, quebra de preço, canais e etiqueta como numa ficha. Pode levar embalagem (copo, palhinha…).
+- **IVA por produto** (fichas e revenda): no detalhe, a linha "IVA" mostra a taxa e quanto IVA vai em cada venda; tocar para pôr uma taxa própria (ex.: 23 % nas bebidas) ou "Usar a da empresa". Essa taxa entra no preço sugerido, na margem, na quebra de preço, nos canais, na tabela de revendedores, nas variações de preço e no IVA estimado da Contabilidade (quando a venda não traz o IVA do Vendus).
+- A revenda aparece nas vendas, encomendas, rentabilidade e tabela de revendedores, mas **não** na produção, no "Quantos assar", nem na contagem de fornadas/envios entre locais. Só avisa de nutrição em falta (a validade e a conservação vêm no rótulo do próprio produto).
+- As linhas dos produtos mostram a unidade do artigo ("1 un", "33 ml") em vez de gramas; na revenda o cartão mostra o IVA no lugar do peso.
+- Pesquisa e "Mais": "Revenda" e "Fichas técnicas" aparecem como secções; a página lembra a última secção aberta.
+- Ficheiros: migration `1791170000_fichas_revenda.js` (`revenda`, `iva_proprio`, `iva_pct` nas fichas), `tech_sheets_screen.dart`, `tech_sheet_detail_screen.dart`, `ficha_form_sheet.dart`, `tech_sheet.dart`/`tech_sheet_item.dart` (+ `.freezed.dart` à mão), `iva.dart`, `tabela_revendedor.dart`, `variacoes_preco_view.dart`, produção e contagem (sem revenda).
+- Testes: `test/revenda_test.dart`.
+
 ## 2.21.0 — 2026-10-10 — Papéis personalizados
 
 **Papéis personalizados**: além de Administrador, Editor e Leitura, o proprietário cria papéis com nome (Balcão, Cozinha, Contabilista…) com mais ou menos restrições, e dá-os às pessoas da equipa.

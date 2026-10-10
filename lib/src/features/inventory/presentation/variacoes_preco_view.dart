@@ -35,6 +35,12 @@ class _VariacoesPrecoViewState extends ConsumerState<VariacoesPrecoView> {
     final cfg = ref.watch(costConfigProvider).valueOrNull;
     final limiar = cfg?.alertaPrecoPct ?? 5;
     final iva = cfg?.ivaVendas ?? 0;
+    // produtos com IVA próprio (ex.: bebidas de revenda)
+    final ivaPorFicha = <String, double>{
+      for (final f
+          in ref.watch(fichasListProvider(false)).valueOrNull ?? const [])
+        if (f.ivaProduto != null) f.id: f.ivaProduto!,
+    };
     final fmt = ref.watch(moneyFormatProvider);
     final tt = Theme.of(context).textTheme;
     final visto = precosVistosAte();
@@ -130,6 +136,7 @@ class _VariacoesPrecoViewState extends ConsumerState<VariacoesPrecoView> {
                     v: v,
                     nova: visto == null || v.criada.isAfter(visto),
                     iva: iva,
+                    ivaPorFicha: ivaPorFicha,
                     fmt: fmt,
                   ),
             ],
@@ -164,7 +171,7 @@ class _SugestaoPreco extends ConsumerWidget {
       custoAtual: ficha.custoProduto,
       precoAtualComIva: ficha.precoVenda,
       precoAntesComIva: afetada.precoVenda,
-      ivaPct: iva,
+      ivaPct: ficha.ivaPara(iva),
     );
     if (s == null) return const SizedBox.shrink();
     final tt = Theme.of(context).textTheme;
@@ -226,11 +233,13 @@ class _CartaoVariacao extends StatelessWidget {
     required this.nova,
     required this.iva,
     required this.fmt,
+    this.ivaPorFicha = const {},
   });
 
   final VariacaoPreco v;
   final bool nova;
   final double iva;
+  final Map<String, double> ivaPorFicha;
   final MoneyFmt fmt;
 
   static String _data(DateTime d) {
@@ -297,10 +306,14 @@ class _CartaoVariacao extends StatelessWidget {
                             Text(
                               '${fmt(f.custoAntes)} → ${fmt(f.custoDepois)}',
                             ),
-                            if (f.margem(f.custoAntes, iva) != null)
+                            if (f.margem(
+                                  f.custoAntes,
+                                  ivaPorFicha[f.id] ?? iva,
+                                ) !=
+                                null)
                               Text(
-                                'margem ${f.margem(f.custoAntes, iva)!.toStringAsFixed(0)}% '
-                                '→ ${f.margem(f.custoDepois, iva)!.toStringAsFixed(0)}%',
+                                'margem ${f.margem(f.custoAntes, ivaPorFicha[f.id] ?? iva)!.toStringAsFixed(0)}% '
+                                '→ ${f.margem(f.custoDepois, ivaPorFicha[f.id] ?? iva)!.toStringAsFixed(0)}%',
                                 style: tt.bodySmall?.copyWith(
                                   color: f.custoDepois > f.custoAntes
                                       ? cs.error

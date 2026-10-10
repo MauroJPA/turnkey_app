@@ -317,7 +317,15 @@ class _PrevisaoAssarViewState extends ConsumerState<PrevisaoAssarView> {
   @override
   Widget build(BuildContext context) {
     final consumo = ref.watch(consumoRecenteProvider);
-    final fichas = ref.watch(fichasListProvider(false));
+    // a revenda (bebidas…) não vai ao forno
+    final fichas = ref
+        .watch(fichasListProvider(false))
+        .whenData(
+          (l) => [
+            for (final f in l)
+              if (!f.revenda) f,
+          ],
+        );
     final stock = ref.watch(stockAgoraProvider).valueOrNull ?? const {};
     final auto = ref.watch(capacidadeFornoProvider).valueOrNull ?? 0;
     final porFornada = capacidadeFornoEscolhida(auto);

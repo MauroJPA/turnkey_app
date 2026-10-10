@@ -101,7 +101,11 @@ class _SheetState extends ConsumerState<_Sheet> {
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
-    final fichas = ref.watch(fichasListProvider(false)).valueOrNull ?? const [];
+    final fichas = [
+      for (final f
+          in ref.watch(fichasListProvider(false)).valueOrNull ?? const [])
+        if (!f.revenda) f,
+    ];
 
     return Padding(
       padding: EdgeInsets.only(

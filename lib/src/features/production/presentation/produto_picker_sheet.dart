@@ -57,7 +57,15 @@ class _ProdutoPickerState extends ConsumerState<_ProdutoPicker> {
 
   @override
   Widget build(BuildContext context) {
-    final async = ref.watch(fichasListProvider(false));
+    // a revenda (bebidas…) não se produz
+    final async = ref
+        .watch(fichasListProvider(false))
+        .whenData(
+          (l) => [
+            for (final f in l)
+              if (!f.revenda) f,
+          ],
+        );
     final formatos = ref.watch(formatosProvider).valueOrNull ?? const [];
     String formatoNome(String id) {
       for (final f in formatos) {
@@ -72,8 +80,10 @@ class _ProdutoPickerState extends ConsumerState<_ProdutoPicker> {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           children: [
-            Text('O que vais produzir?',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'O que vais produzir?',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
             TextField(
               onChanged: (v) => setState(() => _q = v),
@@ -89,9 +99,11 @@ class _ProdutoPickerState extends ConsumerState<_ProdutoPicker> {
                 value: async,
                 data: (all) {
                   final items = all
-                      .where((f) =>
-                          _q.isEmpty ||
-                          f.nome.toLowerCase().contains(_q.toLowerCase()))
+                      .where(
+                        (f) =>
+                            _q.isEmpty ||
+                            f.nome.toLowerCase().contains(_q.toLowerCase()),
+                      )
                       .toList();
                   return ListView(
                     children: [
