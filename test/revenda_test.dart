@@ -95,4 +95,29 @@ void main() {
     );
     expect(g.quantidadeTexto, '80 g');
   });
+
+  test('linha com artigo de revenda (consumível): nome, preço por unidade', () {
+    final r = RecordModel({
+      'id': 'l',
+      'ficha': 'f',
+      'slot': 'extra',
+      'consumivel': 'c1',
+      'quantidade_g': 2,
+      'expand': {
+        'consumivel': {
+          'id': 'c1',
+          'nome': 'Coca-Cola',
+          'caracteristica': 'lata 33 cl',
+          'preco': 0.55,
+        },
+      },
+    });
+    final i = ItemFicha.fromRecord(r);
+    expect(i.consumivelId, 'c1');
+    expect(i.nome, 'Coca-Cola lata 33 cl');
+    expect(i.unidade, 'un');
+    expect(i.quantidadeTexto, '2 un');
+    expect(i.custoLinha, closeTo(1.10, 1e-9));
+    expect(i.isEmbalagem, isFalse);
+  });
 }

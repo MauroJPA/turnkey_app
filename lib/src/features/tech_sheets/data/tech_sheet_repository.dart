@@ -51,10 +51,8 @@ class TechSheetRepository {
       _c.update(id, body: {'preco_venda': valor});
 
   /// Taxa de IVA própria do produto; `null` = a das Configurações.
-  Future<void> setIva(String id, double? pct) => _c.update(
-    id,
-    body: {'iva_proprio': pct != null, 'iva_pct': pct ?? 0},
-  );
+  Future<void> setIva(String id, double? pct) =>
+      _c.update(id, body: {'iva_proprio': pct != null, 'iva_pct': pct ?? 0});
 
   Future<void> hardDelete(String id) => _c.delete(id);
 
@@ -81,6 +79,7 @@ class TechSheetRepository {
           'receita': it.getStringValue('receita'),
           'embalagem': it.getStringValue('embalagem'),
           'kit': it.getStringValue('kit'),
+          'consumivel': it.getStringValue('consumivel'),
           'quantidade_g': it.getDoubleValue('quantidade_g'),
           'slot': it.getStringValue('slot'),
         },

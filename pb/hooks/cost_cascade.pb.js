@@ -214,3 +214,23 @@ onRecordAfterUpdateSuccess((e) => {
   }
   e.next();
 }, 'receitas');
+
+// Revenda (Inventário → Limpeza e insumos: bebidas…): ao mudar o preço por
+// unidade de um consumível, re-corre as fichas que o usam (2.22.1).
+onRecordAfterUpdateSuccess((e) => {
+  try {
+    const num = (rec, f) => {
+      try {
+        return rec.getFloat(f);
+      } catch (_) {
+        return 0;
+      }
+    };
+    if (Math.abs(num(e.record, 'preco') - num(e.record.original(), 'preco')) > 0.0001) {
+      require(`${__hooks}/cascade.js`).runCascade(e.app, 'consumivel', e.record.id);
+    }
+  } catch (err) {
+    console.log('[cascata] consumível: ' + err);
+  }
+  e.next();
+}, 'consumiveis');

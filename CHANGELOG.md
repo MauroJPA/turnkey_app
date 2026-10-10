@@ -2,6 +2,17 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.22.1 — 2026-10-10 — Revenda: escolher artigos do Inventário
+
+**Revenda: escolher bebidas e outros artigos do Inventário.** Em "Artigo comprado" → Adicionar, o seletor passa a ter o separador **Revenda**, com os artigos do Inventário → Limpeza e insumos (é aí que as faturas guardam as bebidas): Bebida e Revenda primeiro, cada um com o preço por unidade e o fornecedor.
+
+- Num produto de revenda o seletor abre logo em Revenda; nas fichas técnicas o separador também existe (ex.: um menu cookie + bebida).
+- O custo da linha é o preço por unidade do artigo × a quantidade, e atualiza-se sozinho quando o preço muda (fatura nova ou edição). Artigo sem preço: o produto avisa que o custo está incompleto.
+- As unidades de revenda não contam como peso do produto; a linha mostra "1 un · €0,62"; editar a quantidade pede "Unidades".
+- Nutrição: estes artigos não têm dados nutricionais, por isso aparecem em "Nutrição em falta" com o nome. Para ter a tabela nutricional, registar a bebida como ingrediente (em unidades) e escolhê-la no separador Ingredientes.
+- Ficheiros: migration `1791180000_itens_ficha_consumivel.js` (`itens_ficha.consumivel`, mesma empresa), `cascade.js` e `cost_cascade.pb.js` (custo e recálculo), `item_picker_sheet.dart`, `tech_sheet_item.dart` (+ `.freezed.dart` à mão), detalhe da ficha.
+- Testes: `test/revenda_test.dart` e `teste_revenda_consumivel` na suíte de segurança (custo, recálculo, sem preço, sem peso; ligação a artigo de outra empresa recusada).
+
 ## 2.22.0 — 2026-10-10 — Produtos para venda: fichas técnicas e revenda
 
 **Produtos para venda: Fichas técnicas e Revenda.** A página "Fichas Técnicas" passa a chamar-se **Produtos para venda** (no rodapé: "Produtos") e tem duas secções: **Fichas técnicas** (o que produzimos) e **Revenda** (o que compramos já feito para revender — água, Coca-Cola, Compal…).

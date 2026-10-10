@@ -18,8 +18,9 @@ class FichaDetail {
   final List<ItemFicha> itens;
 
   /// Peso do produto: as embalagens (peças/kits) não pesam.
+  // embalagens e artigos de revenda (unidades) não pesam
   double get pesoTotal => itens
-      .where((i) => !i.isEmbalagem)
+      .where((i) => !i.isEmbalagem && i.consumivelId == null)
       .fold(0, (s, i) => s + i.quantidadeG);
 
   /// Custo do produto na loja: tudo menos a embalagem só para plataformas.
@@ -125,6 +126,7 @@ class FichaActions {
     String? receitaId,
     String? embalagemId,
     String? kitId,
+    String? consumivelId,
     required double quantidadeG,
   }) async {
     await _items.add(
@@ -134,6 +136,7 @@ class FichaActions {
       receitaId: receitaId,
       embalagemId: embalagemId,
       kitId: kitId,
+      consumivelId: consumivelId,
       quantidadeG: quantidadeG,
     );
     _refreshDetail(fichaId);

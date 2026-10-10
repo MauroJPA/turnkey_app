@@ -2,12 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/widgets/async_value_view.dart';
+import '../../consumables/application/consumivel_providers.dart';
 import '../../ingredients/application/ingredients_providers.dart';
 import '../../packaging/application/embalagem_kit_providers.dart';
 import '../../packaging/application/embalagem_providers.dart';
 import '../application/recipes_providers.dart';
 
-enum PickedKind { ingrediente, subReceita, embalagem, kit }
+enum PickedKind {
+  ingrediente,
+  subReceita,
+  embalagem,
+  kit,
+
+  /// Artigo do Inventário → Limpeza e insumos (bebidas e revenda).
+  revenda,
+}
 
 class PickedItem {
   PickedItem({
@@ -25,12 +34,16 @@ class PickedItem {
 /// Escolhe um ingrediente / sub-receita / embalagem e a quantidade.
 /// Se [apenasVincular] for `true`, não pergunta a quantidade (devolve 0).
 /// Se [apenasEmbalagem] for `true`, mostra só embalagens (para o slot de
-/// embalagem da ficha técnica).
+/// embalagem da ficha técnica). Com [comRevenda], junta o separador
+/// "Revenda" (bebidas e outros artigos do Inventário → Limpeza e insumos);
+/// [paraRevenda] abre logo nele.
 Future<PickedItem?> showItemPickerSheet(
   BuildContext context, {
   String? excludeRecipeId,
   bool apenasVincular = false,
   bool apenasEmbalagem = false,
+  bool comRevenda = false,
+  bool paraRevenda = false,
 }) {
   return showModalBottomSheet<PickedItem>(
     context: context,
@@ -40,6 +53,8 @@ Future<PickedItem?> showItemPickerSheet(
       excludeRecipeId: excludeRecipeId,
       apenasVincular: apenasVincular,
       apenasEmbalagem: apenasEmbalagem,
+      comRevenda: comRevenda || paraRevenda,
+      paraRevenda: paraRevenda,
     ),
   );
 }
@@ -49,10 +64,14 @@ class _ItemPickerSheet extends ConsumerStatefulWidget {
     this.excludeRecipeId,
     this.apenasVincular = false,
     this.apenasEmbalagem = false,
+    this.comRevenda = false,
+    this.paraRevenda = false,
   });
   final String? excludeRecipeId;
   final bool apenasVincular;
   final bool apenasEmbalagem;
+  final bool comRevenda;
+  final bool paraRevenda;
 
   @override
   ConsumerState<_ItemPickerSheet> createState() => _ItemPickerSheetState();
@@ -61,6 +80,8 @@ class _ItemPickerSheet extends ConsumerStatefulWidget {
 class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
   late PickedKind _kind = widget.apenasEmbalagem
       ? PickedKind.embalagem
+      : widget.paraRevenda
+      ? PickedKind.revenda
       : PickedKind.ingrediente;
   String _q = '';
 
@@ -74,7 +95,10 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
       return PickedItem(kind: kind, id: id, nome: nome, quantidadeG: 0);
     }
     final ehEmb = kind == PickedKind.embalagem || kind == PickedKind.kit;
-    final ctrl = TextEditingController(text: ehEmb ? '1' : '');
+    if (kind == PickedKind.revenda) unidade = 'un';
+    final ctrl = TextEditingController(
+      text: ehEmb || kind == PickedKind.revenda ? '1' : '',
+    );
     final qtd = await showDialog<double>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -124,6 +148,9 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
     final receitas = ref.watch(recipesListProvider(false));
     final embalagens = ref.watch(embalagensListProvider);
     final kits = ref.watch(embalagemKitsListProvider);
+    final consumiveis = widget.comRevenda
+        ? ref.watch(consumiveisListProvider)
+        : null;
 
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.8,
@@ -145,15 +172,25 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
               )
             else
               SegmentedButton<PickedKind>(
-                segments: const [
-                  ButtonSegment(
+                segments: [
+                  if (widget.paraRevenda)
+                    const ButtonSegment(
+                      value: PickedKind.revenda,
+                      label: Text('Revenda'),
+                    ),
+                  const ButtonSegment(
                     value: PickedKind.ingrediente,
                     label: Text('Ingredientes'),
                   ),
-                  ButtonSegment(
+                  const ButtonSegment(
                     value: PickedKind.subReceita,
                     label: Text('Receitas'),
                   ),
+                  if (widget.comRevenda && !widget.paraRevenda)
+                    const ButtonSegment(
+                      value: PickedKind.revenda,
+                      label: Text('Revenda'),
+                    ),
                 ],
                 selected: {_kind},
                 onSelectionChanged: (s) => setState(() => _kind = s.first),
@@ -169,7 +206,80 @@ class _ItemPickerSheetState extends ConsumerState<_ItemPickerSheet> {
             ),
             const SizedBox(height: 8),
             Expanded(
-              child: _kind == PickedKind.kit
+              child: _kind == PickedKind.revenda && consumiveis != null
+                  ? AsyncValueView(
+                      value: consumiveis,
+                      data: (all) {
+                        final q = _q.toLowerCase();
+                        bool deRevenda(String c) {
+                          final x = c.toLowerCase();
+                          return x.startsWith('bebida') ||
+                              x.startsWith('revenda');
+                        }
+
+                        // bebidas e revenda primeiro; depois o resto
+                        final items =
+                            all
+                                .where(
+                                  (c) =>
+                                      c.nomeComCaracteristica
+                                          .toLowerCase()
+                                          .contains(q) ||
+                                      c.categoria.toLowerCase().contains(q),
+                                )
+                                .toList()
+                              ..sort((a, b) {
+                                final ra = deRevenda(a.categoria) ? 0 : 1;
+                                final rb = deRevenda(b.categoria) ? 0 : 1;
+                                if (ra != rb) return ra - rb;
+                                return a.nome.toLowerCase().compareTo(
+                                  b.nome.toLowerCase(),
+                                );
+                              });
+                        if (items.isEmpty) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Text(
+                                'Sem artigos. Cria-os em Inventário → Limpeza e '
+                                'insumos (categoria Bebida ou Revenda), ou entra '
+                                'uma fatura com eles.',
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          );
+                        }
+                        return ListView(
+                          children: [
+                            for (final c in items)
+                              ListTile(
+                                title: Text(c.nomeComCaracteristica),
+                                subtitle: Text(
+                                  [
+                                    c.categoria,
+                                    if (c.preco > 0)
+                                      '€ ${c.preco.toStringAsFixed(2)}/un'
+                                    else
+                                      'sem preço',
+                                    if (c.fornecedor.isNotEmpty) c.fornecedor,
+                                  ].join(' · '),
+                                ),
+                                onTap: () async {
+                                  final r = await _askQty(
+                                    PickedKind.revenda,
+                                    c.id,
+                                    c.nomeComCaracteristica,
+                                  );
+                                  if (r != null && context.mounted) {
+                                    Navigator.pop(context, r);
+                                  }
+                                },
+                              ),
+                          ],
+                        );
+                      },
+                    )
+                  : _kind == PickedKind.kit
                   ? AsyncValueView(
                       value: kits,
                       data: (all) {

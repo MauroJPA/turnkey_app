@@ -390,6 +390,21 @@ function runCascade(app, kind, rootId) {
         if (item.getString('slot') !== 'embalagem_plataforma') {
           custo += (fnum(emb, 'preco_compra') / pecas / rende) * qtd;
         }
+      } else if (item.getString('consumivel')) {
+        // revenda (Inventário → Limpeza e insumos: bebidas…): qtd = unidades;
+        // `preco` do consumível já é por unidade. Sem peso.
+        let cons;
+        try {
+          cons = app.findRecordById('consumiveis', item.getString('consumivel'));
+        } catch (_) {
+          continue;
+        }
+        const pu = fnum(cons, 'preco');
+        custo += pu * qtd;
+        if (pu <= 0) {
+          custoCompletoF = false;
+          custoSemDadosF.push({ id: cons.id, nome: cons.getString('nome') || cons.id });
+        }
       } else if (item.getString('kit')) {
         // kit de embalagens: qtd = nº de kits por unidade de produto; sem peso.
         let linhas;
@@ -473,6 +488,17 @@ function runCascade(app, kind, rootId) {
       if (qtd <= 0) continue;
       const ingRel = item.getString('ingrediente');
       const recRel = item.getString('receita');
+      // artigo de revenda (consumível): não tem dados nutricionais na app —
+      // fica assinalado em "Nutrição em falta" com o seu nome
+      if (!ingRel && !recRel && item.getString('consumivel')) {
+        completoF = false;
+        let nomeC = item.getString('consumivel');
+        try {
+          nomeC = app.findRecordById('consumiveis', nomeC).getString('nome') || nomeC;
+        } catch (_) {}
+        semDadosF.push({ id: item.getString('consumivel'), nome: nomeC });
+        continue;
+      }
       // embalagens não têm peso, nutrição nem alergénios.
       if (!ingRel && !recRel) continue;
       pesoCru += qtd;
@@ -932,6 +958,10 @@ function runCascade(app, kind, rootId) {
 
   if (kind === 'ingrediente') recomputeIngrediente(rootId);
   else if (kind === 'ficha') recomputeFicha(rootId);
+  else if (kind === 'consumivel') {
+    // o preço de um artigo de revenda mudou: as fichas que o usam
+    for (const fid of fichasQueUsam('consumivel', rootId)) recomputeFicha(fid);
+  }
   else if (kind === 'embalagem') recomputeEmbalagem(rootId);
   else if (kind === 'kit') recomputeKit(rootId);
   else recomputeReceita(rootId);

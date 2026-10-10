@@ -6,8 +6,9 @@ import '../../../core/pocketbase/pb_client.dart';
 import '../domain/tech_sheet.dart';
 import '../domain/tech_sheet_item.dart';
 
-final techSheetItemRepositoryProvider =
-    Provider<TechSheetItemRepository>((ref) {
+final techSheetItemRepositoryProvider = Provider<TechSheetItemRepository>((
+  ref,
+) {
   return TechSheetItemRepository(ref.watch(pbProvider), requireEmpresaId(ref));
 });
 
@@ -22,7 +23,7 @@ class TechSheetItemRepository {
   Future<List<ItemFicha>> listForFicha(String fichaId) async {
     final recs = await _c.getFullList(
       filter: 'ficha = "$fichaId"',
-      expand: 'ingrediente,receita,embalagem,kit',
+      expand: 'ingrediente,receita,embalagem,kit,consumivel',
       sort: 'created',
     );
     return recs.map(ItemFicha.fromRecord).toList();
@@ -35,6 +36,7 @@ class TechSheetItemRepository {
     String? receitaId,
     String? embalagemId,
     String? kitId,
+    String? consumivelId,
     required double quantidadeG,
   }) {
     return _c.create(
@@ -46,6 +48,7 @@ class TechSheetItemRepository {
         if (receitaId != null) 'receita': receitaId,
         if (embalagemId != null) 'embalagem': embalagemId,
         if (kitId != null) 'kit': kitId,
+        if (consumivelId != null) 'consumivel': consumivelId,
         'quantidade_g': quantidadeG,
       },
     );

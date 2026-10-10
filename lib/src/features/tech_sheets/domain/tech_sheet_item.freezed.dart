@@ -24,6 +24,7 @@ mixin _$ItemFicha {
   String? get receitaId => throw _privateConstructorUsedError;
   String? get embalagemId => throw _privateConstructorUsedError;
   String? get kitId => throw _privateConstructorUsedError;
+  String? get consumivelId => throw _privateConstructorUsedError;
   double get quantidadeG => throw _privateConstructorUsedError;
   String get nomeResolvido => throw _privateConstructorUsedError;
   double get custoPorGramaResolvido => throw _privateConstructorUsedError;
@@ -49,6 +50,7 @@ abstract class $ItemFichaCopyWith<$Res> {
     String? receitaId,
     String? embalagemId,
     String? kitId,
+    String? consumivelId,
     double quantidadeG,
     String nomeResolvido,
     double custoPorGramaResolvido,
@@ -78,6 +80,7 @@ class _$ItemFichaCopyWithImpl<$Res, $Val extends ItemFicha>
     Object? receitaId = freezed,
     Object? embalagemId = freezed,
     Object? kitId = freezed,
+    Object? consumivelId = freezed,
     Object? quantidadeG = null,
     Object? nomeResolvido = null,
     Object? custoPorGramaResolvido = null,
@@ -112,6 +115,10 @@ class _$ItemFichaCopyWithImpl<$Res, $Val extends ItemFicha>
             kitId: freezed == kitId
                 ? _value.kitId
                 : kitId // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            consumivelId: freezed == consumivelId
+                ? _value.consumivelId
+                : consumivelId // ignore: cast_nullable_to_non_nullable
                       as String?,
             quantidadeG: null == quantidadeG
                 ? _value.quantidadeG
@@ -152,6 +159,7 @@ abstract class _$$ItemFichaImplCopyWith<$Res>
     String? receitaId,
     String? embalagemId,
     String? kitId,
+    String? consumivelId,
     double quantidadeG,
     String nomeResolvido,
     double custoPorGramaResolvido,
@@ -180,6 +188,7 @@ class __$$ItemFichaImplCopyWithImpl<$Res>
     Object? receitaId = freezed,
     Object? embalagemId = freezed,
     Object? kitId = freezed,
+    Object? consumivelId = freezed,
     Object? quantidadeG = null,
     Object? nomeResolvido = null,
     Object? custoPorGramaResolvido = null,
@@ -215,6 +224,10 @@ class __$$ItemFichaImplCopyWithImpl<$Res>
             ? _value.kitId
             : kitId // ignore: cast_nullable_to_non_nullable
                   as String?,
+        consumivelId: freezed == consumivelId
+            ? _value.consumivelId
+            : consumivelId // ignore: cast_nullable_to_non_nullable
+                  as String?,
         quantidadeG: null == quantidadeG
             ? _value.quantidadeG
             : quantidadeG // ignore: cast_nullable_to_non_nullable
@@ -247,6 +260,7 @@ class _$ItemFichaImpl extends _ItemFicha {
     this.receitaId,
     this.embalagemId,
     this.kitId,
+    this.consumivelId,
     this.quantidadeG = 0,
     this.nomeResolvido = '',
     this.custoPorGramaResolvido = 0,
@@ -268,6 +282,8 @@ class _$ItemFichaImpl extends _ItemFicha {
   @override
   final String? kitId;
   @override
+  final String? consumivelId;
+  @override
   @JsonKey()
   final double quantidadeG;
   @override
@@ -282,7 +298,7 @@ class _$ItemFichaImpl extends _ItemFicha {
 
   @override
   String toString() {
-    return 'ItemFicha(id: $id, fichaId: $fichaId, slot: $slot, ingredienteId: $ingredienteId, receitaId: $receitaId, embalagemId: $embalagemId, kitId: $kitId, quantidadeG: $quantidadeG, nomeResolvido: $nomeResolvido, custoPorGramaResolvido: $custoPorGramaResolvido, unidade: $unidade)';
+    return 'ItemFicha(id: $id, fichaId: $fichaId, slot: $slot, ingredienteId: $ingredienteId, receitaId: $receitaId, embalagemId: $embalagemId, kitId: $kitId, consumivelId: $consumivelId, quantidadeG: $quantidadeG, nomeResolvido: $nomeResolvido, custoPorGramaResolvido: $custoPorGramaResolvido, unidade: $unidade)';
   }
 
   @override
@@ -300,6 +316,8 @@ class _$ItemFichaImpl extends _ItemFicha {
             (identical(other.embalagemId, embalagemId) ||
                 other.embalagemId == embalagemId) &&
             (identical(other.kitId, kitId) || other.kitId == kitId) &&
+            (identical(other.consumivelId, consumivelId) ||
+                other.consumivelId == consumivelId) &&
             (identical(other.quantidadeG, quantidadeG) ||
                 other.quantidadeG == quantidadeG) &&
             (identical(other.nomeResolvido, nomeResolvido) ||
@@ -319,6 +337,7 @@ class _$ItemFichaImpl extends _ItemFicha {
     receitaId,
     embalagemId,
     kitId,
+    consumivelId,
     quantidadeG,
     nomeResolvido,
     custoPorGramaResolvido,
@@ -343,6 +362,7 @@ abstract class _ItemFicha extends ItemFicha {
     final String? receitaId,
     final String? embalagemId,
     final String? kitId,
+    final String? consumivelId,
     final double quantidadeG,
     final String nomeResolvido,
     final double custoPorGramaResolvido,
@@ -364,6 +384,8 @@ abstract class _ItemFicha extends ItemFicha {
   String? get embalagemId;
   @override
   String? get kitId;
+  @override
+  String? get consumivelId;
   @override
   double get quantidadeG;
   @override

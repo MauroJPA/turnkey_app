@@ -2290,6 +2290,15 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Pesquisa do "Mais": "revenda" ou "bebidas" leva à secção Revenda
 - [ ] Sair da página na secção Revenda e voltar pelo "Mais": abre na Revenda
 
+## 167. Revenda: escolher artigos do Inventário
+
+- [ ] Inventário → Limpeza e insumos: ter uma bebida (categoria Bebida) com preço por unidade
+- [ ] Produtos para venda → Revenda → abrir um produto → Artigo comprado → Adicionar: o seletor abre em "Revenda" com a bebida (Bebida/Revenda no topo, com €/un)
+- [ ] Escolher a bebida com 1 → a linha mostra "1 un · €…" e o custo do produto fica igual ao preço por unidade
+- [ ] Mudar o preço da bebida no Inventário (ou entrar uma fatura) → o custo do produto atualiza
+- [ ] Bebida sem preço → o produto avisa "Preço em falta"
+- [ ] Numa ficha técnica normal, o Adicionar também tem o separador "Revenda" (no fim)
+
 ---
 
 ## Notas / ajustes pedidos

@@ -54,9 +54,20 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
   }
 
   Future<void> _addTo(SlotFicha slot) async {
+    final revenda =
+        ref
+            .read(fichaDetailProvider(widget.fichaId))
+            .valueOrNull
+            ?.ficha
+            .revenda ??
+        false;
     final picked = await showItemPickerSheet(
       context,
       apenasEmbalagem: slot.ehEmbalagem,
+      // na revenda, abre nos artigos de revenda (bebidas…); nas fichas, também
+      // se pode juntar um (ex.: cookie + bebida num menu)
+      comRevenda: true,
+      paraRevenda: revenda && !slot.ehEmbalagem,
     );
     if (picked == null) return;
     await _run(
@@ -71,6 +82,7 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
             receitaId: picked.kind == PickedKind.subReceita ? picked.id : null,
             embalagemId: picked.kind == PickedKind.embalagem ? picked.id : null,
             kitId: picked.kind == PickedKind.kit ? picked.id : null,
+            consumivelId: picked.kind == PickedKind.revenda ? picked.id : null,
             quantidadeG: picked.quantidadeG,
           ),
     );
@@ -93,7 +105,11 @@ class _TechSheetDetailScreenState extends ConsumerState<TechSheetDetailScreen> {
                 ? 'Kits'
                 : item.isEmbalagem
                 ? 'Peças'
-                : 'Gramas',
+                : switch (item.unidade) {
+                    'un' => 'Unidades',
+                    'ml' => 'Mililitros (ml)',
+                    _ => 'Gramas',
+                  },
           ),
         ),
         actions: [
@@ -751,6 +767,8 @@ class _SlotSection extends StatelessWidget {
                     : item.isEmbalagem
                     ? '${item.quantidadeG.toStringAsFixed(0)} pç · '
                           '${fmt(item.custoLinha)}'
+                    : item.consumivelId != null
+                    ? '${item.quantidadeTexto} · ${fmt(item.custoLinha)}'
                     : '${item.quantidadeTexto} · '
                           '${detail.percentagem(item).toStringAsFixed(1)}% · '
                           '${fmt(item.custoLinha)}',

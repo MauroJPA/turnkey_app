@@ -2190,6 +2190,38 @@ def teste_tarefas():
     call('DELETE', f'/api/collections/quadros/records/{qb}', tok=tok['ownerB'])
 
 
+def teste_revenda_consumivel():
+    sec('7a9c. Revenda: ficha com artigo do Inventário (consumível)')
+    A = empresas['A']
+    s, r, _ = call('POST', '/api/collections/consumiveis/records',
+                   {'empresa': A, 'nome': 'Coca-Cola lata', 'categoria': 'Bebida', 'preco': 0.8}, tok['adminA'])
+    check(s == 200, 'cria um artigo de revenda (Bebida)', f'status {s} {str(r)[:120]}')
+    cons = r.get('id')
+    s, r, _ = call('POST', '/api/collections/fichas_tecnicas/records',
+                   {'empresa': A, 'nome': 'Coca-Cola lata', 'revenda': True, 'deletado': False}, tok['editorA'])
+    fid = r.get('id')
+    s, r, _ = call('POST', '/api/collections/itens_ficha/records',
+                   {'empresa': A, 'ficha': fid, 'consumivel': cons, 'quantidade_g': 2, 'slot': 'extra'}, tok['editorA'])
+    check(s == 200, 'a ficha de revenda liga-se ao artigo', f'status {s} {str(r)[:120]}')
+
+    def custo():
+        return call('GET', f'/api/collections/fichas_tecnicas/records/{fid}', tok=tok['editorA'])[1]
+
+    f = custo()
+    check(abs((f.get('custo_produto') or 0) - 1.6) < 1e-6 and f.get('custo_completo') is True,
+          'custo = preço por unidade × quantidade (2 × €0,80)', str({k: f.get(k) for k in ('custo_produto', 'custo_completo')}))
+    check((f.get('peso_produto') or 0) == 0, 'as unidades de revenda não contam como peso', str(f.get('peso_produto')))
+    call('PATCH', f'/api/collections/consumiveis/records/{cons}', {'preco': 1}, tok['adminA'])
+    f = custo()
+    check(abs((f.get('custo_produto') or 0) - 2.0) < 1e-6, 'mudar o preço do artigo atualiza o custo da ficha', str(f.get('custo_produto')))
+    call('PATCH', f'/api/collections/consumiveis/records/{cons}', {'preco': 0}, tok['adminA'])
+    f = custo()
+    check(f.get('custo_completo') is False and any(x.get('id') == cons for x in (f.get('custo_sem_dados') or [])),
+          'artigo sem preço: a ficha avisa que o custo está incompleto', str(f.get('custo_sem_dados'))[:120])
+    call('DELETE', f'/api/collections/fichas_tecnicas/records/{fid}', tok=su)
+    call('DELETE', f'/api/collections/consumiveis/records/{cons}', tok=su)
+
+
 def teste_escala():
     sec('7a10. Escala semanal')
     uid = users['editorA']
@@ -4123,6 +4155,7 @@ def main():
         teste_papeis_personalizados()
         teste_anotacoes()
         teste_tarefas()
+        teste_revenda_consumivel()
         teste_escala()
         teste_formacoes()
         teste_segredos()

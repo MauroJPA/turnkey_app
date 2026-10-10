@@ -15,6 +15,10 @@ class ItemFicha with _$ItemFicha {
     String? receitaId,
     String? embalagemId,
     String? kitId,
+
+    /// Artigo de revenda do Inventário → Limpeza e insumos (bebidas…); a
+    /// quantidade são unidades e o custo é o preço por unidade.
+    String? consumivelId,
     @Default(0) double quantidadeG,
     @Default('') String nomeResolvido,
     @Default(0) double custoPorGramaResolvido,
@@ -53,7 +57,15 @@ class ItemFicha with _$ItemFicha {
     final rec = r.get<List<RecordModel>>('expand.receita', []);
     final emb = r.get<List<RecordModel>>('expand.embalagem', []);
     final kit = r.get<List<RecordModel>>('expand.kit', []);
-    if (kit.isNotEmpty) {
+    final cons = r.get<List<RecordModel>>('expand.consumivel', []);
+    if (cons.isNotEmpty) {
+      final e = cons.first;
+      nome = e.getStringValue('nome');
+      final carac = e.getStringValue('caracteristica');
+      if (carac.isNotEmpty) nome = '$nome $carac';
+      cpg = e.getDoubleValue('preco');
+      unidade = 'un';
+    } else if (kit.isNotEmpty) {
       final e = kit.first;
       nome = e.getStringValue('nome');
       cpg = e.getDoubleValue('custo_unitario');
@@ -93,6 +105,7 @@ class ItemFicha with _$ItemFicha {
       receitaId: nn('receita'),
       embalagemId: nn('embalagem'),
       kitId: nn('kit'),
+      consumivelId: nn('consumivel'),
       quantidadeG: r.getDoubleValue('quantidade_g'),
       nomeResolvido: nome,
       custoPorGramaResolvido: cpg,
