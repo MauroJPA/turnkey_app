@@ -1912,6 +1912,86 @@ def teste_ferias():
     call('DELETE', f'/api/collections/ferias_direito/records/{did}', tok=tok['adminA'])
 
 
+def teste_papeis_personalizados():
+    sec('2b. Papéis personalizados')
+    A, B = empresas['A'], empresas['B']
+    base = {'empresa': A, 'nome': 'Balcão', 'base': 'editor', 'acesso': {'financeiro': 'oculto', 'receitas': 'ver'}}
+    for quem in ('adminA', 'editorA', 'viewerA'):
+        s, _, _ = call('POST', '/api/collections/papeis_personalizados/records', base, tok[quem])
+        check(s in (400, 403), f'{quem}: não cria papéis personalizados', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/papeis_personalizados/records', {**base, 'empresa': B}, tok['ownerA'])
+    check(s in (400, 403), 'não se cria um papel noutra empresa', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/papeis_personalizados/records', {**base, 'base': 'owner'}, tok['ownerA'])
+    check(s == 400, 'um papel personalizado nunca tem base de proprietário', f'status {s}')
+    s, r, _ = call('POST', '/api/collections/papeis_personalizados/records', base, tok['ownerA'])
+    check(s == 200, 'o proprietário cria um papel personalizado', f'status {s} {str(r)[:120]}')
+    balcao = r.get('id')
+    s, _, _ = call('POST', '/api/collections/papeis_personalizados/records', base, tok['ownerA'])
+    check(s == 400, 'não há dois papéis com o mesmo nome', f'status {s}')
+    s, r, _ = call('POST', '/api/collections/papeis_personalizados/records',
+                   {'empresa': A, 'nome': 'Gerente', 'base': 'admin', 'acesso': {}}, tok['ownerA'])
+    gerente = r.get('id')
+    s, r, _ = call('POST', '/api/collections/papeis_personalizados/records',
+                   {'empresa': B, 'nome': 'Da B', 'base': 'editor', 'acesso': {}}, tok['ownerB'])
+    da_b = r.get('id')
+    s, r, _ = call('GET', '/api/collections/papeis_personalizados/records', tok=tok['viewerA'])
+    check(s == 200 and any(i['id'] == balcao for i in r.get('items', [])), 'a equipa lê os papéis (para aplicar o seu)')
+    s, _, _ = call('GET', f'/api/collections/papeis_personalizados/records/{balcao}', tok=tok['editorB'])
+    check(s == 404, 'outra empresa não vê os papéis da A', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/papeis_personalizados/records/{balcao}', {'acesso': {}}, tok['adminA'])
+    check(s in (403, 404), 'o administrador não muda papéis personalizados', f'status {s}')
+
+    # atribuir: endpoint da equipa
+    def membro(alvo, corpo, quem):
+        return call('PATCH', f'/api/gc_turnkey/team/members/{users[alvo]}', corpo, tok[quem])[0]
+
+    def ler(alvo):
+        return call('GET', f'/api/collections/users/records/{users[alvo]}', tok=su)[1]
+
+    s = membro('viewerA', {'papel_personalizado': balcao}, 'ownerA')
+    u = ler('viewerA')
+    check(s == 200 and u.get('papel') == 'editor' and u.get('papel_personalizado') == balcao,
+          'dar um papel personalizado põe o papel base (Leitura → Editor)', f'status {s} {u.get("papel")} {u.get("papel_personalizado")}')
+    s = membro('viewerA', {'papel_personalizado': da_b}, 'ownerA')
+    check(s == 400 and ler('viewerA').get('papel_personalizado') == balcao, 'não se dá um papel de outra empresa', f'status {s}')
+    s = membro('editorA', {'papel_personalizado': gerente}, 'adminA')
+    check(s == 403 and ler('editorA').get('papel') == 'editor', 'o administrador não dá papéis com base de administrador', f'status {s}')
+    s = membro('editorA', {'papel_personalizado': balcao}, 'adminA')
+    check(s == 200 and ler('editorA').get('papel_personalizado') == balcao, 'o administrador dá papéis de base Editor', f'status {s}')
+    call('PATCH', f'/api/collections/users/records/{users["ownerA2"]}', {'papel': 'owner'}, su)
+    s = membro('ownerA2', {'papel_personalizado': balcao}, 'ownerA')
+    u2 = ler('ownerA2')
+    check(s == 400 and u2.get('papel') == 'owner' and not u2.get('papel_personalizado'), 'o proprietário nunca fica com papel personalizado', f'status {s}')
+    call('PATCH', f'/api/collections/users/records/{users["ownerA2"]}', {'papel': 'viewer'}, su)
+    s = call('PATCH', f'/api/gc_turnkey/team/members/{users["viewerA"]}', {'papel_personalizado': balcao}, tok['ownerB'])[0]
+    check(s in (400, 403, 404), 'outra empresa não atribui papéis a pessoas da A', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/users/records/{users["editorA"]}', {'papel_personalizado': ''}, tok['editorA'])
+    check(s in (400, 403), 'ninguém tira ou muda o próprio papel personalizado', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/users/records/{users["editorA"]}', {'papel_personalizado': gerente}, tok['editorA'])
+    check(s in (400, 403) and ler('editorA').get('papel_personalizado') == balcao, 'nem se dá a si próprio outro papel', f'status {s}')
+
+    # mudar o papel base atualiza as pessoas; apagar o papel limpa-as
+    s, _, _ = call('PATCH', f'/api/collections/papeis_personalizados/records/{balcao}', {'base': 'viewer'}, tok['ownerA'])
+    check(s == 200 and ler('viewerA').get('papel') == 'viewer' and ler('editorA').get('papel') == 'viewer',
+          'mudar a base do papel muda o que as pessoas podem fazer no servidor', f'status {s} {ler("viewerA").get("papel")}')
+    s, _, _ = call('POST', '/api/collections/ingredientes/records', {'empresa': A, 'nome': 'Teste papel'}, tok['editorA'])
+    check(s in (400, 403), 'com base Leitura, o servidor já não deixa escrever', f'status {s}')
+    s = membro('editorA', {'papel': 'editor'}, 'ownerA')
+    u = ler('editorA')
+    check(s == 200 and u.get('papel') == 'editor' and not u.get('papel_personalizado'), 'escolher um papel normal tira o personalizado', f'status {s} {u.get("papel_personalizado")}')
+    s, _, _ = call('DELETE', f'/api/collections/papeis_personalizados/records/{balcao}', tok=tok['adminA'])
+    check(s in (403, 404), 'o administrador não apaga papéis personalizados', f'status {s}')
+    s, _, _ = call('DELETE', f'/api/collections/papeis_personalizados/records/{balcao}', tok=tok['ownerA'])
+    u = ler('viewerA')
+    check(s in (200, 204) and not u.get('papel_personalizado') and u.get('papel') == 'viewer',
+          'apagar o papel deixa as pessoas só com o papel base', f'status {s} {u.get("papel_personalizado")} {u.get("papel")}')
+    # repõe
+    membro('viewerA', {'papel': 'viewer'}, 'ownerA')
+    for i, t in ((gerente, 'ownerA'), (da_b, 'ownerB')):
+        if i:
+            call('DELETE', f'/api/collections/papeis_personalizados/records/{i}', tok=tok[t])
+
+
 def teste_anotacoes():
     sec('7a9. Anotações da equipa')
     base = {'empresa': empresas['A'], 'texto': 'Forno avariado', 'categoria': 'ocorrencia',
@@ -4040,6 +4120,7 @@ def main():
         teste_quiosque_offline()
         teste_ponto()
         teste_ferias()
+        teste_papeis_personalizados()
         teste_anotacoes()
         teste_tarefas()
         teste_escala()

@@ -14,6 +14,13 @@ final teamMembersProvider = FutureProvider.autoDispose<List<TeamMember>>((ref) {
   return ref.watch(teamRepositoryProvider).listMembers();
 });
 
+/// Membro → id do seu papel personalizado (só os que têm um).
+final papeisDosMembrosProvider =
+    FutureProvider.autoDispose<Map<String, String>>(
+      (ref) =>
+          ref.watch(teamRepositoryProvider).papeisPersonalizadosDosMembros(),
+    );
+
 final settingsActionsProvider = Provider<SettingsActions>(SettingsActions.new);
 
 class SettingsActions {
@@ -28,7 +35,9 @@ class SettingsActions {
     required TemaApp tema,
   }) async {
     final id = requireEmpresaId(_ref);
-    await _ref.read(empresaRepositoryProvider).updatePerfil(
+    await _ref
+        .read(empresaRepositoryProvider)
+        .updatePerfil(
           id,
           nome: nome,
           moeda: moeda,
@@ -54,7 +63,9 @@ class SettingsActions {
     required String fonteFamilia,
   }) async {
     final id = requireEmpresaId(_ref);
-    await _ref.read(empresaRepositoryProvider).updateAparencia(
+    await _ref
+        .read(empresaRepositoryProvider)
+        .updateAparencia(
           id,
           corMarca: corMarca,
           tema: tema,
@@ -108,9 +119,7 @@ class SettingsActions {
 
   Future<void> saveCustos(CostConfig config) async {
     final atual = await _ref.read(costConfigRepositoryProvider).get();
-    await _ref
-        .read(costConfigRepositoryProvider)
-        .update(atual.id!, config);
+    await _ref.read(costConfigRepositoryProvider).update(atual.id!, config);
     _ref.invalidate(costConfigProvider);
   }
 
@@ -119,14 +128,19 @@ class SettingsActions {
     required String email,
     required String password,
     required Papel papel,
+    String papelPersonalizado = '',
   }) async {
-    await _ref.read(teamRepositoryProvider).addMember(
+    await _ref
+        .read(teamRepositoryProvider)
+        .addMember(
           nome: nome,
           email: email,
           password: password,
           papel: papel,
+          papelPersonalizado: papelPersonalizado,
         );
     _ref.invalidate(teamMembersProvider);
+    _ref.invalidate(papeisDosMembrosProvider);
   }
 
   Future<String> resetPassword(String memberId) =>
@@ -137,8 +151,15 @@ class SettingsActions {
     _ref.invalidate(teamMembersProvider);
   }
 
-  Future<void> changeRole(String memberId, Papel papel) async {
-    await _ref.read(teamRepositoryProvider).changeRole(memberId, papel);
+  Future<void> changeRole(
+    String memberId,
+    Papel papel, {
+    String personalizado = '',
+  }) async {
+    await _ref
+        .read(teamRepositoryProvider)
+        .changeRole(memberId, papel, personalizado: personalizado);
     _ref.invalidate(teamMembersProvider);
+    _ref.invalidate(papeisDosMembrosProvider);
   }
 }

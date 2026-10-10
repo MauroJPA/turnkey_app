@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.21.0 — 2026-10-10 — Papéis personalizados
+
+**Papéis personalizados**: além de Administrador, Editor e Leitura, o proprietário cria papéis com nome (Balcão, Cozinha, Contabilista…) com mais ou menos restrições, e dá-os às pessoas da equipa.
+
+- **Criar** (Configurações → Navegação e permissões → Permissões → "+ Novo papel"): nome e de que papel parte (Administrador, Editor ou Leitura). Depois, página a página: Oculto, Só ver ou Editar. O que não se muda fica "Como o Editor" (herda, também as mudanças futuras na matriz do Editor); o que se muda aparece como "Ajustado". Lápis para mudar o nome/papel base, caixote para apagar.
+- **Dar a alguém** (Equipa → tocar na pessoa, ou ao Adicionar): os papéis personalizados aparecem por baixo dos normais, com o papel de que partem; ao lado de cada pessoa aparece o nome do seu papel.
+- **Na app de quem o tem**: o rodapé, o "Mais", a pesquisa, o Início e o Fecho do dia só mostram o que o papel deixa; uma página oculta aberta pelo endereço fica bloqueada; "Só ver" deixa consultar sem alterar.
+- **No servidor** vale o papel base: dar o papel põe a pessoa nesse papel (ex.: Balcão de base Editor → Editor). Um papel de base Leitura nunca edita. Mudar a base do papel atualiza logo as pessoas; apagar o papel deixa-as com o papel base.
+- **Regras**: só o proprietário cria e muda papéis; o administrador só dá papéis de base Editor/Leitura a Editores/Leitores; o proprietário tem sempre tudo (não leva papel personalizado); ninguém muda o próprio papel.
+- Ficheiros: migration `1791160000_papeis_personalizados.js` (coleção + `users.papel_personalizado`), `team.pb.js`, `guards.pb.js`, `papeis_personalizados.pb.js` (novo), `papel_personalizado.dart` (novo), `nav_config.dart`, `navegacao_screen.dart`, `team_screen.dart`.
+- Testes: `test/papeis_personalizados_test.dart` e `teste_papeis_personalizados` na suíte de segurança (23 verificações).
+
 ## 2.20.0 — 2026-10-10 — Menções no Telegram de cada pessoa
 
 **Menções no Telegram**: quem é mencionado num comentário das Tarefas recebe logo uma mensagem no **seu** Telegram, com a tarefa, o quadro e o comentário.

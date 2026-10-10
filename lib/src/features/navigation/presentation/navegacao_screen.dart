@@ -5,11 +5,14 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/auth/permissions.dart';
+import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/help/help_content.dart';
+import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
 import '../application/navigation_providers.dart';
 import '../domain/nav_config.dart';
 import '../domain/pagina_app.dart';
+import '../domain/papel_personalizado.dart';
 
 /// Configurações → Navegação e permissões: o rodapé (Proprietário e
 /// Administrador) e o que cada nível pode ver/editar (só o Proprietário).
@@ -94,8 +97,9 @@ class _RodapeTabState extends ConsumerState<_RodapeTab> {
     try {
       await ref.read(navigationActionsProvider).salvarRodape(_rodape);
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Rodapé guardado.')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Rodapé guardado.')));
       }
     } on Object {
       if (mounted) {
@@ -153,8 +157,7 @@ class _RodapeTabState extends ConsumerState<_RodapeTab> {
                       IconButton(
                         tooltip: 'Tirar do rodapé',
                         icon: const Icon(Icons.remove_circle_outline),
-                        onPressed: () =>
-                            setState(() => _rodape.removeAt(i)),
+                        onPressed: () => setState(() => _rodape.removeAt(i)),
                       ),
                       ReorderableDragStartListener(
                         index: i,
@@ -173,7 +176,7 @@ class _RodapeTabState extends ConsumerState<_RodapeTab> {
         Text(
           cheio
               ? 'O rodapé está cheio (máximo $rodapeMaximo além do Início; as outras páginas ficam no "Mais"). '
-                  'Tire uma página para juntar outra.'
+                    'Tire uma página para juntar outra.'
               : 'Juntar ao rodapé',
           style: tt.titleSmall,
         ),
@@ -215,32 +218,181 @@ class _PermissoesTab extends ConsumerStatefulWidget {
 }
 
 class _PermissoesTabState extends ConsumerState<_PermissoesTab> {
+  /// O papel normal escolhido (quando [_personalizado] é `null`).
   Papel _papel = Papel.editor;
+
+  /// O id do papel personalizado escolhido.
+  String? _personalizado;
   bool _busy = false;
 
-  Future<void> _mudar(String chave, NivelAcesso n) async {
+  Future<void> _guardar(Future<void> Function() f) async {
     setState(() => _busy = true);
     try {
-      final novo =
-          ref.read(navConfigAtualProvider).comNivel(_papel, chave, n);
-      await ref.read(navigationActionsProvider).salvarAcesso(novo);
-    } on Object {
+      await f();
+    } on Object catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Não foi possível guardar.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
+  Future<void> _mudar(String chave, NivelAcesso n) => _guardar(() async {
+    final novo = ref
+        .read(navConfigProvider)
+        .valueOrNull!
+        .comNivel(_papel, chave, n);
+    await ref.read(navigationActionsProvider).salvarAcesso(novo);
+  });
+
+  Future<void> _mudarPersonalizado(
+    PapelPersonalizado p,
+    String chave,
+    NivelAcesso n,
+  ) => _guardar(() async {
+    final config = ref.read(navConfigProvider).valueOrNull ?? NavConfig.vazia;
+    await ref
+        .read(navigationActionsProvider)
+        .guardarPapel(p.comNivel(chave, n, config));
+  });
+
+  /// Pede nome e papel base. Devolve `null` se cancelou.
+  Future<({String nome, Papel base})?> _pedirPapel({
+    String nome = '',
+    Papel base = Papel.editor,
+    required String titulo,
+  }) async {
+    final ctrl = TextEditingController(text: nome);
+    var escolhida = base;
+    final r = await showDialog<({String nome, Papel base})>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) => AlertDialog(
+          title: Text(titulo),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: ctrl,
+                autofocus: true,
+                maxLength: 40,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  labelText: 'Nome',
+                  hintText: 'Ex.: Balcão, Cozinha, Contabilista',
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Parte de (o que pode fazer no servidor):',
+                style: Theme.of(ctx).textTheme.labelLarge,
+              ),
+              RadioGroup<Papel>(
+                groupValue: escolhida,
+                onChanged: (v) => setS(() => escolhida = v ?? escolhida),
+                child: Column(
+                  children: [
+                    for (final b in PapelPersonalizado.bases)
+                      RadioListTile<Papel>(
+                        value: b,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(b.label),
+                        subtitle: Text(switch (b) {
+                          Papel.admin =>
+                            'Tudo, incluindo configurações e equipa',
+                          Papel.editor => 'Cria e altera o dia a dia',
+                          _ => 'Só consulta, nunca altera',
+                        }),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () =>
+                  Navigator.pop(ctx, (nome: ctrl.text.trim(), base: escolhida)),
+              child: const Text('Guardar'),
+            ),
+          ],
+        ),
+      ),
+    );
+    ctrl.dispose();
+    if (r == null || r.nome.isEmpty) return null;
+    return r;
+  }
+
+  Future<void> _novoPapel() async {
+    final r = await _pedirPapel(titulo: 'Novo papel');
+    if (r == null) return;
+    await _guardar(() async {
+      final p = await ref
+          .read(navigationActionsProvider)
+          .criarPapel(r.nome, r.base);
+      if (mounted) setState(() => _personalizado = p.id);
+    });
+  }
+
+  Future<void> _editarPapel(PapelPersonalizado p) async {
+    final r = await _pedirPapel(
+      titulo: 'Papel "${p.nome}"',
+      nome: p.nome,
+      base: p.base,
+    );
+    if (r == null) return;
+    await _guardar(
+      () => ref
+          .read(navigationActionsProvider)
+          .guardarPapel(
+            PapelPersonalizado(
+              id: p.id,
+              nome: r.nome,
+              base: r.base,
+              acesso: p.acesso,
+            ),
+          ),
+    );
+  }
+
+  Future<void> _apagarPapel(PapelPersonalizado p) async {
+    final ok = await confirmDialog(
+      context,
+      titulo: 'Apagar o papel "${p.nome}"?',
+      mensagem:
+          'Quem o tem fica só com o papel base (${p.base.label}), com as '
+          'permissões normais desse papel.',
+      confirmar: 'Apagar',
+      destrutivo: true,
+    );
+    if (!ok) return;
+    await _guardar(() async {
+      await ref.read(navigationActionsProvider).apagarPapel(p.id);
+      if (mounted) setState(() => _personalizado = null);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final config = ref.watch(navConfigAtualProvider);
+    final config = ref.watch(navConfigProvider).valueOrNull ?? NavConfig.vazia;
+    final papeis =
+        ref.watch(papeisPersonalizadosProvider).valueOrNull ??
+        const <PapelPersonalizado>[];
     final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final perso = papeis.where((p) => p.id == _personalizado).firstOrNull;
+    final papelDasOpcoes = perso?.base ?? _papel;
     // Leitura nunca edita, por isso não se oferece "Editar".
-    final opcoes = _papel == Papel.viewer
+    final opcoes = papelDasOpcoes == Papel.viewer
         ? const [NivelAcesso.oculto, NivelAcesso.ver]
         : NivelAcesso.values;
 
@@ -248,44 +400,115 @@ class _PermissoesTabState extends ConsumerState<_PermissoesTab> {
       padding: const EdgeInsets.all(16),
       children: [
         Text(
-          'Para cada nível, escolha o que pode fazer em cada página. Oculto '
+          'Para cada papel, escolha o que pode fazer em cada página. Oculto '
           'esconde a página (não aparece nem abre); Só ver deixa consultar '
-          'sem alterar. O Proprietário tem sempre acesso total.',
+          'sem alterar. O Proprietário tem sempre acesso total. Crie papéis '
+          'seus (ex.: Balcão, Cozinha) e dê-os às pessoas em Equipa.',
           style: tt.bodyMedium,
         ),
         const SizedBox(height: 12),
-        SegmentedButton<Papel>(
-          segments: const [
-            ButtonSegment(value: Papel.admin, label: Text('Administrador')),
-            ButtonSegment(value: Papel.editor, label: Text('Editor')),
-            ButtonSegment(value: Papel.viewer, label: Text('Leitura')),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (final b in PapelPersonalizado.bases)
+              ChoiceChip(
+                label: Text(b.label),
+                selected: perso == null && _papel == b,
+                onSelected: (_) => setState(() {
+                  _papel = b;
+                  _personalizado = null;
+                }),
+              ),
+            for (final p in papeis)
+              ChoiceChip(
+                avatar: const Icon(Icons.badge_outlined, size: 16),
+                label: Text(p.nome),
+                selected: perso?.id == p.id,
+                onSelected: (_) => setState(() => _personalizado = p.id),
+              ),
+            ActionChip(
+              avatar: const Icon(Icons.add, size: 16),
+              label: const Text('Novo papel'),
+              onPressed: _busy ? null : _novoPapel,
+            ),
           ],
-          selected: {_papel},
-          onSelectionChanged: (s) => setState(() => _papel = s.first),
         ),
-        if (_busy) const Padding(
-          padding: EdgeInsets.only(top: 8),
-          child: LinearProgressIndicator(),
-        ),
-        const SizedBox(height: 8),
-        for (final p in paginasApp)
-          Builder(builder: (_) {
-            final atual = config.nivel(_papel, p.chave);
-            final valor = opcoes.contains(atual) ? atual : NivelAcesso.ver;
-            return ListTile(
-              key: ValueKey('perm-${_papel.name}-${p.chave}'),
-              leading: Icon(p.icon),
-              title: Text(p.label),
-              trailing: DropdownButton<NivelAcesso>(
-                value: valor,
-                onChanged: _busy ? null : (n) => _mudar(p.chave, n!),
-                items: [
-                  for (final n in opcoes)
-                    DropdownMenuItem(value: n, child: Text(n.label)),
+        if (perso != null)
+          Card(
+            margin: const EdgeInsets.only(top: 12),
+            child: ListTile(
+              leading: const Icon(Icons.badge_outlined),
+              title: Text(perso.nome),
+              subtitle: Text(
+                'Parte de ${perso.base.label} · '
+                '${perso.nAjustes == 0 ? 'ainda igual ao ${perso.base.label}' : '${perso.nAjustes} ${perso.nAjustes == 1 ? 'página diferente' : 'páginas diferentes'}'}',
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: 'Nome e papel base',
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: _busy ? null : () => _editarPapel(perso),
+                  ),
+                  IconButton(
+                    tooltip: 'Apagar o papel',
+                    icon: Icon(Icons.delete_outline, color: cs.error),
+                    onPressed: _busy ? null : () => _apagarPapel(perso),
+                  ),
                 ],
               ),
-            );
-          }),
+            ),
+          ),
+        if (_busy)
+          const Padding(
+            padding: EdgeInsets.only(top: 8),
+            child: LinearProgressIndicator(),
+          ),
+        const SizedBox(height: 8),
+        for (final p in paginasApp)
+          Builder(
+            builder: (_) {
+              final herdado = perso == null
+                  ? null
+                  : config.nivelBase(perso.base, p.chave);
+              final atual = perso == null
+                  ? config.nivelBase(_papel, p.chave)
+                  : perso.nivel(p.chave, config.nivelBase);
+              final valor = opcoes.contains(atual) ? atual : NivelAcesso.ver;
+              final ajustado =
+                  perso != null && perso.acesso.containsKey(p.chave);
+              return ListTile(
+                key: ValueKey('perm-${perso?.id ?? _papel.name}-${p.chave}'),
+                leading: Icon(p.icon),
+                title: Text(p.label),
+                subtitle: perso == null
+                    ? null
+                    : Text(
+                        ajustado
+                            ? 'Ajustado (no ${perso.base.label}: ${herdado!.label})'
+                            : 'Como o ${perso.base.label}',
+                        style: tt.bodySmall?.copyWith(
+                          color: ajustado ? cs.primary : null,
+                          fontWeight: ajustado ? FontWeight.w600 : null,
+                        ),
+                      ),
+                trailing: DropdownButton<NivelAcesso>(
+                  value: valor,
+                  onChanged: _busy
+                      ? null
+                      : (n) => perso == null
+                            ? _mudar(p.chave, n!)
+                            : _mudarPersonalizado(perso, p.chave, n!),
+                  items: [
+                    for (final n in opcoes)
+                      DropdownMenuItem(value: n, child: Text(n.label)),
+                  ],
+                ),
+              );
+            },
+          ),
       ],
     );
   }

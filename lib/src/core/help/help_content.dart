@@ -584,7 +584,8 @@ const Map<HelpTopic, HelpEntry> helpContent = {
     paragrafos: [
       'Rodapé: escolha que páginas aparecem na barra de baixo (até 3, além do Início e do "Mais") e a ordem. Todas as outras abrem pelo "Mais". Proprietário e Administrador podem mudar.',
       'Permissões: só o Proprietário. Para cada nível (Administrador, Editor, Leitura) e cada página, escolha Oculto (a página desaparece e não abre), Só ver (vê mas não altera) ou Editar.',
-      'O Proprietário tem sempre acesso a tudo. As permissões escondem e bloqueiam na app; os dados continuam protegidos pelo papel de cada pessoa.',
+      'Papéis personalizados (só o Proprietário): "+ Novo papel", dê-lhe um nome (ex.: Balcão, Cozinha, Contabilista) e escolha de que papel parte — Administrador, Editor ou Leitura. Esse papel base é o que a pessoa pode fazer nos dados; depois ajuste página a página (Oculto, Só ver, Editar). O que não mudar fica "Como o Editor" (herda, incluindo o que mudar na matriz do Editor); o que mudar aparece como "Ajustado". Um papel que parte da Leitura nunca edita. O lápis muda o nome e o papel base; o caixote apaga (quem o tinha fica só com o papel base). Dê o papel às pessoas em Equipa.',
+      'O Proprietário tem sempre acesso a tudo. As permissões escondem e bloqueiam na app; os dados continuam protegidos pelo papel de cada pessoa (o papel base, no caso dos personalizados).',
       'Cada pessoa pode ainda mudar a cor do ícone de cada página: no "Mais", mantém o dedo no ícone — isso é só para si.',
     ],
   ),
@@ -594,6 +595,7 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'As pessoas que podem entrar na app desta empresa.',
       'Cada uma tem um papel: Proprietário e Administrador podem mudar tudo; Editor cria e edita; Leitura só vê.',
       'Use "Adicionar" para convidar alguém. Toque num membro para mudar o papel.',
+      'Papéis personalizados (criados em Configurações → Navegação e permissões → Permissões) aparecem na mesma lista, por baixo dos normais, com o papel de que partem. A pessoa fica com o que esse papel deixa ver e editar; o nome do papel aparece ao lado dela. O administrador só dá papéis que partem de Editor ou Leitura; o Proprietário não leva papel personalizado (tem sempre tudo).',
       'Esqueceu-se da palavra-passe? No ⋮ ao lado do membro, "Repor a palavra-passe": a app gera uma palavra-passe PROVISÓRIA (algo como k7m2p-q9xab), que vê uma só vez — use "Copiar" ou "Copiar mensagem" para a enviar à pessoa. As sessões que ela tinha abertas fecham-se e, ao entrar com a provisória, é obrigada a escolher uma palavra-passe nova antes de continuar. O proprietário repõe a de qualquer pessoa (menos a sua); o administrador só a de Editores e Leitores.',
       'No mesmo ⋮, "Remover da equipa" apaga a conta (a pessoa deixa de poder entrar e o cartão do quiosque desaparece). O que ela registou — ponto, férias, faturas, notas — mantém-se. Não se pode remover a própria conta nem o último proprietário; o administrador só remove Editores e Leitores.',
     ],

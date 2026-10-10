@@ -2260,6 +2260,21 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] "Detetar o meu chat" (Opções → Avisos) continua a mostrar as conversas com o bot
 - [ ] (Opcional) com `GC_TURNKEY_APP_URL` no `.env`: a mensagem traz "Abrir: …" que abre a tarefa na app
 
+## 165. Papéis personalizados
+
+- [ ] (Proprietário) Configurações → Navegação e permissões → Permissões: ao lado de Administrador/Editor/Leitura há "+ Novo papel"
+- [ ] Criar "Balcão", parte de Editor → aparece o chip "Balcão" e um cartão "Parte de Editor · ainda igual ao Editor"; todas as páginas dizem "Como o Editor"
+- [ ] Pôr Contabilidade em Oculto e Receitas em Só ver → essas páginas ficam "Ajustado (no Editor: Editar)" e o cartão diz "2 páginas diferentes"; voltar Receitas a Editar → volta a "Como o Editor"
+- [ ] Mudar a matriz do Editor (Compras: Só ver) → no Balcão, Compras mostra "Só ver" e "Como o Editor"
+- [ ] Equipa → tocar num Editor → escolher "Balcão (Parte de Editor)" → ao lado da pessoa aparece "Balcão"
+- [ ] Entrar com essa pessoa: o "Mais" e a pesquisa já não mostram a Contabilidade; abrir `#/financeiro` mostra "Não tens acesso"; Receitas abre só para ver (sem botões de criar/editar)
+- [ ] Criar "Contabilista", parte de Leitura: só se oferecem Oculto e Só ver; dar a alguém → nunca consegue editar
+- [ ] Mudar a base do Balcão para Leitura (lápis): a pessoa passa a não conseguir criar nada (depois de reabrir a app)
+- [ ] Apagar o papel (caixote, confirmar): a pessoa fica com o papel base (ex.: Leitura) e o chip muda
+- [ ] Equipa → Adicionar: a lista "Papel" inclui os papéis personalizados
+- [ ] (Administrador) só vê/dá papéis de base Editor e Leitura; não vê o separador Permissões para os criar
+- [ ] O proprietário não tem opção de papel personalizado para si nem para outro proprietário
+
 ---
 
 ## Notas / ajustes pedidos

@@ -31,6 +31,12 @@ onRecordUpdateRequest((e) => {
     );
   }
 
+  if (e.record.getString('papel_personalizado') !== original.getString('papel_personalizado')) {
+    throw new ForbiddenError(
+      "O campo 'papel_personalizado' só muda pelos endpoints da equipa.",
+    );
+  }
+
   if (mudouEmpresa || mudouPapel) {
     throw new ForbiddenError(
       "Os campos 'empresa' e 'papel' não podem ser alterados por esta via.",

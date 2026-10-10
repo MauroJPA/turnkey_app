@@ -1,6 +1,6 @@
 # Pendentes (fila de trabalho)
 
-Última versão fechada: **2.20.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
+Última versão fechada: **2.21.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
 (editar → `bash scripts/verificar.sh` → pubspec + CHANGELOG + docs/CHECKLIST_TESTES.md → commit com caminhos
 explícitos → `git branch -f develop main` → `git tag vX.Y.Z`). No fim: `powershell -File scripts\empacotar-producao.ps1`
 e dar ao Mauro o SHA-256 + comando de publicação.
@@ -31,6 +31,7 @@ Fila atual (pedido do Mauro em 06/10/2026, **cada item = uma versão**, por esta
 - ~~**2.18.1**~~ (feito) Ecrã de arranque (sem branco) e aviso de sem ligação ao servidor.
 - ~~**2.19.0**~~ (feito) Tarefas da equipa: quadros com fases, cartões arrastáveis, responsáveis, prazos, etiquetas, lista, comentários com @menções, tempo real e no Início.
 - ~~**2.20.0**~~ (feito) Menções no Telegram: cada pessoa liga o seu Telegram e recebe as suas menções das Tarefas.
+- ~~**2.21.0**~~ (feito) Papéis personalizados: o proprietário cria papéis com nome (base + ajustes por página) e dá-os à equipa.
 - No fim: empacotar, dar SHA-256 + comando; atualizar docs/SEGURANCA.md se houver novos endpoints.
 
 ## Fila 2.x — UI/UX mais ágil (aprovada pelo Mauro em 06/10/2026; branch `ux-2`, cada item = uma versão, por esta ordem)

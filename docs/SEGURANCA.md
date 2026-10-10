@@ -262,6 +262,14 @@ empresa. O WhatsApp está no código mas **desligado** por omissão (precisa de 
 - Endpoints novos (qualquer pessoa da empresa, só sobre o próprio Telegram): `.../pessoal/ligar`, `.../pessoal/verificar` (corre a sondagem da sua empresa), `.../pessoal/testar`. O token nunca vai em respostas nem em mensagens; os erros tiram `bot<token>`.
 - Testado em `teste_telegram_pessoal` (Telegram falso): códigos errado, expirado e reutilizado, grupo, outra pessoa, isolamento entre empresas, escrita à mão recusada, menções (autor excluído, sem repetir ao editar, Telegram desligado), teste, desligar.
 
+## Papéis personalizados (2.21.0)
+
+- `papeis_personalizados` (nome, papel **base** admin/editor/viewer, ajustes por página): só o **proprietário** cria, muda e apaga; a equipa só lê (para a app aplicar o seu); outra empresa não vê. Nunca há base de proprietário.
+- `users.papel_personalizado` só muda pelos endpoints da equipa (`PATCH/POST /api/gc_turnkey/team/members`), que põem também `users.papel` = papel base; o `guards.pb.js` recusa mudá-lo pela API normal (ninguém se dá um papel a si próprio). As regras de sempre: o administrador só dá papéis de base Editor/Leitura e só a Editores/Leitores; o proprietário nunca leva papel personalizado; um papel de outra empresa é recusado.
+- Mudar o papel base de um papel personalizado muda o `papel` das pessoas que o têm (`papeis_personalizados.pb.js`); apagar o papel deixa-as só com o papel base.
+- **O que o servidor garante é o papel base.** Os ajustes por página (Oculto/Só ver) são da interface, como a matriz de acesso: escondem e bloqueiam páginas na app, mas não mudam as regras dos dados (ex.: um "Balcão" de base Editor com a Contabilidade oculta não a vê na app, mas o servidor deixar-lhe-ia ler esses dados por API, como a qualquer Editor). Para restringir dados de verdade, escolha uma base mais restrita (ex.: Leitura).
+- Testado em `teste_papeis_personalizados` (23 verificações).
+
 ## Riscos aceites / notas
 
 - O administrador pode editar o perfil da empresa (desenho) e, tecnicamente, o campo `plano`

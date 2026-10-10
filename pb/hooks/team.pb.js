@@ -3,8 +3,14 @@
 // M6 — gestão de equipa (endpoints privilegiados; as regras de API não deixam
 // o cliente mexer em `empresa`/`papel` diretamente — ver guards.pb.js).
 //
-//   POST  /api/gc_turnkey/team/members         { nome, email, password, papel }
-//   PATCH /api/gc_turnkey/team/members/{id}     { papel }
+//   POST  /api/gc_turnkey/team/members         { nome, email, password, papel, papel_personalizado? }
+//   PATCH /api/gc_turnkey/team/members/{id}     { papel } ou { papel_personalizado }
+//
+// Papel personalizado (2.21.0): `papel_personalizado` = id de um
+// `papeis_personalizados` da empresa; a pessoa fica com `papel` = o papel base
+// dele (é o que o servidor deixa fazer). Escolher um papel normal limpa o
+// personalizado. As mesmas regras: o administrador só dá papéis de base Editor
+// ou Leitura, e só a quem é Editor ou Leitura.
 //
 // NOTA: cada handler é autocontido (os handlers correm isolados e não veem
 // funções de topo do ficheiro).
@@ -30,6 +36,21 @@ routerAdd(
     let papel = ['admin', 'editor', 'viewer'].includes(body.papel)
       ? body.papel
       : 'viewer';
+    let personalizado = '';
+    if (body.papel_personalizado) {
+      let pp;
+      try {
+        pp = e.app.findRecordById('papeis_personalizados', String(body.papel_personalizado));
+      } catch (_) {
+        throw new BadRequestError('Esse papel já não existe.');
+      }
+      if (pp.getString('empresa') !== empresaId) throw new BadRequestError('Esse papel já não existe.');
+      papel = pp.getString('base');
+      personalizado = pp.id;
+      if (papelCaller === 'admin' && papel === 'admin') {
+        throw new ForbiddenError('Só o proprietário dá papéis com base de administrador.');
+      }
+    }
     if (papelCaller === 'admin' && papel === 'admin') papel = 'editor';
 
     if (!email || password.length < 8) {
@@ -47,6 +68,7 @@ routerAdd(
       u.set('nome', nome);
       u.set('empresa', empresaId);
       u.set('papel', papel);
+      u.set('papel_personalizado', personalizado);
       u.set('verified', true);
       u.set('aprovado', true);
       tx.save(u);
@@ -74,7 +96,19 @@ routerAdd(
 
     const targetId = e.request.pathValue('id');
     const body = e.requestInfo().body || {};
-    const novoPapel = body.papel;
+    let novoPapel = body.papel;
+    let personalizado = '';
+    if (body.papel_personalizado) {
+      let pp;
+      try {
+        pp = e.app.findRecordById('papeis_personalizados', String(body.papel_personalizado));
+      } catch (_) {
+        throw new BadRequestError('Esse papel já não existe.');
+      }
+      if (pp.getString('empresa') !== empresaId) throw new BadRequestError('Esse papel já não existe.');
+      novoPapel = pp.getString('base');
+      personalizado = pp.id;
+    }
     if (!['owner', 'admin', 'editor', 'viewer'].includes(novoPapel)) {
       throw new BadRequestError('Papel inválido.');
     }
@@ -115,7 +149,11 @@ routerAdd(
           );
         }
       }
+      if (personalizado && papelAtual === 'owner') {
+        throw new BadRequestError('O proprietário tem sempre acesso total (sem papel personalizado).');
+      }
       target.set('papel', novoPapel);
+      target.set('papel_personalizado', personalizado);
       tx.save(target);
     });
 

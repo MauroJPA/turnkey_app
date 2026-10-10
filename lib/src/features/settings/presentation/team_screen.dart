@@ -11,6 +11,8 @@ import '../../../core/help/help_content.dart';
 import '../../../core/widgets/async_value_view.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../navigation/application/navigation_providers.dart';
+import '../../navigation/domain/papel_personalizado.dart';
 import '../application/settings_providers.dart';
 import '../data/team_repository.dart';
 import '../domain/acesso_equipa.dart';
@@ -56,33 +58,58 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
             nome: result.nome,
             email: result.email,
             password: result.password,
-            papel: result.papel,
+            papel: result.escolha.papel,
+            papelPersonalizado: result.escolha.personalizado,
           ),
     );
   }
 
   Future<void> _changeRole(TeamMember m) async {
-    final novo = await showDialog<Papel>(
+    final perso = ref.read(papeisDosMembrosProvider).valueOrNull ?? const {};
+    final atual = (papel: m.papel, personalizado: perso[m.id] ?? '');
+    final meus = papeisQuePossoDar(
+      ref.read(currentPapelProvider),
+      ref.read(papeisPersonalizadosProvider).valueOrNull ?? const [],
+    );
+    final novo = await showDialog<EscolhaPapel>(
       context: context,
       builder: (ctx) => SimpleDialog(
         title: Text('Papel de ${m.nome.isEmpty ? m.email : m.nome}'),
         children: [
-          RadioGroup<Papel>(
-            groupValue: m.papel,
+          RadioGroup<EscolhaPapel>(
+            groupValue: atual,
             onChanged: (v) => Navigator.pop(ctx, v),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 for (final p in Papel.values)
-                  RadioListTile<Papel>(value: p, title: Text(p.label)),
+                  RadioListTile<EscolhaPapel>(
+                    value: (papel: p, personalizado: ''),
+                    title: Text(p.label),
+                  ),
+                // o proprietário tem sempre acesso total
+                if (m.papel != Papel.owner && meus.isNotEmpty) ...[
+                  const Divider(),
+                  for (final p in meus)
+                    RadioListTile<EscolhaPapel>(
+                      value: (papel: p.base, personalizado: p.id),
+                      secondary: const Icon(Icons.badge_outlined),
+                      title: Text(p.nome),
+                      subtitle: Text('Parte de ${p.base.label}'),
+                    ),
+                ],
               ],
             ),
           ),
         ],
       ),
     );
-    if (novo == null || novo == m.papel) return;
-    await _run(() => ref.read(settingsActionsProvider).changeRole(m.id, novo));
+    if (novo == null || novo == atual) return;
+    await _run(
+      () => ref
+          .read(settingsActionsProvider)
+          .changeRole(m.id, novo.papel, personalizado: novo.personalizado),
+    );
   }
 
   String _nomeDe(TeamMember m) => m.nome.isEmpty ? m.email : m.nome;
@@ -193,6 +220,11 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
   @override
   Widget build(BuildContext context) {
     final membersAsync = ref.watch(teamMembersProvider);
+    final persoDosMembros =
+        ref.watch(papeisDosMembrosProvider).valueOrNull ?? const {};
+    final papeis =
+        ref.watch(papeisPersonalizadosProvider).valueOrNull ??
+        const <PapelPersonalizado>[];
     final meuPapel = ref.watch(currentPapelProvider);
     final meuId = ref.read(teamRepositoryProvider).utilizadorId;
 
@@ -234,7 +266,15 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Chip(label: Text(m.papel.label)),
+                        Chip(
+                          label: Text(
+                            papeis
+                                    .where((p) => p.id == persoDosMembros[m.id])
+                                    .firstOrNull
+                                    ?.nome ??
+                                m.papel.label,
+                          ),
+                        ),
                         if (podeGerirAcesso(
                           eu: meuPapel,
                           alvo: m.papel,
@@ -293,26 +333,26 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
 }
 
 class _NewMember {
-  _NewMember(this.nome, this.email, this.password, this.papel);
+  _NewMember(this.nome, this.email, this.password, this.escolha);
   final String nome;
   final String email;
   final String password;
-  final Papel papel;
+  final EscolhaPapel escolha;
 }
 
-class _AddMemberSheet extends StatefulWidget {
+class _AddMemberSheet extends ConsumerStatefulWidget {
   const _AddMemberSheet();
 
   @override
-  State<_AddMemberSheet> createState() => _AddMemberSheetState();
+  ConsumerState<_AddMemberSheet> createState() => _AddMemberSheetState();
 }
 
-class _AddMemberSheetState extends State<_AddMemberSheet> {
+class _AddMemberSheetState extends ConsumerState<_AddMemberSheet> {
   final _formKey = GlobalKey<FormState>();
   final _nome = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
-  Papel _papel = Papel.editor;
+  EscolhaPapel _papel = (papel: Papel.editor, personalizado: '');
 
   @override
   void dispose() {
@@ -369,14 +409,26 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
                   (v == null || v.length < 8) ? 'Mínimo 8 caracteres' : null,
             ),
             const SizedBox(height: 12),
-            DropdownButtonFormField<Papel>(
+            DropdownButtonFormField<EscolhaPapel>(
               initialValue: _papel,
               decoration: const InputDecoration(labelText: 'Papel'),
               items: [
                 for (final p in [Papel.admin, Papel.editor, Papel.viewer])
-                  DropdownMenuItem(value: p, child: Text(p.label)),
+                  DropdownMenuItem(
+                    value: (papel: p, personalizado: ''),
+                    child: Text(p.label),
+                  ),
+                for (final p in papeisQuePossoDar(
+                  ref.watch(currentPapelProvider),
+                  ref.watch(papeisPersonalizadosProvider).valueOrNull ??
+                      const [],
+                ))
+                  DropdownMenuItem(
+                    value: (papel: p.base, personalizado: p.id),
+                    child: Text('${p.nome} (parte de ${p.base.label})'),
+                  ),
               ],
-              onChanged: (v) => setState(() => _papel = v ?? Papel.editor),
+              onChanged: (v) => setState(() => _papel = v ?? _papel),
             ),
             const SizedBox(height: 16),
             FilledButton(onPressed: _submit, child: const Text('Adicionar')),

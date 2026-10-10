@@ -26,12 +26,29 @@ class TeamRepository {
     return recs.map(TeamMember.fromRecord).toList();
   }
 
+  /// O papel personalizado de cada membro (id do membro → id do papel), só dos
+  /// que têm um.
+  Future<Map<String, String>> papeisPersonalizadosDosMembros() async {
+    final recs = await _pb
+        .collection('users')
+        .getFullList(
+          filter: 'empresa = "$_empresaId"',
+          fields: 'id,papel_personalizado',
+        );
+    return {
+      for (final r in recs)
+        if (r.getStringValue('papel_personalizado').isNotEmpty)
+          r.id: r.getStringValue('papel_personalizado'),
+    };
+  }
+
   /// Cria um membro na empresa (endpoint privilegiado — ver pb/hooks/team.pb.js).
   Future<void> addMember({
     required String nome,
     required String email,
     required String password,
     required Papel papel,
+    String papelPersonalizado = '',
   }) {
     return _pb.send(
       '/api/gc_turnkey/team/members',
@@ -41,6 +58,8 @@ class TeamRepository {
         'email': email,
         'password': password,
         'papel': papel.name,
+        if (papelPersonalizado.isNotEmpty)
+          'papel_personalizado': papelPersonalizado,
       },
     );
   }
@@ -61,11 +80,19 @@ class TeamRepository {
   Future<void> removeMember(String memberId) =>
       _pb.send('/api/gc_turnkey/team/members/$memberId', method: 'DELETE');
 
-  Future<void> changeRole(String memberId, Papel papel) {
+  /// Muda o papel; com [personalizado] (id), dá esse papel personalizado (o
+  /// servidor põe o papel base dele).
+  Future<void> changeRole(
+    String memberId,
+    Papel papel, {
+    String personalizado = '',
+  }) {
     return _pb.send(
       '/api/gc_turnkey/team/members/$memberId',
       method: 'PATCH',
-      body: {'papel': papel.name},
+      body: personalizado.isNotEmpty
+          ? {'papel_personalizado': personalizado}
+          : {'papel': papel.name},
     );
   }
 }

@@ -2,9 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 import '../../../core/auth/current_user.dart';
+import '../../../core/auth/permissions.dart';
 import '../../../core/pocketbase/pb_client.dart';
 import '../domain/nav_config.dart';
 import '../domain/nav_prefs.dart';
+import '../domain/papel_personalizado.dart';
 
 final navigationRepositoryProvider = Provider<NavigationRepository>((ref) {
   return NavigationRepository(ref.watch(pbProvider), requireEmpresaId(ref));
@@ -48,6 +50,40 @@ class NavigationRepository {
         : await _config.update(atual.id, body: {'acesso': acesso});
     return NavConfig.fromRecord(rec);
   }
+
+  RecordService get _papeis => _pb.collection('papeis_personalizados');
+
+  Future<List<PapelPersonalizado>> listarPapeis() async {
+    final recs = await _papeis.getFullList(
+      filter: _pb.filter('empresa = {:e}', {'e': _empresaId}),
+      sort: 'nome',
+    );
+    return recs.map(PapelPersonalizado.fromRecord).toList();
+  }
+
+  /// Só o proprietário consegue (a regra do servidor recusa o resto).
+  Future<PapelPersonalizado> criarPapel(String nome, Papel base) async {
+    final r = await _papeis.create(
+      body: {
+        'empresa': _empresaId,
+        'nome': nome.trim(),
+        'base': base.name,
+        'acesso': <String, String>{},
+      },
+    );
+    return PapelPersonalizado.fromRecord(r);
+  }
+
+  Future<void> guardarPapel(PapelPersonalizado p) => _papeis.update(
+    p.id,
+    body: {
+      'nome': p.nome.trim(),
+      'base': p.base.name,
+      'acesso': p.acessoJson(),
+    },
+  );
+
+  Future<void> apagarPapel(String id) => _papeis.delete(id);
 
   Future<NavPrefs> getPrefs() async {
     try {

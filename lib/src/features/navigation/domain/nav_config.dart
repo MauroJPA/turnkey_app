@@ -2,6 +2,7 @@ import 'package:pocketbase/pocketbase.dart';
 
 import '../../../core/auth/permissions.dart';
 import 'pagina_app.dart';
+import 'papel_personalizado.dart';
 
 /// O que um papel pode fazer numa página.
 enum NivelAcesso {
@@ -47,6 +48,7 @@ class NavConfig {
     this.id = '',
     this.rodape = rodapePorOmissao,
     this.acesso = const {},
+    this.meu,
   });
 
   static const vazia = NavConfig();
@@ -61,11 +63,28 @@ class NavConfig {
   /// nível por omissão.
   final Map<String, Map<String, NivelAcesso>> acesso;
 
+  /// O papel personalizado de quem tem a sessão aberta (ou `null`). Só vale
+  /// para o seu papel base: a matriz dos outros papéis não muda.
+  final PapelPersonalizado? meu;
+
   /// O proprietário nunca fica sem acesso, mesmo com dados mal formados.
   NivelAcesso nivel(Papel papel, String chave) {
     if (papel == Papel.owner) return NivelAcesso.editar;
+    final p = meu;
+    if (p != null && p.base == papel) return p.nivel(chave, nivelBase);
+    return nivelBase(papel, chave);
+  }
+
+  /// O nível do papel (Administrador, Editor, Leitura) na matriz da empresa,
+  /// sem papéis personalizados.
+  NivelAcesso nivelBase(Papel papel, String chave) {
+    if (papel == Papel.owner) return NivelAcesso.editar;
     return acesso[papel.name]?[chave] ?? nivelPorOmissao(papel, chave);
   }
+
+  /// A mesma configuração, aplicando o papel personalizado de quem está.
+  NavConfig comMeu(PapelPersonalizado? p) =>
+      NavConfig(id: id, rodape: rodape, acesso: acesso, meu: p);
 
   bool acessivel(Papel papel, String chave) =>
       nivel(papel, chave) != NivelAcesso.oculto;
@@ -77,7 +96,7 @@ class NavConfig {
   ];
 
   NavConfig comRodape(List<String> novo) =>
-      NavConfig(id: id, rodape: novo, acesso: acesso);
+      NavConfig(id: id, rodape: novo, acesso: acesso, meu: meu);
 
   NavConfig comNivel(Papel papel, String chave, NivelAcesso n) {
     final atual = {
@@ -89,7 +108,7 @@ class NavConfig {
     } else {
       doPapel[chave] = n;
     }
-    return NavConfig(id: id, rodape: rodape, acesso: atual);
+    return NavConfig(id: id, rodape: rodape, acesso: atual, meu: meu);
   }
 
   Map<String, dynamic> acessoJson() => {
