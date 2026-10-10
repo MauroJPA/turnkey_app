@@ -41,6 +41,7 @@ enum HelpTopic {
   pessoasEscala,
   pessoasFerias,
   pessoasNotas,
+  tarefas,
   pessoasFormacoes,
   previsaoAssar,
   tabelaRevendedores,
@@ -431,6 +432,20 @@ const Map<HelpTopic, HelpEntry> helpContent = {
       'Um quadro de anotações partilhado: deixa um recado para os colegas, regista uma ocorrência (algo que se avariou, uma reclamação, um acidente) ou cria um lembrete.',
       'Tipos: Recado, Ocorrência e Lembrete. Num lembrete escolhes o dia: a partir desse dia a nota aparece no Início ("Notas para hoje") até a arquivares. "Fixar" põe a nota no topo; "Arquivar (já tratada)" tira-a da lista sem a apagar (vês em "Arquivadas" e podes voltar a abri-la).',
       'Toda a equipa (menos a Leitura) vê as notas e pode fixá-las ou arquivá-las; só quem escreveu a nota (ou a administração) altera o texto ou a apaga. Não ponhas aqui palavras-passe nem dados pessoais sensíveis.',
+    ],
+  ),
+  HelpTopic.tarefas: (
+    titulo: 'Tarefas da equipa',
+    paragrafos: [
+      'Um quadro junta as tarefas de um assunto (a loja, um evento, as obras…) em fases lado a lado. Um quadro novo vem com "A fazer", "Em curso" e "Feito"; muda os nomes ou junta fases no menu (⋯) de cada fase ou em "Nova fase".',
+      'Criar uma tarefa: "Adicionar tarefa" no fundo da fase, escreve o título e Enter — o campo fica aberto para escreveres logo a seguinte.',
+      'Mudar de fase: arrasta o cartão para outra fase (no telemóvel, mantém o dedo no cartão um instante e arrasta). Ou abre a tarefa e toca na fase em "Fase". Ao arrastar perto da borda, o quadro anda para o lado.',
+      'Abre uma tarefa para pôr os responsáveis ("Fico eu" é um toque), o prazo (Hoje, Amanhã ou um dia), etiquetas coloridas, a descrição e uma lista de passos para ir marcando. Tudo se grava sozinho.',
+      'Comentários e menções: escreve @ e o início do nome e toca na pessoa sugerida. Quem for mencionado vê "Mencionaram-te" no Início e o sinal @ no cartão até abrir a tarefa; o filtro "Menções" mostra essas tarefas.',
+      'Filtros no topo: Todas, Minhas (onde és responsável), Menções e Atrasadas (prazo passado e fora de uma fase feita). A lupa pesquisa por título, etiqueta ou pessoa. As tuas tarefas para hoje ou atrasadas também aparecem no Início.',
+      'A fase "Feito" conta como terminada: o que lá está nunca fica atrasado. Podes marcar outra fase assim no menu (⋯) da fase.',
+      'Arquivar tira a tarefa do quadro sem a apagar (vês e recuperas em ⋮ → "Tarefas arquivadas"); apagar tem "Desfazer" durante uns segundos. O mesmo para os quadros. Só quem criou (ou a administração) apaga.',
+      'As mudanças dos colegas aparecem sozinhas, sem atualizar. A Leitura vê os quadros mas não mexe. Uma fase só se apaga quando estiver vazia.',
     ],
   ),
   HelpTopic.pessoasFerias: (

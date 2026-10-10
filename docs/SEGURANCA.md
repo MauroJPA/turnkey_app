@@ -244,6 +244,15 @@ empresa. O WhatsApp está no código mas **desligado** por omissão (precisa de 
 - O token do bot continua cifrado em `segredos_empresa`; não vai em mensagens, respostas, nem registos (os erros do cron tiram `bot<token>`).
 - Testado em `teste_telegram_botoes` (Telegram falso): assinatura falsa, outro chat, grupo, outra pessoa, formato errado, tipo desconhecido, repetição, outra empresa.
 
+## Tarefas da equipa (2.19.0)
+
+- Quatro coleções novas (`quadros`, `quadro_colunas`, `tarefas`, `tarefa_comentarios`), todas presas à empresa: só a própria empresa as vê; a **Leitura vê mas não escreve** (a única exceção: marcar como lida uma menção a si própria, só o campo `lida_por`).
+- Ninguém escreve em nome de outro (`autor` = quem está autenticado) e nada muda de empresa, de quadro ou de autor depois de criado. A fase de uma tarefa tem de ser do mesmo quadro (também ao mover).
+- Responsáveis, menções e `lida_por` só aceitam pessoas da mesma empresa.
+- Apagar tarefas, comentários e quadros: o autor ou a administração. Uma fase com tarefas não se apaga (`tarefas.coluna` sem cascata); apagar um quadro apaga as tarefas primeiro (`tarefas.pb.js`, na mesma transação) e com elas os comentários.
+- Sem endpoints novos: tudo pelas regras do PocketBase; o tempo real (subscrições) respeita as mesmas regras de leitura.
+- Testado em `teste_tarefas` (50 verificações) e na matriz "Leitura não escreve".
+
 ## Riscos aceites / notas
 
 - O administrador pode editar o perfil da empresa (desenho) e, tecnicamente, o campo `plano`

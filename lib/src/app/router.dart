@@ -27,6 +27,7 @@ import '../features/people/presentation/pessoas_screen.dart';
 import '../features/production/presentation/cart_review_screen.dart';
 import '../features/production/presentation/producao_screen.dart';
 import '../features/products/presentation/produto_detail_screen.dart';
+import '../features/quadros/presentation/quadros_screen.dart';
 import '../features/quiosque/presentation/colaboradores_screen.dart';
 import '../features/quiosque/presentation/quiosque_screen.dart';
 import '../features/recipes/presentation/recipe_detail_screen.dart';
@@ -284,6 +285,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                 child: PessoasScreen(secao: s),
               ),
             ),
+          GoRoute(
+            path: Routes.tarefas,
+            builder: (_, state) =>
+                QuadrosScreen(abrirTarefaId: state.uri.queryParameters['t']),
+          ),
           // os equipamentos passaram da Contabilidade para o Inventário
           GoRoute(
             path: Routes.equipamentosAntigo,

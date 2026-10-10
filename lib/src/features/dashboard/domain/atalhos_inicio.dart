@@ -87,6 +87,13 @@ const atalhosInicio = <AtalhoInicio>[
     Icons.nights_stay_outlined,
     'contagem',
   ),
+  AtalhoInicio(
+    'tarefas',
+    Routes.tarefas,
+    'Tarefas',
+    Icons.view_kanban_outlined,
+    'tarefas',
+  ),
 ];
 
 /// Quantos atalhos cabem no Início.

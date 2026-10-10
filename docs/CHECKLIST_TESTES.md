@@ -2224,6 +2224,27 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Voltar a ligar o Tailscale e tocar "Tentar de novo": a faixa desaparece e os dados carregam
 - [ ] Se havia versão nova, aparece "Há uma versão nova… Atualizar" e atualizar mostra a versão certa (menu ⋮ do Início → versão)
 
+## 163. Tarefas da equipa (quadros ao estilo Trello)
+
+- [ ] Mais → Equipa → **Tarefas**: sem quadros, aparece "Criar o primeiro quadro"; criar "Loja" → fases A fazer, Em curso, Feito
+- [ ] "Adicionar tarefa" → escrever um título e Enter → o cartão aparece e o campo fica aberto para a seguinte; o ✕ fecha
+- [ ] Computador: arrastar um cartão para outra fase e para o meio de outros cartões → fica onde foi largado (também depois de atualizar a página)
+- [ ] Telemóvel: manter o dedo no cartão, arrastar para a fase ao lado (o quadro anda sozinho perto da borda) e largar
+- [ ] Abrir uma tarefa → tocar noutra fase em "Fase" → a tarefa muda de fase
+- [ ] Na tarefa: "Fico eu", "+ Pessoa" (várias), prazo "Amanhã" e depois "Escolher dia", etiqueta nova e uma sugerida, descrição, 3 passos na lista (marcar 1) → fechar e reabrir: está tudo gravado; o cartão mostra o prazo, 1/3, as etiquetas e as iniciais
+- [ ] Prazo de ontem fora de uma fase feita: o cartão tem borda vermelha e conta em "Atrasadas"; ao mover para "Feito" deixa de contar
+- [ ] Comentar com "@" + início do nome de um colega → tocar na sugestão → enviar; noutra conta (o colega): Início mostra "Mencionaram-te" e o cartão tem o sinal @; abrir a tarefa → a menção desaparece do Início
+- [ ] Filtros Minhas, Menções e Atrasadas e a lupa (pesquisar por etiqueta e pelo nome de uma pessoa, sem acentos)
+- [ ] Início: com uma tarefa minha para hoje → "As tuas tarefas" → "Abrir" abre essa tarefa no quadro certo
+- [ ] Duas pessoas com o mesmo quadro aberto: o que uma move aparece à outra em ~1 s, sem atualizar
+- [ ] Arquivar uma tarefa → "Desfazer" volta; arquivar de novo → ⋮ → "Tarefas arquivadas" → "Recuperar"
+- [ ] Apagar uma tarefa/comentário → some logo e "Desfazer" traz de volta; sem desfazer, desaparece de vez
+- [ ] Fase com tarefas → ⋯ → Apagar: avisa que tem tarefas; fase vazia apaga-se (com Desfazer)
+- [ ] ⋯ da fase: mudar o nome, mover para a esquerda/direita, "Tarefas aqui contam como feitas"
+- [ ] Menu do quadro: Nova fase, mudar o nome, Arquivar o quadro (Desfazer) e recuperar em "Quadros arquivados"; trocar de quadro no título
+- [ ] Conta de Leitura: vê os quadros e as tarefas, mas sem "Adicionar", sem arrastar e com os campos bloqueados
+- [ ] Modo escuro: etiquetas, prazos e cartões legíveis
+
 ---
 
 ## Notas / ajustes pedidos

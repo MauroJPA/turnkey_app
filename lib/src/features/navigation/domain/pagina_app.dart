@@ -117,6 +117,13 @@ const paginasApp = <PaginaApp>[
     'Pedidos dos clientes por data/hora',
   ),
   PaginaApp(
+    'tarefas',
+    Routes.tarefas,
+    'Tarefas',
+    Icons.view_kanban_outlined,
+    'Quadros da equipa: tarefas por fases, responsáveis, prazos e comentários',
+  ),
+  PaginaApp(
     'pessoas',
     Routes.pessoas,
     'Pessoas',

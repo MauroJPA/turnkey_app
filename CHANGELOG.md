@@ -2,6 +2,21 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.19.0 — 2026-10-10 — Tarefas da equipa (quadros ao estilo Trello)
+
+**Tarefas da equipa** (Mais → Equipa → Tarefas): quadros ao estilo Trello dentro da app, para a equipa organizar o trabalho por fases sem papéis nem grupos de mensagens.
+
+- **Quadros e fases**: um quadro por assunto (Loja, Eventos, Obras…), que nasce com "A fazer", "Em curso" e "Feito". Fases novas, mudar o nome, mudar a ordem (esquerda/direita) e marcar uma fase como "feita" (o que lá está nunca fica atrasado). Uma fase só se apaga vazia.
+- **Cartões ágeis**: "Adicionar tarefa", título e Enter — o campo fica aberto para a seguinte. Arrastar o cartão de fase em fase (no telemóvel: manter o dedo e arrastar); o quadro anda para o lado perto da borda. Ou, dentro da tarefa, um toque na fase.
+- **Cada tarefa**: responsáveis ("Fico eu" num toque), prazo (Hoje, Amanhã ou um dia), etiquetas coloridas (sempre a mesma cor para o mesmo nome, com sugestões das já usadas), descrição, lista de passos com barra de progresso, e comentários. Tudo grava sozinho.
+- **Menções**: nos comentários, "@" e o início do nome sugere as pessoas; quem é mencionado vê "Mencionaram-te" no Início e o sinal @ no cartão até abrir a tarefa.
+- **Filtros**: Todas, Minhas, Menções e Atrasadas, mais pesquisa por título, etiqueta ou pessoa (sem ligar a acentos).
+- **No Início**: "As tuas tarefas" (prazo hoje ou atrasadas) e "Mencionaram-te", com "Abrir"/"Ver" que leva direto à tarefa. Novo atalho "Tarefas" para escolher no Início.
+- **Tempo real**: as mudanças dos colegas aparecem sozinhas, sem atualizar.
+- **Arquivar e apagar com Desfazer** (tarefas, comentários, quadros); arquivadas recuperam-se no menu ⋮.
+- Ficheiros: `lib/src/features/quadros/` (novo), migration `1791140000_tarefas.js` (4 coleções), hook `tarefas.pb.js` (apagar um quadro apaga as tarefas primeiro). Página `tarefas` nas permissões (a Leitura só vê).
+- Testes: `test/quadros_test.dart` (ordem ao arrastar, prazos, filtros, menções, lista) e `teste_tarefas` na suíte de segurança (50 verificações: isolamento, papéis, autor, responsáveis e menções só da empresa, fase do mesmo quadro, apagar em cascata).
+
 ## 2.18.1 — 2026-10-09 — Ecrã de arranque e aviso de sem ligação ao servidor
 
 Corrige o "ecrã todo branco" e a app "presa" numa versão antiga quando o telemóvel não chega ao servidor (Wi-Fi fora, ou **Tailscale desligado**).

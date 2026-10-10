@@ -312,7 +312,7 @@ const gruposMais = <({String titulo, List<String> paginas})>[
     titulo: 'Receitas e custos',
     paginas: ['receitas', 'fichas', 'inventario', 'faturas'],
   ),
-  (titulo: 'Equipa', paginas: ['pessoas', 'equipa']),
+  (titulo: 'Equipa', paginas: ['tarefas', 'pessoas', 'equipa']),
   (titulo: 'Dinheiro', paginas: ['vendas', 'financeiro']),
   (titulo: 'Casa', paginas: ['configuracoes']),
 ];

@@ -29,6 +29,8 @@ import '../../people/domain/formacao.dart';
 import '../../people/domain/nota.dart';
 import '../../people/domain/ponto.dart';
 import '../../people/presentation/formacoes_view.dart';
+import '../../quadros/application/quadros_providers.dart';
+import '../../quadros/domain/quadro.dart';
 import '../../sales/data/sales_repository.dart';
 import '../../schedule/application/schedule_providers.dart';
 import '../../schedule/domain/production_plan.dart';
@@ -451,6 +453,55 @@ final tarefasHojeProvider = Provider.autoDispose<List<TarefaHoje>>((ref) {
         ],
       ),
     );
+  }
+
+  // ---- tarefas da equipa (quadros): as minhas para hoje e as menções
+  if (acessivel('tarefas')) {
+    final minhas = ref.watch(minhasTarefasHojeProvider).valueOrNull ?? const [];
+    if (minhas.isNotEmpty) {
+      tarefas.add(
+        TarefaHoje(
+          chave: 'tarefas',
+          icon: Icons.view_kanban_outlined,
+          titulo: 'As tuas tarefas',
+          urgencia: Urgencia.atencao,
+          rota: Routes.tarefas,
+          quantidade: minhas.length,
+          itens: [
+            for (final t in minhas.take(5))
+              ItemTarefa(
+                '${t.titulo} · ${prazoTexto(t.prazo!, hoje)}',
+                rotuloAcao: 'Abrir',
+                acao: (context, _) async => context.go(Routes.tarefa(t.id)),
+              ),
+          ],
+        ),
+      );
+    }
+    final mencoes = ref.watch(minhasMencoesProvider).valueOrNull ?? const [];
+    if (mencoes.isNotEmpty) {
+      String curto(String s) =>
+          s.length <= 60 ? s : '${s.substring(0, 57).trimRight()}…';
+      tarefas.add(
+        TarefaHoje(
+          chave: 'mencoes',
+          icon: Icons.alternate_email,
+          titulo: 'Mencionaram-te',
+          urgencia: Urgencia.atencao,
+          rota: Routes.tarefas,
+          quantidade: mencoes.length,
+          itens: [
+            for (final c in mencoes.take(3))
+              ItemTarefa(
+                '${c.autorNome.isEmpty ? 'Alguém' : c.autorNome}: ${curto(c.texto)}',
+                rotuloAcao: 'Ver',
+                acao: (context, _) async =>
+                    context.go(Routes.tarefa(c.tarefaId)),
+              ),
+          ],
+        ),
+      );
+    }
   }
 
   // ---- produção e compras

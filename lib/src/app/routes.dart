@@ -35,6 +35,11 @@ abstract class Routes {
   static const pessoasEscala = '/pessoas/escala';
   static const pessoasNotas = '/pessoas/notas';
   static const pessoasFormacoes = '/pessoas/formacoes';
+
+  /// Tarefas da equipa (quadros ao estilo Trello). `?t=<id>` abre uma tarefa.
+  static const tarefas = '/tarefas';
+  static String tarefa(String id) => '/tarefas?t=${Uri.encodeComponent(id)}';
+
   static const contagem = '/contagem';
   static const contagemRelatorios = '/contagem/relatorios';
   static const fecho = '/contagem/fecho';

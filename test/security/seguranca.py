@@ -399,7 +399,8 @@ def teste_papeis():
     check(s not in (200, 204), 'um utilizador não apaga o de outro')
 
     # leitura não escreve
-    permitidas = {'preferencias_utilizador', 'sugestoes', 'notas_pagina'}
+    # tarefa_comentarios: a Leitura só marca como lida uma menção (campo lida_por)
+    permitidas = {'preferencias_utilizador', 'sugestoes', 'notas_pagina', 'tarefa_comentarios'}
     matriz = {}
     for col in colecoes_com_empresa():
         base = dados.get((col, 'A'))
@@ -1803,6 +1804,158 @@ def teste_anotacoes():
     check(s in (200, 204), 'o autor (admin) apaga a sua nota', f'status {s}')
     s, _, _ = call('DELETE', f'/api/collections/anotacoes/records/{nid}', tok=tok['adminA'])
     check(s in (200, 204), 'a administração apaga notas de outros', f'status {s}')
+
+
+def teste_tarefas():
+    sec('7a9b. Tarefas da equipa (quadros, fases, tarefas, comentários)')
+    A, B = empresas['A'], empresas['B']
+    q = urllib.parse.quote
+
+    # ---- quadros
+    s, _, _ = call('POST', '/api/collections/quadros/records',
+                   {'empresa': A, 'nome': 'Loja', 'autor': users['viewerA']}, tok['viewerA'])
+    check(s in (400, 403), 'Leitura não cria quadros', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/quadros/records',
+                   {'empresa': A, 'nome': 'Loja', 'autor': users['adminA']}, tok['editorA'])
+    check(s in (400, 403), 'ninguém cria um quadro em nome de outro', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/quadros/records',
+                   {'empresa': B, 'nome': 'Loja', 'autor': users['editorA']}, tok['editorA'])
+    check(s in (400, 403), 'não se cria um quadro numa empresa alheia', f'status {s}')
+    s, r, _ = call('POST', '/api/collections/quadros/records',
+                   {'empresa': A, 'nome': 'Loja', 'autor': users['editorA']}, tok['editorA'])
+    check(s == 200, 'editor cria um quadro', f'status {s} {str(r)[:100]}')
+    qa = r.get('id')
+    s, r, _ = call('POST', '/api/collections/quadros/records',
+                   {'empresa': B, 'nome': 'Da B', 'autor': users['editorB']}, tok['editorB'])
+    qb = r.get('id')
+    s, r, _ = call('GET', '/api/collections/quadros/records', tok=tok['viewerA'])
+    check(s == 200 and any(i.get('id') == qa for i in r.get('items', [])), 'Leitura vê os quadros (só ver)')
+    s, _, _ = call('GET', f'/api/collections/quadros/records/{qa}', tok=tok['editorB'])
+    check(s == 404, 'empresa B não vê os quadros da A', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/quadros/records/{qa}', {'empresa': B}, tok['editorA'])
+    check(s in (400, 403, 404), 'um quadro não muda de empresa', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/quadros/records/{qa}', {'nome': 'x'}, tok['viewerA'])
+    check(s in (403, 404), 'Leitura não muda quadros', f'status {s}')
+
+    # ---- fases
+    def fase(quadro, nome, t, emp=A, concluida=False):
+        return call('POST', '/api/collections/quadro_colunas/records',
+                    {'empresa': emp, 'quadro': quadro, 'nome': nome, 'ordem': 1000, 'concluida': concluida}, tok[t])
+    s, r, _ = fase(qa, 'A fazer', 'editorA')
+    check(s == 200, 'editor cria uma fase', f'status {s} {str(r)[:100]}')
+    ca = r.get('id')
+    s, r, _ = fase(qa, 'Feito', 'editorA', concluida=True)
+    cfeito = r.get('id')
+    s, _, _ = fase(qa, 'Intrusa', 'editorB', emp=B)
+    check(s in (400, 403), 'empresa B não junta fases a um quadro da A', f'status {s}')
+    s, r, _ = fase(qb, 'Da B', 'editorB', emp=B)
+    cb = r.get('id')
+    s, _, _ = call('PATCH', f'/api/collections/quadro_colunas/records/{ca}', {'quadro': qb}, tok['editorA'])
+    check(s in (400, 403, 404), 'uma fase não muda de quadro', f'status {s}')
+
+    # ---- tarefas
+    base = {'empresa': A, 'quadro': qa, 'coluna': ca, 'titulo': 'Limpar o forno',
+            'autor': users['editorA'], 'autor_nome': 'Editor A', 'arquivada': False}
+    s, _, _ = call('POST', '/api/collections/tarefas/records', base, tok['viewerA'])
+    check(s in (400, 403), 'Leitura não cria tarefas', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/tarefas/records', {**base, 'autor': users['adminA']}, tok['editorA'])
+    check(s in (400, 403), 'ninguém cria tarefas em nome de outro', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/tarefas/records', {**base, 'coluna': cb}, tok['editorA'])
+    check(s in (400, 403), 'a fase tem de ser do mesmo quadro', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/tarefas/records', {**base, 'responsaveis': [users['editorB']]}, tok['editorA'])
+    check(s in (400, 403), 'responsáveis só da própria empresa', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/tarefas/records', {**base, 'titulo': 'x' * 201}, tok['editorA'])
+    check(s == 400, 'título demasiado longo é recusado', f'status {s}')
+    hoje = time.strftime('%Y-%m-%d')
+    s, r, _ = call('POST', '/api/collections/tarefas/records',
+                   {**base, 'responsaveis': [users['editorA'], users['adminA']], 'prazo': f'{hoje} 12:00:00.000Z',
+                    'etiquetas': ['Urgente'], 'checklist': [{'t': 'Desligar', 'f': False}]}, tok['editorA'])
+    check(s == 200, 'editor cria uma tarefa com responsáveis, prazo, etiquetas e lista', f'status {s} {str(r)[:120]}')
+    ta = r.get('id')
+    s, _, _ = call('PATCH', f'/api/collections/tarefas/records/{ta}', {'coluna': cfeito, 'ordem': 500}, tok['adminA'])
+    check(s == 200, 'qualquer um da equipa move a tarefa de fase', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/tarefas/records/{ta}', {'coluna': cb}, tok['editorA'])
+    check(s in (400, 403, 404), 'não se move para uma fase de outro quadro', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/tarefas/records/{ta}', {'quadro': qb}, tok['editorA'])
+    check(s in (400, 403, 404), 'uma tarefa não muda de quadro', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/tarefas/records/{ta}', {'autor': users['adminA']}, tok['editorA'])
+    check(s in (400, 403, 404), 'o autor de uma tarefa não muda', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/tarefas/records/{ta}', {'responsaveis': [users['ownerB']]}, tok['editorA'])
+    check(s in (400, 403, 404), 'não se põe alguém de fora como responsável', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/tarefas/records/{ta}', {'titulo': 'x'}, tok['viewerA'])
+    check(s in (403, 404), 'Leitura não muda tarefas', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/tarefas/records/{ta}', {'titulo': 'x'}, tok['editorB'])
+    check(s in (403, 404), 'empresa B não muda tarefas da A', f'status {s}')
+    s, r, _ = call('GET', '/api/collections/tarefas/records', tok=tok['editorB'])
+    check(s == 200 and not any(i.get('id') == ta for i in r.get('items', [])), 'empresa B não vê as tarefas da A')
+    s, _, _ = call('DELETE', f'/api/collections/quadro_colunas/records/{cfeito}', tok=tok['editorA'])
+    check(s in (400, 403), 'uma fase com tarefas não se apaga', f'status {s}')
+
+    # o filtro do Início: as minhas com prazo até hoje, fora das fases feitas
+    s, r, _ = call('PATCH', f'/api/collections/tarefas/records/{ta}', {'coluna': ca}, tok['editorA'])
+    filtro = q(f'empresa = "{A}" && arquivada = false && quadro.arquivado = false && coluna.concluida = false'
+               f' && responsaveis ~ "{users["editorA"]}" && prazo != "" && prazo <= "{hoje} 23:59:59.999Z"')
+    s, r, _ = call('GET', f'/api/collections/tarefas/records?filter={filtro}', tok=tok['editorA'])
+    check(s == 200 and [i['id'] for i in r.get('items', [])] == [ta], 'Início: as minhas tarefas para hoje', f'{s} {str(r)[:120]}')
+    s, r, _ = call('GET', f'/api/collections/tarefas/records?filter={filtro.replace(q(users["editorA"]), q(users["viewerA"]))}',
+                   tok=tok['editorA'])
+    check(s == 200 and not r.get('items'), 'Início: quem não é responsável não as vê como suas', f'{s}')
+
+    # ---- comentários e menções
+    cbase = {'empresa': A, 'tarefa': ta, 'texto': '@Admin podes ver?', 'autor': users['editorA'],
+             'autor_nome': 'Editor A', 'mencoes': [users['adminA']], 'lida_por': [users['editorA']]}
+    s, _, _ = call('POST', '/api/collections/tarefa_comentarios/records', cbase, tok['viewerA'])
+    check(s in (400, 403), 'Leitura não comenta', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/tarefa_comentarios/records', {**cbase, 'autor': users['adminA']}, tok['editorA'])
+    check(s in (400, 403), 'ninguém comenta em nome de outro', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/tarefa_comentarios/records', {**cbase, 'mencoes': [users['ownerB']]}, tok['editorA'])
+    check(s in (400, 403), 'só se menciona quem é da empresa', f'status {s}')
+    s, _, _ = call('POST', '/api/collections/tarefa_comentarios/records', {**cbase, 'empresa': B}, tok['editorB'])
+    check(s in (400, 403), 'empresa B não comenta tarefas da A', f'status {s}')
+    s, r, _ = call('POST', '/api/collections/tarefa_comentarios/records', cbase, tok['editorA'])
+    check(s == 200, 'editor comenta e menciona um colega', f'status {s} {str(r)[:120]}')
+    cid = r.get('id')
+    mf = q(f'empresa = "{A}" && mencoes ~ "{users["adminA"]}" && lida_por !~ "{users["adminA"]}"')
+    s, r, _ = call('GET', f'/api/collections/tarefa_comentarios/records?filter={mf}', tok=tok['adminA'])
+    check(s == 200 and [i['id'] for i in r.get('items', [])] == [cid], 'Início: a menção aparece a quem foi mencionado', f'{s} {str(r)[:120]}')
+    s, _, _ = call('PATCH', f'/api/collections/tarefa_comentarios/records/{cid}', {'texto': 'adulterado'}, tok['adminA'])
+    check(s in (403, 404), 'um colega não muda o texto de um comentário alheio', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/tarefa_comentarios/records/{cid}', {'texto': 'adulterado'}, tok['viewerA'])
+    check(s in (403, 404), 'Leitura não muda o texto de um comentário', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/tarefa_comentarios/records/{cid}', {'mencoes': [users['viewerA']]}, tok['viewerA'])
+    check(s in (403, 404), 'Leitura não muda as menções de um comentário', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/tarefa_comentarios/records/{cid}', {'lida_por+': users['viewerA']}, tok['viewerA'])
+    check(s == 200, 'Leitura pode marcar uma menção como lida (só isso)', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/tarefa_comentarios/records/{cid}', {'lida_por+': users['adminA']}, tok['adminA'])
+    check(s == 200, 'quem foi mencionado marca como lida', f'status {s}')
+    s, r, _ = call('GET', f'/api/collections/tarefa_comentarios/records?filter={mf}', tok=tok['adminA'])
+    check(s == 200 and not r.get('items'), 'depois de lida, a menção sai do Início', f'{s}')
+    s, _, _ = call('PATCH', f'/api/collections/tarefa_comentarios/records/{cid}', {'lida_por+': users['ownerB']}, tok['editorA'])
+    check(s in (400, 403, 404), 'lida_por só com pessoas da empresa', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/tarefa_comentarios/records/{cid}', {'texto': 'editado'}, tok['editorA'])
+    check(s == 200, 'o autor edita o seu comentário', f'status {s}')
+    s, _, _ = call('GET', f'/api/collections/tarefa_comentarios/records/{cid}', tok=tok['editorB'])
+    check(s == 404, 'empresa B não vê os comentários da A', f'status {s}')
+    s, _, _ = call('DELETE', f'/api/collections/tarefa_comentarios/records/{cid}', tok=tok['viewerA'])
+    check(s in (403, 404), 'Leitura não apaga comentários', f'status {s}')
+
+    # ---- apagar
+    s, r, _ = call('POST', '/api/collections/tarefas/records',
+                   {**base, 'autor': users['adminA'], 'titulo': 'Do admin'}, tok['adminA'])
+    tadmin = r.get('id')
+    s, _, _ = call('DELETE', f'/api/collections/tarefas/records/{tadmin}', tok=tok['editorA'])
+    check(s in (403, 404), 'um colega não apaga a tarefa de outro', f'status {s}')
+    s, _, _ = call('DELETE', f'/api/collections/tarefas/records/{ta}', tok=tok['adminA'])
+    check(s in (200, 204), 'a administração apaga tarefas de outros', f'status {s}')
+    s, _, _ = call('GET', f'/api/collections/tarefa_comentarios/records/{cid}', tok=tok['adminA'])
+    check(s == 404, 'apagar a tarefa apaga os seus comentários', f'status {s}')
+    s, _, _ = call('DELETE', f'/api/collections/quadros/records/{qa}', tok=tok['viewerA'])
+    check(s in (403, 404), 'Leitura não apaga quadros', f'status {s}')
+    s, _, _ = call('DELETE', f'/api/collections/quadros/records/{qa}', tok=tok['editorA'])
+    check(s in (200, 204), 'quem criou o quadro apaga-o (com as fases e tarefas)', f'status {s}')
+    s, _, _ = call('GET', f'/api/collections/tarefas/records/{tadmin}', tok=tok['adminA'])
+    check(s == 404, 'apagar o quadro apaga as tarefas', f'status {s}')
+    call('DELETE', f'/api/collections/quadros/records/{qb}', tok=tok['ownerB'])
 
 
 def teste_escala():
@@ -3736,6 +3889,7 @@ def main():
         teste_ponto()
         teste_ferias()
         teste_anotacoes()
+        teste_tarefas()
         teste_escala()
         teste_formacoes()
         teste_segredos()
