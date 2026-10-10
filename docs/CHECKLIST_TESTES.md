@@ -2245,6 +2245,21 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Conta de Leitura: vê os quadros e as tarefas, mas sem "Adicionar", sem arrastar e com os campos bloqueados
 - [ ] Modo escuro: etiquetas, prazos e cartões legíveis
 
+## 164. Menções no Telegram de cada pessoa
+
+- [ ] (Administração) Opções → Avisos com o Telegram ligado (token do bot guardado)
+- [ ] Tarefas → ⋮ → "Menções no Telegram" → "Ligar o meu Telegram": abre o Telegram na conversa com o bot da loja
+- [ ] Carregar em "Iniciar": o bot responde "✅ Ligado!" e, em poucos segundos, a app mostra "O teu Telegram está ligado" com o nome da conta
+- [ ] "Enviar uma mensagem de teste": chega "👋 Teste…" ao teu Telegram
+- [ ] Noutra conta (colega), comentar numa tarefa com @o teu nome: chega-te "💬 … mencionou-te em «tarefa» (quadro)" com o comentário
+- [ ] Mencionares-te a ti próprio não te manda nada; um colega sem Telegram ligado não recebe nada (mas vê no Início)
+- [ ] Editar esse comentário sem mudar as menções: não chega mensagem repetida
+- [ ] Desligar o Telegram em Opções → Avisos: as menções deixam de chegar; voltar a ligar: voltam
+- [ ] "Desligar" no ecrã das menções: deixa de receber; ligar de novo funciona
+- [ ] Abrir o link do bot mais de 30 minutos depois de o pedir: o bot diz que o código já não vale; pedir de novo resolve
+- [ ] "Detetar o meu chat" (Opções → Avisos) continua a mostrar as conversas com o bot
+- [ ] (Opcional) com `GC_TURNKEY_APP_URL` no `.env`: a mensagem traz "Abrir: …" que abre a tarefa na app
+
 ---
 
 ## Notas / ajustes pedidos

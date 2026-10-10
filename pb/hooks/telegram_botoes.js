@@ -192,22 +192,25 @@ function tratar(app, empresaId, token, chatConfigurado, cb) {
   return { tratado: true, ok: r.ok };
 }
 
-// Uma passagem: pergunta ao Telegram o que foi carregado em cada empresa com o
-// Telegram ligado (e conversa configurada). Devolve quantos botões tratou.
+// Uma passagem: pergunta ao Telegram o que chegou ao bot de cada empresa com o
+// Telegram ligado — botões carregados (só os da conversa privada configurada) e
+// mensagens "/start <código>" de quem está a ligar o seu Telegram
+// (telegram_pessoas.js). Devolve quantos botões tratou e quantas pessoas ligou.
 function sondar(app, soEmpresa) {
   const seg = require(__hooks + '/segredos.js');
   let cfgs = [];
   try {
-    cfgs = app.findRecordsByFilter('avisos_config', "telegram_ativo = true && telegram_chat != ''", '', 100, 0);
+    cfgs = app.findRecordsByFilter('avisos_config', 'telegram_ativo = true', '', 100, 0);
   } catch (_) {
-    return { tratados: 0 };
+    return { tratados: 0, ligados: 0 };
   }
   let tratados = 0;
+  let ligados = 0;
   for (const cfg of cfgs) {
     const empresaId = cfg.getString('empresa');
     if (soEmpresa && empresaId !== soEmpresa) continue;
+    // os botões só valem na conversa privada configurada (tratar() confere)
     const chat = cfg.getString('telegram_chat');
-    if (String(chat).charAt(0) === '-') continue; // grupos não têm botões
     const token = seg.ler(app, empresaId, 'telegram');
     if (!token) continue;
     const ficheiro = 'telegram_offset_' + empresaId + '.json';
@@ -215,7 +218,7 @@ function sondar(app, soEmpresa) {
     let r = null;
     try {
       const resp = $http.send({
-        url: URL_BASE() + '/bot' + token + '/getUpdates?timeout=0&allowed_updates=%5B%22callback_query%22%5D&offset=' + (Number(estado.offset) || 0),
+        url: URL_BASE() + '/bot' + token + '/getUpdates?timeout=0&allowed_updates=%5B%22callback_query%22%2C%22message%22%5D&offset=' + (Number(estado.offset) || 0),
         method: 'GET',
         timeout: 15,
       });
@@ -227,6 +230,12 @@ function sondar(app, soEmpresa) {
     let offset = Number(estado.offset) || 0;
     for (const u of lista) {
       if (typeof u.update_id === 'number' && u.update_id >= offset) offset = u.update_id + 1;
+      if (u.message) {
+        try {
+          if (require(__hooks + '/telegram_pessoas.js').tratarMensagem(app, empresaId, token, u.message)) ligados++;
+        } catch (_) {}
+        continue;
+      }
       if (!u.callback_query) continue;
       try {
         if (tratar(app, empresaId, token, chat, u.callback_query).tratado) tratados++;
@@ -234,7 +243,7 @@ function sondar(app, soEmpresa) {
     }
     if (offset !== (Number(estado.offset) || 0)) gravarJson(app, ficheiro, { offset: offset });
   }
-  return { tratados: tratados };
+  return { tratados: tratados, ligados: ligados };
 }
 
 // Envia uma mensagem (com botões) ao chat do administrador, se o Telegram está

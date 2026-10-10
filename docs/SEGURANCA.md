@@ -253,6 +253,15 @@ empresa. O WhatsApp está no código mas **desligado** por omissão (precisa de 
 - Sem endpoints novos: tudo pelas regras do PocketBase; o tempo real (subscrições) respeita as mesmas regras de leitura.
 - Testado em `teste_tarefas` (50 verificações) e na matriz "Leitura não escreve".
 
+### Menções no Telegram de cada pessoa (2.20.0)
+
+- Cada pessoa liga o **seu** Telegram ao bot da empresa (`telegram_pessoas`): a app pede um código (`POST /api/gc_turnkey/telegram/pessoal/ligar`) e abre `t.me/<bot>?start=<código>`; a sondagem de minuto a minuto apanha o "/start <código>" e grava o chat. O código tem 24 caracteres ao acaso, é de **uso único**, vale **30 minutos**, está **escondido da API** (campo `hidden`) e só vale em **conversa privada** vinda da própria pessoa (nem grupos, nem outra pessoa no mesmo chat).
+- Só o servidor grava ligações (create/update sem regra). Cada pessoa vê e desliga a sua; a administração vê e desliga as da empresa; outra empresa não vê nada.
+- As menções só vão para quem foi mencionado (nunca para quem escreve), só se o Telegram da empresa estiver ligado e só para quem ainda é da empresa. Editar um comentário só avisa quem passou a estar mencionado.
+- A sondagem passa a ler também as mensagens que chegam ao bot (não só os botões) e corre em qualquer empresa com o Telegram ligado; os botões continuam a valer só na conversa privada configurada. Os chats que falaram com o bot ficam em `pb_data/telegram_chats_<empresa>.json` para o "Detetar o meu chat" (que já não os veria no Telegram).
+- Endpoints novos (qualquer pessoa da empresa, só sobre o próprio Telegram): `.../pessoal/ligar`, `.../pessoal/verificar` (corre a sondagem da sua empresa), `.../pessoal/testar`. O token nunca vai em respostas nem em mensagens; os erros tiram `bot<token>`.
+- Testado em `teste_telegram_pessoal` (Telegram falso): códigos errado, expirado e reutilizado, grupo, outra pessoa, isolamento entre empresas, escrita à mão recusada, menções (autor excluído, sem repetir ao editar, Telegram desligado), teste, desligar.
+
 ## Riscos aceites / notas
 
 - O administrador pode editar o perfil da empresa (desenho) e, tecnicamente, o campo `plano`

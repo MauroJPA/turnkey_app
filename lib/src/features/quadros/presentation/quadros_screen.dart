@@ -16,6 +16,7 @@ import '../data/quadros_repository.dart';
 import '../domain/quadro.dart';
 import 'quadro_comum.dart';
 import 'tarefa_sheet.dart';
+import 'telegram_pessoal_sheet.dart';
 
 /// Tarefas da equipa em quadros, ao estilo Trello: fases lado a lado, cartões
 /// que se arrastam de fase em fase, e cada cartão com responsáveis, prazo,
@@ -320,6 +321,8 @@ class _QuadrosScreenState extends ConsumerState<QuadrosScreen> {
         await _novaFase(q.id, d);
       case 'arquivadas':
         if (d != null) await _tarefasArquivadas(q.id, d);
+      case 'telegram':
+        await abrirTelegramPessoal(context);
       case 'arquivar':
         final messenger = ScaffoldMessenger.of(context);
         await _fazer(() => _repo.arquivarQuadro(q.id, arquivado: true));
@@ -547,6 +550,10 @@ class _QuadrosScreenState extends ConsumerState<QuadrosScreen> {
                 const PopupMenuItem(
                   value: 'arquivadas',
                   child: Text('Tarefas arquivadas'),
+                ),
+                const PopupMenuItem(
+                  value: 'telegram',
+                  child: Text('Menções no Telegram'),
                 ),
                 if (pode)
                   const PopupMenuItem(

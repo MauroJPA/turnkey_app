@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.20.0 — 2026-10-10 — Menções no Telegram de cada pessoa
+
+**Menções no Telegram**: quem é mencionado num comentário das Tarefas recebe logo uma mensagem no **seu** Telegram, com a tarefa, o quadro e o comentário.
+
+- **Cada pessoa liga o seu**: Tarefas → ⋮ → "Menções no Telegram" → "Ligar o meu Telegram". Abre o bot da loja; carrega-se em "Iniciar" e a app confirma sozinha. Só uma vez. "Enviar uma mensagem de teste" e "Desligar" no mesmo sítio.
+- **Só para quem interessa**: a mensagem vai só para quem foi mencionado (nunca para quem escreve); editar um comentário só avisa quem passou a estar mencionado; com o Telegram da empresa desligado (Opções → Avisos) não vai nada.
+- **Seguro**: o código de ligação é de uso único, vale 30 minutos, nunca aparece na API e só funciona numa conversa privada da própria pessoa; só o servidor grava as ligações; cada um vê e desliga a sua (a administração vê as da empresa).
+- **Link "Abrir"** na mensagem, se o servidor tiver `GC_TURNKEY_APP_URL` no `.env` (opcional).
+- O bot passa a ler também as mensagens (não só os botões), em todas as empresas com o Telegram ligado — mesmo quando o chat da empresa é um grupo. O "Detetar o meu chat" continua a funcionar (guarda os chats que já leu).
+- Ficheiros: `telegram_pessoas.js` e `telegram_pessoas.pb.js` (novos), migration `1791150000_telegram_pessoas.js`, `tarefas.pb.js` (aviso ao comentar), `telegram_botoes.js` (sondagem com mensagens), `avisos.pb.js` (detetar), ecrã `telegram_pessoal_sheet.dart`.
+- Testes: `teste_telegram_pessoal` (30 verificações, Telegram falso).
+
 ## 2.19.0 — 2026-10-10 — Tarefas da equipa (quadros ao estilo Trello)
 
 **Tarefas da equipa** (Mais → Equipa → Tarefas): quadros ao estilo Trello dentro da app, para a equipa organizar o trabalho por fases sem papéis nem grupos de mensagens.

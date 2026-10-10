@@ -140,6 +140,15 @@ routerAdd(
     if (r.statusCode !== 200) throw new ApiError(502, 'O Telegram devolveu um erro (' + r.statusCode + ').', null);
     const vistos = {};
     const chats = [];
+    // a sondagem de minuto a minuto já pode ter lido as mensagens: começa pelas
+    // que ela guardou (mais recentes primeiro)
+    try {
+      for (const c of require(`${__hooks}/telegram_pessoas.js`).chatsLembrados(e.app, auth.getString('empresa'))) {
+        if (vistos[c.id]) continue;
+        vistos[c.id] = true;
+        chats.push({ id: String(c.id), nome: String(c.nome || 'chat').substring(0, 60) });
+      }
+    } catch (_) {}
     const lista = (r.json && r.json.result) || [];
     for (let i = lista.length - 1; i >= 0; i--) {
       const m = lista[i].message || lista[i].channel_post || lista[i].my_chat_member || null;

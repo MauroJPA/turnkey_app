@@ -1154,6 +1154,8 @@ class _TelegramFalso(BaseHTTPRequestHandler):
         if tg_estado['modo'] == '401':
             return self._resp(401, {'ok': False})
         tg_estado['enviadas'].append({'path': self.path, 'corpo': corpo})
+        if self.path.endswith('/getMe'):
+            return self._resp(200, {'ok': True, 'result': {'id': 42, 'is_bot': True, 'username': 'gookie_teste_bot'}})
         self._resp(200, {'ok': True, 'result': {}})
 
     def do_GET(self):
@@ -1171,6 +1173,155 @@ class _TelegramFalso(BaseHTTPRequestHandler):
 
 
 TOKEN_TG = '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11'
+
+
+def teste_telegram_pessoal(cfg_id):
+    """Telegram de cada pessoa: ligar com código, segurança da ligação e menções das Tarefas."""
+    sec('7a4c. Telegram de cada pessoa (menções)')
+    A = empresas['A']
+    contador = {'n': 500}
+    limpar = []
+
+    def mensagem(texto, chat, tipo='private', de=None, nome='Pessoa'):
+        contador['n'] += 1
+        tg_estado['updates'].append({'update_id': contador['n'], 'message': {
+            'message_id': contador['n'], 'text': texto, 'from': {'id': de if de is not None else chat, 'first_name': nome},
+            'chat': {'id': chat, 'type': tipo, 'first_name': nome}}})
+
+    def ligar(quem):
+        s, r, _ = call('POST', '/api/gc_turnkey/telegram/pessoal/ligar', {}, tok[quem])
+        return s, r, (r.get('link') or '').split('start=')[-1] if s == 200 else ''
+
+    def verificar(quem):
+        s, r, _ = call('POST', '/api/gc_turnkey/telegram/pessoal/verificar', {}, tok[quem])
+        return r if s == 200 else {}
+
+    def enviadas_para(chat):
+        return [x['corpo'] for x in tg_estado['enviadas']
+                if x['path'].endswith('/sendMessage') and str(x['corpo'].get('chat_id')) == str(chat)]
+
+    try:
+        tg_estado.update(modo='ok', enviadas=[], updates=[])
+        call('PATCH', f'/api/collections/avisos_config/records/{cfg_id}', {'telegram_ativo': True, 'telegram_chat': '987654'}, tok['adminA'])
+
+        s, _, _ = call('POST', '/api/gc_turnkey/telegram/pessoal/ligar', {})
+        check(s in (401, 403), 'sem sessão não pede ligação', f'status {s}')
+        s, r, _ = ligar('editorB')
+        check(s == 400 and 'Telegram' in str(r), 'sem o Telegram da empresa ligado, explica (empresa B)', f'status {s} {str(r)[:100]}')
+
+        s, r, cod = ligar('editorA')
+        check(s == 200 and r.get('link', '').startswith('https://t.me/gookie_teste_bot?start=') and len(cod) >= 16,
+              'a pessoa recebe o link do bot com um código', f'status {s} {str(r)[:120]}')
+        check(TOKEN_TG not in json.dumps(r), 'o token do bot não vai na resposta')
+        s, r, _ = call('GET', '/api/collections/telegram_pessoas/records', tok=tok['editorA'])
+        itens = r.get('items', []) if s == 200 else []
+        check(len(itens) == 1 and 'codigo' not in itens[0] and 'expira' not in itens[0],
+              'a pessoa vê a sua ligação, mas nunca o código', str(itens)[:160])
+        meu = itens[0]['id'] if itens else ''
+        s, r, _ = call('GET', '/api/collections/telegram_pessoas/records', tok=tok['ownerB'])
+        check(s == 200 and not any(x.get('empresa') == A for x in r.get('items', [])), 'outra empresa não vê as ligações da A', f'status {s}')
+        s, _, _ = call('GET', f'/api/collections/telegram_pessoas/records/{itens[0]["id"] if itens else "x"}', tok=tok['ownerB'])
+        check(s == 404, 'outra empresa não abre a ligação de alguém da A', f'status {s}')
+        s, _, _ = call('PATCH', f'/api/collections/telegram_pessoas/records/{meu}', {'chat': '111'}, tok['editorA'])
+        check(s in (403, 404), 'ninguém grava o chat à mão (só o servidor)', f'status {s}')
+        s, _, _ = call('POST', '/api/collections/telegram_pessoas/records',
+                       {'empresa': A, 'user': users['viewerA'], 'chat': '111'}, tok['adminA'])
+        check(s in (400, 403), 'nem a administração cria ligações à mão', f'status {s}')
+
+        # códigos errados, grupos e outra pessoa não ligam
+        mensagem('/start Lcodigoerradoabc12345', 777001)
+        mensagem(f'/start {cod}', -100555, tipo='group', de=777001)
+        mensagem(f'/start {cod}', 777001, de=424242)
+        r = verificar('editorA')
+        check(r.get('ligado') is False, 'código errado, num grupo ou de outra pessoa não liga', str(r))
+        check(any('já não vale' in m.get('text', '') for m in enviadas_para(777001)), 'o bot explica que o código não vale')
+
+        # o código certo, em privado, liga
+        mensagem(f'/start {cod}', 777001, nome='Edi')
+        r = verificar('editorA')
+        check(r.get('ligado') is True and r.get('nome') == 'Edi', '"Iniciar" com o código certo liga o Telegram da pessoa', str(r))
+        check(any('Ligado' in m.get('text', '') for m in enviadas_para(777001)), 'o bot confirma a ligação')
+        mensagem(f'/start {cod}', 888002, nome='Intruso')
+        verificar('editorA')
+        s, r, _ = call('GET', f'/api/collections/telegram_pessoas/records/{meu}', tok=su)
+        check(r.get('chat') == '777001', 'o código só serve uma vez', str(r.get('chat')))
+
+        # código expirado
+        s, r, cod_admin = ligar('adminA')
+        s, ra, _ = call('GET', '/api/collections/telegram_pessoas/records?filter=' + urllib.parse.quote(f'user="{users["adminA"]}"'), tok=su)
+        rid_admin = (ra.get('items') or [{}])[0].get('id')
+        call('PATCH', f'/api/collections/telegram_pessoas/records/{rid_admin}', {'expira': '2020-01-01 00:00:00.000Z'}, su)
+        mensagem(f'/start {cod_admin}', 777002, nome='Admin')
+        check(verificar('adminA').get('ligado') is False, 'um código expirado não liga')
+        s, r, cod_admin = ligar('adminA')
+        mensagem(f'/start {cod_admin}', 777002, nome='Admin')
+        check(verificar('adminA').get('ligado') is True, 'pedir de novo dá um código que funciona')
+        s, r, _ = call('GET', '/api/collections/telegram_pessoas/records', tok=tok['adminA'])
+        check(s == 200 and len(r.get('items', [])) >= 2, 'a administração vê quem tem o Telegram ligado', f'{s}')
+        s, r, _ = call('GET', '/api/collections/telegram_pessoas/records', tok=tok['viewerA'])
+        check(s == 200 and not r.get('items'), 'a Leitura não vê as ligações dos outros', f'{s}')
+
+        # menções: só o mencionado com Telegram ligado recebe; o autor nunca
+        s, r, _ = call('POST', '/api/collections/quadros/records', {'empresa': A, 'nome': 'Tg', 'autor': users['editorA']}, tok['editorA'])
+        qid = r.get('id')
+        limpar.append(('quadros', qid))
+        s, r, _ = call('POST', '/api/collections/quadro_colunas/records', {'empresa': A, 'quadro': qid, 'nome': 'A fazer'}, tok['editorA'])
+        cid = r.get('id')
+        s, r, _ = call('POST', '/api/collections/tarefas/records', {'empresa': A, 'quadro': qid, 'coluna': cid, 'titulo': 'Montar a montra',
+                                                                   'autor': users['editorA'], 'autor_nome': 'Editor A'}, tok['editorA'])
+        tid = r.get('id')
+        tg_estado['enviadas'] = []
+        s, r, _ = call('POST', '/api/collections/tarefa_comentarios/records', {
+            'empresa': A, 'tarefa': tid, 'texto': '@Admin @Editor @Viewer vejam isto', 'autor': users['editorA'], 'autor_nome': 'Editor A',
+            'mencoes': [users['adminA'], users['editorA'], users['viewerA']], 'lida_por': [users['editorA']]}, tok['editorA'])
+        com = r.get('id')
+        para_admin = enviadas_para(777002)
+        check(s == 200 and len(para_admin) == 1 and 'mencionou-te' in para_admin[0].get('text', '') and 'Montar a montra' in para_admin[0].get('text', ''),
+              'a menção chega ao Telegram de quem foi mencionado, com a tarefa', str(para_admin)[:200])
+        check(not enviadas_para(777001), 'quem escreve não recebe a própria menção')
+        check(TOKEN_TG not in json.dumps([x['corpo'] for x in tg_estado['enviadas']]), 'o token nunca vai nas mensagens')
+        tg_estado['enviadas'] = []
+        call('PATCH', f'/api/collections/tarefa_comentarios/records/{com}',
+             {'texto': '@Admin @Owner vejam', 'mencoes': [users['adminA'], users['ownerA']]}, tok['editorA'])
+        check(not enviadas_para(777002), 'editar o comentário não repete a menção a quem já estava')
+        # Telegram da empresa desligado: ninguém recebe
+        call('PATCH', f'/api/collections/avisos_config/records/{cfg_id}', {'telegram_ativo': False}, tok['adminA'])
+        call('POST', '/api/collections/tarefa_comentarios/records', {
+            'empresa': A, 'tarefa': tid, 'texto': '@Admin outra vez', 'autor': users['editorA'], 'autor_nome': 'Editor A',
+            'mencoes': [users['adminA']], 'lida_por': [users['editorA']]}, tok['editorA'])
+        check(not enviadas_para(777002), 'com o Telegram da empresa desligado não envia')
+        s, r, _ = ligar('viewerA')
+        check(s == 400, 'com o Telegram desligado não se liga ninguém', f'status {s}')
+        call('PATCH', f'/api/collections/avisos_config/records/{cfg_id}', {'telegram_ativo': True}, tok['adminA'])
+
+        # mensagem de teste, só para a própria pessoa
+        tg_estado['enviadas'] = []
+        s, _, _ = call('POST', '/api/gc_turnkey/telegram/pessoal/testar', {}, tok['editorA'])
+        check(s == 200 and len(enviadas_para(777001)) == 1 and not enviadas_para(777002), 'o teste vai só para quem o pediu', f'status {s}')
+        s, _, _ = call('POST', '/api/gc_turnkey/telegram/pessoal/testar', {}, tok['viewerA'])
+        check(s == 400, 'sem Telegram ligado, o teste explica', f'status {s}')
+
+        # o "Detetar o meu chat" continua a ver quem falou com o bot, mesmo
+        # depois de a sondagem ler as mensagens
+        tg_estado['updates'] = []
+        s, r, _ = call('POST', '/api/gc_turnkey/avisos/telegram/detetar', {}, tok['adminA'])
+        ids = [c.get('id') for c in r.get('chats', [])] if s == 200 else []
+        check('777001' in ids, 'detetar mostra os chats já lidos pela sondagem', f'status {s} {str(r)[:120]}')
+
+        # desligar: a própria pessoa
+        s, _, _ = call('DELETE', f'/api/collections/telegram_pessoas/records/{meu}', tok=tok['viewerA'])
+        check(s in (403, 404), 'outra pessoa não desliga o meu Telegram', f'status {s}')
+        s, _, _ = call('DELETE', f'/api/collections/telegram_pessoas/records/{meu}', tok=tok['editorA'])
+        check(s in (200, 204), 'a pessoa desliga o seu Telegram', f'status {s}')
+        check(verificar('editorA').get('ligado') is False, 'depois de desligar, já não está ligado')
+    finally:
+        for col, i in reversed(limpar):
+            if i:
+                call('DELETE', f'/api/collections/{col}/records/{i}', tok=su)
+        s, r, _ = call('GET', '/api/collections/telegram_pessoas/records?perPage=50', tok=su)
+        for x in r.get('items', []) if s == 200 else []:
+            call('DELETE', f'/api/collections/telegram_pessoas/records/{x["id"]}', tok=su)
+        tg_estado['updates'] = None
 
 
 def teste_resumo_semanal():
@@ -1528,6 +1679,7 @@ def teste_avisos():
         s, r, _ = call('POST', '/api/gc_turnkey/avisos/telegram/detetar', {}, tok['ownerB'])
         check(s == 400, 'a empresa B não usa o token da A', f'status {s}')
         teste_telegram_botoes(cfg_id)
+        teste_telegram_pessoal(cfg_id)
         # limpeza: o teste seguinte (segredos) espera só o token do Vendus
         call('DELETE', '/api/gc_turnkey/integracoes/telegram', tok=tok['adminA'])
     finally:
