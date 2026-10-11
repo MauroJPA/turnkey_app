@@ -2320,6 +2320,14 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Conta de Leitura: vê as imagens mas não vê "Juntar imagem" nem o ×
 - [ ] Deixar a tarefa aberta mais de 2 minutos: as miniaturas continuam a ver-se (o acesso renova-se sozinho)
 
+## 170. Prioridade (criticidade) nas tarefas da equipa
+
+- [ ] Abrir uma tarefa → "Prioridade": tocar em "Crítica"; fechar. O cartão mostra "Crítica" a vermelho no rodapé
+- [ ] "Alta" mostra a bandeira laranja; "Baixa" mostra uma seta discreta; "Normal" não mostra nada
+- [ ] Filtro "Prioritárias (N)": mostra só as Altas e Críticas; uma tarefa Crítica movida para a fase "Feito" sai do filtro
+- [ ] As tarefas antigas (sem prioridade) aparecem como "Normal" e o filtro "Prioritárias" não as inclui
+- [ ] Conta de Leitura: vê a prioridade mas não a consegue mudar
+
 ---
 
 ## Notas / ajustes pedidos

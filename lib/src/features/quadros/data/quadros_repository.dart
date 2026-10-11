@@ -73,6 +73,7 @@ class QuadrosRepository {
     ],
     checklist: ItemChecklist.listaDeJson(r.data['checklist']),
     imagens: r.getListValue<String>('imagens'),
+    prioridade: PrioridadeTarefa.deTexto(r.getStringValue('prioridade')),
     arquivada: r.getBoolValue('arquivada'),
     autorId: r.getStringValue('autor'),
     autorNome: r.getStringValue('autor_nome'),
@@ -299,6 +300,7 @@ class QuadrosRepository {
       'responsaveis': t.responsaveis,
       'prazo': t.prazo == null ? '' : '${_ymd(t.prazo!)} 12:00:00.000Z',
       'etiquetas': t.etiquetas,
+      'prioridade': t.prioridade.name,
       'checklist': [for (final i in t.checklist) i.toJson()],
     },
   );

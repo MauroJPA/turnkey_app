@@ -2153,6 +2153,16 @@ def teste_tarefas():
                    tok=tok['editorA'])
     check(s == 200 and not r.get('items'), 'Início: quem não é responsável não as vê como suas', f'{s}')
 
+    # ---- prioridade (2.24.0): baixa | normal | alta | critica
+    s, r, _ = call('PATCH', f'/api/collections/tarefas/records/{ta}', {'prioridade': 'critica'}, tok['editorA'])
+    check(s == 200 and r.get('prioridade') == 'critica', 'a equipa define a prioridade da tarefa', f'status {s} {str(r)[:100]}')
+    s, _, _ = call('PATCH', f'/api/collections/tarefas/records/{ta}', {'prioridade': 'urgentissima'}, tok['editorA'])
+    check(s == 400, 'uma prioridade desconhecida é recusada', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/tarefas/records/{ta}', {'prioridade': 'baixa'}, tok['viewerA'])
+    check(s in (403, 404), 'Leitura não muda a prioridade', f'status {s}')
+    s, r, _ = call('GET', f'/api/collections/tarefas/records/{ta}', tok=tok['viewerA'])
+    check(s == 200 and r.get('prioridade') == 'critica', 'Leitura vê a prioridade')
+
     # ---- imagens (2.23.0): ficheiros protegidos, só imagens, só quem pode editar
     import base64 as _b64
     png_t = _b64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==')

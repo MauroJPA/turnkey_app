@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -610,6 +611,14 @@ class _QuadrosScreenState extends ConsumerState<QuadrosScreen> {
                                   uid: uid,
                                   colunasFeitas: dados.colunasFeitas,
                                 ).length,
+                          nPrioritarias: dados == null
+                              ? 0
+                              : filtrarTarefas(
+                                  dados.tarefas,
+                                  filtro: FiltroTarefas.prioritarias,
+                                  uid: uid,
+                                  colunasFeitas: dados.colunasFeitas,
+                                ).length,
                           onFiltro: (f) => setState(() => _filtro = f),
                         ),
                       ),
@@ -708,12 +717,14 @@ class _BarraFiltros extends StatelessWidget {
     required this.filtro,
     required this.nMencoes,
     required this.nAtrasadas,
+    required this.nPrioritarias,
     required this.onFiltro,
   });
 
   final FiltroTarefas filtro;
   final int nMencoes;
   final int nAtrasadas;
+  final int nPrioritarias;
   final ValueChanged<FiltroTarefas> onFiltro;
 
   @override
@@ -721,24 +732,33 @@ class _BarraFiltros extends StatelessWidget {
     String rotulo(FiltroTarefas f) => switch (f) {
       FiltroTarefas.mencoes when nMencoes > 0 => '${f.label} ($nMencoes)',
       FiltroTarefas.atrasadas when nAtrasadas > 0 => '${f.label} ($nAtrasadas)',
+      FiltroTarefas.prioritarias when nPrioritarias > 0 =>
+        '${f.label} ($nPrioritarias)',
       _ => f.label,
     };
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (final f in FiltroTarefas.values)
-            Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: ChoiceChip(
-                label: Text(rotulo(f)),
-                selected: filtro == f,
-                onSelected: (_) => onFiltro(f),
+    // no computador a barra também se arrasta com o rato (numa janela estreita
+    // os últimos filtros ficavam inalcançáveis)
+    return ScrollConfiguration(
+      behavior: ScrollConfiguration.of(
+        context,
+      ).copyWith(dragDevices: PointerDeviceKind.values.toSet()),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final f in FiltroTarefas.values)
+              Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: ChoiceChip(
+                  label: Text(rotulo(f)),
+                  selected: filtro == f,
+                  onSelected: (_) => onFiltro(f),
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1193,6 +1213,21 @@ class _Cartao extends StatelessWidget {
     final pequeno = tt.labelSmall?.copyWith(color: cs.onSurfaceVariant);
 
     final rodape = <Widget>[
+      if (t.prioridade == PrioridadeTarefa.critica)
+        _Info(
+          icone: Icons.priority_high,
+          texto: 'Crítica',
+          cor: cs.error,
+          negrito: true,
+        )
+      else if (t.prioridade == PrioridadeTarefa.alta)
+        _Info(icone: Icons.flag, texto: 'Alta', cor: cs.aviso, negrito: true)
+      else if (t.prioridade == PrioridadeTarefa.baixa)
+        _Info(
+          icone: Icons.arrow_downward,
+          texto: 'Baixa',
+          cor: cs.onSurfaceVariant,
+        ),
       if (t.prazo != null)
         _Info(
           icone: feita ? Icons.check_circle_outline : Icons.schedule,

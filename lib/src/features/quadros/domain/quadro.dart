@@ -63,6 +63,27 @@ class ItemChecklist {
   ];
 }
 
+/// A prioridade (criticidade) de uma tarefa. "Normal" é o que vem por
+/// omissão e não se destaca no cartão.
+enum PrioridadeTarefa {
+  baixa('Baixa'),
+  normal('Normal'),
+  alta('Alta'),
+  critica('Crítica');
+
+  const PrioridadeTarefa(this.label);
+  final String label;
+
+  /// Alta ou crítica: é o que o filtro "Prioritárias" mostra.
+  bool get importante => this == alta || this == critica;
+
+  /// O valor guardado no servidor é o `name`; vazio ou desconhecido = normal.
+  static PrioridadeTarefa deTexto(String? valor) => values.firstWhere(
+    (p) => p.name == valor,
+    orElse: () => PrioridadeTarefa.normal,
+  );
+}
+
 /// Um cartão do quadro.
 class Tarefa {
   const Tarefa({
@@ -78,6 +99,7 @@ class Tarefa {
     this.etiquetas = const [],
     this.checklist = const [],
     this.imagens = const [],
+    this.prioridade = PrioridadeTarefa.normal,
     this.arquivada = false,
     this.autorId = '',
     this.autorNome = '',
@@ -100,6 +122,7 @@ class Tarefa {
 
   /// Nomes dos ficheiros das imagens (campo `imagens`, protegido).
   final List<String> imagens;
+  final PrioridadeTarefa prioridade;
   final bool arquivada;
   final String autorId;
   final String autorNome;
@@ -134,6 +157,7 @@ class Tarefa {
     List<String>? etiquetas,
     List<ItemChecklist>? checklist,
     List<String>? imagens,
+    PrioridadeTarefa? prioridade,
     bool? arquivada,
   }) => Tarefa(
     id: id,
@@ -147,6 +171,7 @@ class Tarefa {
     etiquetas: etiquetas ?? this.etiquetas,
     checklist: checklist ?? this.checklist,
     imagens: imagens ?? this.imagens,
+    prioridade: prioridade ?? this.prioridade,
     arquivada: arquivada ?? this.arquivada,
     autorId: autorId,
     autorNome: autorNome,
@@ -254,7 +279,8 @@ enum FiltroTarefas {
   todas('Todas'),
   minhas('Minhas'),
   mencoes('Menções'),
-  atrasadas('Atrasadas');
+  atrasadas('Atrasadas'),
+  prioritarias('Prioritárias');
 
   const FiltroTarefas(this.label);
   final String label;
@@ -297,6 +323,9 @@ List<Tarefa> filtrarTarefas(
               h,
               feita: colunasFeitas.contains(t.colunaId),
             ),
+            // alta ou crítica e ainda por fazer
+            FiltroTarefas.prioritarias =>
+              t.prioridade.importante && !colunasFeitas.contains(t.colunaId),
           })
         t,
   ];

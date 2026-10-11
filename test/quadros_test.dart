@@ -12,6 +12,7 @@ Tarefa _t(
   DateTime? prazo,
   List<String> etiquetas = const [],
   bool arquivada = false,
+  PrioridadeTarefa prioridade = PrioridadeTarefa.normal,
   DateTime? criada,
 }) => Tarefa(
   id: id,
@@ -23,6 +24,7 @@ Tarefa _t(
   prazo: prazo,
   etiquetas: etiquetas,
   arquivada: arquivada,
+  prioridade: prioridade,
   criada: criada ?? DateTime(2026, 10, 1),
 );
 
@@ -114,6 +116,63 @@ void main() {
       expect(prazoTexto(DateTime(2026, 10, 13), hoje), 'em 3 dias');
       expect(prazoTexto(DateTime(2026, 10, 20), hoje), '20/10');
       expect(prazoTexto(DateTime(2027, 1, 2), hoje), '2/1/2027');
+    });
+  });
+
+  group('prioridade', () {
+    test('lê do servidor; vazio ou desconhecido é normal', () {
+      for (final (valor, esperado) in [
+        ('baixa', PrioridadeTarefa.baixa),
+        ('normal', PrioridadeTarefa.normal),
+        ('alta', PrioridadeTarefa.alta),
+        ('critica', PrioridadeTarefa.critica),
+        ('', PrioridadeTarefa.normal),
+        ('urgentissima', PrioridadeTarefa.normal),
+      ]) {
+        final r = RecordModel({'id': 't', 'titulo': 'x', 'prioridade': valor});
+        expect(
+          QuadrosRepository.tarefaDe(r).prioridade,
+          esperado,
+          reason: valor,
+        );
+      }
+      expect(PrioridadeTarefa.deTexto(null), PrioridadeTarefa.normal);
+    });
+
+    test('só alta e crítica são importantes; o nome é o valor do servidor', () {
+      expect(
+        [for (final p in PrioridadeTarefa.values) p.importante],
+        [false, false, true, true],
+      );
+      expect(PrioridadeTarefa.critica.name, 'critica');
+      expect(PrioridadeTarefa.critica.label, 'Crítica');
+    });
+
+    test('copyWith muda a prioridade e conserva-a nos outros casos', () {
+      final t = _t('a', prioridade: PrioridadeTarefa.alta);
+      expect(t.copyWith(titulo: 'Y').prioridade, PrioridadeTarefa.alta);
+      expect(
+        t.copyWith(prioridade: PrioridadeTarefa.baixa).prioridade,
+        PrioridadeTarefa.baixa,
+      );
+    });
+
+    test('filtro Prioritárias: alta e crítica, fora das fases feitas', () {
+      final todas = [
+        _t('n'),
+        _t('b', prioridade: PrioridadeTarefa.baixa),
+        _t('al', prioridade: PrioridadeTarefa.alta),
+        _t('cr', prioridade: PrioridadeTarefa.critica, coluna: 'c2'),
+        _t('feita', prioridade: PrioridadeTarefa.critica, coluna: 'feito'),
+        _t('arq', prioridade: PrioridadeTarefa.alta, arquivada: true),
+      ];
+      final r = filtrarTarefas(
+        todas,
+        filtro: FiltroTarefas.prioritarias,
+        uid: 'u',
+        colunasFeitas: {'feito'},
+      );
+      expect([for (final t in r) t.id], ['al', 'cr']);
     });
   });
 

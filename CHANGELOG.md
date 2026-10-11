@@ -2,6 +2,15 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.24.0 — 2026-10-11 — Prioridade (criticidade) nas tarefas da equipa
+
+﻿Prioridade (criticidade) em cada tarefa da equipa.
+
+- **Na tarefa**: nova secção **"Prioridade"** com Baixa, Normal, Alta e Crítica (um toque; grava logo). As tarefas que já existem ficam em "Normal".
+- **No cartão**: **Crítica** (vermelho, ❗) e **Alta** (laranja, 🚩) destacam-se no rodapé; **Baixa** aparece discreta com uma seta; **Normal** não mostra nada, para o quadro não ficar carregado.
+- **Filtro "Prioritárias"** no topo (com o número): só as Altas e Críticas que ainda não estão numa fase feita.
+- Servidor: migration `1791210000_tarefas_prioridade.js` (campo `tarefas.prioridade`; vazio = normal). Mesmas regras: quem edita a tarefa muda a prioridade, a Leitura só vê. 4 verificações novas em `teste_tarefas`.
+
 ## 2.23.0 — 2026-10-11 — Imagens nas tarefas da equipa
 
 Imagens nas tarefas da equipa (quadros).

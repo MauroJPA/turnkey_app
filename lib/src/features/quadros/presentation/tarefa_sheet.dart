@@ -580,6 +580,35 @@ class _TarefaSheetState extends ConsumerState<TarefaSheet> {
                 ],
               ),
 
+              seccao('Prioridade', Icons.flag_outlined),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final p in PrioridadeTarefa.values)
+                    ChoiceChip(
+                      label: Text(p.label),
+                      avatar: switch (p) {
+                        PrioridadeTarefa.critica => Icon(
+                          Icons.priority_high,
+                          size: 16,
+                          color: cs.error,
+                        ),
+                        PrioridadeTarefa.alta => Icon(
+                          Icons.flag,
+                          size: 16,
+                          color: cs.aviso,
+                        ),
+                        _ => null,
+                      },
+                      selected: p == _t.prioridade,
+                      onSelected: pode
+                          ? (_) => _mudar(_t.copyWith(prioridade: p), ja: true)
+                          : null,
+                    ),
+                ],
+              ),
+
               seccao('Responsáveis', Icons.person_outline),
               Wrap(
                 spacing: 6,
