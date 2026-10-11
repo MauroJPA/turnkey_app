@@ -2299,6 +2299,16 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Bebida sem preço → o produto avisa "Preço em falta"
 - [ ] Numa ficha técnica normal, o Adicionar também tem o separador "Revenda" (no fim)
 
+## 168. Quadros: rolagem com rato, Nova fase à vista e mudar tarefa de quadro
+
+- [ ] No computador, quadro com mais fases do que cabem no ecrã: aparece a barra por baixo e a seta › à direita; tocar na seta anda uma fase; arrastar com o rato numa zona vazia também anda
+- [ ] No computador: arrastar um cartão para outra fase continua a funcionar (não faz scroll do quadro) e o scroll do rato dentro de uma fase com muitas tarefas anda para cima/baixo
+- [ ] Botão "Fase" no topo cria uma fase nova (a escrita do nome e o aparecer no fim do quadro)
+- [ ] Telemóvel: o quadro continua a deslizar com o dedo e não aparecem setas nem barra fixa
+- [ ] Abrir uma tarefa → "Mudar de quadro" → escolher outro quadro: a tarefa sai deste quadro, aparece na 1.ª fase do outro (no fim) com os comentários; "Desfazer" devolve-a ao sítio de origem
+- [ ] Com um só quadro, "Mudar de quadro" avisa que só existe este quadro
+- [ ] Conta de Leitura: não vê o botão "Mudar de quadro" nem o botão "Fase"
+
 ---
 
 ## Notas / ajustes pedidos

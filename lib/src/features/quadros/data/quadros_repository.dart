@@ -273,6 +273,18 @@ class QuadrosRepository {
     required double ordem,
   }) => _tarefas.update(id, body: {'coluna': colunaId, 'ordem': ordem});
 
+  /// Passa a tarefa para outro quadro (criada no quadro errado), já numa fase
+  /// desse quadro. O servidor recusa fases que não sejam do quadro de destino.
+  Future<void> mudarDeQuadro(
+    String id, {
+    required String quadroId,
+    required String colunaId,
+    required double ordem,
+  }) => _tarefas.update(
+    id,
+    body: {'quadro': quadroId, 'coluna': colunaId, 'ordem': ordem},
+  );
+
   /// Grava os campos editáveis de [t] (título, descrição, responsáveis, prazo,
   /// etiquetas, lista de verificação, fase e ordem).
   Future<void> guardar(Tarefa t) => _tarefas.update(

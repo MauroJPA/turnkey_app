@@ -247,11 +247,12 @@ empresa. O WhatsApp está no código mas **desligado** por omissão (precisa de 
 ## Tarefas da equipa (2.19.0)
 
 - Quatro coleções novas (`quadros`, `quadro_colunas`, `tarefas`, `tarefa_comentarios`), todas presas à empresa: só a própria empresa as vê; a **Leitura vê mas não escreve** (a única exceção: marcar como lida uma menção a si própria, só o campo `lida_por`).
-- Ninguém escreve em nome de outro (`autor` = quem está autenticado) e nada muda de empresa, de quadro ou de autor depois de criado. A fase de uma tarefa tem de ser do mesmo quadro (também ao mover).
+- Ninguém escreve em nome de outro (`autor` = quem está autenticado) e nada muda de empresa ou de autor depois de criado (a tarefa só muda de quadro com a regra de 2.22.2, abaixo). A fase de uma tarefa tem de ser do mesmo quadro (também ao mover).
 - Responsáveis, menções e `lida_por` só aceitam pessoas da mesma empresa.
 - Apagar tarefas, comentários e quadros: o autor ou a administração. Uma fase com tarefas não se apaga (`tarefas.coluna` sem cascata); apagar um quadro apaga as tarefas primeiro (`tarefas.pb.js`, na mesma transação) e com elas os comentários.
 - Sem endpoints novos: tudo pelas regras do PocketBase; o tempo real (subscrições) respeita as mesmas regras de leitura.
-- Testado em `teste_tarefas` (50 verificações) e na matriz "Leitura não escreve".
+- **Mudar uma tarefa de quadro (2.22.2)**: a regra de atualização de `tarefas` deixa mudar `quadro` só para um quadro da mesma empresa, não arquivado, e só se o mesmo pedido trouxer uma fase desse quadro de destino (nunca fica uma tarefa com a fase de outro quadro). Empresa e autor continuam fixos; a Leitura não muda nada. Migration `1791190000_tarefas_mudar_de_quadro.js`.
+- Testado em `teste_tarefas` (60 verificações) e na matriz "Leitura não escreve".
 
 ### Menções no Telegram de cada pessoa (2.20.0)
 

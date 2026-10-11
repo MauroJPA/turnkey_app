@@ -2,6 +2,16 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.22.2 — 2026-10-11 — Quadros: rolagem com rato, Nova fase à vista e mudar tarefa de quadro
+
+Três ajustes às Tarefas da equipa (quadros).
+
+- **Quadro no computador**: o quadro já se vê todo com o rato. Arrasta nas zonas vazias, usa a **barra de rolagem** por baixo (agora sempre visível) ou as **setas ‹ ›** nos lados (aparecem quando há mais fases por ver); Shift + roda do rato também anda para o lado. No telemóvel nada muda.
+- **Nova fase sempre à vista**: botão **"Fase"** no topo, ao lado dos filtros, para criar uma fase sem ir ao fim do quadro.
+- **Mudar uma tarefa de quadro**: para uma tarefa criada no quadro errado, abre-a → **"Mudar de quadro"** → escolhe o quadro. Vai para a primeira fase desse quadro (com **Desfazer**) e os comentários e menções vão com ela.
+- Servidor: migration `1791190000_tarefas_mudar_de_quadro.js` (regra de atualização das tarefas: só para um quadro da mesma empresa e com uma fase desse quadro). `docs/SEGURANCA.md` atualizado; 10 verificações novas em `teste_tarefas`.
+- Novo widget `RolagemHorizontal` / `SemArrastoDeRato` (`lib/src/core/widgets/rolagem_horizontal.dart`), com testes.
+
 ## 2.22.1 — 2026-10-10 — Revenda: escolher artigos do Inventário
 
 **Revenda: escolher bebidas e outros artigos do Inventário.** Em "Artigo comprado" → Adicionar, o seletor passa a ter o separador **Revenda**, com os artigos do Inventário → Limpeza e insumos (é aí que as faturas guardam as bebidas): Bebida e Revenda primeiro, cada um com o preço por unidade e o fornecedor.

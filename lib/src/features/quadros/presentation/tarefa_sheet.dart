@@ -374,6 +374,102 @@ class _TarefaSheetState extends ConsumerState<TarefaSheet> {
     );
   }
 
+  /// Para uma tarefa criada no quadro errado: escolhe o quadro e a tarefa vai
+  /// para a primeira fase dele (depois muda-se a fase, se for preciso).
+  Future<void> _mudarDeQuadro() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final nav = Navigator.of(context);
+    final id = _t.id;
+    final antes = (quadro: _t.quadroId, coluna: _t.colunaId, ordem: _t.ordem);
+    _espera?.cancel();
+    await _gravarAgora();
+    final List<Quadro> outros;
+    try {
+      outros = [
+        for (final q in await _repo.listarQuadros())
+          if (q.id != antes.quadro) q,
+      ];
+    } on Object catch (e) {
+      _erro(e);
+      return;
+    }
+    if (!mounted) return;
+    if (outros.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Só existe este quadro. Cria outro no título do ecrã das Tarefas.',
+          ),
+        ),
+      );
+      return;
+    }
+    final destino = await showDialog<Quadro>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Mudar para o quadro…'),
+        children: [
+          for (final q in outros)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(ctx, q),
+              child: Text(q.nome),
+            ),
+        ],
+      ),
+    );
+    if (destino == null || !mounted) return;
+    final String nomeFase;
+    try {
+      final colunas = await _repo.listarColunas(destino.id);
+      if (colunas.isEmpty) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              'O quadro «${destino.nome}» ainda não tem fases. '
+              'Abre-o e cria uma fase primeiro.',
+            ),
+          ),
+        );
+        return;
+      }
+      final fase = colunas.first;
+      final tarefas = await _repo.listarTarefas(destino.id);
+      await _repo.mudarDeQuadro(
+        id,
+        quadroId: destino.id,
+        colunaId: fase.id,
+        ordem: ordemNoFim([
+          for (final x in tarefasDaColuna(tarefas, fase.id)) x.ordem,
+        ]),
+      );
+      nomeFase = fase.nome;
+    } on Object catch (e) {
+      _erro(e);
+      return;
+    }
+    _porGravar = false;
+    void atualizar() {
+      _container.invalidate(dadosQuadroProvider(antes.quadro));
+      _container.invalidate(dadosQuadroProvider(destino.id));
+    }
+
+    atualizar();
+    if (mounted) nav.pop();
+    await mostrarDesfazerEm(
+      messenger,
+      mensagem: 'Tarefa passada para «${destino.nome}» ($nomeFase).',
+      desfazer: () async {
+        await _repo.mudarDeQuadro(
+          id,
+          quadroId: antes.quadro,
+          colunaId: antes.coluna,
+          ordem: antes.ordem,
+        );
+        atualizar();
+      },
+    );
+  }
+
   Future<void> _apagar() async {
     final id = _t.id;
     _espera?.cancel();
@@ -736,6 +832,12 @@ class _TarefaSheetState extends ConsumerState<TarefaSheet> {
                 Wrap(
                   spacing: 8,
                   children: [
+                    if (pode)
+                      TextButton.icon(
+                        icon: const Icon(Icons.drive_file_move_outline),
+                        label: const Text('Mudar de quadro'),
+                        onPressed: _mudarDeQuadro,
+                      ),
                     if (pode)
                       TextButton.icon(
                         icon: const Icon(Icons.archive_outlined),

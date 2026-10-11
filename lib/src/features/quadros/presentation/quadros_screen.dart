@@ -11,6 +11,7 @@ import '../../../core/help/help_content.dart';
 import '../../../core/widgets/desfazer.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/help_actions.dart';
+import '../../../core/widgets/rolagem_horizontal.dart';
 import '../application/quadros_providers.dart';
 import '../data/quadros_repository.dart';
 import '../domain/quadro.dart';
@@ -593,21 +594,36 @@ class _QuadrosScreenState extends ConsumerState<QuadrosScreen> {
             )
           : Column(
               children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: _BarraFiltros(
-                    filtro: _filtro,
-                    nMencoes: porLer.length,
-                    nAtrasadas: dados == null
-                        ? 0
-                        : filtrarTarefas(
-                            dados.tarefas,
-                            filtro: FiltroTarefas.atrasadas,
-                            uid: uid,
-                            colunasFeitas: dados.colunasFeitas,
-                          ).length,
-                    onFiltro: (f) => setState(() => _filtro = f),
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: _BarraFiltros(
+                          filtro: _filtro,
+                          nMencoes: porLer.length,
+                          nAtrasadas: dados == null
+                              ? 0
+                              : filtrarTarefas(
+                                  dados.tarefas,
+                                  filtro: FiltroTarefas.atrasadas,
+                                  uid: uid,
+                                  colunasFeitas: dados.colunasFeitas,
+                                ).length,
+                          onFiltro: (f) => setState(() => _filtro = f),
+                        ),
+                      ),
+                    ),
+                    if (pode && dados != null)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8, bottom: 8),
+                        child: TextButton.icon(
+                          icon: const Icon(Icons.add),
+                          label: const Text('Fase'),
+                          onPressed: () => _novaFase(quadro.id, dados),
+                        ),
+                      ),
+                  ],
                 ),
                 if (_aPesquisar)
                   Padding(
@@ -798,46 +814,50 @@ class _Quadro extends ConsumerWidget {
         final largura = box.maxWidth < 360
             ? box.maxWidth - 40
             : (box.maxWidth * 0.86).clamp(260.0, 300.0);
-        return ListView(
+        return RolagemHorizontal(
           controller: scroll,
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          children: [
-            for (var i = 0; i < colunas.length; i++)
-              Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: _Coluna(
-                  largura: largura,
-                  coluna: colunas[i],
-                  primeira: i == 0,
-                  ultima: i == colunas.length - 1,
-                  tarefas: tarefasDaColuna(visiveis, colunas[i].id),
-                  nTotal: tarefasDaColuna(todas, colunas[i].id).length,
-                  todas: todas,
-                  colunas: colunas,
-                  pessoas: pessoas,
-                  nComentarios: nComentarios,
-                  porLer: porLer,
-                  pode: pode,
-                  onArrastar: onArrastar,
-                  onLargar: onLargar,
-                  onCriar: onCriar,
-                  onMenu: onMenuFase,
-                ),
-              ),
-            if (pode)
-              SizedBox(
-                width: largura * 0.8,
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.add),
-                    label: const Text('Nova fase'),
-                    onPressed: onNovaFase,
+          passo: largura + 10,
+          child: ListView(
+            controller: scroll,
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 18),
+            children: [
+              for (var i = 0; i < colunas.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: _Coluna(
+                    largura: largura,
+                    coluna: colunas[i],
+                    primeira: i == 0,
+                    ultima: i == colunas.length - 1,
+                    tarefas: tarefasDaColuna(visiveis, colunas[i].id),
+                    nTotal: tarefasDaColuna(todas, colunas[i].id).length,
+                    todas: todas,
+                    colunas: colunas,
+                    pessoas: pessoas,
+                    nComentarios: nComentarios,
+                    porLer: porLer,
+                    pode: pode,
+                    onArrastar: onArrastar,
+                    onLargar: onLargar,
+                    onCriar: onCriar,
+                    onMenu: onMenuFase,
                   ),
                 ),
-              ),
-          ],
+              if (pode)
+                SizedBox(
+                  width: largura * 0.8,
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.add),
+                      label: const Text('Nova fase'),
+                      onPressed: onNovaFase,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         );
       },
     );
@@ -1056,40 +1076,42 @@ class _ColunaState extends State<_Coluna> {
             ),
           ),
           Flexible(
-            child: ListView(
-              shrinkWrap: true,
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-              children: [
-                for (var i = 0; i < n; i++)
-                  _alvo(
-                    i,
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: _arrastavel(
-                        widget.tarefas[i],
-                        _Cartao(
-                          tarefa: widget.tarefas[i],
-                          feita: c.concluida,
-                          pessoas: widget.pessoas,
-                          nComentarios:
-                              widget.nComentarios[widget.tarefas[i].id] ?? 0,
-                          mencaoPorLer: widget.porLer.contains(
-                            widget.tarefas[i].id,
-                          ),
-                          onTap: () => abrirTarefa(
-                            context,
+            child: SemArrastoDeRato(
+              child: ListView(
+                shrinkWrap: true,
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+                children: [
+                  for (var i = 0; i < n; i++)
+                    _alvo(
+                      i,
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: _arrastavel(
+                          widget.tarefas[i],
+                          _Cartao(
                             tarefa: widget.tarefas[i],
-                            colunas: widget.colunas,
-                            todas: widget.todas,
+                            feita: c.concluida,
+                            pessoas: widget.pessoas,
+                            nComentarios:
+                                widget.nComentarios[widget.tarefas[i].id] ?? 0,
+                            mencaoPorLer: widget.porLer.contains(
+                              widget.tarefas[i].id,
+                            ),
+                            onTap: () => abrirTarefa(
+                              context,
+                              tarefa: widget.tarefas[i],
+                              colunas: widget.colunas,
+                              todas: widget.todas,
+                            ),
                           ),
                         ),
                       ),
+                      proprio: widget.tarefas[i].id,
                     ),
-                    proprio: widget.tarefas[i].id,
-                  ),
-                // largar no fim (também numa fase vazia)
-                _alvo(n, SizedBox(height: n == 0 ? 56 : 24)),
-              ],
+                  // largar no fim (também numa fase vazia)
+                  _alvo(n, SizedBox(height: n == 0 ? 56 : 24)),
+                ],
+              ),
             ),
           ),
           if (widget.pode)
