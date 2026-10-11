@@ -2,6 +2,16 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.25.0 — 2026-10-11 — Colar imagens (Ctrl+V) nas tarefas
+
+Colar imagens (Ctrl+V) nas tarefas.
+
+- **Ctrl+V na tarefa** (na descrição ou em qualquer sítio da folha): uma captura de ecrã ou uma imagem copiada junta-se às imagens da tarefa, sem escolher ficheiro. Aparece "Imagem colada na tarefa." Várias de uma vez também.
+- Se a área de transferência tiver **texto** (por exemplo células do Excel, que trazem texto e imagem), cola-se o texto como sempre.
+- Respeita os limites (JPG/PNG/WebP, 10 MB, 8 por tarefa) e a Leitura não cola.
+- A descrição passou a sugerir "(Ctrl+V cola imagens)".
+- Novo `web/gc_colar.js` (escuta o evento de colar) e `core/device/colar_imagem.dart`; testes de node em `test/seguranca/test_colar.js`. Sem migrations.
+
 ## 2.24.0 — 2026-10-11 — Prioridade (criticidade) nas tarefas da equipa
 
 ﻿Prioridade (criticidade) em cada tarefa da equipa.

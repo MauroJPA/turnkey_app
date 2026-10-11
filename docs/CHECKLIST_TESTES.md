@@ -2328,6 +2328,14 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] As tarefas antigas (sem prioridade) aparecem como "Normal" e o filtro "Prioritárias" não as inclui
 - [ ] Conta de Leitura: vê a prioridade mas não a consegue mudar
 
+## 171. Colar imagens (Ctrl+V) nas tarefas
+
+- [ ] No computador: copiar uma captura de ecrã (Win+Shift+S), abrir uma tarefa, clicar na descrição e Ctrl+V: aparece "Imagem colada na tarefa." e a miniatura em "Imagens"; a descrição não fica com lixo
+- [ ] Copiar uma imagem de uma página web (botão direito → Copiar imagem) e colar na tarefa: junta-se
+- [ ] Copiar texto e colar na descrição: cola o texto normalmente
+- [ ] Colar uma imagem quando a tarefa já tem 8: avisa que ficou de fora
+- [ ] Conta de Leitura: Ctrl+V de uma imagem avisa que só quem pode editar junta imagens
+
 ---
 
 ## Notas / ajustes pedidos

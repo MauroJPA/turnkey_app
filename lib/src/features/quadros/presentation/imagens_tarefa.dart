@@ -1,7 +1,11 @@
+import 'dart:async';
+import 'dart:typed_data';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/device/colar_imagem.dart';
 import '../../../core/errors/mensagem_amigavel.dart';
 import '../../../core/widgets/desfazer.dart';
 import '../application/quadros_providers.dart';
@@ -48,10 +52,22 @@ class _ImagensTarefaState extends ConsumerState<ImagensTarefa> {
   );
   bool _aEnviar = false;
 
+  // imagens coladas (Ctrl+V) no mesmo instante juntam-se num só envio
+  final _fila = <({String nome, List<int> bytes})>[];
+  Timer? _esperaFila;
+
   @override
   void initState() {
     super.initState();
     _container; // apanhado já, para o usar depois de a folha fechar
+    ouvirImagensColadas(_colada);
+  }
+
+  @override
+  void dispose() {
+    _esperaFila?.cancel();
+    deixarDeOuvirImagensColadas();
+    super.dispose();
   }
 
   void _atualizarQuadro() =>
@@ -64,8 +80,20 @@ class _ImagensTarefaState extends ConsumerState<ImagensTarefa> {
     ).showSnackBar(SnackBar(content: Text(mensagemAmigavel(e))));
   }
 
+  /// Uma imagem colada com Ctrl+V (em qualquer sítio da tarefa, descrição
+  /// incluída): vai para as imagens da tarefa.
+  void _colada(String nome, Uint8List bytes) {
+    if (!mounted) return;
+    _fila.add((nome: nome, bytes: bytes));
+    _esperaFila?.cancel();
+    _esperaFila = Timer(const Duration(milliseconds: 150), () {
+      final lote = List.of(_fila);
+      _fila.clear();
+      if (mounted) unawaited(_enviarEscolhidas(lote, colada: true));
+    });
+  }
+
   Future<void> _juntar() async {
-    final messenger = ScaffoldMessenger.of(context);
     final FilePickerResult? escolhidas;
     try {
       escolhidas = await FilePicker.platform.pickFiles(
@@ -78,30 +106,57 @@ class _ImagensTarefaState extends ConsumerState<ImagensTarefa> {
       return;
     }
     if (escolhidas == null || !mounted) return;
+    await _enviarEscolhidas([
+      for (final f in escolhidas.files)
+        if (f.bytes != null) (nome: f.name, bytes: f.bytes!),
+    ]);
+  }
+
+  /// Confere formato, tamanho e quantas ainda cabem; envia o que serve e diz
+  /// o que ficou de fora.
+  Future<void> _enviarEscolhidas(
+    List<({String nome, List<int> bytes})> escolhidas, {
+    bool colada = false,
+  }) async {
+    final messenger = ScaffoldMessenger.of(context);
+    if (!widget.pode) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Só quem pode editar a tarefa junta imagens.'),
+        ),
+      );
+      return;
+    }
+    while (_aEnviar && mounted) {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+    if (!mounted) return;
 
     final livres = maxImagensTarefa - widget.imagens.length;
     final novas = <({String nome, List<int> bytes})>[];
     var formato = 0, grandes = 0, demais = 0;
-    for (final f in escolhidas.files) {
-      final bytes = f.bytes;
-      if (bytes == null) continue;
-      if (!_extensoes.contains((f.extension ?? '').toLowerCase())) {
+    for (final f in escolhidas) {
+      final ponto = f.nome.lastIndexOf('.');
+      final ext = ponto < 0 ? '' : f.nome.substring(ponto + 1).toLowerCase();
+      if (!_extensoes.contains(ext)) {
         formato++;
-      } else if (bytes.length > _maxBytes) {
+      } else if (f.bytes.length > _maxBytes) {
         grandes++;
       } else if (novas.length >= livres) {
         demais++;
       } else {
-        novas.add((nome: f.name, bytes: bytes));
+        novas.add(f);
       }
     }
 
+    var enviou = false;
     if (novas.isNotEmpty) {
       setState(() => _aEnviar = true);
       try {
         final t = await _repo.adicionarImagens(widget.tarefaId, novas);
         if (mounted) widget.onMudou(t.imagens);
         _atualizarQuadro();
+        enviou = true;
       } on Object catch (e) {
         _erro(e);
       } finally {
@@ -117,6 +172,16 @@ class _ImagensTarefaState extends ConsumerState<ImagensTarefa> {
     if (avisos.isNotEmpty) {
       messenger.showSnackBar(
         SnackBar(content: Text('Ficaram de fora: ${avisos.join(', ')}.')),
+      );
+    } else if (colada && enviou) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            novas.length == 1
+                ? 'Imagem colada na tarefa.'
+                : '${novas.length} imagens coladas na tarefa.',
+          ),
+        ),
       );
     }
   }

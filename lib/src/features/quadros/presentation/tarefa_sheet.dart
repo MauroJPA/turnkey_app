@@ -743,7 +743,8 @@ class _TarefaSheetState extends ConsumerState<TarefaSheet> {
                 maxLength: 5000,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
-                  hintText: 'Detalhes, o que é preciso, onde está…',
+                  hintText:
+                      'Detalhes, o que é preciso, onde está… (Ctrl+V cola imagens)',
                   counterText: '',
                 ),
                 onChanged: (_) => _mudar(_t),
