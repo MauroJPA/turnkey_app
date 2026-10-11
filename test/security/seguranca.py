@@ -2153,6 +2153,40 @@ def teste_tarefas():
                    tok=tok['editorA'])
     check(s == 200 and not r.get('items'), 'Início: quem não é responsável não as vê como suas', f'{s}')
 
+    # ---- imagens (2.23.0): ficheiros protegidos, só imagens, só quem pode editar
+    import base64 as _b64
+    png_t = _b64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==')
+    url_t = f'/api/collections/tarefas/records/{ta}'
+    corpo, ct = multipart({}, {'imagens': ('foto.png', png_t, 'image/png')})
+    s, r, _ = call('PATCH', url_t, raw=corpo, ctype=ct, tok=tok['viewerA'])
+    check(s in (400, 403, 404), 'Leitura não junta imagens a uma tarefa', f'status {s}')
+    s, r, _ = call('PATCH', url_t, raw=corpo, ctype=ct, tok=tok['editorB'])
+    check(s in (400, 403, 404), 'empresa B não junta imagens a tarefas da A', f'status {s}')
+    corpo_mau, ct_mau = multipart({}, {'imagens': ('mau.html', b'<script>alert(1)</script>', 'text/html')})
+    s, _, _ = call('PATCH', url_t, raw=corpo_mau, ctype=ct_mau, tok=tok['editorA'])
+    check(s == 400, 'ficheiros que não sejam imagem são recusados', f'status {s}')
+    s, r, _ = call('PATCH', url_t, raw=corpo, ctype=ct, tok=tok['editorA'])
+    check(s == 200 and len(r.get('imagens') or []) == 1, 'editor junta uma imagem à tarefa', f'status {s} {str(r)[:100]}')
+    nome_img = (r.get('imagens') or ['x'])[0]
+    s, r, _ = call('PATCH', url_t, {'titulo': 'Limpar o forno (2)'}, tok['editorA'])
+    check(s == 200 and r.get('imagens') == [nome_img], 'gravar a tarefa não mexe nas imagens', f'status {s}')
+    furl = f'/api/files/tarefas/{ta}/{nome_img}'
+    s, _, _ = call('GET', furl)
+    check(s in (401, 403, 404), 'a imagem não se abre sem sessão/token', f'status {s}')
+    s, tk, _ = call('POST', '/api/files/token', {}, tok['editorB'])
+    s, _, _ = call('GET', f'{furl}?token={tk.get("token", "")}')
+    check(s in (401, 403, 404), 'a empresa B não abre as imagens da A com o seu token', f'status {s}')
+    s, tk, _ = call('POST', '/api/files/token', {}, tok['viewerA'])
+    s, _, _ = call('GET', f'{furl}?token={tk.get("token", "")}')
+    check(s == 200, 'a Leitura vê as imagens com um token', f'status {s}')
+    s, tk, _ = call('POST', '/api/files/token', {}, tok['editorA'])
+    s, _, _ = call('GET', f'{furl}?thumb=0x160&token={tk.get("token", "")}')
+    check(s == 200, 'a miniatura abre com um token', f'status {s}')
+    s, _, _ = call('PATCH', url_t, {'imagens-': [nome_img]}, tok['viewerA'])
+    check(s in (400, 403, 404), 'Leitura não tira imagens', f'status {s}')
+    s, r, _ = call('PATCH', url_t, {'imagens-': [nome_img]}, tok['adminA'])
+    check(s == 200 and not r.get('imagens'), 'a equipa tira uma imagem', f'status {s} {str(r)[:100]}')
+
     # ---- comentários e menções
     cbase = {'empresa': A, 'tarefa': ta, 'texto': '@Admin podes ver?', 'autor': users['editorA'],
              'autor_nome': 'Editor A', 'mencoes': [users['adminA']], 'lida_por': [users['editorA']]}

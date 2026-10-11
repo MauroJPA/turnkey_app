@@ -2309,6 +2309,17 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Com um só quadro, "Mudar de quadro" avisa que só existe este quadro
 - [ ] Conta de Leitura: não vê o botão "Mudar de quadro" nem o botão "Fase"
 
+## 169. Imagens nas tarefas da equipa
+
+- [ ] Abrir uma tarefa → "Imagens" → "Juntar imagem" → escolher 2 fotos: aparecem as miniaturas e o título passa a "Imagens (2)"
+- [ ] Telemóvel: "Juntar imagem" oferece a câmara e a galeria; uma foto tirada na hora fica na tarefa
+- [ ] Tocar numa miniatura: abre grande, com zoom (beliscar/roda) e setas para a outra imagem; "Fechar" volta à tarefa
+- [ ] O × numa miniatura tira a imagem e aparece "Desfazer"; desfazer traz a imagem de volta
+- [ ] No quadro, o cartão mostra o ícone da imagem com o número; outro colega vê as imagens da mesma tarefa
+- [ ] Um ficheiro que não seja JPG/PNG/WebP, ou com mais de 10 MB, fica de fora com um aviso; com 8 imagens o botão "Juntar imagem" desaparece
+- [ ] Conta de Leitura: vê as imagens mas não vê "Juntar imagem" nem o ×
+- [ ] Deixar a tarefa aberta mais de 2 minutos: as miniaturas continuam a ver-se (o acesso renova-se sozinho)
+
 ---
 
 ## Notas / ajustes pedidos

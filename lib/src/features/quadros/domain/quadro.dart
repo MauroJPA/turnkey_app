@@ -77,6 +77,7 @@ class Tarefa {
     this.prazo,
     this.etiquetas = const [],
     this.checklist = const [],
+    this.imagens = const [],
     this.arquivada = false,
     this.autorId = '',
     this.autorNome = '',
@@ -96,6 +97,9 @@ class Tarefa {
   final DateTime? prazo;
   final List<String> etiquetas;
   final List<ItemChecklist> checklist;
+
+  /// Nomes dos ficheiros das imagens (campo `imagens`, protegido).
+  final List<String> imagens;
   final bool arquivada;
   final String autorId;
   final String autorNome;
@@ -129,6 +133,7 @@ class Tarefa {
     bool limparPrazo = false,
     List<String>? etiquetas,
     List<ItemChecklist>? checklist,
+    List<String>? imagens,
     bool? arquivada,
   }) => Tarefa(
     id: id,
@@ -141,6 +146,7 @@ class Tarefa {
     prazo: limparPrazo ? null : (prazo ?? this.prazo),
     etiquetas: etiquetas ?? this.etiquetas,
     checklist: checklist ?? this.checklist,
+    imagens: imagens ?? this.imagens,
     arquivada: arquivada ?? this.arquivada,
     autorId: autorId,
     autorNome: autorNome,

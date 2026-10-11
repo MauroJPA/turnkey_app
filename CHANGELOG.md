@@ -2,6 +2,18 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.23.0 — 2026-10-11 — Imagens nas tarefas da equipa
+
+Imagens nas tarefas da equipa (quadros).
+
+- **Abre uma tarefa → secção "Imagens" → "Juntar imagem"**: escolhe uma ou várias fotos da galeria (ou tira uma na hora, no telemóvel). Até **8 imagens por tarefa**, JPG, PNG ou WebP, até **10 MB** cada. Grava logo, sem botão "Guardar".
+- **Ver**: toca numa miniatura para a ver em ponto grande, com zoom e setas para as outras da tarefa.
+- **Tirar**: o × da miniatura, com **Desfazer** durante uns segundos.
+- **No quadro**: o cartão mostra um 🖼 com o número de imagens.
+- A Leitura vê as imagens mas não junta nem tira.
+- Servidor: migration `1791200000_tarefas_imagens.js` (campo `tarefas.imagens`, ficheiros **protegidos**: só se abrem com a sessão de alguém da própria empresa). `docs/SEGURANCA.md` atualizado; 12 verificações novas em `teste_tarefas`.
+- Ficheiros: `imagens_tarefa.dart` (novo), `tarefa_sheet.dart`, `quadros_screen.dart`, repositório e fornecedor do token (renova-se sozinho).
+
 ## 2.22.2 — 2026-10-11 — Quadros: rolagem com rato, Nova fase à vista e mudar tarefa de quadro
 
 Três ajustes às Tarefas da equipa (quadros).

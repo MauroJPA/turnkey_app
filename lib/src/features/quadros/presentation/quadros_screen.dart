@@ -1210,6 +1210,12 @@ class _Cartao extends StatelessWidget {
         ),
       if (t.descricao.trim().isNotEmpty)
         Icon(Icons.notes, size: 15, color: cs.onSurfaceVariant),
+      if (t.imagens.isNotEmpty)
+        _Info(
+          icone: Icons.image_outlined,
+          texto: '${t.imagens.length}',
+          cor: cs.onSurfaceVariant,
+        ),
       if (nComentarios > 0)
         _Info(
           icone: Icons.chat_bubble_outline,

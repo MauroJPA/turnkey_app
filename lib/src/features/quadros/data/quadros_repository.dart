@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import 'package:pocketbase/pocketbase.dart';
 
 import '../../../core/auth/current_user.dart';
@@ -71,6 +72,7 @@ class QuadrosRepository {
         if (e is String && e.trim().isNotEmpty) e.trim(),
     ],
     checklist: ItemChecklist.listaDeJson(r.data['checklist']),
+    imagens: r.getListValue<String>('imagens'),
     arquivada: r.getBoolValue('arquivada'),
     autorId: r.getStringValue('autor'),
     autorNome: r.getStringValue('autor_nome'),
@@ -300,6 +302,57 @@ class QuadrosRepository {
       'checklist': [for (final i in t.checklist) i.toJson()],
     },
   );
+
+  // ---------------------------------------------------------------- imagens
+
+  /// Junta imagens à tarefa (mantém as que já tem). Devolve a tarefa já com a
+  /// lista de ficheiros do servidor.
+  Future<Tarefa> adicionarImagens(
+    String id,
+    List<({String nome, List<int> bytes})> novas,
+  ) async => tarefaDe(
+    await _tarefas.update(
+      id,
+      body: {},
+      files: [
+        for (final img in novas)
+          http.MultipartFile.fromBytes(
+            'imagens',
+            img.bytes,
+            filename: img.nome,
+          ),
+      ],
+    ),
+  );
+
+  /// Tira uma imagem da tarefa (pelo nome do ficheiro).
+  Future<Tarefa> removerImagem(String id, String nomeFicheiro) async =>
+      tarefaDe(
+        await _tarefas.update(
+          id,
+          body: {
+            'imagens-': [nomeFicheiro],
+          },
+        ),
+      );
+
+  /// Token para ver as imagens (são ficheiros protegidos; dura ~2 minutos).
+  Future<String> tokenImagens() => _pb.files.getToken();
+
+  /// URL de uma imagem da tarefa; [thumb] dá a miniatura (0x160).
+  String urlImagem(
+    String tarefaId,
+    String nomeFicheiro, {
+    required String token,
+    bool thumb = false,
+  }) {
+    final base = _pb.baseURL.endsWith('/')
+        ? _pb.baseURL.substring(0, _pb.baseURL.length - 1)
+        : _pb.baseURL;
+    final t = Uri.encodeQueryComponent(token);
+    return '$base/api/files/tarefas/$tarefaId/$nomeFicheiro'
+        '?${thumb ? 'thumb=0x160&' : ''}token=$t';
+  }
 
   Future<void> arquivarTarefa(String id, {required bool arquivada}) =>
       _tarefas.update(id, body: {'arquivada': arquivada});

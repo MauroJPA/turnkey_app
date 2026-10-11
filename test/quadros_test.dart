@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gc_turnkey/src/features/quadros/data/quadros_repository.dart';
 import 'package:gc_turnkey/src/features/quadros/domain/quadro.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 Tarefa _t(
   String id, {
@@ -112,6 +114,30 @@ void main() {
       expect(prazoTexto(DateTime(2026, 10, 13), hoje), 'em 3 dias');
       expect(prazoTexto(DateTime(2026, 10, 20), hoje), '20/10');
       expect(prazoTexto(DateTime(2027, 1, 2), hoje), '2/1/2027');
+    });
+  });
+
+  group('imagens', () {
+    test('lê os ficheiros do registo e conserva-os ao mudar outros campos', () {
+      final r = RecordModel({
+        'id': 't1',
+        'quadro': 'q',
+        'coluna': 'c1',
+        'titulo': 'Avaria',
+        'imagens': ['a_x1.jpg', 'b_y2.png'],
+        'created': '2026-10-10 10:00:00.000Z',
+      });
+      final t = QuadrosRepository.tarefaDe(r);
+      expect(t.imagens, ['a_x1.jpg', 'b_y2.png']);
+      expect(t.copyWith(titulo: 'Outra').imagens, t.imagens);
+      expect(t.copyWith(imagens: const ['c.webp']).imagens, ['c.webp']);
+      expect(t.copyWith(imagens: const []).imagens, isEmpty);
+    });
+
+    test('uma tarefa sem imagens tem a lista vazia', () {
+      expect(_t('a').imagens, isEmpty);
+      final r = RecordModel({'id': 't2', 'titulo': 'x'});
+      expect(QuadrosRepository.tarefaDe(r).imagens, isEmpty);
     });
   });
 

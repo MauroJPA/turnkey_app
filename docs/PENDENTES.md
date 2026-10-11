@@ -1,6 +1,6 @@
 # Pendentes (fila de trabalho)
 
-Última versão fechada: **2.22.2** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
+Última versão fechada: **2.23.0** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
 (editar → `bash scripts/verificar.sh` → pubspec + CHANGELOG + docs/CHECKLIST_TESTES.md → commit com caminhos
 explícitos → `git branch -f develop main` → `git tag vX.Y.Z`). No fim: `powershell -File scripts\empacotar-producao.ps1`
 e dar ao Mauro o SHA-256 + comando de publicação.
@@ -35,6 +35,7 @@ Fila atual (pedido do Mauro em 06/10/2026, **cada item = uma versão**, por esta
 - ~~**2.22.0**~~ (feito) Produtos para venda: secções Fichas técnicas e Revenda (bebidas), IVA por produto.
 - ~~**2.22.1**~~ (feito) Revenda: o Adicionar mostra as bebidas e a revenda do Inventário (Limpeza e insumos).
 - ~~**2.22.2**~~ (feito) Quadros no computador (rato, barra, setas), botão Fase e mudar uma tarefa de quadro.
+- ~~**2.23.0**~~ (feito) Imagens nas tarefas (até 8 por tarefa, ficheiros protegidos, ver em grande, desfazer).
 - No fim: empacotar, dar SHA-256 + comando; atualizar docs/SEGURANCA.md se houver novos endpoints.
 
 ## Fila 2.x — UI/UX mais ágil (aprovada pelo Mauro em 06/10/2026; branch `ux-2`, cada item = uma versão, por esta ordem)

@@ -11,6 +11,7 @@ import '../../people/domain/nota.dart' show quandoTexto;
 import '../application/quadros_providers.dart';
 import '../data/quadros_repository.dart';
 import '../domain/quadro.dart';
+import 'imagens_tarefa.dart';
 import 'quadro_comum.dart';
 
 /// Abre o detalhe de uma tarefa numa folha que sobe de baixo.
@@ -717,6 +718,20 @@ class _TarefaSheetState extends ConsumerState<TarefaSheet> {
                   counterText: '',
                 ),
                 onChanged: (_) => _mudar(_t),
+              ),
+
+              seccao(
+                _t.imagens.isEmpty
+                    ? 'Imagens'
+                    : 'Imagens (${_t.imagens.length})',
+                Icons.image_outlined,
+              ),
+              ImagensTarefa(
+                tarefaId: _t.id,
+                quadroId: _t.quadroId,
+                imagens: _t.imagens,
+                pode: pode,
+                onMudou: (l) => setState(() => _t = _t.copyWith(imagens: l)),
               ),
 
               seccao(

@@ -52,6 +52,15 @@ class DadosQuadro {
   };
 }
 
+/// Token para ver as imagens das tarefas (ficheiros protegidos; dura ~2
+/// minutos, por isso renova-se sozinho enquanto alguém as está a ver).
+final tokenImagensProvider = FutureProvider.autoDispose<String>((ref) async {
+  final token = await ref.watch(quadrosRepositoryProvider).tokenImagens();
+  final renovar = Timer(const Duration(seconds: 90), ref.invalidateSelf);
+  ref.onDispose(renovar.cancel);
+  return token;
+});
+
 /// Fases, tarefas abertas e comentários de um quadro. Fica à escuta: quando
 /// alguém da equipa mexe no quadro, recarrega sozinho (sem piscar).
 final dadosQuadroProvider = FutureProvider.autoDispose
