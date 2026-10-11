@@ -54,14 +54,15 @@ class RecipeRepository {
   Future<Receita> update(String id, RecipeInput input) async =>
       Receita.fromRecord(await _c.update(id, body: input.toBody()));
 
-  /// Anexa ficheiros ao campo `imagens` (multi-ficheiro, mantém os já lá).
+  /// Anexa ficheiros ao campo `imagens` (multi-ficheiro, mantém os já lá). O
+  /// `+` no nome do campo é o que junta; sem ele o PocketBase substitui.
   Future<Receita> adicionarImagens(
     String id,
     List<({String nome, List<int> bytes})> novas,
   ) async {
     final files = [
       for (final img in novas)
-        http.MultipartFile.fromBytes('imagens', img.bytes, filename: img.nome),
+        http.MultipartFile.fromBytes('imagens+', img.bytes, filename: img.nome),
     ];
     return Receita.fromRecord(await _c.update(id, body: {}, files: files));
   }
@@ -69,9 +70,12 @@ class RecipeRepository {
   /// Remove um ficheiro do campo `imagens` (pelo nome guardado).
   Future<Receita> removerImagem(String id, String nomeFicheiro) async =>
       Receita.fromRecord(
-        await _c.update(id, body: {
-          'imagens-': [nomeFicheiro],
-        }),
+        await _c.update(
+          id,
+          body: {
+            'imagens-': [nomeFicheiro],
+          },
+        ),
       );
 
   /// URL público de uma imagem da receita (opcionalmente a miniatura 0x160).

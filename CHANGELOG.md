@@ -2,6 +2,15 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.26.1 — 2026-10-11 — Imagens: juntar não substitui as anteriores
+
+Corrige: ao juntar uma imagem a uma tarefa, a anterior desaparecia (ficava sempre só a última).
+
+- **Causa**: o PocketBase, ao enviar ficheiros para um campo de várias imagens, **substitui** os que já lá estão, a não ser que o campo se chame `imagens+`. A app enviava `imagens`.
+- **Corrigido** nas imagens das **tarefas** e também nas das **receitas** (tinham o mesmo erro: juntar uma imagem apagava as outras).
+- As imagens que já se perderam não se recuperam; as novas passam a acumular (até 8).
+- Testes de segurança: juntar uma segunda imagem mantém a primeira (tarefas e receitas).
+
 ## 2.26.0 — 2026-10-11 — Links nas tarefas (clicáveis e secção de links)
 
 Links nas tarefas da equipa.

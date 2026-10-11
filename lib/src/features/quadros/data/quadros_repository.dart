@@ -310,7 +310,8 @@ class QuadrosRepository {
   // ---------------------------------------------------------------- imagens
 
   /// Junta imagens à tarefa (mantém as que já tem). Devolve a tarefa já com a
-  /// lista de ficheiros do servidor.
+  /// lista de ficheiros do servidor. O nome do campo leva `+`: sem ele o
+  /// PocketBase SUBSTITUI os ficheiros que já lá estão.
   Future<Tarefa> adicionarImagens(
     String id,
     List<({String nome, List<int> bytes})> novas,
@@ -321,7 +322,7 @@ class QuadrosRepository {
       files: [
         for (final img in novas)
           http.MultipartFile.fromBytes(
-            'imagens',
+            'imagens+',
             img.bytes,
             filename: img.nome,
           ),

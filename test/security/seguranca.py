@@ -2178,19 +2178,26 @@ def teste_tarefas():
     import base64 as _b64
     png_t = _b64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==')
     url_t = f'/api/collections/tarefas/records/{ta}'
-    corpo, ct = multipart({}, {'imagens': ('foto.png', png_t, 'image/png')})
+    # `imagens+` JUNTA aos que já existem; sem o `+` o PocketBase substitui tudo
+    corpo, ct = multipart({}, {'imagens+': ('foto.png', png_t, 'image/png')})
     s, r, _ = call('PATCH', url_t, raw=corpo, ctype=ct, tok=tok['viewerA'])
     check(s in (400, 403, 404), 'Leitura não junta imagens a uma tarefa', f'status {s}')
     s, r, _ = call('PATCH', url_t, raw=corpo, ctype=ct, tok=tok['editorB'])
     check(s in (400, 403, 404), 'empresa B não junta imagens a tarefas da A', f'status {s}')
-    corpo_mau, ct_mau = multipart({}, {'imagens': ('mau.html', b'<script>alert(1)</script>', 'text/html')})
+    corpo_mau, ct_mau = multipart({}, {'imagens+': ('mau.html', b'<script>alert(1)</script>', 'text/html')})
     s, _, _ = call('PATCH', url_t, raw=corpo_mau, ctype=ct_mau, tok=tok['editorA'])
     check(s == 400, 'ficheiros que não sejam imagem são recusados', f'status {s}')
     s, r, _ = call('PATCH', url_t, raw=corpo, ctype=ct, tok=tok['editorA'])
     check(s == 200 and len(r.get('imagens') or []) == 1, 'editor junta uma imagem à tarefa', f'status {s} {str(r)[:100]}')
     nome_img = (r.get('imagens') or ['x'])[0]
+    corpo2, ct2 = multipart({}, {'imagens+': ('foto2.png', png_t, 'image/png')})
+    s, r, _ = call('PATCH', url_t, raw=corpo2, ctype=ct2, tok=tok['editorA'])
+    check(s == 200 and len(r.get('imagens') or []) == 2 and nome_img in (r.get('imagens') or []),
+          'juntar uma segunda imagem mantém a primeira (não substitui)', f'status {s} {str(r)[:120]}')
+    segunda = [i for i in (r.get('imagens') or []) if i != nome_img][:1]
     s, r, _ = call('PATCH', url_t, {'titulo': 'Limpar o forno (2)'}, tok['editorA'])
-    check(s == 200 and r.get('imagens') == [nome_img], 'gravar a tarefa não mexe nas imagens', f'status {s}')
+    check(s == 200 and sorted(r.get('imagens') or []) == sorted([nome_img] + segunda),
+          'gravar a tarefa não mexe nas imagens', f'status {s} {str(r.get("imagens"))[:100]}')
     furl = f'/api/files/tarefas/{ta}/{nome_img}'
     s, _, _ = call('GET', furl)
     check(s in (401, 403, 404), 'a imagem não se abre sem sessão/token', f'status {s}')
@@ -2206,7 +2213,16 @@ def teste_tarefas():
     s, _, _ = call('PATCH', url_t, {'imagens-': [nome_img]}, tok['viewerA'])
     check(s in (400, 403, 404), 'Leitura não tira imagens', f'status {s}')
     s, r, _ = call('PATCH', url_t, {'imagens-': [nome_img]}, tok['adminA'])
-    check(s == 200 and not r.get('imagens'), 'a equipa tira uma imagem', f'status {s} {str(r)[:100]}')
+    check(s == 200 and r.get('imagens') == segunda, 'a equipa tira uma imagem (a outra fica)', f'status {s} {str(r)[:100]}')
+    # receitas: o mesmo contrato (o campo `imagens` também é multi-ficheiro)
+    rec_id = dados[('receitas', 'A')][0]
+    urlr = f'/api/collections/receitas/records/{rec_id}'
+    for k in range(2):
+        corpor, ctr = multipart({}, {'imagens+': (f'passo{k}.png', png_t, 'image/png')})
+        s, r, _ = call('PATCH', urlr, raw=corpor, ctype=ctr, tok=tok['editorA'])
+    check(s == 200 and len(r.get('imagens') or []) == 2, 'receitas: juntar imagens também mantém as anteriores',
+          f'status {s} {str(r.get("imagens"))[:100]}')
+    call('PATCH', urlr, {'imagens': []}, tok['editorA'])
 
     # ---- comentários e menções
     cbase = {'empresa': A, 'tarefa': ta, 'texto': '@Admin podes ver?', 'autor': users['editorA'],

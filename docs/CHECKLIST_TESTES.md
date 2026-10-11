@@ -2346,6 +2346,12 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] O cartão no quadro mostra o ícone de link com o número
 - [ ] Conta de Leitura: vê e abre os links mas não tem "Link" nem ×
 
+## 173. Imagens: juntar não substitui as anteriores
+
+- [ ] Numa tarefa, juntar uma imagem e depois outra (e uma terceira): ficam todas, em "Imagens (3)"
+- [ ] Colar (Ctrl+V) uma imagem numa tarefa que já tem imagens: junta-se, não substitui
+- [ ] Numa receita, anexar uma imagem e depois outra: as duas ficam na receita
+
 ---
 
 ## Notas / ajustes pedidos
