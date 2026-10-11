@@ -539,373 +539,391 @@ class _TarefaSheetState extends ConsumerState<TarefaSheet> {
     return Column(
       children: [
         Expanded(
-          child: ListView(
+          // Column e não ListView: a lista só constrói o que está perto do
+          // ecrã, e a secção das imagens tem de existir sempre para escutar o
+          // Ctrl+V (numa janela baixa ficava por construir e o colar falhava)
+          child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            children: [
-              TextField(
-                controller: _titulo,
-                enabled: pode,
-                maxLength: 200,
-                maxLines: null,
-                style: tt.titleLarge,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  hintText: 'Título da tarefa',
-                  counterText: '',
-                  border: InputBorder.none,
-                  filled: false,
-                ),
-                onChanged: (_) => _mudar(_t),
-              ),
-              Text(
-                [
-                  if (_t.autorNome.isNotEmpty) 'Criada por ${_t.autorNome}',
-                  quandoTexto(_t.criada, hoje),
-                ].join(' · '),
-                style: tt.bodySmall,
-              ),
-
-              seccao('Fase', Icons.view_column_outlined),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final c in widget.colunas)
-                    ChoiceChip(
-                      label: Text(c.nome),
-                      avatar: c.concluida
-                          ? Icon(Icons.check, size: 16, color: cs.sucesso)
-                          : null,
-                      selected: c.id == _t.colunaId,
-                      onSelected: pode ? (_) => _moverPara(c) : null,
-                    ),
-                ],
-              ),
-
-              seccao('Prioridade', Icons.flag_outlined),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final p in PrioridadeTarefa.values)
-                    ChoiceChip(
-                      label: Text(p.label),
-                      avatar: switch (p) {
-                        PrioridadeTarefa.critica => Icon(
-                          Icons.priority_high,
-                          size: 16,
-                          color: cs.error,
-                        ),
-                        PrioridadeTarefa.alta => Icon(
-                          Icons.flag,
-                          size: 16,
-                          color: cs.aviso,
-                        ),
-                        _ => null,
-                      },
-                      selected: p == _t.prioridade,
-                      onSelected: pode
-                          ? (_) => _mudar(_t.copyWith(prioridade: p), ja: true)
-                          : null,
-                    ),
-                ],
-              ),
-
-              seccao('Responsáveis', Icons.person_outline),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final p in responsaveis)
-                    InputChip(
-                      avatar: AvatarPessoa(p, raio: 10),
-                      label: Text(p.nome),
-                      onDeleted: pode
-                          ? () => _mudar(
-                              _t.copyWith(
-                                responsaveis: [
-                                  for (final r in _t.responsaveis)
-                                    if (r != p.id) r,
-                                ],
-                              ),
-                              ja: true,
-                            )
-                          : null,
-                    ),
-                  if (pode && uid.isNotEmpty && !_t.responsaveis.contains(uid))
-                    ActionChip(
-                      avatar: const Icon(Icons.front_hand_outlined, size: 16),
-                      label: const Text('Fico eu'),
-                      onPressed: () => _mudar(
-                        _t.copyWith(responsaveis: [..._t.responsaveis, uid]),
-                        ja: true,
-                      ),
-                    ),
-                  if (pode)
-                    ActionChip(
-                      avatar: const Icon(Icons.add, size: 16),
-                      label: const Text('Pessoa'),
-                      onPressed: () => _escolherPessoas(pessoas),
-                    ),
-                  if (!pode && responsaveis.isEmpty)
-                    Text('Ninguém', style: tt.bodySmall),
-                ],
-              ),
-
-              seccao('Prazo', Icons.event_outlined),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  if (_t.prazo != null)
-                    InputChip(
-                      avatar: Icon(
-                        feita ? Icons.check_circle : Icons.event,
-                        size: 16,
-                        color: feita
-                            ? cs.sucesso
-                            : _t.atrasada(hoje, feita: false)
-                            ? cs.error
-                            : null,
-                      ),
-                      label: Text(_prazoCompleto(_t.prazo!, hoje)),
-                      onPressed: pode ? _escolherPrazo : null,
-                      onDeleted: pode
-                          ? () =>
-                                _mudar(_t.copyWith(limparPrazo: true), ja: true)
-                          : null,
-                    )
-                  else if (pode) ...[
-                    ActionChip(
-                      label: const Text('Hoje'),
-                      onPressed: () =>
-                          _mudar(_t.copyWith(prazo: hoje), ja: true),
-                    ),
-                    ActionChip(
-                      label: const Text('Amanhã'),
-                      onPressed: () => _mudar(
-                        _t.copyWith(
-                          prazo: DateTime(hoje.year, hoje.month, hoje.day + 1),
-                        ),
-                        ja: true,
-                      ),
-                    ),
-                    ActionChip(
-                      avatar: const Icon(
-                        Icons.calendar_month_outlined,
-                        size: 16,
-                      ),
-                      label: const Text('Escolher dia'),
-                      onPressed: _escolherPrazo,
-                    ),
-                  ] else
-                    Text('Sem prazo', style: tt.bodySmall),
-                ],
-              ),
-
-              seccao('Etiquetas', Icons.sell_outlined),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  for (final e in _t.etiquetas)
-                    EtiquetaPilula(
-                      e,
-                      onApagar: pode
-                          ? () => _mudar(
-                              _t.copyWith(
-                                etiquetas: [
-                                  for (final x in _t.etiquetas)
-                                    if (x != e) x,
-                                ],
-                              ),
-                              ja: true,
-                            )
-                          : null,
-                    ),
-                  if (pode)
-                    ActionChip(
-                      avatar: const Icon(Icons.add, size: 16),
-                      label: const Text('Etiqueta'),
-                      onPressed: _novaEtiqueta,
-                    ),
-                  if (!pode && _t.etiquetas.isEmpty)
-                    Text('Nenhuma', style: tt.bodySmall),
-                ],
-              ),
-
-              seccao('Descrição', Icons.notes_outlined),
-              DescricaoComLinks(
-                controller: _descricao,
-                enabled: pode,
-                hint:
-                    'Detalhes, o que é preciso, onde está… (Ctrl+V cola imagens)',
-                onChanged: () => _mudar(_t),
-              ),
-
-              seccao(
-                _t.links.isEmpty ? 'Links' : 'Links (${_t.links.length})',
-                Icons.link,
-              ),
-              LinksTarefa(
-                links: _t.links,
-                pode: pode,
-                onMudou: (l) => _mudar(_t.copyWith(links: l), ja: true),
-              ),
-
-              seccao(
-                _t.imagens.isEmpty
-                    ? 'Imagens'
-                    : 'Imagens (${_t.imagens.length})',
-                Icons.image_outlined,
-              ),
-              ImagensTarefa(
-                tarefaId: _t.id,
-                quadroId: _t.quadroId,
-                imagens: _t.imagens,
-                pode: pode,
-                onMudou: (l) => setState(() => _t = _t.copyWith(imagens: l)),
-              ),
-
-              seccao(
-                _t.temChecklist
-                    ? 'Lista (${_t.checklistFeitos}/${_t.checklist.length})'
-                    : 'Lista',
-                Icons.checklist,
-              ),
-              if (_t.temChecklist)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: LinearProgressIndicator(
-                    value: _t.checklistFeitos / _t.checklist.length,
-                    minHeight: 6,
-                    borderRadius: BorderRadius.circular(3),
-                    color: cs.sucesso,
-                  ),
-                ),
-              for (var i = 0; i < _t.checklist.length; i++)
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _t.checklist[i].feito,
-                      onChanged: pode
-                          ? (v) {
-                              final l = [..._t.checklist];
-                              l[i] = l[i].copyWith(feito: v ?? false);
-                              _mudar(_t.copyWith(checklist: l), ja: true);
-                            }
-                          : null,
-                    ),
-                    Expanded(
-                      child: Text(
-                        _t.checklist[i].texto,
-                        style: _t.checklist[i].feito
-                            ? tt.bodyMedium?.copyWith(
-                                decoration: TextDecoration.lineThrough,
-                                color: cs.onSurfaceVariant,
-                              )
-                            : tt.bodyMedium,
-                      ),
-                    ),
-                    if (pode)
-                      IconButton(
-                        tooltip: 'Tirar',
-                        visualDensity: VisualDensity.compact,
-                        icon: const Icon(Icons.close, size: 18),
-                        onPressed: () {
-                          final l = [..._t.checklist]..removeAt(i);
-                          _mudar(_t.copyWith(checklist: l), ja: true);
-                        },
-                      ),
-                  ],
-                ),
-              if (pode)
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
                 TextField(
-                  controller: _novoItem,
-                  focusNode: _novoItemFoco,
+                  controller: _titulo,
+                  enabled: pode,
                   maxLength: 200,
+                  maxLines: null,
+                  style: tt.titleLarge,
                   textCapitalization: TextCapitalization.sentences,
-                  decoration: InputDecoration(
-                    hintText: 'Adicionar um passo',
+                  decoration: const InputDecoration(
+                    hintText: 'Título da tarefa',
                     counterText: '',
-                    isDense: true,
-                    prefixIcon: const Icon(Icons.add),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.keyboard_return),
-                      onPressed: _adicionarItem,
-                    ),
+                    border: InputBorder.none,
+                    filled: false,
                   ),
-                  onSubmitted: (_) => _adicionarItem(),
+                  onChanged: (_) => _mudar(_t),
                 ),
-
-              seccao(
-                lista.isEmpty ? 'Comentários' : 'Comentários (${lista.length})',
-                Icons.forum_outlined,
-              ),
-              if (comentarios.isLoading && lista.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(8),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-              for (final c in lista)
-                _ComentarioLinha(
-                  comentario: c,
-                  pessoas: pessoas,
-                  autor: nomes[c.autorId],
-                  meu: c.autorId == uid,
-                  podeApagar: pode && (c.autorId == uid || papel.canEditConfig),
-                  podeEditar: pode && c.autorId == uid,
-                  onEditar: () => _editarComentario(c, pessoas),
-                  onApagar: () => apagarComDesfazer(
-                    context,
-                    id: c.id,
-                    mensagem: 'Comentário apagado.',
-                    apagar: () => _repo.apagarComentario(c.id),
-                    depois: () {
-                      ref.invalidate(comentariosTarefaProvider(_t.id));
-                      _atualizarQuadro();
-                    },
-                    aoFalhar: _erro,
-                  ),
-                ),
-              if (lista.isEmpty && !comentarios.isLoading)
                 Text(
-                  pode
-                      ? 'Ainda sem comentários. Escreve @ e o nome para chamar alguém.'
-                      : 'Ainda sem comentários.',
+                  [
+                    if (_t.autorNome.isNotEmpty) 'Criada por ${_t.autorNome}',
+                    quandoTexto(_t.criada, hoje),
+                  ].join(' · '),
                   style: tt.bodySmall,
                 ),
-              const SizedBox(height: 12),
-              if (podeApagar || pode)
+
+                seccao('Fase', Icons.view_column_outlined),
                 Wrap(
-                  spacing: 8,
+                  spacing: 6,
+                  runSpacing: 6,
                   children: [
-                    if (pode)
-                      TextButton.icon(
-                        icon: const Icon(Icons.drive_file_move_outline),
-                        label: const Text('Mudar de quadro'),
-                        onPressed: _mudarDeQuadro,
-                      ),
-                    if (pode)
-                      TextButton.icon(
-                        icon: const Icon(Icons.archive_outlined),
-                        label: const Text('Arquivar'),
-                        onPressed: _arquivar,
-                      ),
-                    if (podeApagar)
-                      TextButton.icon(
-                        icon: Icon(Icons.delete_outline, color: cs.error),
-                        label: Text(
-                          'Apagar',
-                          style: TextStyle(color: cs.error),
-                        ),
-                        onPressed: _apagar,
+                    for (final c in widget.colunas)
+                      ChoiceChip(
+                        label: Text(c.nome),
+                        avatar: c.concluida
+                            ? Icon(Icons.check, size: 16, color: cs.sucesso)
+                            : null,
+                        selected: c.id == _t.colunaId,
+                        onSelected: pode ? (_) => _moverPara(c) : null,
                       ),
                   ],
                 ),
-            ],
+
+                seccao('Prioridade', Icons.flag_outlined),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final p in PrioridadeTarefa.values)
+                      ChoiceChip(
+                        label: Text(p.label),
+                        avatar: switch (p) {
+                          PrioridadeTarefa.critica => Icon(
+                            Icons.priority_high,
+                            size: 16,
+                            color: cs.error,
+                          ),
+                          PrioridadeTarefa.alta => Icon(
+                            Icons.flag,
+                            size: 16,
+                            color: cs.aviso,
+                          ),
+                          _ => null,
+                        },
+                        selected: p == _t.prioridade,
+                        onSelected: pode
+                            ? (_) =>
+                                  _mudar(_t.copyWith(prioridade: p), ja: true)
+                            : null,
+                      ),
+                  ],
+                ),
+
+                seccao('Responsáveis', Icons.person_outline),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final p in responsaveis)
+                      InputChip(
+                        avatar: AvatarPessoa(p, raio: 10),
+                        label: Text(p.nome),
+                        onDeleted: pode
+                            ? () => _mudar(
+                                _t.copyWith(
+                                  responsaveis: [
+                                    for (final r in _t.responsaveis)
+                                      if (r != p.id) r,
+                                  ],
+                                ),
+                                ja: true,
+                              )
+                            : null,
+                      ),
+                    if (pode &&
+                        uid.isNotEmpty &&
+                        !_t.responsaveis.contains(uid))
+                      ActionChip(
+                        avatar: const Icon(Icons.front_hand_outlined, size: 16),
+                        label: const Text('Fico eu'),
+                        onPressed: () => _mudar(
+                          _t.copyWith(responsaveis: [..._t.responsaveis, uid]),
+                          ja: true,
+                        ),
+                      ),
+                    if (pode)
+                      ActionChip(
+                        avatar: const Icon(Icons.add, size: 16),
+                        label: const Text('Pessoa'),
+                        onPressed: () => _escolherPessoas(pessoas),
+                      ),
+                    if (!pode && responsaveis.isEmpty)
+                      Text('Ninguém', style: tt.bodySmall),
+                  ],
+                ),
+
+                seccao('Prazo', Icons.event_outlined),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    if (_t.prazo != null)
+                      InputChip(
+                        avatar: Icon(
+                          feita ? Icons.check_circle : Icons.event,
+                          size: 16,
+                          color: feita
+                              ? cs.sucesso
+                              : _t.atrasada(hoje, feita: false)
+                              ? cs.error
+                              : null,
+                        ),
+                        label: Text(_prazoCompleto(_t.prazo!, hoje)),
+                        onPressed: pode ? _escolherPrazo : null,
+                        onDeleted: pode
+                            ? () => _mudar(
+                                _t.copyWith(limparPrazo: true),
+                                ja: true,
+                              )
+                            : null,
+                      )
+                    else if (pode) ...[
+                      ActionChip(
+                        label: const Text('Hoje'),
+                        onPressed: () =>
+                            _mudar(_t.copyWith(prazo: hoje), ja: true),
+                      ),
+                      ActionChip(
+                        label: const Text('Amanhã'),
+                        onPressed: () => _mudar(
+                          _t.copyWith(
+                            prazo: DateTime(
+                              hoje.year,
+                              hoje.month,
+                              hoje.day + 1,
+                            ),
+                          ),
+                          ja: true,
+                        ),
+                      ),
+                      ActionChip(
+                        avatar: const Icon(
+                          Icons.calendar_month_outlined,
+                          size: 16,
+                        ),
+                        label: const Text('Escolher dia'),
+                        onPressed: _escolherPrazo,
+                      ),
+                    ] else
+                      Text('Sem prazo', style: tt.bodySmall),
+                  ],
+                ),
+
+                seccao('Etiquetas', Icons.sell_outlined),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    for (final e in _t.etiquetas)
+                      EtiquetaPilula(
+                        e,
+                        onApagar: pode
+                            ? () => _mudar(
+                                _t.copyWith(
+                                  etiquetas: [
+                                    for (final x in _t.etiquetas)
+                                      if (x != e) x,
+                                  ],
+                                ),
+                                ja: true,
+                              )
+                            : null,
+                      ),
+                    if (pode)
+                      ActionChip(
+                        avatar: const Icon(Icons.add, size: 16),
+                        label: const Text('Etiqueta'),
+                        onPressed: _novaEtiqueta,
+                      ),
+                    if (!pode && _t.etiquetas.isEmpty)
+                      Text('Nenhuma', style: tt.bodySmall),
+                  ],
+                ),
+
+                seccao('Descrição', Icons.notes_outlined),
+                DescricaoComLinks(
+                  controller: _descricao,
+                  enabled: pode,
+                  hint:
+                      'Detalhes, o que é preciso, onde está… (Ctrl+V cola imagens)',
+                  onChanged: () => _mudar(_t),
+                ),
+
+                seccao(
+                  _t.links.isEmpty ? 'Links' : 'Links (${_t.links.length})',
+                  Icons.link,
+                ),
+                LinksTarefa(
+                  links: _t.links,
+                  pode: pode,
+                  onMudou: (l) => _mudar(_t.copyWith(links: l), ja: true),
+                ),
+
+                seccao(
+                  _t.imagens.isEmpty
+                      ? 'Imagens'
+                      : 'Imagens (${_t.imagens.length})',
+                  Icons.image_outlined,
+                ),
+                ImagensTarefa(
+                  tarefaId: _t.id,
+                  quadroId: _t.quadroId,
+                  imagens: _t.imagens,
+                  pode: pode,
+                  onMudou: (l) => setState(() => _t = _t.copyWith(imagens: l)),
+                ),
+
+                seccao(
+                  _t.temChecklist
+                      ? 'Lista (${_t.checklistFeitos}/${_t.checklist.length})'
+                      : 'Lista',
+                  Icons.checklist,
+                ),
+                if (_t.temChecklist)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: LinearProgressIndicator(
+                      value: _t.checklistFeitos / _t.checklist.length,
+                      minHeight: 6,
+                      borderRadius: BorderRadius.circular(3),
+                      color: cs.sucesso,
+                    ),
+                  ),
+                for (var i = 0; i < _t.checklist.length; i++)
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: _t.checklist[i].feito,
+                        onChanged: pode
+                            ? (v) {
+                                final l = [..._t.checklist];
+                                l[i] = l[i].copyWith(feito: v ?? false);
+                                _mudar(_t.copyWith(checklist: l), ja: true);
+                              }
+                            : null,
+                      ),
+                      Expanded(
+                        child: Text(
+                          _t.checklist[i].texto,
+                          style: _t.checklist[i].feito
+                              ? tt.bodyMedium?.copyWith(
+                                  decoration: TextDecoration.lineThrough,
+                                  color: cs.onSurfaceVariant,
+                                )
+                              : tt.bodyMedium,
+                        ),
+                      ),
+                      if (pode)
+                        IconButton(
+                          tooltip: 'Tirar',
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.close, size: 18),
+                          onPressed: () {
+                            final l = [..._t.checklist]..removeAt(i);
+                            _mudar(_t.copyWith(checklist: l), ja: true);
+                          },
+                        ),
+                    ],
+                  ),
+                if (pode)
+                  TextField(
+                    controller: _novoItem,
+                    focusNode: _novoItemFoco,
+                    maxLength: 200,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: InputDecoration(
+                      hintText: 'Adicionar um passo',
+                      counterText: '',
+                      isDense: true,
+                      prefixIcon: const Icon(Icons.add),
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.keyboard_return),
+                        onPressed: _adicionarItem,
+                      ),
+                    ),
+                    onSubmitted: (_) => _adicionarItem(),
+                  ),
+
+                seccao(
+                  lista.isEmpty
+                      ? 'Comentários'
+                      : 'Comentários (${lista.length})',
+                  Icons.forum_outlined,
+                ),
+                if (comentarios.isLoading && lista.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                for (final c in lista)
+                  _ComentarioLinha(
+                    comentario: c,
+                    pessoas: pessoas,
+                    autor: nomes[c.autorId],
+                    meu: c.autorId == uid,
+                    podeApagar:
+                        pode && (c.autorId == uid || papel.canEditConfig),
+                    podeEditar: pode && c.autorId == uid,
+                    onEditar: () => _editarComentario(c, pessoas),
+                    onApagar: () => apagarComDesfazer(
+                      context,
+                      id: c.id,
+                      mensagem: 'Comentário apagado.',
+                      apagar: () => _repo.apagarComentario(c.id),
+                      depois: () {
+                        ref.invalidate(comentariosTarefaProvider(_t.id));
+                        _atualizarQuadro();
+                      },
+                      aoFalhar: _erro,
+                    ),
+                  ),
+                if (lista.isEmpty && !comentarios.isLoading)
+                  Text(
+                    pode
+                        ? 'Ainda sem comentários. Escreve @ e o nome para chamar alguém.'
+                        : 'Ainda sem comentários.',
+                    style: tt.bodySmall,
+                  ),
+                const SizedBox(height: 12),
+                if (podeApagar || pode)
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      if (pode)
+                        TextButton.icon(
+                          icon: const Icon(Icons.drive_file_move_outline),
+                          label: const Text('Mudar de quadro'),
+                          onPressed: _mudarDeQuadro,
+                        ),
+                      if (pode)
+                        TextButton.icon(
+                          icon: const Icon(Icons.archive_outlined),
+                          label: const Text('Arquivar'),
+                          onPressed: _arquivar,
+                        ),
+                      if (podeApagar)
+                        TextButton.icon(
+                          icon: Icon(Icons.delete_outline, color: cs.error),
+                          label: Text(
+                            'Apagar',
+                            style: TextStyle(color: cs.error),
+                          ),
+                          onPressed: _apagar,
+                        ),
+                    ],
+                  ),
+              ],
+            ),
           ),
         ),
         if (pode)

@@ -2,6 +2,15 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.26.2 — 2026-10-11 — Colar imagens: funciona com qualquer altura de janela
+
+Corrige: o Ctrl+V de imagens na tarefa deixava de funcionar (sobretudo em janelas pouco altas).
+
+- **Causa**: a folha da tarefa é uma lista que só constrói o que está perto do ecrã. A secção das imagens — a que escuta o Ctrl+V — ficava abaixo, por construir, e o colar não fazia nada. Com as secções novas (Prioridade, Links) ficou ainda mais abaixo.
+- **Corrigido**: a folha passa a construir tudo de uma vez, por isso colar funciona com a janela do tamanho que for e esteja a rolagem onde estiver.
+- Teste novo (`test/tarefa_sheet_imagens_test.dart`) que garante que a secção das imagens existe mesmo com a janela baixa.
+- A ponte de colar fica separada em versão web e versão vazia (`colar_imagem_web.dart` / `colar_imagem_stub.dart`) para os testes correrem.
+
 ## 2.26.1 — 2026-10-11 — Imagens: juntar não substitui as anteriores
 
 Corrige: ao juntar uma imagem a uma tarefa, a anterior desaparecia (ficava sempre só a última).

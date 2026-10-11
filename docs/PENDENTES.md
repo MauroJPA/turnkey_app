@@ -1,6 +1,6 @@
 # Pendentes (fila de trabalho)
 
-Última versão fechada: **2.26.1** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
+Última versão fechada: **2.26.2** (ver CHANGELOG). Cada item abaixo = **uma versão própria**
 (editar → `bash scripts/verificar.sh` → pubspec + CHANGELOG + docs/CHECKLIST_TESTES.md → commit com caminhos
 explícitos → `git branch -f develop main` → `git tag vX.Y.Z`). No fim: `powershell -File scripts\empacotar-producao.ps1`
 e dar ao Mauro o SHA-256 + comando de publicação.
@@ -40,6 +40,7 @@ Fila atual (pedido do Mauro em 06/10/2026, **cada item = uma versão**, por esta
 - ~~**2.25.0**~~ (feito) Ctrl+V de imagens na tarefa (ponte web/gc_colar.js).
 - ~~**2.26.0**~~ (feito) Links clicáveis na descrição e secção Links (título + endereço) em cada tarefa.
 - ~~**2.26.1**~~ (feito) Corrigido: juntar imagem substituía as anteriores (tarefas e receitas; campo imagens+).
+- ~~**2.26.2**~~ (feito) Corrigido: Ctrl+V de imagens não funcionava com a secção das imagens fora do ecrã (folha construída por inteiro).
 - No fim: empacotar, dar SHA-256 + comando; atualizar docs/SEGURANCA.md se houver novos endpoints.
 
 ## Fila 2.x — UI/UX mais ágil (aprovada pelo Mauro em 06/10/2026; branch `ux-2`, cada item = uma versão, por esta ordem)

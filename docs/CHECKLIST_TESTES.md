@@ -2352,6 +2352,11 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Colar (Ctrl+V) uma imagem numa tarefa que já tem imagens: junta-se, não substitui
 - [ ] Numa receita, anexar uma imagem e depois outra: as duas ficam na receita
 
+## 174. Colar imagens: funciona com qualquer altura de janela
+
+- [ ] Com o navegador numa janela baixa (ex.: reduzir a altura), abrir uma tarefa e colar (Ctrl+V) uma captura de ecrã com o cursor na descrição: aparece "Imagem colada na tarefa."
+- [ ] O mesmo com a tarefa rolada para baixo (nos comentários) e com a descrição com um link
+
 ---
 
 ## Notas / ajustes pedidos
