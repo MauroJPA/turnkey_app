@@ -1245,6 +1245,12 @@ class _Cartao extends StatelessWidget {
         ),
       if (t.descricao.trim().isNotEmpty)
         Icon(Icons.notes, size: 15, color: cs.onSurfaceVariant),
+      if (t.links.isNotEmpty)
+        _Info(
+          icone: Icons.link,
+          texto: '${t.links.length}',
+          cor: cs.onSurfaceVariant,
+        ),
       if (t.imagens.isNotEmpty)
         _Info(
           icone: Icons.image_outlined,

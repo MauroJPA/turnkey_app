@@ -2163,6 +2163,17 @@ def teste_tarefas():
     s, r, _ = call('GET', f'/api/collections/tarefas/records/{ta}', tok=tok['viewerA'])
     check(s == 200 and r.get('prioridade') == 'critica', 'Leitura vê a prioridade')
 
+    # ---- links (2.26.0): lista JSON {t, u}, só quem pode editar
+    links_t = [{'t': 'Fatura', 'u': 'https://exemplo.pt/f'}, {'t': 'Menu', 'u': 'https://loja.pt'}]
+    s, r, _ = call('PATCH', f'/api/collections/tarefas/records/{ta}', {'links': links_t}, tok['editorA'])
+    check(s == 200 and r.get('links') == links_t, 'a equipa guarda os links da tarefa', f'status {s} {str(r)[:100]}')
+    s, _, _ = call('PATCH', f'/api/collections/tarefas/records/{ta}', {'links': []}, tok['viewerA'])
+    check(s in (403, 404), 'Leitura não muda os links', f'status {s}')
+    s, _, _ = call('PATCH', f'/api/collections/tarefas/records/{ta}', {'links': []}, tok['editorB'])
+    check(s in (403, 404), 'empresa B não muda os links da A', f'status {s}')
+    s, r, _ = call('GET', f'/api/collections/tarefas/records/{ta}', tok=tok['viewerA'])
+    check(s == 200 and r.get('links') == links_t, 'Leitura vê os links')
+
     # ---- imagens (2.23.0): ficheiros protegidos, só imagens, só quem pode editar
     import base64 as _b64
     png_t = _b64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==')

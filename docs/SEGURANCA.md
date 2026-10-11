@@ -254,7 +254,8 @@ empresa. O WhatsApp está no código mas **desligado** por omissão (precisa de 
 - **Mudar uma tarefa de quadro (2.22.2)**: a regra de atualização de `tarefas` deixa mudar `quadro` só para um quadro da mesma empresa, não arquivado, e só se o mesmo pedido trouxer uma fase desse quadro de destino (nunca fica uma tarefa com a fase de outro quadro). Empresa e autor continuam fixos; a Leitura não muda nada. Migration `1791190000_tarefas_mudar_de_quadro.js`.
 - **Imagens nas tarefas (2.23.0)**: campo `tarefas.imagens` (até 8, JPEG/PNG/WebP, 10 MB). Os ficheiros são **protegidos** (`protected: true`): só abrem com um token de sessão (`POST /api/files/token`) de alguém com acesso de leitura à tarefa — nunca outra empresa. Juntar e tirar imagens segue a regra de atualização da tarefa (a Leitura não pode). A app pede o token à medida que precisa e renova-o (dura ~2 min). Migration `1791200000_tarefas_imagens.js`.
 - **Prioridade (2.24.0)**: campo `tarefas.prioridade` (select: baixa, normal, alta, critica); o servidor recusa qualquer outro valor. Segue a regra de atualização da tarefa. Migration `1791210000_tarefas_prioridade.js`.
-- Testado em `teste_tarefas` (76 verificações) e na matriz "Leitura não escreve".
+- **Links nas tarefas (2.26.0)**: campo JSON `tarefas.links` (`[{t, u}]`, até 20; 20 KB). Segue a regra de atualização da tarefa. Como o servidor não valida o conteúdo do JSON, **a app só abre endereços `http`/`https`** (`normalizarUrl`): `javascript:`, `data:`, `file:`, `mailto:`… são ignorados ao ler e ao escrever; abre-se fora da app (`LaunchMode.externalApplication`). Migration `1791220000_tarefas_links.js`.
+- Testado em `teste_tarefas` (80 verificações) e na matriz "Leitura não escreve".
 
 ### Menções no Telegram de cada pessoa (2.20.0)
 

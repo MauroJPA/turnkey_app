@@ -63,6 +63,103 @@ class ItemChecklist {
   ];
 }
 
+/// Um link de uma tarefa: o que é (título) e o endereço.
+class LinkTarefa {
+  const LinkTarefa(this.titulo, this.url);
+
+  final String titulo;
+  final String url;
+
+  Map<String, String> toJson() => {'t': titulo, 'u': url};
+
+  /// Lê a lista guardada (`[{"t": "…", "u": "…"}]`). Ignora o que não for um
+  /// endereço http/https válido — nunca se abre outra coisa.
+  static List<LinkTarefa> listaDeJson(Object? v) {
+    if (v is! List) return const [];
+    final r = <LinkTarefa>[];
+    for (final e in v) {
+      if (e is! Map) continue;
+      final url = normalizarUrl('${e['u'] ?? ''}');
+      if (url == null) continue;
+      final t = '${e['t'] ?? ''}'.trim();
+      r.add(LinkTarefa(t.isEmpty ? nomeDoSitio(url) : t, url));
+    }
+    return r;
+  }
+}
+
+/// O endereço pronto a abrir, ou `null` se não servir. Só http e https; sem
+/// esquema assume-se https ("exemplo.pt/x" → "https://exemplo.pt/x").
+/// `javascript:`, `mailto:`, ficheiros… são recusados.
+String? normalizarUrl(String bruto) {
+  final t = bruto.trim();
+  if (t.isEmpty || RegExp(r'\s').hasMatch(t)) return null;
+  var url = t;
+  if (!RegExp(r'^[a-zA-Z][a-zA-Z0-9+.-]*://').hasMatch(t)) {
+    // "javascript:…", "mailto:…" — um esquema; "exemplo.pt:8080" é porta
+    if (RegExp(r'^[a-zA-Z][a-zA-Z0-9+.-]*:(?!\d)').hasMatch(t)) return null;
+    url = 'https://$t';
+  }
+  final u = Uri.tryParse(url);
+  if (u == null || (u.scheme != 'http' && u.scheme != 'https')) return null;
+  final h = u.host;
+  if (h.isEmpty || !(h.contains('.') || h == 'localhost')) return null;
+  return url;
+}
+
+/// "https://www.exemplo.pt/x" → "exemplo.pt" (para quando o link não tem título).
+String nomeDoSitio(String url) {
+  final h = Uri.tryParse(url)?.host ?? '';
+  return h.startsWith('www.') ? h.substring(4) : h;
+}
+
+/// Um bocado de um texto: simples ou um link clicável.
+class TrechoTexto {
+  const TrechoTexto(this.texto, [this.url]);
+
+  final String texto;
+
+  /// O endereço a abrir; `null` para texto simples.
+  final String? url;
+}
+
+/// Parte [texto] em bocados, marcando os endereços (http://, https:// ou
+/// www.) para serem clicáveis. A pontuação no fim ("veja https://x.pt.") não
+/// entra no link.
+List<TrechoTexto> trechosComLinks(String texto) {
+  final r = <TrechoTexto>[];
+  var pos = 0;
+  void simples(String s) {
+    if (s.isNotEmpty) r.add(TrechoTexto(s));
+  }
+
+  for (final m in RegExp(
+    r'''(?:https?://|www\.)[^\s<>"']+''',
+    caseSensitive: false,
+  ).allMatches(texto)) {
+    var fim = m.end;
+    String corpo() => texto.substring(m.start, fim);
+    while (fim > m.start) {
+      final c = texto[fim - 1];
+      final b = corpo();
+      final sobra = c == ')'
+          ? ')'.allMatches(b).length > '('.allMatches(b).length
+          : c == ']'
+          ? ']'.allMatches(b).length > '['.allMatches(b).length
+          : '.,;:!?»'.contains(c);
+      if (!sobra) break;
+      fim--;
+    }
+    final url = normalizarUrl(corpo());
+    if (url == null) continue;
+    simples(texto.substring(pos, m.start));
+    r.add(TrechoTexto(corpo(), url));
+    pos = fim;
+  }
+  simples(texto.substring(pos));
+  return r;
+}
+
 /// A prioridade (criticidade) de uma tarefa. "Normal" é o que vem por
 /// omissão e não se destaca no cartão.
 enum PrioridadeTarefa {
@@ -100,6 +197,7 @@ class Tarefa {
     this.checklist = const [],
     this.imagens = const [],
     this.prioridade = PrioridadeTarefa.normal,
+    this.links = const [],
     this.arquivada = false,
     this.autorId = '',
     this.autorNome = '',
@@ -123,6 +221,7 @@ class Tarefa {
   /// Nomes dos ficheiros das imagens (campo `imagens`, protegido).
   final List<String> imagens;
   final PrioridadeTarefa prioridade;
+  final List<LinkTarefa> links;
   final bool arquivada;
   final String autorId;
   final String autorNome;
@@ -158,6 +257,7 @@ class Tarefa {
     List<ItemChecklist>? checklist,
     List<String>? imagens,
     PrioridadeTarefa? prioridade,
+    List<LinkTarefa>? links,
     bool? arquivada,
   }) => Tarefa(
     id: id,
@@ -172,6 +272,7 @@ class Tarefa {
     checklist: checklist ?? this.checklist,
     imagens: imagens ?? this.imagens,
     prioridade: prioridade ?? this.prioridade,
+    links: links ?? this.links,
     arquivada: arquivada ?? this.arquivada,
     autorId: autorId,
     autorNome: autorNome,

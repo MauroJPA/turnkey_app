@@ -11,7 +11,9 @@ import '../../people/domain/nota.dart' show quandoTexto;
 import '../application/quadros_providers.dart';
 import '../data/quadros_repository.dart';
 import '../domain/quadro.dart';
+import 'descricao_com_links.dart';
 import 'imagens_tarefa.dart';
+import 'links_tarefa.dart';
 import 'quadro_comum.dart';
 
 /// Abre o detalhe de uma tarefa numa folha que sobe de baixo.
@@ -735,19 +737,22 @@ class _TarefaSheetState extends ConsumerState<TarefaSheet> {
               ),
 
               seccao('Descrição', Icons.notes_outlined),
-              TextField(
+              DescricaoComLinks(
                 controller: _descricao,
                 enabled: pode,
-                minLines: 2,
-                maxLines: 12,
-                maxLength: 5000,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  hintText:
-                      'Detalhes, o que é preciso, onde está… (Ctrl+V cola imagens)',
-                  counterText: '',
-                ),
-                onChanged: (_) => _mudar(_t),
+                hint:
+                    'Detalhes, o que é preciso, onde está… (Ctrl+V cola imagens)',
+                onChanged: () => _mudar(_t),
+              ),
+
+              seccao(
+                _t.links.isEmpty ? 'Links' : 'Links (${_t.links.length})',
+                Icons.link,
+              ),
+              LinksTarefa(
+                links: _t.links,
+                pode: pode,
+                onMudou: (l) => _mudar(_t.copyWith(links: l), ja: true),
               ),
 
               seccao(

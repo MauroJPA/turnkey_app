@@ -2336,6 +2336,16 @@ abre o **seletor de ficheiros** (importar CSV por ficheiro, escolher imagem) e a
 - [ ] Colar uma imagem quando a tarefa já tem 8: avisa que ficou de fora
 - [ ] Conta de Leitura: Ctrl+V de uma imagem avisa que só quem pode editar junta imagens
 
+## 172. Links nas tarefas (clicáveis e secção de links)
+
+- [ ] Escrever na descrição "Ver https://www.google.com e www.gookie.pt." e sair do campo: os dois endereços aparecem sublinhados; tocar num abre noutro separador (o ponto final não faz parte do link)
+- [ ] Tocar no texto da descrição (ou no lápis) volta a editar; sair do campo mostra os links outra vez
+- [ ] Secção "Links" → "Link": título "Fatura" + endereço "exemplo.pt/f" → aparece um botão "Fatura"; tocar abre https://exemplo.pt/f
+- [ ] Manter premido o botão do link edita o título/endereço; o × tira e aparece "Desfazer"
+- [ ] Endereço inválido (ex.: "javascript:alert(1)" ou "abc") é recusado com aviso
+- [ ] O cartão no quadro mostra o ícone de link com o número
+- [ ] Conta de Leitura: vê e abre os links mas não tem "Link" nem ×
+
 ---
 
 ## Notas / ajustes pedidos

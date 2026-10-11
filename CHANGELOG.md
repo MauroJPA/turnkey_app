@@ -2,6 +2,16 @@
 
 Versões da app (Flutter) + schema/hooks do PocketBase. Datas em AAAA-MM-DD.
 
+## 2.26.0 — 2026-10-11 — Links nas tarefas (clicáveis e secção de links)
+
+Links nas tarefas da equipa.
+
+- **Endereços clicáveis na descrição**: escreve ou cola `https://…` ou `www.…` na descrição e ficam sublinhados e clicáveis — tocar abre o link noutro separador. Tocar no texto (ou no lápis) volta a editar. A pontuação no fim ("veja https://x.pt.") não entra no link.
+- **Secção "Links"** em cada tarefa: **"Link"** → "O que é" (título) + "Endereço" → vira um **botão** com o título; tocar abre. Manter premido edita; o × tira (com **Desfazer**). Até 20 por tarefa. Sem título, usa o nome do sítio.
+- **No cartão**: o ícone de link com o número.
+- **Segurança**: só se abrem endereços `http`/`https` (nunca `javascript:`, `file:`…), tanto na descrição como nos botões. `docs/SEGURANCA.md` atualizado.
+- Servidor: migration `1791220000_tarefas_links.js` (campo JSON `tarefas.links`). 4 verificações novas em `teste_tarefas`; testes de domínio e de ecrã em `test/links_tarefa_test.dart`.
+
 ## 2.25.0 — 2026-10-11 — Colar imagens (Ctrl+V) nas tarefas
 
 Colar imagens (Ctrl+V) nas tarefas.
